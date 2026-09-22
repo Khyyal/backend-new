@@ -13,7 +13,10 @@ class CityFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => $this->faker->city(),
+            'name' => [
+                'ar' => $this->faker->city(),
+                'en' => $this->faker->city(),
+            ],
             'lat' => $this->faker->latitude(),
             'lng' => $this->faker->longitude(),
             'radius' => $this->faker->numberBetween(1, 100),

@@ -38,6 +38,9 @@
             "Modules\\Support\\": "modules/Support/src/",
             "Modules\\Support\\Database\\Factories\\": "modules/Support/database/factories/",
             "Modules\\Support\\Database\\Seeders\\":  "modules/Support/database/seeders/",
+            "Modules\\Centers\\": "modules/Centers/src/",
+            "Modules\\Centers\\Database\\Factories\\": "modules/Centers/database/factories/",
+            "Modules\\Centers\\Database\\Seeders\\":  "modules/Centers/database/seeders/",
 
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/"

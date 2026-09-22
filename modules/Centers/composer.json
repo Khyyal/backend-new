@@ -1,0 +1,19 @@
+{
+    "name": "modules/centers",
+    "description": "Centers module for managing various center-related functionalities.",
+    "type": "library",
+    "autoload": {
+        "psr-4": {
+            "Modules\\Centers\\": "src/",
+            "Modules\\Centers\\Database\\Seeders\\": "database/seeders/",
+            "Modules\\Centers\\Database\\Factories\\": "database/factories/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Modules\\Centers\\CentersServiceProvider"
+            ]
+        }
+    }
+}

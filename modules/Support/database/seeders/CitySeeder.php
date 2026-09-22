@@ -2,9 +2,10 @@
 
 namespace Modules\Support\Database\Seeders;
 
+use Illuminate\Database\Seeder;
 use Modules\Support\Models\City;
 
-class CitySeeder extends DatabaseSeeder
+class CitySeeder extends Seeder
 {
     public function run(): void
     {

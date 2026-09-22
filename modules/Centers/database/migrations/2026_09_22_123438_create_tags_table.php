@@ -7,17 +7,14 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void
     {
-        Schema::create('devices', function (Blueprint $table) {
+        Schema::create('tags', function (Blueprint $table) {
             $table->id();
-            $table->unique('device_identifier');
-            $table->string('fcm_token')->nullable();
-            $table->morphs('deviceable');
-            $table->timestamps();
+            $table->json('name');
         });
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('devices');
+        Schema::dropIfExists('tags');
     }
 };
