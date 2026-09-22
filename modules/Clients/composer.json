@@ -1,0 +1,19 @@
+{
+    "name": "modules/clients",
+    "description": "Clients module for handling clients functionality across the application.",
+    "type": "library",
+    "autoload": {
+        "psr-4": {
+            "Modules\\Clients\\": "src/",
+            "Modules\\Clients\\Database\\Seeders\\": "database/seeders/",
+            "Modules\\Clients\\Database\\Factories\\": "database/factories/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Modules\\Clients\\ClientsServiceProvider"
+            ]
+        }
+    }
+}
