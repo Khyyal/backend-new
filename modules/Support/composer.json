@@ -1,0 +1,19 @@
+{
+    "name": "modules/support",
+    "description": "Support module for handling common functionality across the application.",
+    "type": "library",
+    "autoload": {
+        "psr-4": {
+            "Modules\\Support\\": "src/",
+            "Modules\\Support\\Database\\Seeders\\": "database/seeders/",
+            "Modules\\Support\\Database\\Factories\\": "database/factories/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Modules\\Support\\SupportServiceProvider"
+            ]
+        }
+    }
+}
