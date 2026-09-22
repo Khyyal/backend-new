@@ -5,6 +5,7 @@ namespace Modules\Centers\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Modules\Centers\Enums\CenterStatus;
 use Modules\Support\Concerns\Actionable;
@@ -46,5 +47,37 @@ class Center extends Model
     public function tags(): BelongsToMany
     {
         return $this->belongsToMany(Tag::class, 'tag_center');
+    }
+
+
+    public function users(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            User::class,
+            'center_user_assignment',
+            'center_id',
+            'user_id'
+        )
+            ->using(CenterUser::class)
+            ->withPivot([
+                'status',
+                'joined_at',
+                'is_primary',
+            ])
+            ->withTimestamps();
+    }
+
+
+
+    public function primaryUser(): HasOneThrough
+    {
+        return $this->hasOneThrough(
+            User::class,
+            CenterUser::class,
+            'center_id',
+            'id',
+            'id',
+            'user_id'
+        )->where('center_user_assignment.is_primary', true);
     }
 }
