@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\Centers\Enums;
+namespace Modules\Support\Enums;
 
 enum ActivationStatus: string
 {

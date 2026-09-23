@@ -3,7 +3,7 @@
 namespace Modules\Centers\Models;
 
 use Illuminate\Database\Eloquent\Relations\Pivot;
-use Modules\Centers\Enums\ActivationStatus;
+use Modules\Support\Enums\ActivationStatus;
 
 class CenterUser extends Pivot
 {

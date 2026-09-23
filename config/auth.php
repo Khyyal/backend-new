@@ -1,6 +1,7 @@
 <?php
 
-use Modules\Centers\Models\User;
+use Modules\Centers\Models\User as CenterUser;
+use Modules\Clients\Models\Client;
 
 return [
 
@@ -42,6 +43,14 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+        'client' => [
+            'driver' => 'sanctum',
+            'provider' => 'clients',
+        ],
+        'center_user' => [
+            'driver' => 'sanctum',
+            'provider' => 'center_users',
+        ],
     ],
 
     /*
@@ -62,9 +71,19 @@ return [
     */
 
     'providers' => [
-        'users' => [
+//        'users' => [
+//            'driver' => 'eloquent',
+//            'model' => env('AUTH_MODEL', User::class),
+//        ],
+
+        'clients' => [
             'driver' => 'eloquent',
-            'model' => env('AUTH_MODEL', User::class),
+            'model' => Client::class,
+        ],
+
+        'center_users' => [
+            'driver' => 'eloquent',
+            'model' => CenterUser::class,
         ],
 
         // 'users' => [
