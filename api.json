@@ -1,0 +1,123 @@
+{
+    "openapi": "3.1.0",
+    "info": {
+        "title": "Laravel",
+        "version": "0.0.1"
+    },
+    "servers": [
+        {
+            "url": "http://localhost:8000/api"
+        }
+    ],
+    "tags": [
+        {
+            "name": "Client / Cities",
+            "description": "Client-facing city endpoints."
+        },
+        {
+            "name": "Center / Cities",
+            "description": "Center dashboard city endpoints."
+        }
+    ],
+    "paths": {
+        "/v1/center/cities": {
+            "get": {
+                "operationId": "center.cities.index",
+                "description": "Returns every city in the system ordered alphabetically by name,\nregardless of whether the city has any centers.",
+                "summary": "List all cities",
+                "tags": [
+                    "Center / Cities"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Complete list of all cities.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/City"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/client/cities": {
+            "get": {
+                "operationId": "client.cities.index",
+                "description": "Returns all cities that have at least one center with VISIBLE status,\nordered alphabetically by name.",
+                "summary": "List cities with visible centers",
+                "tags": [
+                    "Client / Cities"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of cities that have at least one visible center.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/City"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "City": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "array",
+                        "items": {}
+                    },
+                    "lat": {
+                        "type": "number"
+                    },
+                    "lng": {
+                        "type": "number"
+                    },
+                    "radius": {
+                        "type": "integer"
+                    },
+                    "created_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "lat",
+                    "lng",
+                    "radius",
+                    "created_at",
+                    "updated_at"
+                ],
+                "title": "City"
+            }
+        }
+    }
+}
