@@ -1,11 +1,11 @@
 <?php
 
-namespace Modules\Support;
+namespace Modules\Clients;
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 
-class SupportServiceProvider  extends ServiceProvider
+class ClientsServiceProvider extends ServiceProvider
 {
     public function boot(): void
     {

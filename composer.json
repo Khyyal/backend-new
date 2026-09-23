@@ -41,6 +41,9 @@
             "Modules\\Centers\\": "modules/Centers/src/",
             "Modules\\Centers\\Database\\Factories\\": "modules/Centers/database/factories/",
             "Modules\\Centers\\Database\\Seeders\\":  "modules/Centers/database/seeders/",
+  "Modules\\Clients\\": "modules/Clients/src/",
+            "Modules\\Clients\\Database\\Factories\\": "modules/Clients/database/factories/",
+            "Modules\\Clients\\Database\\Seeders\\":  "modules/Clients/database/seeders/",
 
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/"
