@@ -4,6 +4,8 @@ namespace Modules\Support\Services;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Http\Request;
 use Modules\Support\Models\Device;
 
 class DeviceService
@@ -25,6 +27,53 @@ class DeviceService
             ],
         );
     }
+
+    public function registerOrUpdateDevice(
+        Model $deviceable,
+        string $deviceIdentifier,
+        ?string $fcmToken = null,
+        ?string $platform = null,
+        ?string $locale = null,
+    ): Device {
+        $payload = [
+            'last_seen_at' => now(),
+        ];
+
+        if ($deviceable !== null) {
+            $payload['deviceable_id'] = $deviceable->id;
+            $payload['deviceable_type'] = get_class($deviceable);
+        }
+
+        if ($fcmToken !== null) {
+            $payload['fcm_token'] = $fcmToken;
+        }
+
+        if ($platform !== null) {
+            $payload['platform'] = $platform;
+        }
+
+        if ($locale !== null) {
+            $payload['locale'] = $locale;
+        }
+
+        $attempts = 0;
+
+        do {
+            try {
+                return Device::query()->updateOrCreate(
+                    ['device_identifier' => $deviceIdentifier],
+                    $payload
+                );
+            } catch (UniqueConstraintViolationException $e) {
+                if (++$attempts >= 2) {
+                    throw $e;
+                }
+                usleep(10_000);
+            }
+        } while (true);
+    }
+
+
 
     /**
      * Unregister a device.
@@ -96,5 +145,18 @@ class DeviceService
         return $deviceable->devices()
             ->where('device_identifier', $deviceIdentifier)
             ->first();
+    }
+
+    public function extractDeviceIdentifier(Request $request): ?string
+    {
+        $value = $request->header('X-Device-Identifier') ?? $request->input('device_identifier');
+
+        if ($value === null) {
+            return null;
+        }
+
+        $string = is_string($value) ? $value : (string) $value;
+
+        return $string === '' ? null : $string;
     }
 }

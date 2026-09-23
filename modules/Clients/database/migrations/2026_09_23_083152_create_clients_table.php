@@ -10,10 +10,10 @@ return new class extends Migration {
     {
         Schema::create('clients', function (Blueprint $table) {
             $table->id();
-            $table->string('first_name');
-            $table->string('last_name');
+            $table->string('first_name')->nullable();
+            $table->string('last_name')->nullable();
             $table->string('phone_number');
-            $table->enum('gender', [Gender::MALE->value, Gender::FEMALE->value, Gender::OTHER->value])->default(Gender::OTHER->value);
+            $table->enum('gender', [Gender::MALE->value, Gender::FEMALE->value, Gender::OTHER->value])->nullable()->default(Gender::OTHER->value);
             $table->foreignId('city_id')->nullable()->constrained('cities');
             $table->softDeletes();
             $table->timestamps();
