@@ -9,11 +9,11 @@ use Tests\TestCase;
 
 uses(TestCase::class, RefreshDatabase::class);
 
-test('center cities returns empty array when no cities exist', function () {
+test('center cities returns empty data array when no cities exist', function () {
     $response = $this->getJson('/api/v1/center/cities');
 
     $response->assertStatus(200);
-    expect($response->json())->toBe([]);
+    expect($response->json('data'))->toBe([]);
 });
 
 test('center cities returns all cities regardless of centers', function () {
@@ -28,9 +28,9 @@ test('center cities returns all cities regardless of centers', function () {
     $response = $this->getJson('/api/v1/center/cities');
 
     $response->assertStatus(200);
-    $response->assertJsonCount(3);
+    $response->assertJsonCount(3, 'data');
 
-    $ids = collect($response->json())->pluck('id')->all();
+    $ids = collect($response->json('data'))->pluck('id')->all();
     expect($ids)->toContain($cityWithVisible->id);
     expect($ids)->toContain($cityWithInvisible->id);
     expect($ids)->toContain($cityWithNoCenters->id);
@@ -46,7 +46,7 @@ test('center cities is ordered by name ascending', function () {
 
     $response->assertStatus(200);
 
-    $returnedNames = collect($response->json())
+    $returnedNames = collect($response->json('data'))
         ->map(fn (array $city) => $city['name']['en'] ?? null)
         ->values()
         ->all();
@@ -64,14 +64,12 @@ test('center cities is accessible without authentication', function () {
     $response = $this->getJson('/api/v1/center/cities');
 
     $response->assertStatus(200);
-    $response->assertJsonCount(1);
+    $response->assertJsonCount(1, 'data');
 });
 
-test('center cities response structure matches city columns', function () {
+test('center cities response structure matches city resource', function () {
     CityFactory::new()->create([
         'name' => ['en' => 'Example', 'ar' => 'مثال'],
-        'lat' => 12.345678,
-        'lng' => 45.678901,
         'radius' => 25,
     ]);
 
@@ -79,18 +77,16 @@ test('center cities response structure matches city columns', function () {
 
     $response->assertStatus(200)
         ->assertJsonStructure([
-            '*' => [
-                'id',
-                'name',
-                'lat',
-                'lng',
-                'radius',
-                'created_at',
-                'updated_at',
+            'data' => [
+                '*' => [
+                    'id',
+                    'name',
+                    'radius',
+                ],
             ],
         ]);
 
-    $item = $response->json(0);
+    $item = $response->json('data.0');
     expect($item['name'])->toBeArray();
     expect($item['name'])->toHaveKeys(['en', 'ar']);
 });

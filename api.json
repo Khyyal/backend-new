@@ -16,28 +16,36 @@
         },
         {
             "name": "Center / Cities",
-            "description": "Center dashboard city endpoints."
+            "description": "Center protal city endpoints."
         }
     ],
     "paths": {
         "/v1/center/cities": {
             "get": {
                 "operationId": "center.cities.index",
-                "description": "Returns every city in the system ordered alphabetically by name,\nregardless of whether the city has any centers.",
+                "description": "Returns every city in the system ordered alphabetically by name,\nregardless of whether the city has any centers. Used by the center\nportal for full-system city listings and location pickers.\n\nThe response data is an array of `CityResource` items wrapped in a\nstandard `data` envelope.",
                 "summary": "List all cities",
                 "tags": [
                     "Center / Cities"
                 ],
                 "responses": {
                     "200": {
-                        "description": "Complete list of all cities.",
+                        "description": "Complete list of all cities, wrapped in the `data` envelope as `CityResource[]`.",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "$ref": "#/components/schemas/City"
-                                    }
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/CityResource"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
                                 }
                             }
                         }
@@ -48,21 +56,29 @@
         "/v1/client/cities": {
             "get": {
                 "operationId": "client.cities.index",
-                "description": "Returns all cities that have at least one center with VISIBLE status,\nordered alphabetically by name.",
+                "description": "Returns all cities that have at least one center with VISIBLE status,\nordered alphabetically by name. Only cities that contain at least one\npublished (`VISIBLE`) center are returned, so the client-side location\npicker never shows empty cities.\n\nThe response data is an array of `CityResource` items wrapped in a\nstandard `data` envelope.",
                 "summary": "List cities with visible centers",
                 "tags": [
                     "Client / Cities"
                 ],
                 "responses": {
                     "200": {
-                        "description": "List of cities that have at least one visible center.",
+                        "description": "List of cities that have at least one visible center, wrapped in the `data` envelope as `CityResource[]`.",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "type": "array",
-                                    "items": {
-                                        "$ref": "#/components/schemas/City"
-                                    }
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/CityResource"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
                                 }
                             }
                         }
@@ -73,50 +89,25 @@
     },
     "components": {
         "schemas": {
-            "City": {
+            "CityResource": {
                 "type": "object",
                 "properties": {
                     "id": {
                         "type": "integer"
                     },
                     "name": {
-                        "type": "array",
-                        "items": {}
-                    },
-                    "lat": {
-                        "type": "number"
-                    },
-                    "lng": {
-                        "type": "number"
+                        "type": "string"
                     },
                     "radius": {
                         "type": "integer"
-                    },
-                    "created_at": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "format": "date-time"
-                    },
-                    "updated_at": {
-                        "type": [
-                            "string",
-                            "null"
-                        ],
-                        "format": "date-time"
                     }
                 },
                 "required": [
                     "id",
                     "name",
-                    "lat",
-                    "lng",
-                    "radius",
-                    "created_at",
-                    "updated_at"
+                    "radius"
                 ],
-                "title": "City"
+                "title": "CityResource"
             }
         }
     }
