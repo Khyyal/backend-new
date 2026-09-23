@@ -47,11 +47,11 @@ test('center cities is ordered by name ascending', function () {
     $response->assertStatus(200);
 
     $returnedNames = collect($response->json('data'))
-        ->map(fn (array $city) => $city['name']['en'] ?? null)
+        ->map(fn (array $city) => $city['name'] ?? null)
         ->values()
         ->all();
-    $expectedNames = $cities->sortBy(fn (City $c) => $c->getTranslation('name', 'en'))
-        ->map(fn (City $c) => $c->getTranslation('name', 'en'))
+    $expectedNames = $cities->sortBy(fn (City $c) => $c->name)
+        ->map(fn (City $c) => $c->name)
         ->values()
         ->all();
 
@@ -87,6 +87,5 @@ test('center cities response structure matches city resource', function () {
         ]);
 
     $item = $response->json('data.0');
-    expect($item['name'])->toBeArray();
-    expect($item['name'])->toHaveKeys(['en', 'ar']);
+    expect($item['name'])->toBeString();
 });
