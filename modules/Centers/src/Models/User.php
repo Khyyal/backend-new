@@ -52,9 +52,11 @@ class User extends Authenticatable
             'user_id',
             'center_id'
         )
+            ->using(CenterUser::class)
             ->withPivot([
                 'status',
                 'joined_at',
+                'is_primary',
             ])
             ->withTimestamps();
     }

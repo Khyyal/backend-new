@@ -5,7 +5,7 @@ namespace Modules\Support\Services;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Modules\Support\Models\OTP;
-use RuntimeException;
+use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 
 class OtpVerificationService
 {
@@ -152,9 +152,9 @@ class OtpVerificationService
 
         $seconds = RateLimiter::availableIn($key);
 
-        throw new RuntimeException(
-//            "Too many OTP requests. Try again in {$seconds} seconds."
-               __('otp.errors.tooManyRequests', ['seconds' => $seconds]),
+        throw new TooManyRequestsHttpException(
+            $seconds,
+            __('otp.errors.tooManyRequests', ['seconds' => $seconds]),
         );
     }
 
@@ -172,7 +172,12 @@ class OtpVerificationService
             return;
         }
 
-        return;
+        $seconds = RateLimiter::availableIn($key);
+
+        throw new TooManyRequestsHttpException(
+            $seconds,
+            __('otp.errors.tooManyVerifyAttempts', ['seconds' => $seconds]),
+        );
     }
 
     /**

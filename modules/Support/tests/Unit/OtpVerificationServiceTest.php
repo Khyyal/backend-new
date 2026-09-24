@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\RateLimiter;
 use Modules\Support\Models\OTP;
 use Modules\Support\Services\OtpVerificationService;
 use Modules\Support\Services\SMSService;
-use RuntimeException;
+use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 use Tests\TestCase;
 
 uses(TestCase::class, RefreshDatabase::class);
@@ -93,7 +93,7 @@ describe('send', function () {
         expect(RateLimiter::attempts($key))->toBe(3);
     });
 
-    test('throws runtime exception after max send attempts', function () {
+    test('throws TooManyRequestsHttpException after max send attempts', function () {
         $phone = '+966500000001';
         $key = 'otp:send:' . $phone;
 
@@ -103,7 +103,7 @@ describe('send', function () {
             $this->service->send($phone);
         }
 
-        $this->expectException(RuntimeException::class);
+        $this->expectException(TooManyRequestsHttpException::class);
         $this->service->send($phone);
     });
 
@@ -413,7 +413,7 @@ describe('verify', function () {
         expect($result)->toBeTrue();
     });
 
-    test('ensure can verify does not throw even after max attempts', function () {
+    test('ensure can verify blocks with TooManyRequestsHttpException after max attempts', function () {
         $phone = '+966500000001';
         $key = 'otp:verify:' . $phone;
 
@@ -428,8 +428,8 @@ describe('verify', function () {
             'verified_at' => null,
         ]);
 
-        $result = $this->service->verify($phone, '4321');
-        expect($result)->toBeTrue();
+        $this->expectException(TooManyRequestsHttpException::class);
+        $this->service->verify($phone, '4321');
     });
 
 });
