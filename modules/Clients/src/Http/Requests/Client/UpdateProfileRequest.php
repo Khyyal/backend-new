@@ -16,6 +16,7 @@ class UpdateProfileRequest extends FormRequest
         return [
             'first_name' => ['required', 'string', 'min:2', 'max:255'],
             'last_name' => ['required', 'string', 'min:2', 'max:255'],
+            'city_id' => ['nullable', 'integer', 'exists:cities,id'],
         ];
     }
 
@@ -31,6 +32,9 @@ class UpdateProfileRequest extends FormRequest
             'last_name.string' => __('validation.name_min'),
             'last_name.min' => __('validation.name_min'),
             'last_name.max' => __('validation.name_max'),
+
+            'city_id.integer' => __('validation.city_id_integer'),
+            'city_id.exists' => __('validation.city_id_exists'),
         ];
     }
 }
