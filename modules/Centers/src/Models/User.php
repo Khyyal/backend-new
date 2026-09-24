@@ -15,7 +15,7 @@ use Laravel\Sanctum\HasApiTokens;
 use Modules\Support\Concerns\HasDevices;
 use Spatie\Permission\Traits\HasRoles;
 
-#[Fillable(['name', 'phone', 'password'])]
+#[Fillable(['name', 'phone', 'password','phone_verified_at'])]
 #[Hidden(['password'])]
 #[Table("center_users")]
 class User extends Authenticatable
@@ -57,5 +57,12 @@ class User extends Authenticatable
                 'joined_at',
             ])
             ->withTimestamps();
+    }
+
+
+
+    public function hasVerifiedPhone(): bool
+    {
+        return !is_null($this->phone_verified_at);
     }
 }
