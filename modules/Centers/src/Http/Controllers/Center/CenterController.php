@@ -184,7 +184,7 @@ class CenterController extends Controller
             }
         }
 
-        $token = $this->authService->issueAppToken($user, $request);
+        $token = $this->authService->issueCenterAccessToken($user, $center, $request);
 
         return response()->json([
             'token' => $token,

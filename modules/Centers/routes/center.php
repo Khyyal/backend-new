@@ -34,11 +34,14 @@ Route::middleware(['api'])
                 Route::get('/', [CenterController::class, 'index'])
                     ->name('index');
 
-                Route::get('/{center}', [CenterController::class, 'show'])
-                    ->name('show');
-
                 Route::post('/{center}/access', [CenterController::class, 'access'])
                     ->name('access');
+
+                Route::middleware(['center.scope'])
+                    ->group(function (): void {
+                        Route::get('/{center}', [CenterController::class, 'show'])
+                            ->name('show');
+                    });
             });
 
     });
