@@ -34,6 +34,7 @@ class Center extends Model implements HasMedia
         'address',
         'points',
         'status',
+        'contact_phone'
     ];
 
 

@@ -6,12 +6,14 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Attributes\Table;
+use Illuminate\Database\Eloquent\Attributes\UseResource;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Modules\Centers\Http\Resources\Center\UserResource;
 use Modules\Support\Concerns\HasDevices;
 use Spatie\Permission\Traits\HasRoles;
 
@@ -27,10 +29,8 @@ class User extends Authenticatable
 
     protected string $guard_name = 'center_user';
 
-    public function getGuardName(): string
-    {
-        return $this->guard_name;
-    }
+
+
 
     /**
      * Get the attributes that should be cast.

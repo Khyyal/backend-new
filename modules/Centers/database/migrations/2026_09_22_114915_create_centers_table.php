@@ -24,6 +24,7 @@ return new class extends Migration {
             $table->decimal('lng', 10, 7)->nullable();
 
             $table->string('address')->nullable();
+            $table->string('contact_phone')->nullable();
 
             $table->unsignedInteger('points')->default(0);
 
