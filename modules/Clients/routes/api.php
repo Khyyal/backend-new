@@ -2,6 +2,7 @@
 
 use Modules\Clients\Http\Controllers\Client\AuthController;
 use Modules\Clients\Http\Controllers\Client\ProfileController;
+use Modules\Clients\Http\Controllers\Client\RatingController;
 
 Route::middleware(['api', 'set.locale.from.accept.language'])
     ->prefix('clients')
@@ -17,6 +18,8 @@ Route::middleware(['api', 'set.locale.from.accept.language'])
                     Route::get('/me', [ProfileController::class, 'me'])
                         ->name('profile.me');
 
+                    Route::post('/ratings', [RatingController::class, 'rate'])
+                        ->name('ratings.rate');
                 });
             });
 
