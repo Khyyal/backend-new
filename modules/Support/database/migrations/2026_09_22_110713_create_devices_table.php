@@ -9,9 +9,12 @@ return new class extends Migration {
     {
         Schema::create('devices', function (Blueprint $table) {
             $table->id();
-            $table->unique('device_identifier');
+            $table->string('device_identifier')->unique();
             $table->string('fcm_token')->nullable();
-            $table->morphs('deviceable');
+            $table->string('platform')->nullable();
+            $table->string('locale')->nullable();
+            $table->timestamp('last_seen_at')->nullable();
+            $table->nullableMorphs('deviceable');
             $table->timestamps();
         });
     }

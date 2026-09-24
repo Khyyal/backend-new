@@ -11,14 +11,18 @@ use Modules\Centers\Enums\CenterStatus;
 use Modules\Support\Concerns\Actionable;
 use Modules\Support\Concerns\HasCity;
 use Modules\Support\Concerns\Rateable;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
-class Center extends Model
+class Center extends Model implements HasMedia
 {
     use HasFactory;
     use HasCity;
     use Actionable;
     use SoftDeletes;
     use Rateable;
+    use InteractsWithMedia;
 
     protected $fillable = [
         'city_id',
@@ -30,6 +34,15 @@ class Center extends Model
         'address',
         'points',
         'status',
+        'contact_phone'
+    ];
+
+
+
+    public const MEDIA_COLLECTIONS = [
+        'logo',
+        'cover',
+        'images',
     ];
 
     protected function casts(): array
@@ -41,6 +54,41 @@ class Center extends Model
             'status' => CenterStatus::class,
         ];
     }
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection('logo')
+            ->singleFile()
+            ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/webp', 'image/jpg'])
+            ->useFallbackUrl('')
+            ->registerMediaConversions(function (?Media $media = null): void {
+                $this->addMediaConversion('thumb')
+                    ->width(200)
+                    ->height(200)
+                    ->nonQueued();
+            });
+
+        $this->addMediaCollection('cover')
+            ->singleFile()
+            ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/webp', 'image/jpg'])
+            ->useFallbackUrl('')
+            ->registerMediaConversions(function (?Media $media = null): void {
+                $this->addMediaConversion('cover-thumb')
+                    ->width(1200)
+                    ->height(400)
+                    ->nonQueued();
+            });
+
+        $this->addMediaCollection('images')
+            ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/webp', 'image/jpg'])
+            ->registerMediaConversions(function (?Media $media = null): void {
+                $this->addMediaConversion('gallery-thumb')
+                    ->width(600)
+                    ->height(600)
+                    ->nonQueued();
+            });
+    }
+
 
 
 
