@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Support\Facades\Route;
 use Modules\Clients\Http\Controllers\Client\AuthController;
 use Modules\Clients\Http\Controllers\Client\ProfileController;
 use Modules\Clients\Http\Controllers\Client\RatingController;
