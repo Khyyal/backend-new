@@ -31,7 +31,7 @@ readonly class CenterRegisterService
 
         if (! $this->otpVerificationService->verify($phone, $code)) {
             throw ValidationException::withMessages([
-                'user.code' => __('validation.otp_invalid', ['default' => 'Invalid or expired verification code.']),
+                'user.code' => __('centers::validation.otp_invalid'),
             ]);
         }
 
@@ -39,6 +39,7 @@ readonly class CenterRegisterService
             $user = User::create([
                 'name' => $request->input('user.name'),
                 'phone' => $request->input('user.phone'),
+                'password' => $request->input('user.password'),
                 'phone_verified_at' => now(),
             ]);
 

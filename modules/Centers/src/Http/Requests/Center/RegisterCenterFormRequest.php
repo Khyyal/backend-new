@@ -20,6 +20,7 @@ class RegisterCenterFormRequest extends FormRequest
             'user.name' => ['required', 'string', 'max:255'],
             'user.phone' => ['required', 'string', 'max:32'],
             'user.code' => ['required', 'string'],
+            'user.password' => ['required', 'string', 'min:8', 'max:255'],
         ];
     }
 }

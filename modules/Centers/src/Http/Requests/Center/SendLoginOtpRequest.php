@@ -21,10 +21,10 @@ class SendLoginOtpRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'phone.required' => __('validation.phone_required', ['default' => 'The phone number is required.']),
-            'phone.string' => __('validation.phone_format', ['default' => 'The phone number format is invalid.']),
-            'phone.max' => __('validation.phone_format', ['default' => 'The phone number format is invalid.']),
-            'phone.exists' => __('auth.phone_not_registered_please_register', ['default' => 'This phone number is not registered. Please register first.']),
+            'phone.required' => __('centers::validation.phone_required'),
+            'phone.string' => __('centers::validation.phone_format'),
+            'phone.max' => __('centers::validation.phone_format'),
+            'phone.exists' => __('centers::auth.phone_not_registered_please_register'),
         ];
     }
 }

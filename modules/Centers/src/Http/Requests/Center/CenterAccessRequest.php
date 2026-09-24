@@ -21,7 +21,7 @@ class CenterAccessRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'password.string' => __('validation.password_string', ['default' => 'The password must be a string.']),
+            'password.string' => __('centers::validation.password_string'),
         ];
     }
 }

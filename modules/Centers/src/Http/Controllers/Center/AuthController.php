@@ -64,7 +64,7 @@ class AuthController extends Controller
         $this->verification->send($phone);
 
         return response()->json([
-            'message' => __('messages.otp_sent', ['default' => 'Verification code sent.']),
+            'message' => __('centers::messages.otp_sent'),
             'expires_in_seconds' => OtpVerificationService::DEFAULT_TTL_SECONDS,
         ]);
     }
@@ -119,14 +119,14 @@ class AuthController extends Controller
 
         if (! $this->verification->verify($phone, $code)) {
             throw ValidationException::withMessages([
-                'code' => [__('otp.invalid', ['default' => 'Invalid or expired verification code.'])],
+                'code' => [__('centers::otp.invalid')],
             ]);
         }
 
         $user = $this->authService->findByPhone($phone);
         if ($user === null) {
             throw ValidationException::withMessages([
-                'phone' => [__('auth.phone_not_registered_please_register', ['default' => 'This phone number is not registered. Please register first.'])],
+                'phone' => [__('centers::auth.phone_not_registered_please_register')],
             ]);
         }
 

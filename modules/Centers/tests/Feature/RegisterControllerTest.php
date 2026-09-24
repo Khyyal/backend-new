@@ -24,7 +24,7 @@ beforeEach(function (): void {
     config()->set('otp.dev.code', $this->devCode);
 });
 
-$validPayload = fn (): array => [
+$validPayload = fn (string $password = 'validpassword123'): array => [
     'name' => 'Phoenix Learning Center',
     'description' => 'A top-tier tutoring center for all ages.',
     'contact_phone' => '+966112345678',
@@ -32,6 +32,7 @@ $validPayload = fn (): array => [
         'name' => 'Ahmad Al-Farsi',
         'phone' => '+966500000999',
         'code' => '123456',
+        'password' => $password,
     ],
 ];
 
@@ -119,6 +120,7 @@ test('register does not persist any record when otp is invalid (transaction roll
             'name' => $userName,
             'phone' => $uniquePhone,
             'code' => '0000',
+            'password' => 'rollbackpass123',
         ],
     ]);
 
@@ -230,6 +232,7 @@ test('register auto-generates unique slug from center name', function (): void {
             'name' => 'Slug User 1',
             'phone' => $this->devPhone,
             'code' => $this->devCode,
+            'password' => 'slugtestpass123',
         ],
     ]);
 
@@ -251,6 +254,7 @@ test('register auto-generates unique slug from center name', function (): void {
             'name' => 'Slug User 2',
             'phone' => $secondPhone,
             'code' => '2222',
+            'password' => 'slugtestpass2',
         ],
     ]);
 
@@ -267,6 +271,7 @@ test('register works without description field (nullable)', function (): void {
             'name' => 'Minimal User',
             'phone' => $this->devPhone,
             'code' => $this->devCode,
+            'password' => 'minimalpass123',
         ],
     ]);
 
@@ -308,6 +313,7 @@ test('register uses a non-conflicting phone for center user', function (): void 
             'name' => 'Alt User',
             'phone' => $newPhone,
             'code' => '9999',
+            'password' => 'altpassword123',
         ],
     ]);
 

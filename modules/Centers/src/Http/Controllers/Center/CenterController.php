@@ -173,13 +173,13 @@ class CenterController extends Controller
 
             if ($password === '') {
                 throw ValidationException::withMessages([
-                    'password' => [__('validation.required', ['attribute' => __('auth.password_field', ['default' => 'password'])] + ['default' => 'The password field is required.'])],
+                    'password' => [__('centers::validation.password_required', ['attribute' => __('centers::auth.password_field')])],
                 ]);
             }
 
             if (! $this->authService->verifyPrimaryAccessPassword($user, $password)) {
                 throw ValidationException::withMessages([
-                    'password' => [__('auth.invalid_password', ['default' => 'The provided password is incorrect.'])],
+                    'password' => [__('centers::auth.invalid_password')],
                 ]);
             }
         }

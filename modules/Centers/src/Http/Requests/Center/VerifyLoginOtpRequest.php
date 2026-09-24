@@ -22,13 +22,13 @@ class VerifyLoginOtpRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'phone.required' => __('validation.phone_required', ['default' => 'The phone number is required.']),
-            'phone.string' => __('validation.phone_format', ['default' => 'The phone number format is invalid.']),
-            'phone.max' => __('validation.phone_format', ['default' => 'The phone number format is invalid.']),
-            'phone.exists' => __('auth.phone_not_registered_please_register', ['default' => 'This phone number is not registered. Please register first.']),
-            'code.required' => __('validation.code_required', ['default' => 'The verification code is required.']),
-            'code.string' => __('validation.code_digits', ['default' => 'The verification code must be between 4 and 6 digits.']),
-            'code.digits_between' => __('validation.code_digits', ['default' => 'The verification code must be between 4 and 6 digits.']),
+            'phone.required' => __('centers::validation.phone_required'),
+            'phone.string' => __('centers::validation.phone_format'),
+            'phone.max' => __('centers::validation.phone_format'),
+            'phone.exists' => __('centers::auth.phone_not_registered_please_register'),
+            'code.required' => __('centers::validation.code_required'),
+            'code.string' => __('centers::validation.code_digits'),
+            'code.digits_between' => __('centers::validation.code_digits'),
         ];
     }
 }
