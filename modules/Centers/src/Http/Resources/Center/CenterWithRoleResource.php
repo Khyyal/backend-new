@@ -20,6 +20,7 @@ class CenterWithRoleResource extends JsonResource
         $role = null;
         if ($user instanceof User) {
             app(PermissionRegistrar::class)->setPermissionsTeamId($this->id);
+            $user->unsetRelation('roles');
             $role = $user->getRoleNames()->first() ?: null;
         }
 
