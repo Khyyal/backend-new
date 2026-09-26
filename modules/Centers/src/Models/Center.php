@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Modules\Centers\Enums\CenterStatus;
+use Modules\Purchase\Contracts\Buyer;
+use Modules\Purchase\Traits\IsBuyer;
 use Modules\Support\Concerns\Actionable;
 use Modules\Support\Concerns\HasCity;
 use Modules\Support\Concerns\Rateable;
@@ -15,7 +17,7 @@ use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
-class Center extends Model implements HasMedia
+class Center extends Model implements HasMedia, Buyer
 {
     use HasFactory;
     use HasCity;
@@ -23,6 +25,7 @@ class Center extends Model implements HasMedia
     use SoftDeletes;
     use Rateable;
     use InteractsWithMedia;
+    use IsBuyer;
 
     protected $fillable = [
         'city_id',

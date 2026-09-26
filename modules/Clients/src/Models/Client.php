@@ -6,14 +6,16 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Laravel\Sanctum\HasApiTokens;
+use Modules\Purchase\Contracts\Buyer;
+use Modules\Purchase\Traits\IsBuyer;
 use Modules\Support\Concerns\ActionActor;
 use Modules\Support\Concerns\HasCity;
 use Modules\Support\Concerns\HasDevices;
 use Modules\Support\Concerns\Rater;
 
-class Client extends Authenticatable
+class Client extends Authenticatable implements Buyer
 {
-    use HasApiTokens, HasFactory, SoftDeletes, HasDevices, Rater, ActionActor, HasCity;
+    use HasApiTokens, HasFactory, SoftDeletes, HasDevices, Rater, ActionActor, HasCity, IsBuyer;
 
 
 

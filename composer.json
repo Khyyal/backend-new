@@ -44,6 +44,9 @@
   "Modules\\Clients\\": "modules/Clients/src/",
             "Modules\\Clients\\Database\\Factories\\": "modules/Clients/database/factories/",
             "Modules\\Clients\\Database\\Seeders\\":  "modules/Clients/database/seeders/",
+            "Modules\\Purchase\\": "modules/Purchase/src/",
+            "Modules\\Purchase\\Database\\Factories\\": "modules/Purchase/database/factories/",
+            "Modules\\Purchase\\Database\\Seeders\\":  "modules/Purchase/database/seeders/",
 
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/"
@@ -51,7 +54,8 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Tests\\": "tests/"
+            "Tests\\": "tests/",
+            "Modules\\Purchase\\Tests\\": "modules/Purchase/tests/"
         }
     },
     "scripts": {

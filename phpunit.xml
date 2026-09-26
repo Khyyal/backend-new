@@ -13,6 +13,7 @@
             <directory>modules/Support/tests</directory>
             <directory>modules/Clients/tests</directory>
             <directory>modules/Centers/tests</directory>
+            <directory>modules/Purchase/tests</directory>
         </testsuite>
     </testsuites>
     <source>
