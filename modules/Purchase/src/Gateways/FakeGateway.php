@@ -36,6 +36,28 @@ class FakeGateway implements PaymentGateway
         ];
     }
 
+    public function sync(Payment $payment): PaymentStatus
+    {
+        $key = (string) $payment->getKey();
+
+        if (isset(static::$nextStatus[$key])) {
+            return static::$nextStatus[$key];
+        }
+
+        return PaymentStatus::Pending;
+    }
+
+    public function authorize(Payment $payment): PaymentStatus
+    {
+        $key = (string) $payment->getKey();
+
+        if (isset(static::$nextStatus[$key])) {
+            return static::$nextStatus[$key];
+        }
+
+        return PaymentStatus::Processing;
+    }
+
     public function verify(Payment $payment): PaymentStatus
     {
         $key = (string) $payment->getKey();

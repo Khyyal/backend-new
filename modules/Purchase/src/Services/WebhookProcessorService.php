@@ -7,6 +7,8 @@ use InvalidArgumentException;
 use Modules\Purchase\Contracts\WebhookEventHandler;
 use Modules\Purchase\Enums\PaymentStatus;
 use Modules\Purchase\Gateways\FakeWebhookEventHandler;
+use Modules\Purchase\Gateways\Moyasar\MoyasarWebhookEventHandler;
+use Modules\Purchase\Gateways\Tamara\TamaraWebhookEventHandler;
 use Modules\Purchase\Models\Payment;
 use Modules\Purchase\Models\WebhookEvent;
 
@@ -24,6 +26,8 @@ class WebhookProcessorService
         private readonly PaymentStateService $paymentStateService,
         array $handlers = [
             'fake' => FakeWebhookEventHandler::class,
+            'tamara' => TamaraWebhookEventHandler::class,
+            'moyasar' => MoyasarWebhookEventHandler::class,
         ],
     ) {
         $this->handlers = $handlers;

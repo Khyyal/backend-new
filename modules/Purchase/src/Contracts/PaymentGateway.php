@@ -10,6 +10,10 @@ interface PaymentGateway
 {
     public function initialize(Purchase $purchase, Payment $payment): array;
 
+    public function sync(Payment $payment): PaymentStatus;
+
+    public function authorize(Payment $payment): PaymentStatus;
+
     public function verify(Payment $payment): PaymentStatus;
 
     public function capture(Payment $payment): PaymentStatus;
