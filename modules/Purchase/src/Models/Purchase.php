@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Promotion\Traits\HasDiscountable;
 use Modules\Purchase\Database\Factories\PurchaseFactory;
 use Modules\Purchase\Enums\PurchaseSource;
 use Modules\Purchase\Enums\PurchaseStatus;
@@ -15,6 +16,7 @@ class Purchase extends Model
 {
     use HasFactory;
     use SoftDeletes;
+    use HasDiscountable;
 
     protected $fillable = [
         'buyer_type',

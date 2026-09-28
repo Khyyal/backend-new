@@ -47,6 +47,9 @@
             "Modules\\Purchase\\": "modules/Purchase/src/",
             "Modules\\Purchase\\Database\\Factories\\": "modules/Purchase/database/factories/",
             "Modules\\Purchase\\Database\\Seeders\\":  "modules/Purchase/database/seeders/",
+            "Modules\\Promotion\\": "modules/Promotion/src/",
+            "Modules\\Promotion\\Database\\Factories\\": "modules/Promotion/database/factories/",
+            "Modules\\Promotion\\Database\\Seeders\\":  "modules/Promotion/database/seeders/",
 
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/"

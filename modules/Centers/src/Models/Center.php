@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Modules\Centers\Enums\CenterStatus;
+use Modules\Promotion\Traits\HasDiscounts;
 use Modules\Purchase\Contracts\Buyer;
 use Modules\Purchase\Traits\IsBuyer;
 use Modules\Support\Concerns\Actionable;
@@ -26,6 +27,7 @@ class Center extends Model implements HasMedia, Buyer
     use Rateable;
     use InteractsWithMedia;
     use IsBuyer;
+    use HasDiscounts;
 
     protected $fillable = [
         'city_id',
