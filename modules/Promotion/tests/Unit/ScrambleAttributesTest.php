@@ -9,25 +9,29 @@ use ReflectionMethod;
 
 uses(\Tests\TestCase::class, \Illuminate\Foundation\Testing\RefreshDatabase::class);
 
-function publicControllerMethods(string $class): array
-{
-    $r = new ReflectionClass($class);
-    $exclude = [
-        'middleware', 'getMiddleware', 'callAction', '__call', '__callStatic',
-        'authorize', 'authorizeResource', 'validate', 'validateWith', 'validateWithBag',
-    ];
+if (! function_exists('publicControllerMethods')) {
+    function publicControllerMethods(string $class): array
+    {
+        $r = new ReflectionClass($class);
+        $exclude = [
+            'middleware', 'getMiddleware', 'callAction', '__call', '__callStatic',
+            'authorize', 'authorizeResource', 'validate', 'validateWith', 'validateWithBag',
+        ];
 
-    return array_values(array_filter(
-        array_map(fn (ReflectionMethod $m) => $m->getName(), $r->getMethods(ReflectionMethod::IS_PUBLIC)),
-        fn (string $n) => ! str_starts_with($n, '__') && ! in_array($n, $exclude, true),
-    ));
+        return array_values(array_filter(
+            array_map(fn (ReflectionMethod $m) => $m->getName(), $r->getMethods(ReflectionMethod::IS_PUBLIC)),
+            fn (string $n) => ! str_starts_with($n, '__') && ! in_array($n, $exclude, true),
+        ));
+    }
 }
 
-function methodHasAttr(string $class, string $method, string $attr): bool
-{
-    $r = new ReflectionMethod($class, $method);
+if (! function_exists('methodHasAttr')) {
+    function methodHasAttr(string $class, string $method, string $attr): bool
+    {
+        $r = new ReflectionMethod($class, $method);
 
-    return count($r->getAttributes($attr)) > 0;
+        return count($r->getAttributes($attr)) > 0;
+    }
 }
 
 test('admin discount controller has class-level Group attribute', function (): void {

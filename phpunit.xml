@@ -14,6 +14,8 @@
             <directory>modules/Clients/tests</directory>
             <directory>modules/Centers/tests</directory>
             <directory>modules/Purchase/tests</directory>
+            <directory>modules/Promotion/tests</directory>
+            <directory>modules/Billing/tests</directory>
         </testsuite>
     </testsuites>
     <source>

@@ -1,6 +1,7 @@
 <?php
 
 use App\Providers\AppServiceProvider;
+use Modules\Billing\BillingServiceProvider;
 use Modules\Centers\CentersServiceProvider;
 use Modules\Clients\ClientsServiceProvider;
 use Modules\Promotion\PromotionServiceProvider;
@@ -14,4 +15,5 @@ return [
     ClientsServiceProvider::class,
     PurchaseServiceProvider::class,
     PromotionServiceProvider::class,
+    BillingServiceProvider::class,
 ];

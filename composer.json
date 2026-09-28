@@ -50,6 +50,9 @@
             "Modules\\Promotion\\": "modules/Promotion/src/",
             "Modules\\Promotion\\Database\\Factories\\": "modules/Promotion/database/factories/",
             "Modules\\Promotion\\Database\\Seeders\\":  "modules/Promotion/database/seeders/",
+            "Modules\\Billing\\": "modules/Billing/src/",
+            "Modules\\Billing\\Database\\Factories\\": "modules/Billing/database/factories/",
+            "Modules\\Billing\\Database\\Seeders\\":  "modules/Billing/database/seeders/",
 
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/"

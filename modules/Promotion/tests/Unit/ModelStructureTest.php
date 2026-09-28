@@ -46,7 +46,7 @@ test('migrations create all four tables with expected columns', function (): voi
 });
 
 test('rollback drops promotion tables', function (): void {
-    $this->artisan('migrate:rollback', ['--step' => 4])->assertExitCode(0);
+    $this->artisan('migrate:rollback', ['--step' => 10])->assertExitCode(0);
     foreach (['discounts', 'coupons', 'discountables', 'discount_redemptions'] as $t) {
         expect(Schema::hasTable($t))->toBeFalse("$t still exists after rollback");
     }
