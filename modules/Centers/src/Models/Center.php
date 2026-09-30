@@ -5,6 +5,7 @@ namespace Modules\Centers\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Modules\Billing\Traits\HasSubscriptions;
@@ -12,9 +13,11 @@ use Modules\Centers\Enums\CenterStatus;
 use Modules\Promotion\Traits\HasDiscounts;
 use Modules\Purchase\Contracts\Buyer;
 use Modules\Purchase\Traits\IsBuyer;
+use Modules\Services\Models\Service;
 use Modules\Support\Concerns\Actionable;
 use Modules\Support\Concerns\HasCity;
 use Modules\Support\Concerns\Rateable;
+use Spatie\Image\Enums\Fit;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
@@ -45,7 +48,6 @@ class Center extends Model implements HasMedia, Buyer
     ];
 
 
-
     public const MEDIA_COLLECTIONS = [
         'logo',
         'cover',
@@ -70,9 +72,8 @@ class Center extends Model implements HasMedia, Buyer
             ->useFallbackUrl('')
             ->registerMediaConversions(function (?Media $media = null): void {
                 $this->addMediaConversion('thumb')
-                    ->width(200)
-                    ->height(200)
-                    ->nonQueued();
+                    ->fit(Fit::Crop, 200, 200);
+
             });
 
         $this->addMediaCollection('cover')
@@ -81,22 +82,19 @@ class Center extends Model implements HasMedia, Buyer
             ->useFallbackUrl('')
             ->registerMediaConversions(function (?Media $media = null): void {
                 $this->addMediaConversion('cover-thumb')
-                    ->width(1200)
-                    ->height(400)
-                    ->nonQueued();
+                    ->fit(Fit::Crop, 1200, 400);
+
             });
 
         $this->addMediaCollection('images')
             ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/webp', 'image/jpg'])
             ->registerMediaConversions(function (?Media $media = null): void {
                 $this->addMediaConversion('gallery-thumb')
-                    ->width(600)
-                    ->height(600)
-                    ->nonQueued();
+                    ->fit(Fit::Crop, 600, 600);
             });
+
+
     }
-
-
 
 
     public function tags(): BelongsToMany
@@ -123,7 +121,6 @@ class Center extends Model implements HasMedia, Buyer
     }
 
 
-
     public function primaryUser(): HasOneThrough
     {
         return $this->hasOneThrough(
@@ -134,5 +131,11 @@ class Center extends Model implements HasMedia, Buyer
             'id',
             'user_id'
         )->where('center_user_assignment.is_primary', true);
+    }
+
+
+    public function services(): HasMany
+    {
+        return $this->hasMany(Service::class);
     }
 }
