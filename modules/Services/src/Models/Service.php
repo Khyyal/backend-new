@@ -5,6 +5,7 @@ namespace Modules\Services\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 use Modules\Centers\Models\Center;
@@ -95,6 +96,16 @@ class Service extends Model implements HasMedia
                     ->fit(Fit::Crop, 600, 600);
             });
     }
+
+
+    /// price options
+    public function priceOptions(): HasMany|Service
+    {
+        return $this->hasMany(PriceOption::class);
+    }
+
+
+
 
 
 }
