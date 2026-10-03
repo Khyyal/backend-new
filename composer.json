@@ -44,6 +44,19 @@
   "Modules\\Clients\\": "modules/Clients/src/",
             "Modules\\Clients\\Database\\Factories\\": "modules/Clients/database/factories/",
             "Modules\\Clients\\Database\\Seeders\\":  "modules/Clients/database/seeders/",
+            "Modules\\Purchase\\": "modules/Purchase/src/",
+            "Modules\\Purchase\\Database\\Factories\\": "modules/Purchase/database/factories/",
+            "Modules\\Purchase\\Database\\Seeders\\":  "modules/Purchase/database/seeders/",
+            "Modules\\Promotion\\": "modules/Promotion/src/",
+            "Modules\\Promotion\\Database\\Factories\\": "modules/Promotion/database/factories/",
+            "Modules\\Promotion\\Database\\Seeders\\":  "modules/Promotion/database/seeders/",
+            "Modules\\Billing\\": "modules/Billing/src/",
+            "Modules\\Billing\\Database\\Factories\\": "modules/Billing/database/factories/",
+            "Modules\\Billing\\Database\\Seeders\\":  "modules/Billing/database/seeders/",
+
+            "Modules\\Services\\": "modules/Services/src/",
+            "Modules\\Services\\Database\\Factories\\": "modules/Services/database/factories/",
+            "Modules\\Services\\Database\\Seeders\\":  "modules/Services/database/seeders/",
 
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/"
@@ -51,7 +64,8 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Tests\\": "tests/"
+            "Tests\\": "tests/",
+            "Modules\\Purchase\\Tests\\": "modules/Purchase/tests/"
         }
     },
     "scripts": {
