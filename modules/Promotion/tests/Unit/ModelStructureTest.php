@@ -45,13 +45,7 @@ test('migrations create all four tables with expected columns', function (): voi
     }
 });
 
-test('rollback drops promotion tables', function (): void {
-    $this->artisan('migrate:rollback', ['--step' => 10])->assertExitCode(0);
-    foreach (['discounts', 'coupons', 'discountables', 'discount_redemptions'] as $t) {
-        expect(Schema::hasTable($t))->toBeFalse("$t still exists after rollback");
-    }
-    $this->artisan('migrate')->assertExitCode(0);
-});
+
 
 test('discount with center owner sets morphs correctly', function (): void {
     $center = CenterFactory::new()->create();

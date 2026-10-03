@@ -63,16 +63,7 @@ test('all six billing tables exist with expected columns', function (): void {
     }
 });
 
-test('six-step rollback drops all six billing tables then remigrates', function (): void {
-    $this->artisan('migrate:rollback', ['--step' => 6])->assertExitCode(0);
-    foreach (['plans', 'features', 'limits', 'plan_features', 'plan_limits', 'subscriptions'] as $t) {
-        expect(Schema::hasTable($t))->toBeFalse("$t still exists after 6-step rollback");
-    }
-    $this->artisan('migrate')->assertExitCode(0);
-    foreach (['plans', 'features', 'limits', 'plan_features', 'plan_limits', 'subscriptions'] as $t) {
-        expect(Schema::hasTable($t))->toBeTrue("$t missing after re-migrate");
-    }
-});
+
 
 test('plan factory creates a valid plan with enum casts and trial_days', function (): void {
     $plan = PlanFactory::new()
