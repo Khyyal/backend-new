@@ -17,6 +17,7 @@ return new class extends Migration {
             $table->json('description');
             $table->enum('status',[ActivationStatus::ACTIVE->value, ActivationStatus::INACTIVE->value]);
             $table->string('type');
+            $table->morphs('serviceable');
             $table->timestamps();
             $table->softDeletes();
 

@@ -16,6 +16,7 @@ return new class extends Migration {
             $table->integer('quantity')->nullable();
             $table->string('unit')->default(PriceOptionUnit::OPTION->value);
             $table->foreignIdFor(Service::class)->constrained('services');
+            $table->softDeletes();
         });
     }
 

@@ -9,7 +9,6 @@ return new class extends Migration {
     {
         Schema::create('recreational_ridings', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('service_id')->constrained('services')->cascadeOnDelete();
             $table->softDeletes();
         });
     }

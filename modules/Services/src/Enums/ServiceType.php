@@ -1,0 +1,9 @@
+<?php
+
+
+namespace Modules\Services\Enums;
+
+enum ServiceType: string
+{
+    case RecreationRiding = 'recreation_riding';
+}

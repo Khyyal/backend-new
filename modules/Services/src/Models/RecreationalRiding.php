@@ -7,12 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Modules\Services\Concerns\HasSchedules;
 use Modules\Services\Concerns\HasService;
-use Modules\Support\Concerns\SyncsParentSoftDeletes;
 
 class RecreationalRiding extends Model
 {
 
-    use HasFactory, SoftDeletes , SyncsParentSoftDeletes , HasSchedules , HasService;
+    use HasFactory, SoftDeletes  , HasSchedules , HasService;
 
 
     public $timestamps = false;

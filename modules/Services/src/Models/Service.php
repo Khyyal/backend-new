@@ -6,9 +6,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 use Modules\Centers\Models\Center;
+use Modules\Services\Enums\ServiceType;
 use Modules\Support\Enums\ActivationStatus;
 use Spatie\Image\Enums\Fit;
 use Spatie\MediaLibrary\HasMedia;
@@ -30,6 +32,8 @@ class Service extends Model implements HasMedia
         'status',
         "slug",
         'type',
+        'serviceable_type',
+        'serviceable_id',
     ];
 
     public function center(): BelongsTo
@@ -41,6 +45,7 @@ class Service extends Model implements HasMedia
     {
         return [
             'status' => ActivationStatus::class,
+            'type' => ServiceType::class,
         ];
     }
 
@@ -103,6 +108,14 @@ class Service extends Model implements HasMedia
     {
         return $this->hasMany(PriceOption::class);
     }
+
+
+    public function serviceable(): MorphTo
+    {
+        return $this->morphTo();
+    }
+
+
 
 
 
