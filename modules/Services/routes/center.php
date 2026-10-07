@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Modules\Services\Http\Controllers\Center\EventController;
 use Modules\Services\Http\Controllers\Center\RecreationRidingController;
 use Modules\Services\Http\Controllers\Center\ResortController;
+use Modules\Services\Http\Controllers\Center\ServiceTypeTermController;
 use Modules\Services\Http\Controllers\Center\VisitController;
 
 Route::prefix('centers/{center}/recreation-ridings')
@@ -48,4 +49,12 @@ Route::prefix('centers/{center}/resorts')
         Route::get('/{resort}', [ResortController::class, 'show'])->name('show');
         Route::match(['put', 'patch'], '/{resort}', [ResortController::class, 'update'])->name('update');
         Route::delete('/{resort}', [ResortController::class, 'destroy'])->name('destroy');
+    });
+
+Route::prefix('centers/{center}/service-types')
+    ->name('centers.service-types.')
+    ->middleware(['auth:center_user', 'center.scope'])
+    ->group(function (): void {
+        Route::get('/', [ServiceTypeTermController::class, 'index'])->name('index');
+        Route::put('/{type}/terms', [ServiceTypeTermController::class, 'updateTerms'])->name('terms.update');
     });
