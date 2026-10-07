@@ -8,4 +8,6 @@ enum ServiceType: string
     case Visit = 'visit';
     case Event = 'event';
     case Resort = 'resort';
+    case HorseCare = 'horse_care';
+    case HorseService = 'horse_service';
 }

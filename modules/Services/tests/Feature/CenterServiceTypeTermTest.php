@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Centers\Database\Factories\CenterFactory;
 use Modules\Centers\Database\Factories\UserFactory;
+use Modules\Services\Enums\ServiceType;
 use Modules\Services\Models\ServiceTypeTerm;
 use Modules\Support\Enums\ActivationStatus;
 use Tests\TestCase;
@@ -30,16 +31,18 @@ test('guests and unassigned users are rejected', function (): void {
         ->putJson("{$this->url}/visit/terms", ['terms' => ['ar' => 'شروط']])->assertForbidden();
 });
 
-test('index lists all 4 service types with null terms initially', function (): void {
+test('index lists all service types with null terms initially', function (): void {
     $this->actingAs($this->user, 'center_user')
         ->getJson($this->url)
         ->assertOk()
-        ->assertJsonCount(4, 'data')
+        ->assertJsonCount(count(ServiceType::cases()), 'data')
         ->assertJsonPath('data.0.type', 'recreation_riding')
         ->assertJsonPath('data.0.terms', null)
         ->assertJsonPath('data.1.type', 'visit')
         ->assertJsonPath('data.2.type', 'event')
-        ->assertJsonPath('data.3.type', 'resort');
+        ->assertJsonPath('data.3.type', 'resort')
+        ->assertJsonPath('data.4.type', 'horse_care')
+        ->assertJsonPath('data.5.type', 'horse_service');
 });
 
 test('sets terms for a type and reflects them in index', function (): void {

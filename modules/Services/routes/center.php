@@ -2,6 +2,8 @@
 
 use Illuminate\Support\Facades\Route;
 use Modules\Services\Http\Controllers\Center\EventController;
+use Modules\Services\Http\Controllers\Center\HorseCareController;
+use Modules\Services\Http\Controllers\Center\HorseServiceController;
 use Modules\Services\Http\Controllers\Center\RecreationRidingController;
 use Modules\Services\Http\Controllers\Center\ResortController;
 use Modules\Services\Http\Controllers\Center\ServiceTypeTermController;
@@ -49,6 +51,28 @@ Route::prefix('centers/{center}/resorts')
         Route::get('/{resort}', [ResortController::class, 'show'])->name('show');
         Route::match(['put', 'patch'], '/{resort}', [ResortController::class, 'update'])->name('update');
         Route::delete('/{resort}', [ResortController::class, 'destroy'])->name('destroy');
+    });
+
+Route::prefix('centers/{center}/horse-cares')
+    ->name('centers.horse-cares.')
+    ->middleware(['auth:center_user', 'center.scope'])
+    ->group(function (): void {
+        Route::get('/', [HorseCareController::class, 'index'])->name('index');
+        Route::post('/', [HorseCareController::class, 'store'])->name('store');
+        Route::get('/{horseCare}', [HorseCareController::class, 'show'])->name('show');
+        Route::match(['put', 'patch'], '/{horseCare}', [HorseCareController::class, 'update'])->name('update');
+        Route::delete('/{horseCare}', [HorseCareController::class, 'destroy'])->name('destroy');
+    });
+
+Route::prefix('centers/{center}/horse-services')
+    ->name('centers.horse-services.')
+    ->middleware(['auth:center_user', 'center.scope'])
+    ->group(function (): void {
+        Route::get('/', [HorseServiceController::class, 'index'])->name('index');
+        Route::post('/', [HorseServiceController::class, 'store'])->name('store');
+        Route::get('/{horseService}', [HorseServiceController::class, 'show'])->name('show');
+        Route::match(['put', 'patch'], '/{horseService}', [HorseServiceController::class, 'update'])->name('update');
+        Route::delete('/{horseService}', [HorseServiceController::class, 'destroy'])->name('destroy');
     });
 
 Route::prefix('centers/{center}/service-types')
