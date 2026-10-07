@@ -41,6 +41,9 @@ Route::middleware(['api'])
                     ->group(function (): void {
                         Route::get('/{center}', [CenterController::class, 'show'])
                             ->name('show');
+
+                        Route::match(['put', 'patch'], '/{center}', [CenterController::class, 'update'])
+                            ->name('update');
                     });
             });
 
