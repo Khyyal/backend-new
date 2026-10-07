@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Modules\Services\Http\Controllers\Center\RecreationRidingController;
+use Modules\Services\Http\Controllers\Center\VisitController;
 
 Route::prefix('centers/{center}/recreation-ridings')
     ->name('centers.recreation-ridings.')
@@ -12,4 +13,15 @@ Route::prefix('centers/{center}/recreation-ridings')
         Route::get('/{recreationRiding}', [RecreationRidingController::class, 'show'])->name('show');
         Route::match(['put', 'patch'], '/{recreationRiding}', [RecreationRidingController::class, 'update'])->name('update');
         Route::delete('/{recreationRiding}', [RecreationRidingController::class, 'destroy'])->name('destroy');
+    });
+
+Route::prefix('centers/{center}/visits')
+    ->name('centers.visits.')
+    ->middleware(['auth:center_user', 'center.scope'])
+    ->group(function (): void {
+        Route::get('/', [VisitController::class, 'index'])->name('index');
+        Route::post('/', [VisitController::class, 'store'])->name('store');
+        Route::get('/{visit}', [VisitController::class, 'show'])->name('show');
+        Route::match(['put', 'patch'], '/{visit}', [VisitController::class, 'update'])->name('update');
+        Route::delete('/{visit}', [VisitController::class, 'destroy'])->name('destroy');
     });
