@@ -6,4 +6,5 @@ enum ServiceType: string
 {
     case RecreationRiding = 'recreation_riding';
     case Visit = 'visit';
+    case Event = 'event';
 }

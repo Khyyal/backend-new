@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Modules\Services\Http\Controllers\Center\EventController;
 use Modules\Services\Http\Controllers\Center\RecreationRidingController;
 use Modules\Services\Http\Controllers\Center\VisitController;
 
@@ -24,4 +25,15 @@ Route::prefix('centers/{center}/visits')
         Route::get('/{visit}', [VisitController::class, 'show'])->name('show');
         Route::match(['put', 'patch'], '/{visit}', [VisitController::class, 'update'])->name('update');
         Route::delete('/{visit}', [VisitController::class, 'destroy'])->name('destroy');
+    });
+
+Route::prefix('centers/{center}/events')
+    ->name('centers.events.')
+    ->middleware(['auth:center_user', 'center.scope'])
+    ->group(function (): void {
+        Route::get('/', [EventController::class, 'index'])->name('index');
+        Route::post('/', [EventController::class, 'store'])->name('store');
+        Route::get('/{event}', [EventController::class, 'show'])->name('show');
+        Route::match(['put', 'patch'], '/{event}', [EventController::class, 'update'])->name('update');
+        Route::delete('/{event}', [EventController::class, 'destroy'])->name('destroy');
     });
