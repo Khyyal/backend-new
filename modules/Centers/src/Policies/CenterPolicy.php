@@ -17,4 +17,12 @@ class CenterPolicy
             ->wherePivot('is_primary', true)
             ->exists();
     }
+
+    /**
+     * Any user assigned to the center may manage its services.
+     */
+    public function manageServices(User $user, Center $center): bool
+    {
+        return $user->centers()->whereKey($center->getKey())->exists();
+    }
 }
