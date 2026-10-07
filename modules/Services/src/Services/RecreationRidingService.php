@@ -27,7 +27,9 @@ class RecreationRidingService
                 $description['en'] = $data['description']['en'];
             }
 
-            $riding = RecreationalRiding::query()->create();
+            $riding = RecreationalRiding::query()->create([
+                'max_tickets_per_hour' => $data['max_tickets_per_hour'] ?? null,
+            ]);
 
             $service = $riding->service()->create([
                 'name' => $name,
@@ -90,6 +92,10 @@ class RecreationRidingService
             $service->update([
                 'name' => $name,
                 'description' => $description,
+            ]);
+
+            $riding->update([
+                'max_tickets_per_hour' => $data['max_tickets_per_hour'] ?? null,
             ]);
 
             $service->priceOptions()->forceDelete();

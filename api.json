@@ -95,6 +95,14 @@
         {
             "name": "Center / Recreation Riding",
             "description": "Manage the recreation riding services of a center. Requires a center-scoped Bearer token (see `POST /centers/{center}/access`)."
+        },
+        {
+            "name": "Center / Visit",
+            "description": "Manage the visit services of a center. Requires a center-scoped Bearer token (see `POST /centers/{center}/access`)."
+        },
+        {
+            "name": "Center / Event",
+            "description": "Manage the event services of a center. Requires a center-scoped Bearer token (see `POST /centers/{center}/access`)."
         }
     ],
     "paths": {
@@ -4124,6 +4132,599 @@
                 }
             }
         },
+        "/v1/centers/{center}/events": {
+            "get": {
+                "operationId": "centers.events.index",
+                "description": "Paginated (15 per page, `?page=`), newest first. Each item is an\n`EventResource`.",
+                "summary": "List the center's event services",
+                "tags": [
+                    "Center / Event"
+                ],
+                "parameters": [
+                    {
+                        "name": "center",
+                        "in": "path",
+                        "required": true,
+                        "description": "The center ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated `EventResource` collection.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/EventResource"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "properties": {
+                                                "first": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "last": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "next": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "first",
+                                                "last",
+                                                "prev",
+                                                "next"
+                                            ]
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "minimum": 1
+                                                },
+                                                "from": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ],
+                                                    "minimum": 1
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "minimum": 1
+                                                },
+                                                "links": {
+                                                    "type": "array",
+                                                    "description": "Generated paginator links.",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "url": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            },
+                                                            "label": {
+                                                                "type": "string"
+                                                            },
+                                                            "active": {
+                                                                "type": "boolean"
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "url",
+                                                            "label",
+                                                            "active"
+                                                        ]
+                                                    }
+                                                },
+                                                "path": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "Base path for paginator generated URLs."
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items shown per page.",
+                                                    "minimum": 0
+                                                },
+                                                "to": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ],
+                                                    "description": "Number of the last item in the slice.",
+                                                    "minimum": 1
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "description": "Total number of items being paginated.",
+                                                    "minimum": 0
+                                                }
+                                            },
+                                            "required": [
+                                                "current_page",
+                                                "from",
+                                                "last_page",
+                                                "links",
+                                                "path",
+                                                "per_page",
+                                                "to",
+                                                "total"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "description": "Missing or invalid Bearer token for the `center_user` guard.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview."
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "The token has no access to this center, or the user is not assigned to it.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "operationId": "centers.events.store",
+                "description": "**Request body:**\n- `name`                    required object; `ar` required string, `en` optional string.\n- `description`             required object; `ar` required string, `en` optional string.\n- `occurrence_type`         required `specific_day` or `general`.\n- `start_date`              required date.\n- `end_date`                required date, on or after `start_date`.\n- `open_date`               required date (ticket sales open).\n- `close_date`              required date (ticket sales close).\n- `max_tickets_per_day`     required integer >= 1.\n- `price_options`           required array (1-20) of `{ name, price }`.\n- `cover`                   optional media id (uuid) or `null`.\n- `images`                  optional array (max 10) of media ids, in display order.\n\nMedia ids come from the Support media API (`POST /media`); temporary\nuploads must belong to the authenticated user and not be expired.\n\nThe service is created `active`.",
+                "summary": "Create an event service",
+                "tags": [
+                    "Center / Event"
+                ],
+                "parameters": [
+                    {
+                        "name": "center",
+                        "in": "path",
+                        "required": true,
+                        "description": "The center ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/EventRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "The created service as an `EventResource`: `id`, `service_id`, `center_id`, `slug`, `status`, `name` {ar,en}, `description` {ar,en}, `occurrence_type`, `start_date`, `end_date`, `open_date`, `close_date`, `max_tickets_per_day`, `price_options` [{id,name,price}], `cover`, `images`.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/EventResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "description": "Missing or invalid Bearer token.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview."
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation failed, or a media id is invalid, expired or not owned by the user.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Errors overview."
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "description": "A detailed description of each field that failed validation.",
+                                            "additionalProperties": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "message",
+                                        "errors"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "The token has no access to this center, or the user is not assigned to it.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview."
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/centers/{center}/events/{event}": {
+            "get": {
+                "operationId": "centers.events.show",
+                "summary": "Show an event service",
+                "tags": [
+                    "Center / Event"
+                ],
+                "parameters": [
+                    {
+                        "name": "center",
+                        "in": "path",
+                        "required": true,
+                        "description": "The center ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "event",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The service as an `EventResource`.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/EventResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No such service in this center.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview."
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "403": {
+                        "description": "The token has no access to this center, or the user is not assigned to it.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "operationId": "centers.events.update",
+                "description": "Replaces the definition: `name`, `description`, `occurrence_type`,\ndates, `max_tickets_per_day` and `price_options` are all required and\ntake the same shape as on create (the old price options are replaced).\n`cover` and `images` are optional and untouched when omitted: `cover`\ntakes a media id (`null` removes it); `images` is the full list of media\nids in display order, so existing ids are kept, new temporary ids are\nattached and omitted ones are removed.",
+                "summary": "Update an event service",
+                "tags": [
+                    "Center / Event"
+                ],
+                "parameters": [
+                    {
+                        "name": "center",
+                        "in": "path",
+                        "required": true,
+                        "description": "The center ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "event",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/EventRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The updated service as an `EventResource`.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/EventResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No such service in this center.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview."
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "description": "Validation failed, or a media id is invalid, expired or not owned by the user.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Errors overview."
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "description": "A detailed description of each field that failed validation.",
+                                            "additionalProperties": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "message",
+                                        "errors"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "The token has no access to this center, or the user is not assigned to it.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview."
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "centers.events.destroy",
+                "description": "Soft-deletes the service together with its price options.",
+                "summary": "Delete an event service",
+                "tags": [
+                    "Center / Event"
+                ],
+                "parameters": [
+                    {
+                        "name": "center",
+                        "in": "path",
+                        "required": true,
+                        "description": "The center ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "event",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Deleted; no content.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No such service in this center.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview."
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "403": {
+                        "description": "The token has no access to this center, or the user is not assigned to it.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/center/plans": {
             "get": {
                 "operationId": "center.plans.index",
@@ -4460,7 +5061,7 @@
             },
             "post": {
                 "operationId": "centers.recreation-ridings.store",
-                "description": "**Request body:**\n- `name`                    required object; `ar` required string, `en` optional string.\n- `description`             required object; `ar` required string, `en` optional string.\n- `price_options`           required array (1-20) of `{ duration, price }`; `duration` is minutes (integer >= 1), `price` a number >= 0.\n- `days`                    required array of distinct weekday numbers `0`-`6`.\n- `hours`                   required flat list of `HH:mm` start/end pairs, e.g. `[\"09:00\",\"12:00\",\"14:00\",\"17:00\"]` (two slots); applied to every day in `days`. Each end must be after its start.\n- `cover`                   optional media id (uuid) or `null`.\n- `images`                  optional array (max 10) of media ids, in display order.\n\nMedia ids come from the Support media API (`POST /media`); temporary\nuploads must belong to the authenticated user and not be expired.\n\nThe service is created `active`.",
+                "description": "**Request body:**\n- `name`                    required object; `ar` required string, `en` optional string.\n- `description`             required object; `ar` required string, `en` optional string.\n- `max_tickets_per_hour`    optional integer >= 1, or `null`/omitted for no hourly limit.\n- `price_options`           required array (1-20) of `{ duration, price }`; `duration` is minutes (integer >= 1), `price` a number >= 0.\n- `days`                    required array of distinct weekday numbers `0`-`6`.\n- `hours`                   required flat list of `HH:mm` start/end pairs, e.g. `[\"09:00\",\"12:00\",\"14:00\",\"17:00\"]` (two slots); applied to every day in `days`. Each end must be after its start.\n- `cover`                   optional media id (uuid) or `null`.\n- `images`                  optional array (max 10) of media ids, in display order.\n\nMedia ids come from the Support media API (`POST /media`); temporary\nuploads must belong to the authenticated user and not be expired.\n\nThe service is created `active`.",
                 "summary": "Create a recreation riding service",
                 "tags": [
                     "Center / Recreation Riding"
@@ -4488,7 +5089,7 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "The created service as a `RecreationRidingResource`: `id`, `service_id`, `center_id`, `slug`, `status`, `name` {ar,en}, `description` {ar,en}, `price_options` [{id,duration,price}], `days`, `hours`, `cover`, `images`.",
+                        "description": "The created service as a `RecreationRidingResource`: `id`, `service_id`, `center_id`, `slug`, `status`, `name` {ar,en}, `description` {ar,en}, `max_tickets_per_hour`, `price_options` [{id,duration,price}], `days`, `hours`, `cover`, `images`.",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -4660,7 +5261,7 @@
             },
             "put": {
                 "operationId": "centers.recreation-ridings.update",
-                "description": "Replaces the definition: `name`, `description`, `price_options`, `days`\nand `hours` are all required and take the same shape as on create (old\nprice options and schedules are replaced). `cover` and `images` are\noptional and untouched when omitted: `cover` takes a media id (`null`\nremoves it); `images` is the full list of media ids in display order, so\nexisting ids are kept, new temporary ids are attached and omitted ones\nare removed.",
+                "description": "Replaces the definition: `name`, `description`, `price_options`, `days`\nand `hours` are all required (`max_tickets_per_hour` is optional and resets to `null` when omitted) and take the same shape as on create (old\nprice options and schedules are replaced). `cover` and `images` are\noptional and untouched when omitted: `cover` takes a media id (`null`\nremoves it); `images` is the full list of media ids in display order, so\nexisting ids are kept, new temporary ids are attached and omitted ones\nare removed.",
                 "summary": "Update a recreation riding service",
                 "tags": [
                     "Center / Recreation Riding"
@@ -5292,6 +5893,599 @@
                     },
                     "403": {
                         "description": "Subscription does not belong to center or no center assignment.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/centers/{center}/visits": {
+            "get": {
+                "operationId": "centers.visits.index",
+                "description": "Paginated (15 per page, `?page=`), newest first. Each item is a\n`VisitResource`.",
+                "summary": "List the center's visit services",
+                "tags": [
+                    "Center / Visit"
+                ],
+                "parameters": [
+                    {
+                        "name": "center",
+                        "in": "path",
+                        "required": true,
+                        "description": "The center ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated `VisitResource` collection.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/VisitResource"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "properties": {
+                                                "first": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "last": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "next": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "first",
+                                                "last",
+                                                "prev",
+                                                "next"
+                                            ]
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "minimum": 1
+                                                },
+                                                "from": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ],
+                                                    "minimum": 1
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "minimum": 1
+                                                },
+                                                "links": {
+                                                    "type": "array",
+                                                    "description": "Generated paginator links.",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "url": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            },
+                                                            "label": {
+                                                                "type": "string"
+                                                            },
+                                                            "active": {
+                                                                "type": "boolean"
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "url",
+                                                            "label",
+                                                            "active"
+                                                        ]
+                                                    }
+                                                },
+                                                "path": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "Base path for paginator generated URLs."
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items shown per page.",
+                                                    "minimum": 0
+                                                },
+                                                "to": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ],
+                                                    "description": "Number of the last item in the slice.",
+                                                    "minimum": 1
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "description": "Total number of items being paginated.",
+                                                    "minimum": 0
+                                                }
+                                            },
+                                            "required": [
+                                                "current_page",
+                                                "from",
+                                                "last_page",
+                                                "links",
+                                                "path",
+                                                "per_page",
+                                                "to",
+                                                "total"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "description": "Missing or invalid Bearer token for the `center_user` guard.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview."
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "The token has no access to this center, or the user is not assigned to it.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "operationId": "centers.visits.store",
+                "description": "**Request body:**\n- `name`                    required object; `ar` required string, `en` optional string.\n- `description`             required object; `ar` required string, `en` optional string.\n- `enter_type`              required `all_day` or `specific_time`.\n- `max_tickets_per_day`     optional integer >= 1, or `null`/omitted for no daily limit.\n- `price`                   required number >= 0.\n- `days`                    required array of distinct weekday numbers `0`-`6`.\n- `hours`                   required flat list of `HH:mm` start/end pairs when `enter_type` is `specific_time`\n                            (applied to every day in `days`); must be omitted when `enter_type` is `all_day`.\n- `cover`                   optional media id (uuid) or `null`.\n- `images`                  optional array (max 10) of media ids, in display order.\n\nMedia ids come from the Support media API (`POST /media`); temporary\nuploads must belong to the authenticated user and not be expired.\n\nThe service is created `active`.",
+                "summary": "Create a visit service",
+                "tags": [
+                    "Center / Visit"
+                ],
+                "parameters": [
+                    {
+                        "name": "center",
+                        "in": "path",
+                        "required": true,
+                        "description": "The center ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/VisitRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "The created service as a `VisitResource`: `id`, `service_id`, `center_id`, `slug`, `status`, `name` {ar,en}, `description` {ar,en}, `enter_type`, `max_tickets_per_day`, `price`, `days`, `hours`, `cover`, `images`.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/VisitResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "description": "Missing or invalid Bearer token.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview."
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation failed, or a media id is invalid, expired or not owned by the user.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Errors overview."
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "description": "A detailed description of each field that failed validation.",
+                                            "additionalProperties": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "message",
+                                        "errors"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "The token has no access to this center, or the user is not assigned to it.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview."
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/centers/{center}/visits/{visit}": {
+            "get": {
+                "operationId": "centers.visits.show",
+                "summary": "Show a visit service",
+                "tags": [
+                    "Center / Visit"
+                ],
+                "parameters": [
+                    {
+                        "name": "center",
+                        "in": "path",
+                        "required": true,
+                        "description": "The center ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "visit",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The service as a `VisitResource`.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/VisitResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No such service in this center.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview."
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "403": {
+                        "description": "The token has no access to this center, or the user is not assigned to it.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "operationId": "centers.visits.update",
+                "description": "Replaces the definition: `name`, `description`, `enter_type`, `price`,\n`max_tickets_per_day` (optional), `days` (and `hours`, when applicable) are all required and take the same\nshape as on create (old price option and schedules are replaced).\n`cover` and `images` are optional and untouched when omitted: `cover`\ntakes a media id (`null` removes it); `images` is the full list of media\nids in display order, so existing ids are kept, new temporary ids are\nattached and omitted ones are removed.",
+                "summary": "Update a visit service",
+                "tags": [
+                    "Center / Visit"
+                ],
+                "parameters": [
+                    {
+                        "name": "center",
+                        "in": "path",
+                        "required": true,
+                        "description": "The center ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "visit",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/VisitRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The updated service as a `VisitResource`.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/VisitResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No such service in this center.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview."
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "description": "Validation failed, or a media id is invalid, expired or not owned by the user.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Errors overview."
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "description": "A detailed description of each field that failed validation.",
+                                            "additionalProperties": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "message",
+                                        "errors"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "The token has no access to this center, or the user is not assigned to it.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview."
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "centers.visits.destroy",
+                "description": "Soft-deletes the service together with its price option and schedules.",
+                "summary": "Delete a visit service",
+                "tags": [
+                    "Center / Visit"
+                ],
+                "parameters": [
+                    {
+                        "name": "center",
+                        "in": "path",
+                        "required": true,
+                        "description": "The center ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "visit",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Deleted; no content.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No such service in this center.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview."
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "403": {
+                        "description": "The token has no access to this center, or the user is not assigned to it.",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -6363,6 +7557,232 @@
                 ],
                 "title": "DiscountType"
             },
+            "EventOccurrenceType": {
+                "type": "string",
+                "enum": [
+                    "specific_day",
+                    "general"
+                ],
+                "title": "EventOccurrenceType"
+            },
+            "EventRequest": {
+                "type": "object",
+                "description": "Body shared by create and update. Update replaces the whole definition\n(name, description, occurrence_type, dates, max_tickets_per_day and\nprice_options); only the media fields are optional and are left untouched\nwhen omitted.",
+                "properties": {
+                    "name": {
+                        "type": "object",
+                        "properties": {
+                            "ar": {
+                                "type": "string",
+                                "maxLength": 255
+                            },
+                            "en": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "maxLength": 255
+                            }
+                        },
+                        "required": [
+                            "ar"
+                        ]
+                    },
+                    "description": {
+                        "type": "object",
+                        "properties": {
+                            "ar": {
+                                "type": "string"
+                            },
+                            "en": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "ar"
+                        ]
+                    },
+                    "occurrence_type": {
+                        "$ref": "#/components/schemas/EventOccurrenceType"
+                    },
+                    "start_date": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "end_date": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "open_date": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "close_date": {
+                        "type": "string",
+                        "format": "date-time"
+                    },
+                    "max_tickets_per_day": {
+                        "type": "integer",
+                        "minimum": 1
+                    },
+                    "price_options": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "name": {
+                                    "type": "string",
+                                    "maxLength": 255
+                                },
+                                "price": {
+                                    "type": "number",
+                                    "minimum": 0
+                                }
+                            },
+                            "required": [
+                                "name",
+                                "price"
+                            ]
+                        },
+                        "minItems": 1,
+                        "maxItems": 20
+                    },
+                    "cover": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "uuid"
+                    },
+                    "images": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "maxItems": 10,
+                        "uniqueItems": true
+                    }
+                },
+                "required": [
+                    "name",
+                    "description",
+                    "occurrence_type",
+                    "start_date",
+                    "end_date",
+                    "open_date",
+                    "close_date",
+                    "max_tickets_per_day",
+                    "price_options"
+                ],
+                "title": "EventRequest"
+            },
+            "EventResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "service_id": {
+                        "type": "string"
+                    },
+                    "center_id": {
+                        "type": "string"
+                    },
+                    "slug": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "array",
+                        "items": {}
+                    },
+                    "description": {
+                        "type": "array",
+                        "items": {}
+                    },
+                    "occurrence_type": {
+                        "type": "string"
+                    },
+                    "start_date": {
+                        "type": "string"
+                    },
+                    "end_date": {
+                        "type": "string"
+                    },
+                    "open_date": {
+                        "type": "string"
+                    },
+                    "close_date": {
+                        "type": "string"
+                    },
+                    "max_tickets_per_day": {
+                        "type": "string"
+                    },
+                    "price_options": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "id": {
+                                    "type": "string"
+                                },
+                                "name": {
+                                    "type": "string"
+                                },
+                                "price": {
+                                    "type": "string"
+                                }
+                            },
+                            "required": [
+                                "id",
+                                "name",
+                                "price"
+                            ]
+                        }
+                    },
+                    "cover": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/MediaResource"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "images": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/MediaResource"
+                        }
+                    }
+                },
+                "required": [
+                    "id",
+                    "service_id",
+                    "center_id",
+                    "slug",
+                    "status",
+                    "name",
+                    "description",
+                    "occurrence_type",
+                    "start_date",
+                    "end_date",
+                    "open_date",
+                    "close_date",
+                    "max_tickets_per_day",
+                    "price_options",
+                    "cover",
+                    "images"
+                ],
+                "title": "EventResource"
+            },
             "FeatureResource": {
                 "type": "object",
                 "properties": {
@@ -6624,7 +8044,7 @@
             },
             "RecreationRidingRequest": {
                 "type": "object",
-                "description": "Body shared by create and update. Update replaces the whole definition\n(name, description, price options, days and hours); only the media fields\nare optional and are left untouched when omitted.",
+                "description": "Body shared by create and update. Update replaces the whole definition\n(name, description, max_tickets_per_hour, price options, days and hours); only the media fields\nare optional and are left untouched when omitted.",
                 "properties": {
                     "name": {
                         "type": "object",
@@ -6661,6 +8081,13 @@
                         "required": [
                             "ar"
                         ]
+                    },
+                    "max_tickets_per_hour": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "minimum": 1
                     },
                     "price_options": {
                         "type": "array",
@@ -6755,6 +8182,9 @@
                         "type": "array",
                         "items": {}
                     },
+                    "max_tickets_per_hour": {
+                        "type": "string"
+                    },
                     "price_options": {
                         "type": "array",
                         "items": {
@@ -6812,6 +8242,7 @@
                     "status",
                     "name",
                     "description",
+                    "max_tickets_per_hour",
                     "price_options",
                     "days",
                     "hours",
@@ -7688,6 +9119,208 @@
                     "code"
                 ],
                 "title": "VerifyOtpRequest"
+            },
+            "VisitEnterType": {
+                "type": "string",
+                "enum": [
+                    "all_day",
+                    "specific_time"
+                ],
+                "title": "VisitEnterType"
+            },
+            "VisitRequest": {
+                "type": "object",
+                "description": "Body shared by create and update. Update replaces the whole definition\n(name, description, enter_type, max_tickets_per_day, price, days and hours); only the media\nfields are optional and are left untouched when omitted.",
+                "properties": {
+                    "name": {
+                        "type": "object",
+                        "properties": {
+                            "ar": {
+                                "type": "string",
+                                "maxLength": 255
+                            },
+                            "en": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ],
+                                "maxLength": 255
+                            }
+                        },
+                        "required": [
+                            "ar"
+                        ]
+                    },
+                    "description": {
+                        "type": "object",
+                        "properties": {
+                            "ar": {
+                                "type": "string"
+                            },
+                            "en": {
+                                "type": [
+                                    "string",
+                                    "null"
+                                ]
+                            }
+                        },
+                        "required": [
+                            "ar"
+                        ]
+                    },
+                    "enter_type": {
+                        "$ref": "#/components/schemas/VisitEnterType"
+                    },
+                    "max_tickets_per_day": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ],
+                        "minimum": 1
+                    },
+                    "price": {
+                        "type": "number",
+                        "minimum": 0
+                    },
+                    "days": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 6
+                        },
+                        "minItems": 1,
+                        "maxItems": 7,
+                        "uniqueItems": true
+                    },
+                    "hours": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "minItems": 2,
+                        "maxItems": 48
+                    },
+                    "cover": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "uuid"
+                    },
+                    "images": {
+                        "type": "array",
+                        "items": {
+                            "type": "string",
+                            "format": "uuid"
+                        },
+                        "maxItems": 10,
+                        "uniqueItems": true
+                    }
+                },
+                "required": [
+                    "name",
+                    "description",
+                    "enter_type",
+                    "price",
+                    "days"
+                ],
+                "title": "VisitRequest"
+            },
+            "VisitResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "service_id": {
+                        "type": "string"
+                    },
+                    "center_id": {
+                        "type": "string"
+                    },
+                    "slug": {
+                        "type": "string"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "array",
+                        "items": {}
+                    },
+                    "description": {
+                        "type": "array",
+                        "items": {}
+                    },
+                    "enter_type": {
+                        "type": "string"
+                    },
+                    "max_tickets_per_day": {
+                        "type": "string"
+                    },
+                    "price": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "days": {
+                        "type": "array",
+                        "items": {}
+                    },
+                    "hours": {
+                        "anyOf": [
+                            {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                }
+                            },
+                            {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                },
+                                "minItems": 0,
+                                "maxItems": 0
+                            }
+                        ]
+                    },
+                    "cover": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/MediaResource"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "images": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/MediaResource"
+                        }
+                    }
+                },
+                "required": [
+                    "id",
+                    "service_id",
+                    "center_id",
+                    "slug",
+                    "status",
+                    "name",
+                    "description",
+                    "enter_type",
+                    "max_tickets_per_day",
+                    "price",
+                    "days",
+                    "hours",
+                    "cover",
+                    "images"
+                ],
+                "title": "VisitResource"
             }
         },
         "responses": {

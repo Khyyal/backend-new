@@ -14,6 +14,7 @@ class VisitFactory extends Factory
     {
         return [
             'enter_type' => $this->faker->randomElement(VisitEnterType::cases())->value,
+            'max_tickets_per_day' => $this->faker->numberBetween(10, 200),
         ];
     }
 }

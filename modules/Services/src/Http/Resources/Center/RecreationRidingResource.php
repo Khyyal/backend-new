@@ -26,6 +26,7 @@ class RecreationRidingResource extends JsonResource
             'status' => $service->status,
             'name' => $service->getTranslations('name'),
             'description' => $service->getTranslations('description'),
+            'max_tickets_per_hour' => $this->resource->max_tickets_per_hour,
             'price_options' => $service->priceOptions->map(fn ($option) => [
                 'id' => $option->id,
                 'duration' => $option->quantity,

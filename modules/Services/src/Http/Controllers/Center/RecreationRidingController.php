@@ -50,6 +50,7 @@ class RecreationRidingController extends Controller
      * **Request body:**
      * - `name`                    required object; `ar` required string, `en` optional string.
      * - `description`             required object; `ar` required string, `en` optional string.
+     * - `max_tickets_per_hour`    optional integer >= 1, or `null`/omitted for no hourly limit.
      * - `price_options`           required array (1-20) of `{ duration, price }`; `duration` is minutes (integer >= 1), `price` a number >= 0.
      * - `days`                    required array of distinct weekday numbers `0`-`6`.
      * - `hours`                   required flat list of `HH:mm` start/end pairs, e.g. `["09:00","12:00","14:00","17:00"]` (two slots); applied to every day in `days`. Each end must be after its start.
@@ -61,7 +62,7 @@ class RecreationRidingController extends Controller
      *
      * The service is created `active`.
      */
-    #[Response(status: 201, description: 'The created service as a `RecreationRidingResource`: `id`, `service_id`, `center_id`, `slug`, `status`, `name` {ar,en}, `description` {ar,en}, `price_options` [{id,duration,price}], `days`, `hours`, `cover`, `images`.')]
+    #[Response(status: 201, description: 'The created service as a `RecreationRidingResource`: `id`, `service_id`, `center_id`, `slug`, `status`, `name` {ar,en}, `description` {ar,en}, `max_tickets_per_hour`, `price_options` [{id,duration,price}], `days`, `hours`, `cover`, `images`.')]
     #[Response(status: 401, description: 'Missing or invalid Bearer token.')]
     #[Response(status: 403, description: 'The token has no access to this center, or the user is not assigned to it.')]
     #[Response(status: 422, description: 'Validation failed, or a media id is invalid, expired or not owned by the user.')]
@@ -89,7 +90,7 @@ class RecreationRidingController extends Controller
      * Update a recreation riding service.
      *
      * Replaces the definition: `name`, `description`, `price_options`, `days`
-     * and `hours` are all required and take the same shape as on create (old
+     * and `hours` are all required (`max_tickets_per_hour` is optional and resets to `null` when omitted) and take the same shape as on create (old
      * price options and schedules are replaced). `cover` and `images` are
      * optional and untouched when omitted: `cover` takes a media id (`null`
      * removes it); `images` is the full list of media ids in display order, so

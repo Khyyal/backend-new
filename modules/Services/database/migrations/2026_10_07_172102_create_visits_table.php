@@ -11,6 +11,7 @@ return new class extends Migration
         Schema::create('visits', function (Blueprint $table) {
             $table->id();
             $table->string('enter_type');
+            $table->unsignedInteger('max_tickets_per_day')->nullable();
             $table->softDeletes();
         });
     }

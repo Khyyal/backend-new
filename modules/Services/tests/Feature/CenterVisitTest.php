@@ -162,3 +162,19 @@ test('cannot access a service of another center', function (): void {
     $this->getJson("/api/v1/centers/{$other->id}/visits/{$id}")->assertNotFound();
     $this->deleteJson("/api/v1/centers/{$other->id}/visits/{$id}")->assertNotFound();
 });
+
+test('max_tickets_per_day is stored, updated, validated and nullable', function (): void {
+    $this->actingAs($this->user, 'center_user');
+
+    $id = $this->postJson($this->url, ($this->body)(['max_tickets_per_day' => 50]))
+        ->assertCreated()->assertJsonPath('data.max_tickets_per_day', 50)->json('data.id');
+
+    $this->putJson("{$this->url}/{$id}", ($this->body)(['max_tickets_per_day' => 80]))
+        ->assertOk()->assertJsonPath('data.max_tickets_per_day', 80);
+
+    $this->putJson("{$this->url}/{$id}", ($this->body)(['max_tickets_per_day' => null]))
+        ->assertOk()->assertJsonPath('data.max_tickets_per_day', null);
+
+    $this->postJson($this->url, ($this->body)(['max_tickets_per_day' => 0]))
+        ->assertUnprocessable()->assertJsonValidationErrors('max_tickets_per_day');
+});

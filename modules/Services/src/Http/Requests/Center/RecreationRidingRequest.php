@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Gate;
 
 /**
  * Body shared by create and update. Update replaces the whole definition
- * (name, description, price options, days and hours); only the media fields
+ * (name, description, max_tickets_per_hour, price options, days and hours); only the media fields
  * are optional and are left untouched when omitted.
  */
 class RecreationRidingRequest extends FormRequest
@@ -19,7 +19,8 @@ class RecreationRidingRequest extends FormRequest
     }
 
     /**
-     * `hours` is a flat list of `start, end` pairs (`["09:00","12:00","14:00","17:00"]`)
+     * `max_tickets_per_hour` is an optional integer >= 1; `null` or omitted means
+     * no hourly limit. `hours` is a flat list of `start, end` pairs (`["09:00","12:00","14:00","17:00"]`)
      * applied to every day in `days` (0-6). `cover` and `images` take media ids
      * from the Support media API; `images` is the full desired list in display order.
      *
@@ -34,6 +35,7 @@ class RecreationRidingRequest extends FormRequest
             'description' => ['required', 'array'],
             'description.ar' => ['required', 'string'],
             'description.en' => ['nullable', 'string'],
+            'max_tickets_per_hour' => ['nullable', 'integer', 'min:1'],
             'price_options' => ['required', 'array', 'min:1', 'max:20'],
             'price_options.*.duration' => ['required', 'integer', 'min:1'],
             'price_options.*.price' => ['required', 'numeric', 'min:0'],

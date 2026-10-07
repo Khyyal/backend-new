@@ -10,7 +10,7 @@ use Modules\Services\Enums\VisitEnterType;
 
 /**
  * Body shared by create and update. Update replaces the whole definition
- * (name, description, enter_type, price, days and hours); only the media
+ * (name, description, enter_type, max_tickets_per_day, price, days and hours); only the media
  * fields are optional and are left untouched when omitted.
  */
 class VisitRequest extends FormRequest
@@ -21,7 +21,8 @@ class VisitRequest extends FormRequest
     }
 
     /**
-     * `enter_type` is `all_day` or `specific_time`. `hours` is a flat list of
+     * `enter_type` is `all_day` or `specific_time`. `max_tickets_per_day` is an
+     * optional integer >= 1; `null` or omitted means no daily limit. `hours` is a flat list of
      * `start, end` pairs (`["09:00","12:00","14:00","17:00"]`) applied to every
      * day in `days` (0-6); required when `enter_type` is `specific_time` and
      * must be absent when it is `all_day`. `cover` and `images` take media ids
@@ -40,6 +41,7 @@ class VisitRequest extends FormRequest
             'description.ar' => ['required', 'string'],
             'description.en' => ['nullable', 'string'],
             'enter_type' => ['required', new Enum(VisitEnterType::class)],
+            'max_tickets_per_day' => ['nullable', 'integer', 'min:1'],
             'price' => ['required', 'numeric', 'min:0'],
             'days' => ['required', 'array', 'min:1', 'max:7'],
             'days.*' => ['integer', 'between:0,6', 'distinct'],

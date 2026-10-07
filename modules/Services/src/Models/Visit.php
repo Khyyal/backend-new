@@ -17,12 +17,14 @@ class Visit extends Model
 
     protected $fillable = [
         'enter_type',
+        'max_tickets_per_day',
     ];
 
     protected function casts(): array
     {
         return [
             'enter_type' => VisitEnterType::class,
+            'max_tickets_per_day' => 'integer',
         ];
     }
 }

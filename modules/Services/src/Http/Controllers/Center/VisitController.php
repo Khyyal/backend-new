@@ -51,6 +51,7 @@ class VisitController extends Controller
      * - `name`                    required object; `ar` required string, `en` optional string.
      * - `description`             required object; `ar` required string, `en` optional string.
      * - `enter_type`              required `all_day` or `specific_time`.
+     * - `max_tickets_per_day`     optional integer >= 1, or `null`/omitted for no daily limit.
      * - `price`                   required number >= 0.
      * - `days`                    required array of distinct weekday numbers `0`-`6`.
      * - `hours`                   required flat list of `HH:mm` start/end pairs when `enter_type` is `specific_time`
@@ -63,7 +64,7 @@ class VisitController extends Controller
      *
      * The service is created `active`.
      */
-    #[Response(status: 201, description: 'The created service as a `VisitResource`: `id`, `service_id`, `center_id`, `slug`, `status`, `name` {ar,en}, `description` {ar,en}, `enter_type`, `price`, `days`, `hours`, `cover`, `images`.')]
+    #[Response(status: 201, description: 'The created service as a `VisitResource`: `id`, `service_id`, `center_id`, `slug`, `status`, `name` {ar,en}, `description` {ar,en}, `enter_type`, `max_tickets_per_day`, `price`, `days`, `hours`, `cover`, `images`.')]
     #[Response(status: 401, description: 'Missing or invalid Bearer token.')]
     #[Response(status: 403, description: 'The token has no access to this center, or the user is not assigned to it.')]
     #[Response(status: 422, description: 'Validation failed, or a media id is invalid, expired or not owned by the user.')]
@@ -91,7 +92,7 @@ class VisitController extends Controller
      * Update a visit service.
      *
      * Replaces the definition: `name`, `description`, `enter_type`, `price`,
-     * `days` (and `hours`, when applicable) are all required and take the same
+     * `max_tickets_per_day` (optional), `days` (and `hours`, when applicable) are all required and take the same
      * shape as on create (old price option and schedules are replaced).
      * `cover` and `images` are optional and untouched when omitted: `cover`
      * takes a media id (`null` removes it); `images` is the full list of media

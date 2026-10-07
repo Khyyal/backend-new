@@ -30,6 +30,7 @@ class VisitService
 
             $visit = Visit::query()->create([
                 'enter_type' => $data['enter_type'],
+                'max_tickets_per_day' => $data['max_tickets_per_day'] ?? null,
             ]);
 
             $service = $visit->service()->create([
@@ -83,6 +84,7 @@ class VisitService
 
             $visit->update([
                 'enter_type' => $data['enter_type'],
+                'max_tickets_per_day' => $data['max_tickets_per_day'] ?? null,
             ]);
 
             $service->priceOptions()->forceDelete();

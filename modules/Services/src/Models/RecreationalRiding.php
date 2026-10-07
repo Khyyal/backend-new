@@ -10,11 +10,18 @@ use Modules\Services\Concerns\HasService;
 
 class RecreationalRiding extends Model
 {
-
-    use HasFactory, SoftDeletes  , HasSchedules , HasService;
-
+    use HasFactory, HasSchedules  , HasService , SoftDeletes;
 
     public $timestamps = false;
 
+    protected $fillable = [
+        'max_tickets_per_hour',
+    ];
 
+    protected function casts(): array
+    {
+        return [
+            'max_tickets_per_hour' => 'integer',
+        ];
+    }
 }
