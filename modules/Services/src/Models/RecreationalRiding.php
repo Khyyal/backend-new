@@ -16,8 +16,5 @@ class RecreationalRiding extends Model
 
     public $timestamps = false;
 
-    protected function getParentForSync(): ?Model
-    {
-        return $this->service;
-    }
+
 }
