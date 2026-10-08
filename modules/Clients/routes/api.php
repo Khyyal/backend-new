@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Modules\Clients\Http\Controllers\Client\AuthController;
+use Modules\Clients\Http\Controllers\Client\CenterController;
 use Modules\Clients\Http\Controllers\Client\ProfileController;
 use Modules\Clients\Http\Controllers\Client\RatingController;
 
@@ -9,7 +10,6 @@ Route::middleware(['api', 'set.locale.from.accept.language'])
     ->prefix('clients')
     ->name('client.')
     ->group(function (): void {
-
 
         Route::middleware(['track.client.session'])
             ->group(function (): void {
@@ -29,5 +29,7 @@ Route::middleware(['api', 'set.locale.from.accept.language'])
 
         Route::post('/auth/verify', [AuthController::class, 'verify'])
             ->name('auth.verify');
-    });
 
+        Route::get('/centers', [CenterController::class, 'index'])
+            ->name('centers.index');
+    });

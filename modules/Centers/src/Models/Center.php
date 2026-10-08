@@ -22,17 +22,17 @@ use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
-class Center extends Model implements HasMedia, Buyer
+class Center extends Model implements Buyer, HasMedia
 {
-    use HasFactory;
-    use HasCity;
     use Actionable;
-    use SoftDeletes;
-    use Rateable;
+    use HasCity;
+    use HasDiscounts;
+    use HasFactory;
+    use HasSubscriptions;
     use InteractsWithMedia;
     use IsBuyer;
-    use HasDiscounts;
-    use HasSubscriptions;
+    use Rateable;
+    use SoftDeletes;
 
     protected $fillable = [
         'city_id',
@@ -44,9 +44,8 @@ class Center extends Model implements HasMedia, Buyer
         'address',
         'points',
         'status',
-        'contact_phone'
+        'contact_phone',
     ];
-
 
     public const MEDIA_COLLECTIONS = [
         'logo',
@@ -93,15 +92,12 @@ class Center extends Model implements HasMedia, Buyer
                     ->fit(Fit::Crop, 600, 600);
             });
 
-
     }
-
 
     public function tags(): BelongsToMany
     {
         return $this->belongsToMany(Tag::class, 'tag_center');
     }
-
 
     public function users(): BelongsToMany
     {
@@ -120,7 +116,6 @@ class Center extends Model implements HasMedia, Buyer
             ->withTimestamps();
     }
 
-
     public function primaryUser(): HasOneThrough
     {
         return $this->hasOneThrough(
@@ -133,9 +128,14 @@ class Center extends Model implements HasMedia, Buyer
         )->where('center_user_assignment.is_primary', true);
     }
 
-
     public function services(): HasMany
     {
         return $this->hasMany(Service::class);
+    }
+
+    // / scope list (status = visible)
+    public function scopeVisible($query)
+    {
+        return $query->where('status', CenterStatus::VISIBLE);
     }
 }
