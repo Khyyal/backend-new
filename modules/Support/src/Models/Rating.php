@@ -10,8 +10,6 @@ class Rating extends Model
 {
     use HasFactory;
 
-    public $timestamps = false;
-
     protected $fillable = [
         'stars',
         'comment',

@@ -15,13 +15,9 @@ use Modules\Support\Concerns\Rater;
 
 class Client extends Authenticatable implements Buyer
 {
-    use HasApiTokens, HasFactory, SoftDeletes, HasDevices, Rater, ActionActor, HasCity, IsBuyer;
-
-
+    use ActionActor, HasApiTokens, HasCity, HasDevices, HasFactory, IsBuyer, Rater, SoftDeletes;
 
     protected string $guard_name = 'client';
-
-
 
     protected $fillable = [
         'first_name',
@@ -31,11 +27,14 @@ class Client extends Authenticatable implements Buyer
         'city_id',
     ];
 
-
-
-    /// need onboarding where name is null
+    // / need onboarding where name is null
     public function getNeedsOnboardingAttribute(): bool
     {
         return $this->first_name === null || $this->last_name === null;
+    }
+
+    public function getFullNameAttribute(): string
+    {
+        return trim("{$this->first_name} {$this->last_name}");
     }
 }

@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Modules\Centers\Http\Controllers\Center\AuthController;
 use Modules\Centers\Http\Controllers\Center\CenterController;
+use Modules\Centers\Http\Controllers\Center\RatingController;
 use Modules\Centers\Http\Controllers\Center\RegisterController;
 
 Route::middleware(['api'])
@@ -44,6 +45,9 @@ Route::middleware(['api'])
 
                         Route::match(['put', 'patch'], '/{center}', [CenterController::class, 'update'])
                             ->name('update');
+
+                        Route::get('/{center}/ratings', [RatingController::class, 'index'])
+                            ->name('ratings');
                     });
             });
 
