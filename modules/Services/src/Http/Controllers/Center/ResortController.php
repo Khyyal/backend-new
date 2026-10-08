@@ -37,7 +37,7 @@ class ResortController extends Controller
 
         $resorts = Resort::query()
             ->whereHas('service', fn ($query) => $query->where('center_id', $center->getKey()))
-            ->with(['service.priceOptions', 'service.media', 'dayPrices'])
+            ->with(['service.priceOptions', 'service.media'])
             ->latest('id')
             ->paginate(15);
 

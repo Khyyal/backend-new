@@ -24,11 +24,11 @@ class ResortResource extends JsonResource
             'status' => $service->status,
             'name' => $service->getTranslations('name'),
             'description' => $service->getTranslations('description'),
-            'days' => $this->resource->dayPrices->sortBy('day_of_week')->map(fn ($dayPrice) => [
-                'day' => $dayPrice->day_of_week,
-                'price' => $dayPrice->price,
+            'days' => $service->priceOptions->whereNotNull('quantity')->sortBy('quantity')->map(fn ($option) => [
+                'day' => $option->quantity,
+                'price' => $option->price,
             ])->values(),
-            'price_options' => $service->priceOptions->map(fn ($option) => [
+            'price_options' => $service->priceOptions->whereNull('quantity')->map(fn ($option) => [
                 'id' => $option->id,
                 'name' => $option->name,
                 'price' => $option->price,

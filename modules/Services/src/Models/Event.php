@@ -6,11 +6,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Modules\Services\Concerns\HasService;
+use Modules\Services\Concerns\HasStartPrice;
 use Modules\Services\Enums\EventOccurrenceType;
 
 class Event extends Model
 {
-    use HasFactory, HasService, SoftDeletes;
+    use HasFactory, HasService, HasStartPrice, SoftDeletes;
 
     public $timestamps = false;
 

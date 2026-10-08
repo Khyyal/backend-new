@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\DB;
 use Modules\Services\Enums\PriceOptionUnit;
 use Modules\Services\Enums\ServiceType;
 use Modules\Services\Models\Resort;
+use Modules\Services\Models\Service;
 use Modules\Support\Enums\ActivationStatus;
 
 class ResortService
@@ -37,23 +38,9 @@ class ResortService
                 'type' => ServiceType::Resort,
             ]);
 
-            foreach ($data['price_options'] as $option) {
-                $service->priceOptions()->create([
-                    'name' => $option['name'],
-                    'price' => $option['price'],
-                    'quantity' => null,
-                    'unit' => PriceOptionUnit::OPTION,
-                ]);
-            }
+            $this->createPriceOptions($service, $data);
 
-            foreach ($data['days'] as $day) {
-                $resort->dayPrices()->create([
-                    'day_of_week' => $day['day'],
-                    'price' => $day['price'],
-                ]);
-            }
-
-            $resort->load(['service.priceOptions', 'dayPrices']);
+            $resort->load(['service.priceOptions']);
 
             return $resort;
         });
@@ -86,25 +73,10 @@ class ResortService
             ]);
 
             $service->priceOptions()->forceDelete();
-            foreach ($data['price_options'] as $option) {
-                $service->priceOptions()->create([
-                    'name' => $option['name'],
-                    'price' => $option['price'],
-                    'quantity' => null,
-                    'unit' => PriceOptionUnit::OPTION,
-                ]);
-            }
-
-            $resort->dayPrices()->delete();
-            foreach ($data['days'] as $day) {
-                $resort->dayPrices()->create([
-                    'day_of_week' => $day['day'],
-                    'price' => $day['price'],
-                ]);
-            }
+            $this->createPriceOptions($service, $data);
 
             $resort = $resort->fresh();
-            $resort->load(['service.priceOptions', 'dayPrices']);
+            $resort->load(['service.priceOptions']);
 
             return $resort;
         });
@@ -117,10 +89,38 @@ class ResortService
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            $resort->dayPrices()->delete();
             $service->priceOptions()->delete();
             $resort->delete();
             $service->delete();
         });
+    }
+
+    /**
+     * Both the per-weekday base prices and the named addon tiers are stored
+     * as PriceOption rows on the same relation: a day-price row carries its
+     * weekday in `quantity` and no `name`; an addon row carries a `name` and
+     * no `quantity`.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    private function createPriceOptions(Service $service, array $data): void
+    {
+        foreach ($data['days'] as $day) {
+            $service->priceOptions()->create([
+                'name' => null,
+                'price' => $day['price'],
+                'quantity' => $day['day'],
+                'unit' => PriceOptionUnit::OPTION,
+            ]);
+        }
+
+        foreach ($data['price_options'] as $option) {
+            $service->priceOptions()->create([
+                'name' => $option['name'],
+                'price' => $option['price'],
+                'quantity' => null,
+                'unit' => PriceOptionUnit::OPTION,
+            ]);
+        }
     }
 }
