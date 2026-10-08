@@ -6,6 +6,7 @@ use Modules\Services\Http\Controllers\Center\HorseCareController;
 use Modules\Services\Http\Controllers\Center\HorseServiceController;
 use Modules\Services\Http\Controllers\Center\RecreationRidingController;
 use Modules\Services\Http\Controllers\Center\ResortController;
+use Modules\Services\Http\Controllers\Center\ServiceBlockController;
 use Modules\Services\Http\Controllers\Center\ServiceTypeTermController;
 use Modules\Services\Http\Controllers\Center\VisitController;
 
@@ -81,4 +82,15 @@ Route::prefix('centers/{center}/service-types')
     ->group(function (): void {
         Route::get('/', [ServiceTypeTermController::class, 'index'])->name('index');
         Route::put('/{type}/terms', [ServiceTypeTermController::class, 'updateTerms'])->name('terms.update');
+    });
+
+Route::prefix('centers/{center}/service-blocks')
+    ->name('centers.service-blocks.')
+    ->middleware(['auth:center_user', 'center.scope'])
+    ->group(function (): void {
+        Route::get('/', [ServiceBlockController::class, 'index'])->name('index');
+        Route::post('/', [ServiceBlockController::class, 'store'])->name('store');
+        Route::get('/{serviceBlock}', [ServiceBlockController::class, 'show'])->name('show');
+        Route::match(['put', 'patch'], '/{serviceBlock}', [ServiceBlockController::class, 'update'])->name('update');
+        Route::delete('/{serviceBlock}', [ServiceBlockController::class, 'destroy'])->name('destroy');
     });
