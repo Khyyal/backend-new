@@ -4,7 +4,7 @@ namespace Modules\Centers\Http\Resources\Center;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
-use Modules\Centers\Models\Rating;
+use Modules\Support\Models\Rating;
 
 /**
  * @property Rating $resource
