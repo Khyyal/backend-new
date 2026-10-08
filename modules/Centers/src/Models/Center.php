@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Modules\Billing\Traits\HasSubscriptions;
 use Modules\Centers\Enums\CenterStatus;
 use Modules\Promotion\Traits\HasDiscounts;
@@ -137,5 +139,37 @@ class Center extends Model implements Buyer, HasMedia
     public function scopeVisible($query)
     {
         return $query->where('status', CenterStatus::VISIBLE);
+    }
+
+    protected static function booted(): void
+    {
+        $flush = fn () => DB::afterCommit(fn () => self::flushSearchCache());
+
+        static::saved($flush);
+        static::deleted($flush);
+        static::restored($flush);
+    }
+
+    /**
+     * Invalidates the cached `centers.search` listing (see
+     * `Modules\Centers\Services\CenterSearchService`). Called whenever a
+     * center, its tags/media (via `CenterUpdateService::update()`, which
+     * always saves the center), or one of its services/ratings changes.
+     *
+     * A no-op when the configured cache store doesn't support tags (e.g.
+     * `array`/`database`) — there, the search cache only relies on its TTL.
+     */
+    public static function flushSearchCache(): void
+    {
+        if (! self::supportsCacheTags()) {
+            return;
+        }
+
+        Cache::tags(['centers'])->flush();
+    }
+
+    public static function supportsCacheTags(): bool
+    {
+        return in_array(config('cache.default'), ['redis', 'memcached', 'dynamodb'], true);
     }
 }

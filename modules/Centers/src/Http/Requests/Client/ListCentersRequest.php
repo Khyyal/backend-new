@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\Clients\Http\Requests\Client;
+namespace Modules\Centers\Http\Requests\Client;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Enum;

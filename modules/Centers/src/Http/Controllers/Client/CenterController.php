@@ -1,14 +1,14 @@
 <?php
 
-namespace Modules\Clients\Http\Controllers\Client;
+namespace Modules\Centers\Http\Controllers\Client;
 
 use Dedoc\Scramble\Attributes\Group;
 use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Routing\Controller;
-use Modules\Clients\Http\Requests\Client\ListCentersRequest;
-use Modules\Clients\Http\Resources\Client\CenterResource;
-use Modules\Clients\Services\CenterSearchService;
+use Modules\Centers\Http\Requests\Client\ListCentersRequest;
+use Modules\Centers\Http\Resources\Client\CenterResource;
+use Modules\Centers\Services\CenterSearchService;
 
 #[Group(name: 'Client / Centers', description: 'Browse and search centers. Public, no authentication required.')]
 class CenterController extends Controller

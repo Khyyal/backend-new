@@ -33,7 +33,7 @@ class RatingController extends Controller
      * - `stars`     — required, integer, between 1 and 5 inclusive.
      * - `comment`   — optional, string, max 1000 characters.
      *
-     * @param RateCenterRequest $request Validated via {@see RateCenterRequest}.
+     * @param  RateCenterRequest  $request  Validated via {@see RateCenterRequest}.
      * @return JsonResponse 201 with the created `rating` and a confirmation `message`.
      */
     #[Response(
@@ -62,6 +62,8 @@ class RatingController extends Controller
             stars: (int) $request->validated()['stars'],
             comment: $request->validated()['comment'] ?? null,
         );
+
+        Center::flushSearchCache();
 
         return response()->json([
             'message' => __('messages.rating_created'),

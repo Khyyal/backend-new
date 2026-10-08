@@ -22,15 +22,14 @@ use Spatie\Translatable\HasTranslations;
 #[Translatable('name', 'description')]
 class Service extends Model implements HasMedia
 {
-    use HasFactory, SoftDeletes, HasTranslations, InteractsWithMedia;
-
+    use HasFactory, HasTranslations, InteractsWithMedia, SoftDeletes;
 
     protected $fillable = [
         'name',
         'center_id',
         'description',
         'status',
-        "slug",
+        'slug',
         'type',
         'serviceable_type',
         'serviceable_id',
@@ -54,8 +53,11 @@ class Service extends Model implements HasMedia
         static::creating(function (Service $service) {
             $service->slug = $service->generateSlug();
         });
-    }
 
+        $flush = fn () => Center::flushSearchCache();
+        static::saved($flush);
+        static::deleted($flush);
+    }
 
     public function generateSlug(): string
     {
@@ -66,11 +68,11 @@ class Service extends Model implements HasMedia
         $counter = 1;
 
         while (
-        static::query()
-            ->where('center_id', $this->center_id)
-            ->where('slug', $slug)
-            ->when($this->exists, fn($query) => $query->whereKeyNot($this->getKey()))
-            ->exists()
+            static::query()
+                ->where('center_id', $this->center_id)
+                ->where('slug', $slug)
+                ->when($this->exists, fn ($query) => $query->whereKeyNot($this->getKey()))
+                ->exists()
         ) {
             $slug = "{$originalSlug}-{$counter}";
             $counter++;
@@ -82,7 +84,6 @@ class Service extends Model implements HasMedia
     public function registerMediaCollections(): void
     {
 
-
         $this->addMediaCollection('cover')
             ->singleFile()
 
@@ -93,7 +94,6 @@ class Service extends Model implements HasMedia
                     ->fit(Fit::Crop, 1200, 400);
             });
 
-
         $this->addMediaCollection('images')
             ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/jpg'])
             ->registerMediaConversions(function (?Media $media = null): void {
@@ -102,23 +102,14 @@ class Service extends Model implements HasMedia
             });
     }
 
-
-    /// price options
+    // / price options
     public function priceOptions(): HasMany|Service
     {
         return $this->hasMany(PriceOption::class);
     }
 
-
     public function serviceable(): MorphTo
     {
         return $this->morphTo();
     }
-
-
-
-
-
-
-
 }
