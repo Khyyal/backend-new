@@ -7,6 +7,7 @@ use Modules\Services\Http\Controllers\Center\HorseServiceController;
 use Modules\Services\Http\Controllers\Center\RecreationRidingController;
 use Modules\Services\Http\Controllers\Center\ResortController;
 use Modules\Services\Http\Controllers\Center\ServiceBlockController;
+use Modules\Services\Http\Controllers\Center\ServiceTypeCountController;
 use Modules\Services\Http\Controllers\Center\ServiceTypeTermController;
 use Modules\Services\Http\Controllers\Center\VisitController;
 
@@ -81,6 +82,7 @@ Route::prefix('centers/{center}/service-types')
     ->middleware(['auth:center_user', 'center.scope'])
     ->group(function (): void {
         Route::get('/', [ServiceTypeTermController::class, 'index'])->name('index');
+        Route::get('/counts', [ServiceTypeCountController::class, 'index'])->name('counts');
         Route::put('/{type}/terms', [ServiceTypeTermController::class, 'updateTerms'])->name('terms.update');
     });
 
