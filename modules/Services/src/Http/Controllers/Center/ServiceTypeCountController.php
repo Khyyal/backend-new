@@ -21,7 +21,7 @@ class ServiceTypeCountController extends Controller
      * List every service type with how many services this center has of it.
      *
      * Always returns one entry per service type (`recreation_riding`, `visit`,
-     * `event`, `resort`, `horse_care`, `horse_service`); `count` is `0` for a
+     * `event`, `resort`, `horse_care`, `horse_service`, `training`); `count` is `0` for a
      * type the center has none of.
      */
     #[Response(status: 200, description: '`ServiceTypeCountResource` collection, one per service type: `service_type`, `count`.')]

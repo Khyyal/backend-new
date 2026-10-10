@@ -9,6 +9,8 @@ use Modules\Services\Http\Controllers\Center\ResortController;
 use Modules\Services\Http\Controllers\Center\ServiceBlockController;
 use Modules\Services\Http\Controllers\Center\ServiceTypeCountController;
 use Modules\Services\Http\Controllers\Center\ServiceTypeTermController;
+use Modules\Services\Http\Controllers\Center\TrainerController;
+use Modules\Services\Http\Controllers\Center\TrainingServiceController;
 use Modules\Services\Http\Controllers\Center\VisitController;
 
 Route::prefix('centers/{center}/recreation-ridings')
@@ -75,6 +77,28 @@ Route::prefix('centers/{center}/horse-services')
         Route::get('/{horseService}', [HorseServiceController::class, 'show'])->name('show');
         Route::match(['put', 'patch'], '/{horseService}', [HorseServiceController::class, 'update'])->name('update');
         Route::delete('/{horseService}', [HorseServiceController::class, 'destroy'])->name('destroy');
+    });
+
+Route::prefix('centers/{center}/training-services')
+    ->name('centers.training-services.')
+    ->middleware(['auth:center_user', 'center.scope'])
+    ->group(function (): void {
+        Route::get('/', [TrainingServiceController::class, 'index'])->name('index');
+        Route::post('/', [TrainingServiceController::class, 'store'])->name('store');
+        Route::get('/{trainingService}', [TrainingServiceController::class, 'show'])->name('show');
+        Route::match(['put', 'patch'], '/{trainingService}', [TrainingServiceController::class, 'update'])->name('update');
+        Route::delete('/{trainingService}', [TrainingServiceController::class, 'destroy'])->name('destroy');
+    });
+
+Route::prefix('centers/{center}/trainers')
+    ->name('centers.trainers.')
+    ->middleware(['auth:center_user', 'center.scope'])
+    ->group(function (): void {
+        Route::get('/', [TrainerController::class, 'index'])->name('index');
+        Route::post('/', [TrainerController::class, 'store'])->name('store');
+        Route::get('/{trainer}', [TrainerController::class, 'show'])->name('show');
+        Route::match(['put', 'patch'], '/{trainer}', [TrainerController::class, 'update'])->name('update');
+        Route::delete('/{trainer}', [TrainerController::class, 'destroy'])->name('destroy');
     });
 
 Route::prefix('centers/{center}/service-types')
