@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\Clients\Services;
+namespace Modules\Centers\Services;
 
 use Illuminate\Pagination\LengthAwarePaginator;
 use Modules\Centers\Models\Center;

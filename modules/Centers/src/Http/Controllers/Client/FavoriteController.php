@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\Clients\Http\Controllers\Client;
+namespace Modules\Centers\Http\Controllers\Client;
 
 use Dedoc\Scramble\Attributes\Group;
 use Dedoc\Scramble\Attributes\Response;
@@ -8,11 +8,11 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Routing\Controller;
+use Modules\Centers\Http\Requests\Client\FavoriteCenterRequest;
 use Modules\Centers\Http\Resources\Client\CenterResource;
 use Modules\Centers\Models\Center;
-use Modules\Clients\Http\Requests\Client\FavoriteCenterRequest;
+use Modules\Centers\Services\FavoriteService;
 use Modules\Clients\Models\Client;
-use Modules\Clients\Services\FavoriteService;
 
 #[Group(name: 'Client / Favorites', description: 'Authenticated client favorite centers management.')]
 class FavoriteController extends Controller

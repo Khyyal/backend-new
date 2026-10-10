@@ -1,13 +1,13 @@
 <?php
 
-namespace Modules\Clients\Http\Controllers\Client;
+namespace Modules\Centers\Http\Controllers\Client;
 
 use Dedoc\Scramble\Attributes\Group;
 use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
+use Modules\Centers\Http\Requests\Client\RateCenterRequest;
 use Modules\Centers\Models\Center;
-use Modules\Clients\Http\Requests\Client\RateCenterRequest;
 use Modules\Clients\Models\Client;
 use Modules\Support\Services\RatingService;
 

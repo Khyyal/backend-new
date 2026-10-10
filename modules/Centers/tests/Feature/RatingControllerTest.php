@@ -7,7 +7,6 @@ use Tests\TestCase;
 
 uses(TestCase::class, RefreshDatabase::class);
 
-
 test('rate endpoint requires authentication', function (): void {
     $center = CenterFactory::new()->create();
 
@@ -18,7 +17,6 @@ test('rate endpoint requires authentication', function (): void {
 
     $response->assertStatus(401);
 });
-
 
 test('rate returns 422 when center_id is missing', function (): void {
     $client = ClientFactory::new()->create();
@@ -31,7 +29,6 @@ test('rate returns 422 when center_id is missing', function (): void {
     $response->assertStatus(422);
     $response->assertJsonValidationErrors('center_id');
 });
-
 
 test('rate returns 422 when center_id is not an integer', function (): void {
     $client = ClientFactory::new()->create();
@@ -46,7 +43,6 @@ test('rate returns 422 when center_id is not an integer', function (): void {
     $response->assertJsonValidationErrors('center_id');
 });
 
-
 test('rate returns 422 when center_id does not exist', function (): void {
     $client = ClientFactory::new()->create();
 
@@ -60,7 +56,6 @@ test('rate returns 422 when center_id does not exist', function (): void {
     $response->assertJsonValidationErrors('center_id');
 });
 
-
 test('rate returns 422 when stars is missing', function (): void {
     $client = ClientFactory::new()->create();
     $center = CenterFactory::new()->create();
@@ -73,7 +68,6 @@ test('rate returns 422 when stars is missing', function (): void {
     $response->assertStatus(422);
     $response->assertJsonValidationErrors('stars');
 });
-
 
 test('rate returns 422 when stars is not an integer', function (): void {
     $client = ClientFactory::new()->create();
@@ -89,7 +83,6 @@ test('rate returns 422 when stars is not an integer', function (): void {
     $response->assertJsonValidationErrors('stars');
 });
 
-
 test('rate returns 422 when stars is less than 1', function (): void {
     $client = ClientFactory::new()->create();
     $center = CenterFactory::new()->create();
@@ -104,7 +97,6 @@ test('rate returns 422 when stars is less than 1', function (): void {
     $response->assertJsonValidationErrors('stars');
 });
 
-
 test('rate returns 422 when stars is greater than 5', function (): void {
     $client = ClientFactory::new()->create();
     $center = CenterFactory::new()->create();
@@ -118,7 +110,6 @@ test('rate returns 422 when stars is greater than 5', function (): void {
     $response->assertStatus(422);
     $response->assertJsonValidationErrors('stars');
 });
-
 
 test('rate returns 422 when comment is not a string', function (): void {
     $client = ClientFactory::new()->create();
@@ -135,7 +126,6 @@ test('rate returns 422 when comment is not a string', function (): void {
     $response->assertJsonValidationErrors('comment');
 });
 
-
 test('rate returns 422 when comment exceeds 1000 characters', function (): void {
     $client = ClientFactory::new()->create();
     $center = CenterFactory::new()->create();
@@ -150,7 +140,6 @@ test('rate returns 422 when comment exceeds 1000 characters', function (): void 
     $response->assertStatus(422);
     $response->assertJsonValidationErrors('comment');
 });
-
 
 test('rate creates a rating with valid data and no comment', function (): void {
     $client = ClientFactory::new()->create();
@@ -189,7 +178,6 @@ test('rate creates a rating with valid data and no comment', function (): void {
     ]);
 });
 
-
 test('rate creates a rating with a comment', function (): void {
     $client = ClientFactory::new()->create();
     $center = CenterFactory::new()->create();
@@ -216,7 +204,6 @@ test('rate creates a rating with a comment', function (): void {
     ]);
 });
 
-
 test('rate creates a 1-star rating successfully', function (): void {
     $client = ClientFactory::new()->create();
     $center = CenterFactory::new()->create();
@@ -236,7 +223,6 @@ test('rate creates a 1-star rating successfully', function (): void {
     ]);
 });
 
-
 test('rate creates a 3-star rating successfully', function (): void {
     $client = ClientFactory::new()->create();
     $center = CenterFactory::new()->create();
@@ -250,7 +236,6 @@ test('rate creates a 3-star rating successfully', function (): void {
     $response->assertStatus(201);
     expect($response->json('rating.stars'))->toBe(3);
 });
-
 
 test('rate stores the correct polymorphic rater and rateable types', function (): void {
     $client = ClientFactory::new()->create();
@@ -270,7 +255,6 @@ test('rate stores the correct polymorphic rater and rateable types', function ()
     ]);
 });
 
-
 test('rating is accessible via rateable relationship on center', function (): void {
     $client = ClientFactory::new()->create();
     $center = CenterFactory::new()->create();
@@ -287,7 +271,6 @@ test('rating is accessible via rateable relationship on center', function (): vo
     expect($center->ratings->first()->stars)->toBe(4);
     expect($center->ratings->first()->comment)->toBe('Good overall.');
 });
-
 
 test('rating is accessible via ratingsGiven relationship on client', function (): void {
     $client = ClientFactory::new()->create();
