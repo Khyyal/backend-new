@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Modules\Clients\Http\Controllers\Client\AuthController;
+use Modules\Clients\Http\Controllers\Client\FavoriteController;
 use Modules\Clients\Http\Controllers\Client\ProfileController;
 use Modules\Clients\Http\Controllers\Client\RatingController;
 
@@ -20,6 +21,13 @@ Route::middleware(['api', 'set.locale.from.accept.language'])
 
                     Route::post('/ratings', [RatingController::class, 'rate'])
                         ->name('ratings.rate');
+
+                    Route::get('/favorites', [FavoriteController::class, 'index'])
+                        ->name('favorites.index');
+                    Route::post('/favorites', [FavoriteController::class, 'store'])
+                        ->name('favorites.store');
+                    Route::delete('/favorites/{center}', [FavoriteController::class, 'destroy'])
+                        ->name('favorites.destroy');
                 });
             });
 

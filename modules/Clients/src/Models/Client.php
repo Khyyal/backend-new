@@ -3,9 +3,11 @@
 namespace Modules\Clients\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Laravel\Sanctum\HasApiTokens;
+use Modules\Centers\Models\Center;
 use Modules\Purchase\Contracts\Buyer;
 use Modules\Purchase\Traits\IsBuyer;
 use Modules\Support\Concerns\ActionActor;
@@ -36,5 +38,11 @@ class Client extends Authenticatable implements Buyer
     public function getFullNameAttribute(): string
     {
         return trim("{$this->first_name} {$this->last_name}");
+    }
+
+    public function favoriteCenters(): BelongsToMany
+    {
+        return $this->belongsToMany(Center::class, 'center_favorites', 'client_id', 'center_id')
+            ->withTimestamps();
     }
 }

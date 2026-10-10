@@ -171,7 +171,6 @@ test('response is cached: a change after the first call is not reflected within 
 
     $this->getJson($this->url)->assertOk()->assertJsonCount(2, 'data');
 });
-
 function attachCenterServiceOfType(Center $center, ServiceType $type): void
 {
     Resort::query()->create()->service()->create([
