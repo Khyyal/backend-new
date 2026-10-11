@@ -30,6 +30,12 @@ class TrainingServiceResource extends JsonResource
                 'id' => $option->id,
                 'duration' => $option->quantity,
                 'price' => $option->price,
+                'package' => $option->package === null ? null : [
+                    'id' => $option->package->id,
+                    'count' => $option->package->count,
+                    'price' => $option->package->price,
+                    'duration' => $option->package->duration,
+                ],
             ])->values(),
             'trainers' => $this->resource->trainers
                 ->sortBy('id')

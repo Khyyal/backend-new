@@ -5,6 +5,7 @@ namespace Modules\Services\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Services\Concerns\HasPackages;
 use Modules\Services\Concerns\HasSchedules;
 use Modules\Services\Concerns\HasService;
 use Modules\Services\Concerns\HasSettings;
@@ -12,7 +13,7 @@ use Modules\Services\Concerns\HasStartPrice;
 
 class RecreationalRiding extends Model
 {
-    use HasFactory, HasSchedules, HasService, HasSettings, HasStartPrice, SoftDeletes;
+    use HasFactory, HasPackages, HasSchedules, HasService, HasSettings, HasStartPrice, SoftDeletes;
 
     public $timestamps = false;
 

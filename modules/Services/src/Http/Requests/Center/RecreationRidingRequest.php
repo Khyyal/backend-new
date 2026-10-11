@@ -48,12 +48,14 @@ class RecreationRidingRequest extends FormRequest
             'images' => ['sometimes', 'array', 'max:10'],
             'images.*' => ['uuid', 'distinct'],
             ...RecreationalRiding::settingsRules(),
+            ...RecreationalRiding::packageRules(),
         ];
     }
 
     public function after(): array
     {
         return [
+            fn (Validator $validator) => RecreationalRiding::validatePackageIndexes($validator, $this->all()),
             function (Validator $validator): void {
                 $hours = $this->input('hours');
 

@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 use Modules\Centers\Models\Center;
+use Modules\Services\Database\Factories\ServiceFactory;
 use Modules\Services\Enums\ServiceType;
 use Modules\Support\Enums\ActivationStatus;
 use Spatie\Image\Enums\Fit;
@@ -34,6 +35,11 @@ class Service extends Model implements HasMedia
         'serviceable_type',
         'serviceable_id',
     ];
+
+    protected static function newFactory(): ServiceFactory
+    {
+        return ServiceFactory::new();
+    }
 
     public function center(): BelongsTo
     {
@@ -106,6 +112,11 @@ class Service extends Model implements HasMedia
     public function priceOptions(): HasMany|Service
     {
         return $this->hasMany(PriceOption::class);
+    }
+
+    public function packages(): HasMany
+    {
+        return $this->hasMany(ServicePackage::class);
     }
 
     public function settings(): HasMany

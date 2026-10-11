@@ -3,13 +3,14 @@
 namespace Modules\Services\Services;
 
 use Illuminate\Support\Facades\DB;
-use Modules\Services\Enums\PriceOptionUnit;
 use Modules\Services\Enums\ServiceType;
 use Modules\Services\Models\TrainingService;
 use Modules\Support\Enums\ActivationStatus;
 
 class TrainingServiceService
 {
+    public function __construct(private readonly DurationOptionService $durationOptions = new DurationOptionService) {}
+
     public function create(array $data): TrainingService
     {
         return DB::transaction(function () use ($data) {
@@ -23,14 +24,7 @@ class TrainingServiceService
                 'type' => ServiceType::Training,
             ]);
 
-            foreach ($data['price_options'] as $option) {
-                $service->priceOptions()->create([
-                    'name' => null,
-                    'price' => $option['price'],
-                    'quantity' => $option['duration'],
-                    'unit' => PriceOptionUnit::MINUTE,
-                ]);
-            }
+            $this->durationOptions->sync($service, $data['price_options'], $data['packages'] ?? null);
 
             if (array_key_exists('trainer_ids', $data)) {
                 $trainingService->trainers()->sync($data['trainer_ids']);
@@ -40,7 +34,7 @@ class TrainingServiceService
                 $trainingService->syncSettings($data['settings']);
             }
 
-            $trainingService->load(['service.priceOptions', 'service.settings', 'trainers']);
+            $trainingService->load(['service.priceOptions.package', 'service.settings', 'trainers']);
 
             return $trainingService;
         });
@@ -58,15 +52,7 @@ class TrainingServiceService
                 'description' => $this->translations($data['description']),
             ]);
 
-            $service->priceOptions()->forceDelete();
-            foreach ($data['price_options'] as $option) {
-                $service->priceOptions()->create([
-                    'name' => null,
-                    'price' => $option['price'],
-                    'quantity' => $option['duration'],
-                    'unit' => PriceOptionUnit::MINUTE,
-                ]);
-            }
+            $this->durationOptions->sync($service, $data['price_options'], $data['packages'] ?? null);
 
             if (array_key_exists('trainer_ids', $data)) {
                 $trainingService->trainers()->sync($data['trainer_ids']);
@@ -77,7 +63,7 @@ class TrainingServiceService
                 $trainingService->syncSettings($data['settings']);
             }
 
-            $trainingService->load(['service.priceOptions', 'service.settings', 'trainers']);
+            $trainingService->load(['service.priceOptions.package', 'service.settings', 'trainers']);
 
             return $trainingService;
         });

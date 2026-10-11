@@ -37,7 +37,7 @@ class TrainingServiceController extends Controller
 
         $trainingServices = TrainingService::query()
             ->whereHas('service', fn ($query) => $query->where('center_id', $center->getKey()))
-            ->with(['service.priceOptions', 'service.settings', 'service.media', 'trainers'])
+            ->with(['service.priceOptions.package', 'service.settings', 'service.media', 'trainers'])
             ->latest('id')
             ->paginate(15);
 
@@ -54,6 +54,8 @@ class TrainingServiceController extends Controller
      * - `trainer_ids`     optional array of trainer ids of this center.
      * - `cover`           optional media id (uuid) or `null`.
      * - `images`          optional array (max 10) of media ids, in display order.
+     * - `price_options[].id`     optional (update only); keeps that existing option, and its package, in place. Existing options not sent are deleted together with their package.
+     * - `packages`               optional array (max 20) of `{ price_option, count, price, duration }`: `price_option` is the 0-based index into `price_options`, `count` the number of sessions, `duration` the validity in months. One package per option. On update it replaces all packages; omit it to leave them untouched.
      * - `settings`              optional object of booleans keyed by the service type's setting keys (unknown keys are rejected). On update it replaces all settings: omitted keys reset to `false`; omit `settings` to leave them untouched.
      *
      * Media ids come from the Support media API (`POST /media`); temporary

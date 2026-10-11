@@ -2,6 +2,7 @@
 
 namespace Modules\Services\Http\Requests\Center;
 
+use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
@@ -54,6 +55,17 @@ class TrainingServiceRequest extends FormRequest
             'images' => ['sometimes', 'array', 'max:10'],
             'images.*' => ['uuid', 'distinct'],
             ...TrainingService::settingsRules(),
+            ...TrainingService::packageRules(),
+        ];
+    }
+
+    /**
+     * @return array<int, callable(Validator): void>
+     */
+    public function after(): array
+    {
+        return [
+            fn (Validator $validator) => TrainingService::validatePackageIndexes($validator, $this->all()),
         ];
     }
 }

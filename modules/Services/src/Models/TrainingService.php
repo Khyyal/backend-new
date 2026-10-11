@@ -6,13 +6,14 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Services\Concerns\HasPackages;
 use Modules\Services\Concerns\HasService;
 use Modules\Services\Concerns\HasSettings;
 use Modules\Services\Concerns\HasStartPrice;
 
 class TrainingService extends Model
 {
-    use HasFactory, HasService, HasSettings, HasStartPrice, SoftDeletes;
+    use HasFactory, HasPackages, HasService, HasSettings, HasStartPrice, SoftDeletes;
 
     public $timestamps = false;
 

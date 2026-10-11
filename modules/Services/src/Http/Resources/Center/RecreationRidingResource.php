@@ -32,6 +32,12 @@ class RecreationRidingResource extends JsonResource
                 'id' => $option->id,
                 'duration' => $option->quantity,
                 'price' => $option->price,
+                'package' => $option->package === null ? null : [
+                    'id' => $option->package->id,
+                    'count' => $option->package->count,
+                    'price' => $option->package->price,
+                    'duration' => $option->package->duration,
+                ],
             ])->values(),
             'days' => $schedules->pluck('day_of_week')->unique()->values(),
             'hours' => $schedules->where('day_of_week', $firstDay)
