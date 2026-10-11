@@ -37,7 +37,7 @@ class RecreationRidingController extends Controller
 
         $ridings = RecreationalRiding::query()
             ->whereHas('service', fn ($query) => $query->where('center_id', $center->getKey()))
-            ->with(['service.priceOptions', 'service.media', 'schedules'])
+            ->with(['service.priceOptions', 'service.settings', 'service.media', 'schedules'])
             ->latest('id')
             ->paginate(15);
 
@@ -56,6 +56,7 @@ class RecreationRidingController extends Controller
      * - `hours`                   required flat list of `HH:mm` start/end pairs, e.g. `["09:00","12:00","14:00","17:00"]` (two slots); applied to every day in `days`. Each end must be after its start.
      * - `cover`                   optional media id (uuid) or `null`.
      * - `images`                  optional array (max 10) of media ids, in display order.
+     * - `settings`              optional object of booleans keyed by the service type's setting keys (unknown keys are rejected). On update it replaces all settings: omitted keys reset to `false`; omit `settings` to leave them untouched.
      *
      * Media ids come from the Support media API (`POST /media`); temporary
      * uploads must belong to the authenticated user and not be expired.

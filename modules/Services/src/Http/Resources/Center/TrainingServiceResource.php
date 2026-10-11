@@ -25,6 +25,7 @@ class TrainingServiceResource extends JsonResource
             'status' => $service->status,
             'name' => $service->getTranslations('name'),
             'description' => $service->getTranslations('description'),
+            'settings' => $this->resource->settingValues(),
             'price_options' => $service->priceOptions->map(fn ($option) => [
                 'id' => $option->id,
                 'duration' => $option->quantity,

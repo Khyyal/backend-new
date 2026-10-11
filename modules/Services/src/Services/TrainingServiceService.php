@@ -36,7 +36,11 @@ class TrainingServiceService
                 $trainingService->trainers()->sync($data['trainer_ids']);
             }
 
-            $trainingService->load(['service.priceOptions', 'trainers']);
+            if (isset($data['settings'])) {
+                $trainingService->syncSettings($data['settings']);
+            }
+
+            $trainingService->load(['service.priceOptions', 'service.settings', 'trainers']);
 
             return $trainingService;
         });
@@ -69,7 +73,11 @@ class TrainingServiceService
             }
 
             $trainingService = $trainingService->fresh();
-            $trainingService->load(['service.priceOptions', 'trainers']);
+            if (array_key_exists('settings', $data)) {
+                $trainingService->syncSettings($data['settings']);
+            }
+
+            $trainingService->load(['service.priceOptions', 'service.settings', 'trainers']);
 
             return $trainingService;
         });

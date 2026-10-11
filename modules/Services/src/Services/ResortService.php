@@ -40,7 +40,11 @@ class ResortService
 
             $this->createPriceOptions($service, $data);
 
-            $resort->load(['service.priceOptions']);
+            if (isset($data['settings'])) {
+                $resort->syncSettings($data['settings']);
+            }
+
+            $resort->load(['service.priceOptions', 'service.settings']);
 
             return $resort;
         });
@@ -76,7 +80,11 @@ class ResortService
             $this->createPriceOptions($service, $data);
 
             $resort = $resort->fresh();
-            $resort->load(['service.priceOptions']);
+            if (array_key_exists('settings', $data)) {
+                $resort->syncSettings($data['settings']);
+            }
+
+            $resort->load(['service.priceOptions', 'service.settings']);
 
             return $resort;
         });

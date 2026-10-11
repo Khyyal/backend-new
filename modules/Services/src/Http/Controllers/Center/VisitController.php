@@ -37,7 +37,7 @@ class VisitController extends Controller
 
         $visits = Visit::query()
             ->whereHas('service', fn ($query) => $query->where('center_id', $center->getKey()))
-            ->with(['service.priceOptions', 'service.media', 'schedules'])
+            ->with(['service.priceOptions', 'service.settings', 'service.media', 'schedules'])
             ->latest('id')
             ->paginate(15);
 
@@ -58,6 +58,7 @@ class VisitController extends Controller
      *                             (applied to every day in `days`); must be omitted when `enter_type` is `all_day`.
      * - `cover`                   optional media id (uuid) or `null`.
      * - `images`                  optional array (max 10) of media ids, in display order.
+     * - `settings`              optional object of booleans keyed by the service type's setting keys (unknown keys are rejected). On update it replaces all settings: omitted keys reset to `false`; omit `settings` to leave them untouched.
      *
      * Media ids come from the Support media API (`POST /media`); temporary
      * uploads must belong to the authenticated user and not be expired.

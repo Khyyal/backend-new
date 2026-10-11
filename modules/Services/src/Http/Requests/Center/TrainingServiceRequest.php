@@ -6,6 +6,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Modules\Centers\Models\Center;
+use Modules\Services\Models\TrainingService;
 
 /**
  * Body shared by create and update. Update replaces the whole definition
@@ -52,6 +53,7 @@ class TrainingServiceRequest extends FormRequest
             'cover' => ['sometimes', 'nullable', 'uuid'],
             'images' => ['sometimes', 'array', 'max:10'],
             'images.*' => ['uuid', 'distinct'],
+            ...TrainingService::settingsRules(),
         ];
     }
 }

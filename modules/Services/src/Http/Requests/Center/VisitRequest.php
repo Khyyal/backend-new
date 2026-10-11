@@ -7,6 +7,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rules\Enum;
 use Modules\Services\Enums\VisitEnterType;
+use Modules\Services\Models\Visit;
 
 /**
  * Body shared by create and update. Update replaces the whole definition
@@ -50,6 +51,7 @@ class VisitRequest extends FormRequest
             'cover' => ['sometimes', 'nullable', 'uuid'],
             'images' => ['sometimes', 'array', 'max:10'],
             'images.*' => ['uuid', 'distinct'],
+            ...Visit::settingsRules(),
         ];
     }
 

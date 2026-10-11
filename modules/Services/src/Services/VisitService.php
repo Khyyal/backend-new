@@ -50,7 +50,11 @@ class VisitService
 
             $this->createSchedules($visit, $data);
 
-            $visit->load(['service.priceOptions', 'schedules']);
+            if (isset($data['settings'])) {
+                $visit->syncSettings($data['settings']);
+            }
+
+            $visit->load(['service.priceOptions', 'service.settings', 'schedules']);
 
             return $visit;
         });
@@ -99,7 +103,11 @@ class VisitService
             $this->createSchedules($visit, $data);
 
             $visit = $visit->fresh();
-            $visit->load(['service.priceOptions', 'schedules']);
+            if (array_key_exists('settings', $data)) {
+                $visit->syncSettings($data['settings']);
+            }
+
+            $visit->load(['service.priceOptions', 'service.settings', 'schedules']);
 
             return $visit;
         });

@@ -28,6 +28,7 @@ class ResortResource extends JsonResource
                 'day' => $option->quantity,
                 'price' => $option->price,
             ])->values(),
+            'settings' => $this->resource->settingValues(),
             'price_options' => $service->priceOptions->whereNull('quantity')->map(fn ($option) => [
                 'id' => $option->id,
                 'name' => $option->name,

@@ -6,14 +6,20 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Modules\Services\Concerns\HasService;
+use Modules\Services\Concerns\HasSettings;
 use Modules\Services\Concerns\HasStartPrice;
 use Modules\Services\Enums\EventOccurrenceType;
 
 class Event extends Model
 {
-    use HasFactory, HasService, HasStartPrice, SoftDeletes;
+    use HasFactory, HasService, HasSettings, HasStartPrice, SoftDeletes;
 
     public $timestamps = false;
+
+    const array SETTINGS_KEYS = [
+        'enable_cash_on_arrival',
+
+    ];
 
     protected $fillable = [
         'occurrence_type',

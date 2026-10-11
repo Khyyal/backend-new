@@ -20,7 +20,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  */
 class CenterVisitService
 {
-    private const RELATIONS = ['service.priceOptions', 'service.media', 'schedules'];
+    private const RELATIONS = ['service.priceOptions', 'service.settings', 'service.media', 'schedules'];
 
     public function __construct(
         private readonly VisitService $visitService,

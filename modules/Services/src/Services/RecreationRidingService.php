@@ -62,7 +62,11 @@ class RecreationRidingService
                 }
             }
 
-            $riding->load(['service.priceOptions', 'schedules']);
+            if (isset($data['settings'])) {
+                $riding->syncSettings($data['settings']);
+            }
+
+            $riding->load(['service.priceOptions', 'service.settings', 'schedules']);
 
             return $riding;
         });
@@ -124,7 +128,11 @@ class RecreationRidingService
             }
 
             $riding = $riding->fresh();
-            $riding->load(['service.priceOptions', 'schedules']);
+            if (array_key_exists('settings', $data)) {
+                $riding->syncSettings($data['settings']);
+            }
+
+            $riding->load(['service.priceOptions', 'service.settings', 'schedules']);
 
             return $riding;
         });

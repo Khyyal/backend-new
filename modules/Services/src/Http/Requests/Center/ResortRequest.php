@@ -4,6 +4,7 @@ namespace Modules\Services\Http\Requests\Center;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
+use Modules\Services\Models\Resort;
 
 /**
  * Body shared by create and update. Update replaces the whole definition
@@ -44,6 +45,7 @@ class ResortRequest extends FormRequest
             'cover' => ['sometimes', 'nullable', 'uuid'],
             'images' => ['sometimes', 'array', 'max:10'],
             'images.*' => ['uuid', 'distinct'],
+            ...Resort::settingsRules(),
         ];
     }
 }

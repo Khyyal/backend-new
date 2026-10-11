@@ -7,14 +7,19 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Modules\Services\Concerns\HasSchedules;
 use Modules\Services\Concerns\HasService;
+use Modules\Services\Concerns\HasSettings;
 use Modules\Services\Concerns\HasStartPrice;
 use Modules\Services\Enums\VisitEnterType;
 
 class Visit extends Model
 {
-    use HasFactory, HasSchedules, HasService, HasStartPrice, SoftDeletes;
+    use HasFactory, HasSchedules, HasService, HasSettings, HasStartPrice, SoftDeletes;
 
     public $timestamps = false;
+
+    const array SETTINGS_KEYS = [
+        'enable_cash_on_arrival',
+    ];
 
     protected $fillable = [
         'enter_type',

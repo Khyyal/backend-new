@@ -30,6 +30,7 @@ class EventResource extends JsonResource
             'open_date' => $this->resource->open_date->format('Y-m-d'),
             'close_date' => $this->resource->close_date->format('Y-m-d'),
             'max_tickets_per_day' => $this->resource->max_tickets_per_day,
+            'settings' => $this->resource->settingValues(),
             'price_options' => $service->priceOptions->map(fn ($option) => [
                 'id' => $option->id,
                 'name' => $option->name,

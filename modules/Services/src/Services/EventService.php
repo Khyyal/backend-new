@@ -53,7 +53,11 @@ class EventService
                 ]);
             }
 
-            $event->load(['service.priceOptions']);
+            if (isset($data['settings'])) {
+                $event->syncSettings($data['settings']);
+            }
+
+            $event->load(['service.priceOptions', 'service.settings']);
 
             return $event;
         });
@@ -105,7 +109,11 @@ class EventService
             }
 
             $event = $event->fresh();
-            $event->load(['service.priceOptions']);
+            if (array_key_exists('settings', $data)) {
+                $event->syncSettings($data['settings']);
+            }
+
+            $event->load(['service.priceOptions', 'service.settings']);
 
             return $event;
         });

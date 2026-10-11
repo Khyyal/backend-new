@@ -5,6 +5,7 @@ namespace Modules\Services\Http\Requests\Center;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
+use Modules\Services\Models\RecreationalRiding;
 
 /**
  * Body shared by create and update. Update replaces the whole definition
@@ -46,6 +47,7 @@ class RecreationRidingRequest extends FormRequest
             'cover' => ['sometimes', 'nullable', 'uuid'],
             'images' => ['sometimes', 'array', 'max:10'],
             'images.*' => ['uuid', 'distinct'],
+            ...RecreationalRiding::settingsRules(),
         ];
     }
 

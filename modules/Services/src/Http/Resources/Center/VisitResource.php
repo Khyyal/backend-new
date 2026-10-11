@@ -29,6 +29,7 @@ class VisitResource extends JsonResource
             'description' => $service->getTranslations('description'),
             'enter_type' => $this->resource->enter_type,
             'max_tickets_per_day' => $this->resource->max_tickets_per_day,
+            'settings' => $this->resource->settingValues(),
             'price' => $service->priceOptions->first()?->price,
             'days' => $schedules->pluck('day_of_week')->unique()->values(),
             'hours' => $this->resource->enter_type === VisitEnterType::SpecificTime

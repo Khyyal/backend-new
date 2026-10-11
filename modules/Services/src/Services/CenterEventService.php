@@ -20,7 +20,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  */
 class CenterEventService
 {
-    private const RELATIONS = ['service.priceOptions', 'service.media'];
+    private const RELATIONS = ['service.priceOptions', 'service.settings', 'service.media'];
 
     public function __construct(
         private readonly EventService $eventService,

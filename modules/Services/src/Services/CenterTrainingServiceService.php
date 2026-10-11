@@ -20,7 +20,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  */
 class CenterTrainingServiceService
 {
-    private const RELATIONS = ['service.priceOptions', 'service.media', 'trainers'];
+    private const RELATIONS = ['service.priceOptions', 'service.settings', 'service.media', 'trainers'];
 
     public function __construct(
         private readonly TrainingServiceService $trainingServiceService,

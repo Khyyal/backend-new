@@ -108,6 +108,11 @@ class Service extends Model implements HasMedia
         return $this->hasMany(PriceOption::class);
     }
 
+    public function settings(): HasMany
+    {
+        return $this->hasMany(ServiceSetting::class);
+    }
+
     public function serviceable(): MorphTo
     {
         return $this->morphTo();

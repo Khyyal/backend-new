@@ -6,6 +6,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rules\Enum;
 use Modules\Services\Enums\EventOccurrenceType;
+use Modules\Services\Models\Event;
 
 /**
  * Body shared by create and update. Update replaces the whole definition
@@ -51,6 +52,7 @@ class EventRequest extends FormRequest
             'cover' => ['sometimes', 'nullable', 'uuid'],
             'images' => ['sometimes', 'array', 'max:10'],
             'images.*' => ['uuid', 'distinct'],
+            ...Event::settingsRules(),
         ];
     }
 }
