@@ -4,22 +4,23 @@ namespace Modules\Promotion\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\MorphMany;
-use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Modules\Centers\Models\Center;
 use Modules\Promotion\Database\Factories\DiscountFactory;
 use Modules\Promotion\Enums\ApplicationMethod;
 use Modules\Promotion\Enums\DiscountScope;
 use Modules\Promotion\Enums\DiscountType;
 use Modules\Promotion\Enums\PromotionStatus;
+use Modules\Services\Models\Service;
 
 class Discount extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'owner_type',
-        'owner_id',
+        'center_id',
         'name',
         'description',
         'type',
@@ -56,9 +57,9 @@ class Discount extends Model
         ];
     }
 
-    public function owner(): MorphTo
+    public function center(): BelongsTo
     {
-        return $this->morphTo();
+        return $this->belongsTo(Center::class);
     }
 
     public function coupons(): HasMany
@@ -66,9 +67,12 @@ class Discount extends Model
         return $this->hasMany(Coupon::class);
     }
 
-    public function discountables(): HasMany
+    /**
+     * Services the discount is restricted to when its scope is `specific_items`.
+     */
+    public function services(): BelongsToMany
     {
-        return $this->hasMany(Discountable::class, 'discount_id');
+        return $this->belongsToMany(Service::class, 'discount_service')->withTimestamps();
     }
 
     public function redemptions(): HasMany

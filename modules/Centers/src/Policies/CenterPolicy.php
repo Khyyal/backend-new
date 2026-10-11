@@ -67,6 +67,16 @@ class CenterPolicy
         return $this->canAccessCenter($user, $center, SystemPermission::ManageCenterBlockedClients);
     }
 
+    /**
+     * Center users: any user assigned to the center. System users: denied,
+     * discounts are managed by the center only.
+     */
+    public function manageDiscounts(User|SystemUser $user, Center $center): bool
+    {
+        return $user instanceof User
+            && $user->centers()->whereKey($center->getKey())->exists();
+    }
+
     private function canAccessCenter(User|SystemUser $user, Center $center, SystemPermission $permission): bool
     {
         if ($user instanceof SystemUser) {

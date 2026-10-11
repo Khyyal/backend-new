@@ -6,15 +6,18 @@ use Illuminate\Database\Eloquent\Model;
 use Modules\Promotion\Enums\DiscountScope;
 use Modules\Promotion\Enums\PromotionStatus;
 use Modules\Promotion\Models\Discount;
-use Modules\Promotion\Models\Discountable;
+use Modules\Services\Models\Service;
 
 class DiscountEligibilityService
 {
+    /**
+     * @param  iterable<Service|int>  $services  Services (or service ids) being purchased.
+     */
     public function isEligible(
         Discount $discount,
         ?Model $user = null,
         float|int $subtotal = 0,
-        iterable $items = [],
+        iterable $services = [],
     ): bool {
         if ($discount->status !== PromotionStatus::Active) {
             return false;
@@ -50,29 +53,14 @@ class DiscountEligibilityService
         }
 
         if ($discount->scope === DiscountScope::SpecificItems) {
-            if (! is_countable($items) || count($items) === 0) {
-                return false;
-            }
+            $serviceIds = collect($services)
+                ->map(fn (Service|int $service): int => $service instanceof Service ? $service->getKey() : $service);
 
-            $attachedKeys = $discount->discountables
-                ->map(fn (Discountable $d) => $d->discountable_type.'|'.$d->discountable_id)
-                ->unique()
-                ->values();
-
-            $itemKeys = collect($items)
-                ->map(fn (Model $m) => $this->modelKey($m))
-                ->values();
-
-            if ($attachedKeys->intersect($itemKeys)->isEmpty()) {
+            if ($serviceIds->intersect($discount->services->modelKeys())->isEmpty()) {
                 return false;
             }
         }
 
         return true;
-    }
-
-    private function modelKey(Model $model): string
-    {
-        return $model->getMorphClass().'|'.$model->getKey();
     }
 }

@@ -2,12 +2,13 @@
 
 use Dedoc\Scramble\Attributes\Group;
 use Dedoc\Scramble\Attributes\Response;
-use Modules\Promotion\Http\Controllers\Admin\DiscountController as AdminDiscountController;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Promotion\Http\Controllers\Center\DiscountController as CenterDiscountController;
 use ReflectionClass;
 use ReflectionMethod;
+use Tests\TestCase;
 
-uses(\Tests\TestCase::class, \Illuminate\Foundation\Testing\RefreshDatabase::class);
+uses(TestCase::class, RefreshDatabase::class);
 
 if (! function_exists('publicControllerMethods')) {
     function publicControllerMethods(string $class): array
@@ -34,21 +35,9 @@ if (! function_exists('methodHasAttr')) {
     }
 }
 
-test('admin discount controller has class-level Group attribute', function (): void {
-    $r = new ReflectionClass(AdminDiscountController::class);
-    expect(count($r->getAttributes(Group::class)))->toBeGreaterThan(0);
-});
-
 test('center discount controller has class-level Group attribute', function (): void {
     $r = new ReflectionClass(CenterDiscountController::class);
     expect(count($r->getAttributes(Group::class)))->toBeGreaterThan(0);
-});
-
-test('every public method on admin discount controller has at least one Response attribute', function (): void {
-    foreach (publicControllerMethods(AdminDiscountController::class) as $m) {
-        expect(methodHasAttr(AdminDiscountController::class, $m, Response::class))
-            ->toBeTrue("AdminDiscountController::$m missing Response attribute");
-    }
 });
 
 test('every public method on center discount controller has at least one Response attribute', function (): void {

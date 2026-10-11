@@ -11,8 +11,7 @@ class DiscountResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'owner_type' => $this->owner_type,
-            'owner_id' => $this->owner_id,
+            'center_id' => $this->center_id,
             'name' => $this->name,
             'description' => $this->description,
             'type' => $this->type?->value,
@@ -29,6 +28,8 @@ class DiscountResource extends JsonResource
             'status' => $this->status?->value,
             'coupons_count' => $this->whenCounted('coupons'),
             'redemptions_count' => $this->whenCounted('redemptions'),
+            'services_count' => $this->whenCounted('services'),
+            'service_ids' => $this->whenLoaded('services', fn () => $this->services->modelKeys()),
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
         ];

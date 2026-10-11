@@ -2,13 +2,13 @@
 
 namespace Modules\Promotion\Traits;
 
-use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Modules\Promotion\Models\Discount;
 
 trait HasDiscounts
 {
-    public function discounts(): MorphMany
+    public function discounts(): HasMany
     {
-        return $this->morphMany(Discount::class, 'owner');
+        return $this->hasMany(Discount::class);
     }
 }

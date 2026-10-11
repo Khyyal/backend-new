@@ -2,24 +2,13 @@
 
 namespace Modules\Promotion\Traits;
 
-use Illuminate\Database\Eloquent\Relations\MorphMany;
-use Illuminate\Database\Eloquent\Relations\MorphToMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Modules\Promotion\Models\Discount;
-use Modules\Promotion\Models\DiscountRedemption;
 
 trait HasDiscountable
 {
-    public function discountRedemptions(): MorphMany
+    public function discounts(): BelongsToMany
     {
-        return $this->morphMany(DiscountRedemption::class, 'discountable');
-    }
-
-    public function discounts(): MorphToMany
-    {
-        return $this->morphToMany(
-            Discount::class,
-            'discountable',
-            'discountables'
-        )->withTimestamps();
+        return $this->belongsToMany(Discount::class, 'discount_service')->withTimestamps();
     }
 }
