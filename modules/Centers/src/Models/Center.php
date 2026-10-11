@@ -17,6 +17,7 @@ use Modules\Purchase\Contracts\Buyer;
 use Modules\Purchase\Traits\IsBuyer;
 use Modules\Services\Models\Service;
 use Modules\Support\Concerns\Actionable;
+use Modules\Support\Concerns\Blocker;
 use Modules\Support\Concerns\HasCity;
 use Modules\Support\Concerns\Rateable;
 use Spatie\Image\Enums\Fit;
@@ -27,6 +28,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 class Center extends Model implements Buyer, HasMedia
 {
     use Actionable;
+    use Blocker;
     use HasCity;
     use HasDiscounts;
     use HasFactory;

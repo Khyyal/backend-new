@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Modules\Centers\Http\Controllers\Center\AuthController;
+use Modules\Centers\Http\Controllers\Center\BlockedClientController;
 use Modules\Centers\Http\Controllers\Center\CenterController;
 use Modules\Centers\Http\Controllers\Center\RatingController;
 use Modules\Centers\Http\Controllers\Center\RegisterController;
@@ -48,6 +49,12 @@ Route::middleware(['api'])
 
                         Route::get('/{center}/ratings', [RatingController::class, 'index'])
                             ->name('ratings');
+
+                        Route::get('/{center}/blocked-clients', [BlockedClientController::class, 'index'])
+                            ->name('blocked-clients.index');
+
+                        Route::post('/{center}/blocked-clients', [BlockedClientController::class, 'store'])
+                            ->name('blocked-clients.store');
                     });
             });
 
