@@ -26,7 +26,7 @@ class RatingController extends Controller
     #[Response(status: 403, description: 'The token has no access to this center, or the user is not assigned to it.')]
     public function index(Request $request, Center $center): JsonResponse
     {
-        Gate::forUser($request->user('center_user'))->authorize('manageServices', $center);
+        Gate::forUser($request->user())->authorize('viewRatings', $center);
 
         $ratings = $center->ratings()->with('rater')->latest()->get();
 

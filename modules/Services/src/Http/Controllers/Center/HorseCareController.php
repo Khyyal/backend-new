@@ -4,13 +4,13 @@ namespace Modules\Services\Http\Controllers\Center;
 
 use Dedoc\Scramble\Attributes\Group;
 use Dedoc\Scramble\Attributes\Response;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Gate;
 use Modules\Centers\Models\Center;
-use Modules\Centers\Models\User;
 use Modules\Services\Http\Requests\Center\HorseCareRequest;
 use Modules\Services\Http\Resources\Center\HorseCareResource;
 use Modules\Services\Models\HorseCare;
@@ -33,7 +33,7 @@ class HorseCareController extends Controller
     #[Response(status: 403, description: 'The token has no access to this center, or the user is not assigned to it.')]
     public function index(Request $request, Center $center): AnonymousResourceCollection
     {
-        Gate::forUser($request->user('center_user'))->authorize('manageServices', $center);
+        Gate::forUser($request->user())->authorize('manageServices', $center);
 
         $horseCares = HorseCare::query()
             ->whereHas('service', fn ($query) => $query->where('center_id', $center->getKey()))
@@ -78,7 +78,7 @@ class HorseCareController extends Controller
     #[Response(status: 404, description: 'No such service in this center.')]
     public function show(Request $request, Center $center, int $horseCare): HorseCareResource
     {
-        Gate::forUser($request->user('center_user'))->authorize('manageServices', $center);
+        Gate::forUser($request->user())->authorize('manageServices', $center);
 
         return HorseCareResource::make($this->service->findForCenter($center, $horseCare));
     }
@@ -116,15 +116,15 @@ class HorseCareController extends Controller
     #[Response(status: 404, description: 'No such service in this center.')]
     public function destroy(Request $request, Center $center, int $horseCare): \Illuminate\Http\Response
     {
-        Gate::forUser($request->user('center_user'))->authorize('manageServices', $center);
+        Gate::forUser($request->user())->authorize('manageServices', $center);
 
         $this->service->delete($this->service->findForCenter($center, $horseCare));
 
         return response()->noContent();
     }
 
-    private function user(Request $request): User
+    private function user(Request $request): Model
     {
-        return $request->user('center_user');
+        return $request->user();
     }
 }

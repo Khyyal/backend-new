@@ -31,7 +31,7 @@ class ServiceBlockController extends Controller
     #[Response(status: 403, description: 'The token has no access to this center, or the user is not assigned to it.')]
     public function index(Request $request, Center $center): AnonymousResourceCollection
     {
-        Gate::forUser($request->user('center_user'))->authorize('manageServices', $center);
+        Gate::forUser($request->user())->authorize('manageServices', $center);
 
         $blocks = $this->service->list($center, $request->integer('service_id') ?: null);
 
@@ -69,7 +69,7 @@ class ServiceBlockController extends Controller
     #[Response(status: 404, description: 'No such block in this center.')]
     public function show(Request $request, Center $center, int $serviceBlock): ServiceBlockResource
     {
-        Gate::forUser($request->user('center_user'))->authorize('manageServices', $center);
+        Gate::forUser($request->user())->authorize('manageServices', $center);
 
         return ServiceBlockResource::make($this->service->findForCenter($center, $serviceBlock));
     }
@@ -98,7 +98,7 @@ class ServiceBlockController extends Controller
     #[Response(status: 404, description: 'No such block in this center.')]
     public function destroy(Request $request, Center $center, int $serviceBlock): \Illuminate\Http\Response
     {
-        Gate::forUser($request->user('center_user'))->authorize('manageServices', $center);
+        Gate::forUser($request->user())->authorize('manageServices', $center);
 
         $this->service->delete($this->service->findForCenter($center, $serviceBlock));
 

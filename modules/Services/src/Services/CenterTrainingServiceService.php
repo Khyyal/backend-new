@@ -3,10 +3,10 @@
 namespace Modules\Services\Services;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
 use Modules\Centers\Models\Center;
-use Modules\Centers\Models\User;
 use Modules\Services\Models\Service;
 use Modules\Services\Models\TrainingService;
 use Modules\Support\Services\Media\MediaService;
@@ -31,7 +31,7 @@ class CenterTrainingServiceService
     /**
      * @param  array<string, mixed>  $data
      */
-    public function create(Center $center, User $user, array $data): TrainingService
+    public function create(Center $center, Model $user, array $data): TrainingService
     {
         $trainingService = DB::transaction(function () use ($center, $user, $data) {
             $trainingService = $this->trainingServiceService->create([...$data, 'center_id' => $center->getKey()]);
@@ -47,7 +47,7 @@ class CenterTrainingServiceService
     /**
      * @param  array<string, mixed>  $data
      */
-    public function update(Center $center, TrainingService $trainingService, User $user, array $data): TrainingService
+    public function update(Center $center, TrainingService $trainingService, Model $user, array $data): TrainingService
     {
         $trainingService = DB::transaction(function () use ($trainingService, $user, $data) {
             $trainingService = $this->trainingServiceService->update($trainingService, $data);
@@ -83,7 +83,7 @@ class CenterTrainingServiceService
     /**
      * @param  array<string, mixed>  $data
      */
-    private function syncMedia(Service $service, User $user, array $data): void
+    private function syncMedia(Service $service, Model $user, array $data): void
     {
         if (array_key_exists('cover', $data)) {
             $this->syncCover($service, $user, $data['cover']);
@@ -94,7 +94,7 @@ class CenterTrainingServiceService
         }
     }
 
-    private function syncCover(Service $service, User $user, ?string $mediaId): void
+    private function syncCover(Service $service, Model $user, ?string $mediaId): void
     {
         $current = $service->media()->where('collection_name', 'cover')->first();
 
@@ -115,7 +115,7 @@ class CenterTrainingServiceService
     /**
      * @param  array<int, string>  $mediaIds  desired images, in display order
      */
-    private function syncImages(Service $service, User $user, array $mediaIds): void
+    private function syncImages(Service $service, Model $user, array $mediaIds): void
     {
         $current = $service->media()->where('collection_name', 'images')->orderBy('order_column')->get()->toBase()->keyBy('uuid');
         $newIds = array_values(array_diff($mediaIds, $current->keys()->all()));

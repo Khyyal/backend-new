@@ -7,7 +7,9 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Modules\Support\Jobs\CleanupExpiredMedia;
+use Modules\Support\Models\SystemUser;
 use Modules\Support\Policies\MediaPolicy;
+use Modules\Support\Policies\SystemUserPolicy;
 
 class SupportServiceProvider extends ServiceProvider
 {
@@ -19,6 +21,7 @@ class SupportServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Gate::policy(config('media-library.media_model'), MediaPolicy::class);
+        Gate::policy(SystemUser::class, SystemUserPolicy::class);
 
         $this->callAfterResolving(Schedule::class, function (Schedule $schedule): void {
             $schedule->job(new CleanupExpiredMedia)->hourly();

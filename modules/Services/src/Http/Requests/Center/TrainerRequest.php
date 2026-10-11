@@ -18,7 +18,7 @@ class TrainerRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return Gate::forUser($this->user('center_user'))->allows('manageServices', $this->route('center'));
+        return Gate::forUser($this->user())->allows('manageServices', $this->route('center'));
     }
 
     /**

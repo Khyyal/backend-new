@@ -30,7 +30,7 @@ class ServiceTypeTermController extends Controller
     #[Response(status: 403, description: 'The token has no access to this center, or the user is not assigned to it.')]
     public function index(Request $request, Center $center): AnonymousResourceCollection
     {
-        Gate::forUser($request->user('center_user'))->authorize('manageServices', $center);
+        Gate::forUser($request->user())->authorize('manageServices', $center);
 
         return ServiceTypeTermResource::collection($this->service->listForCenter($center));
     }

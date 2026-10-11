@@ -24,7 +24,7 @@ return [
     /*
     | Auth guards allowed to use the media endpoints.
     */
-    'guards' => ['client', 'center_user'],
+    'guards' => ['client', 'center_user', 'system_user'],
 
     /*
     | Collection used internally to hold a media item while it is temporary.

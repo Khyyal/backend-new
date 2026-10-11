@@ -31,7 +31,7 @@ class BlockedClientController extends Controller
     #[Response(status: 403, description: 'The token has no access to this center, or the user is not assigned to it.')]
     public function index(Request $request, Center $center): JsonResponse
     {
-        Gate::forUser($request->user('center_user'))->authorize('manageServices', $center);
+        Gate::forUser($request->user())->authorize('manageBlockedClients', $center);
 
         $blocks = $center->blocksGiven()
             ->where('blockable_type', (new Client)->getMorphClass())
@@ -56,7 +56,7 @@ class BlockedClientController extends Controller
     #[Response(status: 422, description: 'Validation failed (`client_id` or `reason`).')]
     public function store(BlockClientRequest $request, Center $center): JsonResponse
     {
-        Gate::forUser($request->user('center_user'))->authorize('manageServices', $center);
+        Gate::forUser($request->user())->authorize('manageBlockedClients', $center);
 
         $block = $this->blockService->block(
             $center,

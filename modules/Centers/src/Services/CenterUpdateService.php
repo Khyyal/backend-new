@@ -2,10 +2,10 @@
 
 namespace Modules\Centers\Services;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Modules\Centers\Models\Center;
-use Modules\Centers\Models\User;
 use Modules\Support\Services\Media\MediaService;
 use Modules\Support\Services\Media\TemporaryMediaService;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
@@ -27,7 +27,7 @@ class CenterUpdateService
      *
      * @param  array<string, mixed>  $data
      */
-    public function update(Center $center, User $user, array $data): Center
+    public function update(Center $center, Model $user, array $data): Center
     {
         return DB::transaction(function () use ($center, $user, $data) {
             // Serialize concurrent updates of the same center's media.
@@ -53,7 +53,7 @@ class CenterUpdateService
         });
     }
 
-    private function syncSingleMedia(Center $center, User $user, string $collection, ?string $mediaId): void
+    private function syncSingleMedia(Center $center, Model $user, string $collection, ?string $mediaId): void
     {
         $current = $center->media()->where('collection_name', $collection)->first();
 
@@ -76,7 +76,7 @@ class CenterUpdateService
     /**
      * @param  array<int, string>  $mediaIds  desired images, in display order
      */
-    private function syncImages(Center $center, User $user, array $mediaIds): void
+    private function syncImages(Center $center, Model $user, array $mediaIds): void
     {
         $current = $center->media()->where('collection_name', 'images')->orderBy('order_column')->get()->toBase()->keyBy('uuid');
         $newIds = array_values(array_diff($mediaIds, $current->keys()->all()));
