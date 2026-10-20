@@ -125,6 +125,11 @@ class Service extends Model implements HasMedia
         return $this->hasMany(ServiceSetting::class);
     }
 
+    public function periods(): HasMany
+    {
+        return $this->hasMany(ServicePeriod::class);
+    }
+
     public function serviceable(): MorphTo
     {
         return $this->morphTo();

@@ -7,6 +7,7 @@ use Modules\Services\Http\Controllers\Center\HorseServiceController;
 use Modules\Services\Http\Controllers\Center\RecreationRidingController;
 use Modules\Services\Http\Controllers\Center\ResortController;
 use Modules\Services\Http\Controllers\Center\ServiceBlockController;
+use Modules\Services\Http\Controllers\Center\ServicePeriodController;
 use Modules\Services\Http\Controllers\Center\ServiceTypeCountController;
 use Modules\Services\Http\Controllers\Center\ServiceTypeTermController;
 use Modules\Services\Http\Controllers\Center\TrainerController;
@@ -36,6 +37,13 @@ Route::prefix('admin/centers/{center}')
         foreach ($resources as $uri => [$controller, $parameter]) {
             Route::apiResource($uri, $controller)->parameters([$uri => $parameter]);
         }
+
+        Route::prefix('services/{service}/periods')
+            ->name('services.periods.')
+            ->group(function (): void {
+                Route::get('/', [ServicePeriodController::class, 'show'])->name('show');
+                Route::match(['put', 'patch'], '/', [ServicePeriodController::class, 'update'])->name('update');
+            });
 
         Route::prefix('service-types')
             ->name('service-types.')
