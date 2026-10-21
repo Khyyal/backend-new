@@ -30,6 +30,12 @@ class Resort extends Model
             ->whereNotNull('price_options.quantity');
     }
 
+    public function addons(): HasManyThrough
+    {
+        return $this->priceOptions()
+            ->whereNull('price_options.quantity');
+    }
+
     protected function startPriceRelation(): string
     {
         return 'dayPrices';

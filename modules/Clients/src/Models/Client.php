@@ -4,12 +4,15 @@ namespace Modules\Clients\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Laravel\Sanctum\HasApiTokens;
 use Modules\Centers\Models\Center;
 use Modules\Purchase\Contracts\Buyer;
 use Modules\Purchase\Traits\IsBuyer;
+use Modules\Reservations\Models\ClientPackage;
+use Modules\Reservations\Models\Reservation;
 use Modules\Support\Concerns\ActionActor;
 use Modules\Support\Concerns\Blockable;
 use Modules\Support\Concerns\HasCity;
@@ -45,5 +48,15 @@ class Client extends Authenticatable implements Buyer
     {
         return $this->belongsToMany(Center::class, 'center_favorites', 'client_id', 'center_id')
             ->withTimestamps();
+    }
+
+    public function reservations(): HasMany
+    {
+        return $this->hasMany(Reservation::class);
+    }
+
+    public function packages(): HasMany
+    {
+        return $this->hasMany(ClientPackage::class);
     }
 }
