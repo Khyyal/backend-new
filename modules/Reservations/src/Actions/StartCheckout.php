@@ -9,6 +9,7 @@ use Modules\Purchase\Actions\CreatePurchase;
 use Modules\Purchase\Contracts\Buyer;
 use Modules\Purchase\Enums\PaymentMethod;
 use Modules\Purchase\Enums\PurchaseSource;
+use Modules\Purchase\Managers\PaymentGatewayManager;
 use Modules\Purchase\Services\PaymentStateService;
 use Modules\Purchase\Services\PurchaseStateService;
 use Modules\Reservations\Booking\CheckoutResult;
@@ -17,7 +18,9 @@ use Modules\Reservations\Exceptions\ReservationNotAllowedException;
 /**
  * Opens the purchase and its payment. A manual payment is taken by center
  * staff at the desk, so it succeeds and confirms the purchase right away;
- * other methods leave both pending for the gateway or the arrival.
+ * other methods leave both pending for the gateway or the arrival. An online
+ * payment is initialized with its gateway (the default one when no company
+ * is given) so the client can pay.
  */
 class StartCheckout
 {
@@ -26,6 +29,7 @@ class StartCheckout
         private CreatePayment $createPayment,
         private PaymentStateService $paymentState,
         private PurchaseStateService $purchaseState,
+        private PaymentGatewayManager $gateways,
     ) {}
 
     /**
@@ -48,11 +52,13 @@ class StartCheckout
         return DB::transaction(function () use ($buyer, $merchant, $source, $method, $items, $paymentCompany): CheckoutResult {
             $purchase = $this->createPurchase->execute($buyer, $merchant, $source, $items);
 
+            $isOnline = $method === PaymentMethod::Online;
+
             $payment = $this->createPayment->execute(
                 $purchase,
                 $method,
                 (float) $purchase->total_amount,
-                $method === PaymentMethod::Online ? $paymentCompany : null,
+                $isOnline ? ($paymentCompany ?? $this->gateways->getDefaultDriver()) : null,
             );
 
             if ($method === PaymentMethod::Manual) {
@@ -60,7 +66,11 @@ class StartCheckout
                 $purchase = $this->purchaseState->confirm($purchase);
             }
 
-            return new CheckoutResult($purchase, $payment);
+            $gateway = $isOnline
+                ? $this->gateways->driver($payment->payment_company)->initialize($purchase, $payment)
+                : null;
+
+            return new CheckoutResult($purchase, $payment, $gateway);
         });
     }
 }

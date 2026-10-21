@@ -68,6 +68,14 @@ class CenterPolicy
     }
 
     /**
+     * Center users: any user assigned to the center. System users: by permission.
+     */
+    public function manageReservations(User|SystemUser $user, Center $center): bool
+    {
+        return $this->canAccessCenter($user, $center, SystemPermission::ManageCenterReservations);
+    }
+
+    /**
      * Center users: any user assigned to the center. System users: denied,
      * discounts are managed by the center only.
      */

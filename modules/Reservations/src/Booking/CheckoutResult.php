@@ -10,8 +10,12 @@ use Modules\Purchase\Models\Purchase;
  */
 final readonly class CheckoutResult
 {
+    /**
+     * @param  array<string, mixed>|null  $gateway  what the client needs to pay online, from PaymentGateway::initialize()
+     */
     public function __construct(
         public Purchase $purchase,
         public Payment $payment,
+        public ?array $gateway = null,
     ) {}
 }

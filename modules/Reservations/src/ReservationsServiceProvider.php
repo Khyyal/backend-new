@@ -4,6 +4,7 @@ namespace Modules\Reservations;
 
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Modules\Purchase\Events\PurchaseCancelled;
 use Modules\Purchase\Events\PurchaseConfirmed;
@@ -26,6 +27,10 @@ class ReservationsServiceProvider extends ServiceProvider
     {
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
         $this->loadTranslationsFrom(__DIR__.'/../lang', 'reservations');
+
+        Route::middleware(['api'])
+            ->prefix('api/v1')
+            ->group(__DIR__.'/../routes/api.php');
 
         Relation::morphMap([
             'reservation' => Reservation::class,

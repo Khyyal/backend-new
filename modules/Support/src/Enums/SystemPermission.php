@@ -27,6 +27,7 @@ enum SystemPermission: string
     case ManageCenterServices = 'centers.manage_services';
     case ViewCenterRatings = 'centers.view_ratings';
     case ManageCenterBlockedClients = 'centers.manage_blocked_clients';
+    case ManageCenterReservations = 'centers.manage_reservations';
 
     /** @return array<string> */
     public static function all(): array
