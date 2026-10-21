@@ -3,9 +3,12 @@
 namespace Modules\Purchase;
 
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 use Modules\Centers\Models\Center;
 use Modules\Clients\Models\Client;
+use Modules\Purchase\Events\PaymentSucceeded;
+use Modules\Purchase\Listeners\ConfirmPaidPurchase;
 use Modules\Purchase\Managers\PaymentGatewayManager;
 use Modules\Purchase\Models\Merchant\Platform;
 
@@ -32,5 +35,7 @@ class PurchaseServiceProvider extends ServiceProvider
             'center' => Center::class,
             'client' => Client::class,
         ]);
+
+        Event::listen(PaymentSucceeded::class, ConfirmPaidPurchase::class);
     }
 }
