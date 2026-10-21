@@ -13,6 +13,7 @@ use Modules\Purchase\Enums\PurchaseStatus;
 use Modules\Purchase\Managers\PaymentGatewayManager;
 use Modules\Purchase\Models\Payment;
 use Modules\Purchase\Models\PurchaseItem;
+use Modules\Purchase\Services\PaymentStateService;
 use Modules\Reservations\Booking\BookingRequest;
 use Modules\Reservations\Booking\CapacityLock;
 use Modules\Reservations\Booking\ReservationRulesResolver;
@@ -39,6 +40,7 @@ class ReservationStateService
         private ReservationRulesResolver $rules,
         private CapacityLock $capacityLock,
         private PaymentGatewayManager $gateways,
+        private PaymentStateService $paymentState,
     ) {}
 
     /**
@@ -293,7 +295,7 @@ class ReservationStateService
         $package->remaining_sessions = min($package->total_sessions, $package->remaining_sessions + 1);
 
         if ($package->status === ClientPackageStatus::Exhausted) {
-            $package->status = ClientPackageStatus::Active;
+            $package->status = $package->isExpired() ? ClientPackageStatus::Expired : ClientPackageStatus::Active;
         }
 
         $package->save();
@@ -301,8 +303,10 @@ class ReservationStateService
 
     /**
      * Refunds the reservation's share of a confirmed purchase. Online payments
-     * go back through their gateway; a manual payment is flagged for the center
-     * to settle by hand. Nothing was taken yet for pending or cash payments.
+     * go back through their gateway and are recorded on the payment (which
+     * becomes `refunded` once fully returned); a manual payment is flagged for
+     * the center to settle by hand. Nothing was taken yet for pending or cash
+     * payments.
      *
      * @return array{amount: float, payment_id: int, method: string, status: string}|null
      *
@@ -325,7 +329,12 @@ class ReservationStateService
             return null;
         }
 
-        $amount = (float) $item->total_amount;
+        $amount = min((float) $item->total_amount, $payment->refundableAmount());
+
+        if ($amount <= 0) {
+            return null;
+        }
+
         $refund = [
             'amount' => $amount,
             'payment_id' => $payment->getKey(),
@@ -333,31 +342,22 @@ class ReservationStateService
             'status' => 'manual_required',
         ];
 
-        if ($payment->method === PaymentMethod::Online) {
-            try {
-                $refunded = $this->gateways->driver($payment->payment_company ?: null)->refund($payment, $amount);
-            } catch (Throwable $exception) {
-                throw ReservationNotAllowedException::because('refund_failed', previous: $exception);
-            }
-
-            if (! $refunded) {
-                throw ReservationNotAllowedException::because('refund_failed');
-            }
-
-            $refund['status'] = 'refunded';
+        if ($payment->method !== PaymentMethod::Online) {
+            return $refund;
         }
 
-        $payment->refresh();
-        $paymentMetadata = $payment->metadata ?? [];
-        $paymentMetadata['refunds'] = [...($paymentMetadata['refunds'] ?? []), [
-            'reservation_id' => $reservation->getKey(),
-            'amount' => $amount,
-            'status' => $refund['status'],
-            'at' => now()->toIso8601String(),
-        ]];
-        $payment->metadata = $paymentMetadata;
-        $payment->save();
+        try {
+            $refunded = $this->gateways->driver($payment->payment_company ?: null)->refund($payment, $amount);
+        } catch (Throwable $exception) {
+            throw ReservationNotAllowedException::because('refund_failed', previous: $exception);
+        }
 
-        return $refund;
+        if (! $refunded) {
+            throw ReservationNotAllowedException::because('refund_failed');
+        }
+
+        $this->paymentState->recordRefund($payment, $amount);
+
+        return [...$refund, 'status' => 'refunded'];
     }
 }

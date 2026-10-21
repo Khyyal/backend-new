@@ -130,7 +130,8 @@ describe('cancel', function (): void {
         $cancelled = $this->state->cancel($reservation, $this->client);
 
         expect($cancelled->metadata['refund'])->toMatchArray(['amount' => 100.0, 'status' => 'refunded', 'payment_id' => $payment->id])
-            ->and($payment->fresh()->metadata['refunds'][0])->toMatchArray(['reservation_id' => $reservation->id, 'amount' => 100.0]);
+            ->and($payment->fresh()->status)->toBe(PaymentStatus::Refunded)
+            ->and((float) $payment->fresh()->refunded_amount)->toBe(100.0);
     });
 
     test('a failed refund leaves the reservation untouched', function (): void {
