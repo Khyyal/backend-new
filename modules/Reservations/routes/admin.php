@@ -12,3 +12,10 @@ Route::prefix('admin/centers/{center}/reservations')
     ->group(function (): void {
         require __DIR__.'/partials/center-reservations.php';
     });
+
+Route::prefix('admin/centers/{center}/packages')
+    ->name('admin.centers.packages.')
+    ->middleware(['auth:system_user'])
+    ->group(function (): void {
+        require __DIR__.'/partials/center-packages.php';
+    });

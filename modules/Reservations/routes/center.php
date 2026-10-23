@@ -8,3 +8,10 @@ Route::prefix('centers/{center}/reservations')
     ->group(function (): void {
         require __DIR__.'/partials/center-reservations.php';
     });
+
+Route::prefix('centers/{center}/packages')
+    ->name('centers.packages.')
+    ->middleware(['auth:center_user', 'center.scope'])
+    ->group(function (): void {
+        require __DIR__.'/partials/center-packages.php';
+    });
