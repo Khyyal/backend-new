@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Modules\Centers\Http\Controllers\Admin\CenterController;
 use Modules\Centers\Http\Controllers\Center\BlockedClientController;
+use Modules\Centers\Http\Controllers\Center\PurchaseController;
 use Modules\Centers\Http\Controllers\Center\RatingController;
 
 Route::prefix('admin/centers')
@@ -19,4 +20,7 @@ Route::prefix('admin/centers')
 
         Route::get('/{center}/blocked-clients', [BlockedClientController::class, 'index'])->name('blocked-clients.index');
         Route::post('/{center}/blocked-clients', [BlockedClientController::class, 'store'])->name('blocked-clients.store');
+
+        Route::get('/{center}/purchases', [PurchaseController::class, 'index'])->name('purchases.index');
+        Route::get('/{center}/purchases/{purchase}', [PurchaseController::class, 'show'])->name('purchases.show');
     });

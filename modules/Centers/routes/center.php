@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Modules\Centers\Http\Controllers\Center\AuthController;
 use Modules\Centers\Http\Controllers\Center\BlockedClientController;
 use Modules\Centers\Http\Controllers\Center\CenterController;
+use Modules\Centers\Http\Controllers\Center\PurchaseController;
 use Modules\Centers\Http\Controllers\Center\RatingController;
 use Modules\Centers\Http\Controllers\Center\RegisterController;
 
@@ -55,6 +56,12 @@ Route::middleware(['api'])
 
                         Route::post('/{center}/blocked-clients', [BlockedClientController::class, 'store'])
                             ->name('blocked-clients.store');
+
+                        Route::get('/{center}/purchases', [PurchaseController::class, 'index'])
+                            ->name('purchases.index');
+
+                        Route::get('/{center}/purchases/{purchase}', [PurchaseController::class, 'show'])
+                            ->name('purchases.show');
                     });
             });
 
