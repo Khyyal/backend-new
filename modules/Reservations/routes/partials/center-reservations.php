@@ -8,6 +8,8 @@ use Modules\Reservations\Http\Controllers\Center\ReservationController;
  */
 Route::get('/', [ReservationController::class, 'index'])->name('index');
 Route::post('/', [ReservationController::class, 'store'])->name('store');
+Route::get('/calendar', [ReservationController::class, 'calendar'])->name('calendar');
+Route::get('/day', [ReservationController::class, 'day'])->name('day');
 Route::get('/{reservation}', [ReservationController::class, 'show'])->name('show');
 Route::patch('/{reservation}/reschedule', [ReservationController::class, 'reschedule'])->name('reschedule');
 Route::post('/{reservation}/cancel', [ReservationController::class, 'cancel'])->name('cancel');

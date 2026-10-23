@@ -178,3 +178,49 @@ test('a system user without the permission is rejected', function (): void {
         ->getJson("/api/v1/admin/centers/{$this->center->id}/reservations")
         ->assertForbidden();
 });
+
+test('calendar returns every day of the range with its reservation count', function (): void {
+    ($this->reservation)();
+    ($this->reservation)(['start_time' => '12:00:00', 'end_time' => '13:00:00']);
+    ($this->reservation)(['date' => '2026-10-28']);
+    ($this->reservation)(['date' => '2026-11-10']);
+    ReservationFactory::new()->create(['date' => '2026-10-26']);
+
+    $this->actingAs($this->user, 'center_user')
+        ->getJson("{$this->url}/calendar?from=2026-10-25&to=2026-10-29")
+        ->assertOk()
+        ->assertJsonCount(5, 'data')
+        ->assertExactJson(['data' => [
+            ['date' => '2026-10-25', 'count' => 0],
+            ['date' => '2026-10-26', 'count' => 2],
+            ['date' => '2026-10-27', 'count' => 0],
+            ['date' => '2026-10-28', 'count' => 1],
+            ['date' => '2026-10-29', 'count' => 0],
+        ]]);
+
+    $this->actingAs($this->user, 'center_user')
+        ->getJson("{$this->url}/calendar?from=2026-10-29&to=2026-10-25")
+        ->assertUnprocessable();
+
+    $this->actingAs(UserFactory::new()->create(), 'center_user')
+        ->getJson("{$this->url}/calendar?from=2026-10-25&to=2026-10-29")
+        ->assertForbidden();
+});
+
+test('lists the reservations of a single day', function (): void {
+    $late = ($this->reservation)(['start_time' => '15:00:00', 'end_time' => '16:00:00']);
+    $early = ($this->reservation)();
+    ($this->reservation)(['date' => '2026-10-27']);
+    ReservationFactory::new()->create(['date' => '2026-10-26']);
+
+    $this->actingAs($this->user, 'center_user')
+        ->getJson("{$this->url}/day?date=2026-10-26")
+        ->assertOk()
+        ->assertJsonCount(2, 'data')
+        ->assertJsonPath('data.0.id', $early->id)
+        ->assertJsonPath('data.1.id', $late->id);
+
+    $this->actingAs($this->user, 'center_user')
+        ->getJson("{$this->url}/day")
+        ->assertUnprocessable();
+});

@@ -3,6 +3,7 @@
 namespace Modules\Reservations\Http\Controllers\Center;
 
 use Carbon\CarbonImmutable;
+use Carbon\CarbonPeriod;
 use Dedoc\Scramble\Attributes\Group;
 use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Database\Eloquent\Builder;
@@ -10,6 +11,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Modules\Centers\Models\Center;
 use Modules\Clients\Models\Client;
@@ -76,6 +78,73 @@ class ReservationController extends Controller
             ->withQueryString();
 
         return CenterReservationResource::collection($reservations);
+    }
+
+    /**
+     * Reservations per day.
+     *
+     * Every day from `from` to `to` is returned, with a `count` of `0` when nothing is booked. Reservations
+     * are counted on their start `date`. Capped at 366 days.
+     *
+     * **Query:** `from` and `to`, both required dates (`Y-m-d`); `to` must not be before `from`.
+     */
+    #[Response(status: 200, description: '`{data: [{date: "Y-m-d", count: int}]}`, one entry per day.')]
+    #[Response(status: 401, description: 'Missing or invalid Bearer token.')]
+    #[Response(status: 403, description: 'No access to this center\'s reservations.')]
+    #[Response(status: 422, description: 'Invalid or too long date range.')]
+    public function calendar(Request $request, Center $center): JsonResponse
+    {
+        $this->authorize($request, $center);
+
+        $validated = $request->validate([
+            'from' => ['required', 'date_format:Y-m-d'],
+            'to' => ['required', 'date_format:Y-m-d', 'after_or_equal:from', 'before_or_equal:'.CarbonImmutable::parse($request->input('from', 'now'))->addDays(365)->toDateString()],
+        ]);
+
+        $counts = Reservation::query()
+            ->where('center_id', $center->getKey())
+            ->whereDate('date', '>=', $validated['from'])
+            ->whereDate('date', '<=', $validated['to'])
+            ->select(DB::raw('date(date) as day'), DB::raw('count(*) as total'))
+            ->groupBy('day')
+            ->pluck('total', 'day');
+
+        $days = collect(CarbonPeriod::create($validated['from'], $validated['to']))
+            ->map(fn ($day): array => [
+                'date' => $day->toDateString(),
+                'count' => (int) ($counts[$day->toDateString()] ?? 0),
+            ])
+            ->values();
+
+        return response()->json(['data' => $days]);
+    }
+
+    /**
+     * List the reservations of a day.
+     *
+     * Not paginated; sorted by start time.
+     *
+     * **Query:** `date`, required (`Y-m-d`).
+     */
+    #[Response(status: 200, description: '`CenterReservationResource` collection.')]
+    #[Response(status: 401, description: 'Missing or invalid Bearer token.')]
+    #[Response(status: 403, description: 'No access to this center\'s reservations.')]
+    #[Response(status: 422, description: 'Missing or invalid date.')]
+    public function day(Request $request, Center $center): AnonymousResourceCollection
+    {
+        $this->authorize($request, $center);
+
+        $validated = $request->validate(['date' => ['required', 'date_format:Y-m-d']]);
+
+        return CenterReservationResource::collection(
+            Reservation::query()
+                ->where('center_id', $center->getKey())
+                ->whereDate('date', $validated['date'])
+                ->with(self::RELATIONS)
+                ->orderBy('start_time')
+                ->orderBy('id')
+                ->get()
+        );
     }
 
     /**
