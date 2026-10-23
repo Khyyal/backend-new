@@ -6,11 +6,14 @@ use Dedoc\Scramble\Attributes\Group;
 use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Facades\Gate;
 use Modules\Centers\Models\Center;
 use Modules\Reservations\Enums\ClientPackageStatus;
 use Modules\Reservations\Http\Requests\Center\ListClientPackagesRequest;
+use Modules\Reservations\Http\Resources\CenterClientPackageDetailsResource;
 use Modules\Reservations\Http\Resources\CenterClientPackageResource;
 use Modules\Reservations\Models\ClientPackage;
 
@@ -48,6 +51,28 @@ class PackageController extends Controller
             ->withQueryString();
 
         return CenterClientPackageResource::collection($packages);
+    }
+
+    /**
+     * Show a client package.
+     *
+     * With its owner and the sessions booked from it (`reservations`, by date). A pending (unpaid) package is not found.
+     */
+    #[Response(status: 200, description: 'The `CenterClientPackageDetailsResource`.')]
+    #[Response(status: 401, description: 'Missing or invalid Bearer token.')]
+    #[Response(status: 403, description: 'No access to this center\'s reservations.')]
+    #[Response(status: 404, description: 'No such package in this center.')]
+    public function show(Request $request, Center $center, int $package): CenterClientPackageDetailsResource
+    {
+        Gate::forUser($request->user())->authorize('manageReservations', $center);
+
+        $clientPackage = ClientPackage::query()
+            ->whereHas('service', fn (Builder $query) => $query->where('center_id', $center->getKey()))
+            ->where('status', '!=', ClientPackageStatus::Pending)
+            ->with(['client', 'service', 'priceOption', 'reservations' => fn ($query) => $query->orderBy('date')->orderBy('start_time')])
+            ->findOrFail($package);
+
+        return CenterClientPackageDetailsResource::make($clientPackage);
     }
 
     /**

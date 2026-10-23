@@ -5,6 +5,7 @@ use Modules\Centers\Database\Factories\CenterFactory;
 use Modules\Centers\Database\Factories\UserFactory;
 use Modules\Clients\Database\Factories\ClientFactory;
 use Modules\Reservations\Database\Factories\ClientPackageFactory;
+use Modules\Reservations\Database\Factories\ReservationFactory;
 use Modules\Reservations\Enums\ClientPackageStatus;
 use Modules\Reservations\Tests\Support\BookingFixtures;
 use Modules\Services\Models\ServicePackage;
@@ -145,5 +146,38 @@ test('counts active and not active packages, ignoring pending ones', function ()
 
     $this->actingAs(UserFactory::new()->create(), 'center_user')
         ->getJson("{$this->url}/counts")
+        ->assertForbidden();
+});
+
+test('shows a package with its client and booked sessions', function (): void {
+    $package = ($this->package)();
+    ReservationFactory::new()->forService($this->service)
+        ->at('2026-10-26', '10:00:00', '11:00:00')
+        ->create([
+            'client_id' => $package->client_id,
+            'client_package_id' => $package->id,
+            'price_option_id' => $package->price_option_id,
+        ]);
+
+    $this->actingAs($this->user, 'center_user')
+        ->getJson("{$this->url}/{$package->id}")
+        ->assertOk()
+        ->assertJsonPath('data.id', $package->id)
+        ->assertJsonPath('data.client.id', $package->client_id)
+        ->assertJsonCount(1, 'data.reservations')
+        ->assertJsonPath('data.reservations.0.date', '2026-10-26')
+        ->assertJsonPath('data.reservations.0.start_time', '10:00');
+});
+
+test('a pending, foreign or forbidden package cannot be shown', function (): void {
+    $pending = ($this->package)(['status' => ClientPackageStatus::Pending]);
+    $foreign = ClientPackageFactory::new()->create();
+    $own = ($this->package)();
+
+    $this->actingAs($this->user, 'center_user')->getJson("{$this->url}/{$pending->id}")->assertNotFound();
+    $this->actingAs($this->user, 'center_user')->getJson("{$this->url}/{$foreign->id}")->assertNotFound();
+
+    $this->actingAs(UserFactory::new()->create(), 'center_user')
+        ->getJson("{$this->url}/{$own->id}")
         ->assertForbidden();
 });
