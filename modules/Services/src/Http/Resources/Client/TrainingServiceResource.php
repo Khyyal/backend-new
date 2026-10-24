@@ -15,6 +15,23 @@ use Modules\Support\Http\Resources\MediaResource;
  */
 class TrainingServiceResource extends JsonResource
 {
+    /**
+     * Upcoming availability keyed by trainer id.
+     *
+     * @var array<int, array<int, array<string, mixed>>>|null
+     */
+    private ?array $availability = null;
+
+    /**
+     * @param  array<int, array<int, array<string, mixed>>>|null  $availability  keyed by trainer id
+     */
+    public function withAvailability(?array $availability): static
+    {
+        $this->availability = $availability;
+
+        return $this;
+    }
+
     public function toArray(Request $request): array
     {
         $service = $this->resource->service;
@@ -39,10 +56,9 @@ class TrainingServiceResource extends JsonResource
             ])->values(),
             'trainers' => $this->resource->trainers
                 ->sortBy('id')
-                ->map(fn (Trainer $trainer) => [
-                    'id' => $trainer->id,
-                    'name' => $trainer->name,
-                ])->values(),
+                ->map(fn (Trainer $trainer) => TrainerResource::make($trainer)
+                    ->withAvailability($this->availability[$trainer->id] ?? null))
+                ->values(),
             'cover' => $this->singleMedia('cover'),
             'images' => MediaResource::collection(
                 $service->media->where('collection_name', 'images')->sortBy('order_column')->values()

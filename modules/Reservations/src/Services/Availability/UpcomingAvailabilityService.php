@@ -14,15 +14,19 @@ class UpcomingAvailabilityService
 {
     public const int DAYS = 15;
 
-    public function __construct(private readonly RecreationRidingAvailability $recreationRiding) {}
+    public function __construct(
+        private readonly RecreationRidingAvailability $recreationRiding,
+        private readonly TrainingServiceAvailability $training,
+    ) {}
 
     /**
-     * @return array<int, array<string, mixed>>|null
+     * @return array<int, array<mixed>>|null days, or days keyed by trainer id for training
      */
     public function forService(Service $service): ?array
     {
         $availability = match ($service->type) {
             ServiceType::RecreationRiding => $this->recreationRiding,
+            ServiceType::Training => $this->training,
             default => null,
         };
 

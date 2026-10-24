@@ -11,6 +11,7 @@ use Modules\Services\Database\Factories\HorseServiceFactory;
 use Modules\Services\Database\Factories\RecreationalRidingFactory;
 use Modules\Services\Database\Factories\ResortFactory;
 use Modules\Services\Database\Factories\ServiceFactory;
+use Modules\Services\Database\Factories\TrainerFactory;
 use Modules\Services\Database\Factories\TrainingServiceFactory;
 use Modules\Services\Database\Factories\VisitFactory;
 use Modules\Services\Enums\ServiceType;
@@ -136,4 +137,52 @@ test('loads recreation riding details with a constant number of queries', functi
     }
 
     expect($queries())->toBe($withOne);
+});
+
+test('lists training trainers with their own availability using a constant number of queries', function (): void {
+    $this->travelTo('2026-10-19 08:00:00');
+    $training = TrainingServiceFactory::new()->create();
+    $service = ServiceFactory::new()
+        ->forServiceable($training, ServiceType::Training)
+        ->create(['center_id' => $this->center->id]);
+    $service->settings()->create(['key' => 'enable_single_session_booking', 'value' => '1']);
+    $trainers = TrainerFactory::new()->count(2)->create(['center_id' => $this->center->id, 'max_tickets_per_hour' => 5]);
+    foreach ($trainers as $trainer) {
+        $trainer->schedules()->create(['day_of_week' => 1, 'start_time' => '09:00', 'end_time' => '10:00']);
+    }
+    $training->trainers()->attach($trainers->modelKeys());
+
+    $queries = function () use ($service): int {
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+        $this->getJson(($this->url)($service))->assertOk();
+        DB::disableQueryLog();
+
+        return count(DB::getQueryLog());
+    };
+
+    ReservationFactory::new()->forService($service)->at('2026-10-19', '09:00:00', '10:00:00')
+        ->create(['trainer_id' => $trainers[0]->id, 'quantity' => 2]);
+    $withOne = $queries();
+
+    foreach (range(1, 14) as $offset) {
+        foreach ($trainers as $trainer) {
+            ReservationFactory::new()->forService($service)
+                ->at(now()->addDays($offset)->toDateString(), '09:00:00', '10:00:00')
+                ->create(['trainer_id' => $trainer->id]);
+        }
+    }
+
+    expect($queries())->toBe($withOne);
+
+    $this->getJson(($this->url)($service))
+        ->assertOk()
+        ->assertJsonMissingPath('data.details.availability')
+        ->assertJsonPath('data.details.trainers.0.id', $trainers[0]->id)
+        ->assertJsonPath('data.details.trainers.0.name', $trainers[0]->name)
+        ->assertJsonCount(15, 'data.details.trainers.0.availability')
+        ->assertJsonPath('data.details.trainers.0.availability.0.hours', [
+            ['hour' => '09:00', 'available' => true, 'available_tickets' => 3, 'max_tickets' => 5],
+        ])
+        ->assertJsonPath('data.details.trainers.1.availability.0.hours.0.available_tickets', 5);
 });

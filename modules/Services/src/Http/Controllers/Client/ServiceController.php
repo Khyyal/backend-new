@@ -25,11 +25,14 @@ class ServiceController extends Controller
      * type-specific shape (e.g. `days` for resorts, `trainers` for training,
      * `days` and `hours` for recreation riding and visits).
      *
-     * Recreation riding `details` include `availability`: today and the
-     * next 14 days, each `{date, available, hours}`; `hours` are the
+     * Recreation riding `details` include `availability`, and each of a
+     * training service's `details.trainers` (`{id, name, availability}`)
+     * its own, computed from that trainer's schedules and hourly limit
+     * (shared by every service the trainer teaches). Availability covers
+     * today and the next 14 days, each `{date, available, hours}`; `hours` are the
      * one-hour slots of the day's schedule windows, each `{hour, available,
      * available_tickets, max_tickets}` (`available_tickets` / `max_tickets`
-     * are `null` when the riding has no hourly limit). A slot is available when it has not
+     * are `null` when there is no hourly limit). A slot is available when it has not
      * started, is not blocked, has tickets left and the service accepts
      * bookings; a day is available when any of its slots is.
      */

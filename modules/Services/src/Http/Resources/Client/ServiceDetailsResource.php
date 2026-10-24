@@ -44,7 +44,7 @@ class ServiceDetailsResource extends JsonResource
                 ServiceType::Resort => ResortResource::make($serviceable),
                 ServiceType::HorseCare => HorseCareResource::make($serviceable),
                 ServiceType::HorseService => HorseServiceResource::make($serviceable),
-                ServiceType::Training => TrainingServiceResource::make($serviceable),
+                ServiceType::Training => TrainingServiceResource::make($serviceable)->withAvailability($this->availability),
             },
         ];
     }

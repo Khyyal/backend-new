@@ -13,12 +13,14 @@ interface ServiceAvailability
     /**
      * Eager loads on the Service needed to compute the range without extra queries.
      *
-     * @return array<string, \Closure>
+     * @return array<int|string, string|\Closure>
      */
     public function relations(CarbonImmutable $from, CarbonImmutable $to): array;
 
     /**
-     * @return array<int, array<string, mixed>>
+     * Days for the service, or days keyed by schedule owner (e.g. trainer id).
+     *
+     * @return array<int, array<mixed>>
      */
     public function forService(Service $service, CarbonImmutable $from, int $days): array;
 }
