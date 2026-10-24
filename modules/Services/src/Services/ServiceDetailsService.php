@@ -21,16 +21,29 @@ use Modules\Support\Enums\ActivationStatus;
 class ServiceDetailsService
 {
     /**
+     * Relations of the Service itself, per serviceable type.
+     *
      * @var array<class-string, list<string>>
      */
-    private const RELATIONS = [
-        RecreationalRiding::class => ['service.priceOptions.package', 'service.settings', 'service.media', 'schedules'],
-        Visit::class => ['service.priceOptions', 'service.settings', 'service.media', 'schedules'],
-        Event::class => ['service.priceOptions', 'service.settings', 'service.media'],
-        Resort::class => ['service.priceOptions', 'service.settings', 'service.media'],
-        HorseCare::class => ['service.priceOptions', 'service.media'],
-        HorseService::class => ['service.priceOptions', 'service.media'],
-        TrainingService::class => ['service.priceOptions.package', 'service.settings', 'service.media', 'trainers'],
+    private const SERVICE_RELATIONS = [
+        RecreationalRiding::class => ['priceOptions.package', 'settings', 'media'],
+        Visit::class => ['priceOptions', 'settings', 'media'],
+        Event::class => ['priceOptions', 'settings', 'media'],
+        Resort::class => ['priceOptions', 'settings', 'media'],
+        HorseCare::class => ['priceOptions', 'media'],
+        HorseService::class => ['priceOptions', 'media'],
+        TrainingService::class => ['priceOptions.package', 'settings', 'media'],
+    ];
+
+    /**
+     * Relations of the serviceable, per type.
+     *
+     * @var array<class-string, list<string>>
+     */
+    private const SERVICEABLE_RELATIONS = [
+        RecreationalRiding::class => ['schedules'],
+        Visit::class => ['schedules'],
+        TrainingService::class => ['trainers'],
     ];
 
     /**
@@ -47,8 +60,9 @@ class ServiceDetailsService
 
         $serviceable = $service->serviceable ?? throw (new ModelNotFoundException)->setModel(Service::class);
 
+        $service->load(self::SERVICE_RELATIONS[$serviceable::class] ?? []);
         $serviceable->setRelation('service', $service)
-            ->loadMissing(self::RELATIONS[$serviceable::class] ?? []);
+            ->load(self::SERVICEABLE_RELATIONS[$serviceable::class] ?? []);
 
         return $service;
     }

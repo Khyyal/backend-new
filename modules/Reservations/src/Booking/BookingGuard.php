@@ -79,6 +79,20 @@ class BookingGuard
     }
 
     /**
+     * Whether any client could book the service at all: it is active, not
+     * closed by its center and at least one booking mode is enabled.
+     */
+    public function acceptsBookings(Service $service): bool
+    {
+        if ($service->status !== ActivationStatus::ACTIVE || $this->closedByCenter($service)) {
+            return false;
+        }
+
+        return collect(['enable_single_session_booking', 'enable_package_booking'])
+            ->contains(fn (string $key): bool => ! $this->supportsSetting($service, $key) || $this->settingEnabled($service, $key));
+    }
+
+    /**
      * A setting the service type does not declare never blocks the booking.
      *
      * @throws ReservationNotAllowedException

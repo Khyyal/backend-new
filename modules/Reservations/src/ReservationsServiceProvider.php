@@ -17,6 +17,7 @@ use Modules\Reservations\Listeners\RefundLatePayment;
 use Modules\Reservations\Listeners\ReleaseCancelledPurchase;
 use Modules\Reservations\Models\ClientPackage;
 use Modules\Reservations\Models\Reservation;
+use Modules\Services\Models\Service;
 
 class ReservationsServiceProvider extends ServiceProvider
 {
@@ -41,6 +42,9 @@ class ReservationsServiceProvider extends ServiceProvider
             'reservation' => Reservation::class,
             'client_package' => ClientPackage::class,
         ]);
+
+        // Lets availability eager-load a service's reservations without Services depending on Reservations.
+        Service::resolveRelationUsing('reservations', fn (Service $service) => $service->hasMany(Reservation::class));
 
         Event::listen(PurchaseConfirmed::class, ConfirmPurchasedReservations::class);
         Event::listen(PurchaseCancelled::class, ReleaseCancelledPurchase::class);

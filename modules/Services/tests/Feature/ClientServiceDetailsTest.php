@@ -1,8 +1,10 @@
 <?php
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Modules\Centers\Database\Factories\CenterFactory;
 use Modules\Centers\Enums\CenterStatus;
+use Modules\Reservations\Database\Factories\ReservationFactory;
 use Modules\Services\Database\Factories\EventFactory;
 use Modules\Services\Database\Factories\HorseCareFactory;
 use Modules\Services\Database\Factories\HorseServiceFactory;
@@ -72,3 +74,66 @@ test('returns 404 for a service that cannot be shown', function (string $case): 
 
     $this->getJson(($this->url)($service, $center))->assertNotFound();
 })->with(['unknown slug', 'slug of another center', 'inactive service', 'invisible center', 'deleted service']);
+
+test('includes the next 15 days of availability for recreation riding', function (): void {
+    $this->travelTo('2026-10-19 08:00:00');
+    $riding = RecreationalRidingFactory::new()->create(['max_tickets_per_hour' => 4]);
+    $riding->schedules()->create(['day_of_week' => 1, 'start_time' => '09:00', 'end_time' => '11:00']);
+    $service = ServiceFactory::new()
+        ->forServiceable($riding, ServiceType::RecreationRiding)
+        ->create(['center_id' => $this->center->id]);
+    $service->settings()->create(['key' => 'enable_single_session_booking', 'value' => '1']);
+
+    $this->getJson(($this->url)($service))
+        ->assertOk()
+        ->assertJsonCount(15, 'data.details.availability')
+        ->assertJsonPath('data.details.availability.0.date', '2026-10-19')
+        ->assertJsonPath('data.details.availability.0.hours', [
+            ['hour' => '09:00', 'available' => true, 'available_tickets' => 4, 'max_tickets' => 4],
+            ['hour' => '10:00', 'available' => true, 'available_tickets' => 4, 'max_tickets' => 4],
+        ])
+        ->assertJsonPath('data.details.availability.1', ['date' => '2026-10-20', 'available' => false, 'hours' => []]);
+});
+
+test('has no availability for other service types yet', function (): void {
+    $service = ServiceFactory::new()
+        ->forServiceable(ResortFactory::new()->create(), ServiceType::Resort)
+        ->create(['center_id' => $this->center->id]);
+
+    $this->getJson(($this->url)($service))
+        ->assertOk()
+        ->assertJsonMissingPath('data.availability')
+        ->assertJsonMissingPath('data.details.availability');
+});
+
+test('loads recreation riding details with a constant number of queries', function (): void {
+    $this->travelTo('2026-10-19 08:00:00');
+    $riding = RecreationalRidingFactory::new()->create(['max_tickets_per_hour' => 50]);
+    foreach (range(0, 6) as $day) {
+        $riding->schedules()->create(['day_of_week' => $day, 'start_time' => '09:00', 'end_time' => '12:00']);
+    }
+    $service = ServiceFactory::new()
+        ->forServiceable($riding, ServiceType::RecreationRiding)
+        ->create(['center_id' => $this->center->id]);
+    $service->settings()->create(['key' => 'enable_single_session_booking', 'value' => '1']);
+
+    $queries = function () use ($service): int {
+        DB::flushQueryLog();
+        DB::enableQueryLog();
+        $this->getJson(($this->url)($service))->assertOk();
+        DB::disableQueryLog();
+
+        return count(DB::getQueryLog());
+    };
+
+    ReservationFactory::new()->forService($service)->at('2026-10-19', '09:00:00', '10:00:00')->create();
+    $withOne = $queries();
+
+    foreach (range(1, 14) as $offset) {
+        ReservationFactory::new()->forService($service)
+            ->at(now()->addDays($offset)->toDateString(), '10:00:00', '11:00:00')
+            ->create();
+    }
+
+    expect($queries())->toBe($withOne);
+});

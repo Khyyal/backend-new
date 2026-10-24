@@ -14,6 +14,21 @@ use Modules\Support\Http\Resources\MediaResource;
  */
 class RecreationRidingResource extends JsonResource
 {
+    /**
+     * @var array<int, array{date: string, available: bool, hours: array<int, array<string, mixed>>}>|null
+     */
+    private ?array $availability = null;
+
+    /**
+     * @param  array<int, array{date: string, available: bool, hours: array<int, array<string, mixed>>}>|null  $availability
+     */
+    public function withAvailability(?array $availability): static
+    {
+        $this->availability = $availability;
+
+        return $this;
+    }
+
     public function toArray(Request $request): array
     {
         $service = $this->resource->service;
@@ -43,6 +58,7 @@ class RecreationRidingResource extends JsonResource
             'hours' => $schedules->where('day_of_week', $firstDay)
                 ->flatMap(fn ($slot) => [substr($slot->start_time, 0, 5), substr($slot->end_time, 0, 5)])
                 ->values(),
+            'availability' => $this->availability,
             'cover' => $this->singleMedia('cover'),
             'images' => MediaResource::collection(
                 $service->media->where('collection_name', 'images')->sortBy('order_column')->values()
