@@ -35,6 +35,13 @@ class ServiceController extends Controller
      * are `null` when there is no hourly limit). A slot is available when it has not
      * started, is not blocked, has tickets left and the service accepts
      * bookings; a day is available when any of its slots is.
+     *
+     * Event `details.availability` is empty for `general` events. For
+     * `specific_day` events it lists every event day (`start_date` ..
+     * `end_date`) as `{day, available, available_tickets, max_tickets}`
+     * under `max_tickets_per_day`; a day is available while booking is
+     * open today (`open_date` .. `close_date`), the day has not passed, is
+     * not blocked all day and has tickets left.
      */
     #[Response(status: 200, description: '`{data: {type, details}}`.')]
     #[Response(status: 404, description: 'No such active service in this visible center.')]

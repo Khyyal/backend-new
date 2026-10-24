@@ -14,6 +14,21 @@ use Modules\Support\Http\Resources\MediaResource;
  */
 class EventResource extends JsonResource
 {
+    /**
+     * @var array<int, array{day: string, available: bool, available_tickets: int|null, max_tickets: int|null}>|null
+     */
+    private ?array $availability = null;
+
+    /**
+     * @param  array<int, array{day: string, available: bool, available_tickets: int|null, max_tickets: int|null}>|null  $availability
+     */
+    public function withAvailability(?array $availability): static
+    {
+        $this->availability = $availability;
+
+        return $this;
+    }
+
     public function toArray(Request $request): array
     {
         $service = $this->resource->service;
@@ -36,6 +51,7 @@ class EventResource extends JsonResource
                 'name' => $option->name,
                 'price' => $option->price,
             ])->values(),
+            'availability' => $this->availability,
             'cover' => $this->singleMedia('cover'),
             'images' => MediaResource::collection(
                 $service->media->where('collection_name', 'images')->sortBy('order_column')->values()

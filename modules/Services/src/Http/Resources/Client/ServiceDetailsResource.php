@@ -40,7 +40,7 @@ class ServiceDetailsResource extends JsonResource
             'details' => match ($this->resource->type) {
                 ServiceType::RecreationRiding => RecreationRidingResource::make($serviceable)->withAvailability($this->availability),
                 ServiceType::Visit => VisitResource::make($serviceable),
-                ServiceType::Event => EventResource::make($serviceable),
+                ServiceType::Event => EventResource::make($serviceable)->withAvailability($this->availability),
                 ServiceType::Resort => ResortResource::make($serviceable),
                 ServiceType::HorseCare => HorseCareResource::make($serviceable),
                 ServiceType::HorseService => HorseServiceResource::make($serviceable),

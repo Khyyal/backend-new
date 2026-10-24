@@ -186,3 +186,26 @@ test('lists training trainers with their own availability using a constant numbe
         ])
         ->assertJsonPath('data.details.trainers.1.availability.0.hours.0.available_tickets', 5);
 });
+
+test('includes the event days in event details', function (): void {
+    $this->travelTo('2026-10-19 08:00:00');
+    $event = EventFactory::new()->create([
+        'occurrence_type' => 'specific_day',
+        'start_date' => '2026-10-25',
+        'end_date' => '2026-10-26',
+        'open_date' => '2026-10-15',
+        'close_date' => '2026-10-26',
+        'max_tickets_per_day' => 5,
+    ]);
+    $service = ServiceFactory::new()
+        ->forServiceable($event, ServiceType::Event)
+        ->create(['center_id' => $this->center->id]);
+    ReservationFactory::new()->forService($service)->at('2026-10-25')->create(['quantity' => 2]);
+
+    $this->getJson(($this->url)($service))
+        ->assertOk()
+        ->assertJsonPath('data.details.availability', [
+            ['day' => '2026-10-25', 'available' => true, 'available_tickets' => 3, 'max_tickets' => 5],
+            ['day' => '2026-10-26', 'available' => true, 'available_tickets' => 5, 'max_tickets' => 5],
+        ]);
+});

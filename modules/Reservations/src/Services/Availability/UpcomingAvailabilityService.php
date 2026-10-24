@@ -7,8 +7,9 @@ use Modules\Services\Enums\ServiceType;
 use Modules\Services\Models\Service;
 
 /**
- * Bookability of a service over the next days, starting today. Service types
- * without an availability implementation yet return `null`.
+ * Bookability of a service over the next days, starting today (events use
+ * their own dates). Service types without an availability implementation yet
+ * return `null`.
  */
 class UpcomingAvailabilityService
 {
@@ -17,6 +18,7 @@ class UpcomingAvailabilityService
     public function __construct(
         private readonly RecreationRidingAvailability $recreationRiding,
         private readonly TrainingServiceAvailability $training,
+        private readonly EventAvailability $event,
     ) {}
 
     /**
@@ -27,6 +29,7 @@ class UpcomingAvailabilityService
         $availability = match ($service->type) {
             ServiceType::RecreationRiding => $this->recreationRiding,
             ServiceType::Training => $this->training,
+            ServiceType::Event => $this->event,
             default => null,
         };
 
