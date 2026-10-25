@@ -1,7 +1,6 @@
 {
     "agents": [
         "claude_code"
-        
     ],
     "cloud": true,
     "guidelines": true,
@@ -13,6 +12,7 @@
         "deploying-to-cloud",
         "laravel-best-practices",
         "testing-best-practices",
+        "octane-development",
         "tailwindcss-development"
     ]
 }

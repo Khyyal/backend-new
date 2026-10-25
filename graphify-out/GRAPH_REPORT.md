@@ -1,176 +1,176 @@
-# Graph Report - khyyal_backend  (2026-10-11)
+# Graph Report - khyyal_backend  (2026-10-24)
 
 ## Corpus Check
-- 639 files · ~201,361 words
+- 778 files · ~230,358 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 21 file(s) not represented in the graph (top: (none) 17, .example 1, .xml 1)
 
 ## Summary
-- 4676 nodes · 10588 edges · 286 communities (185 shown, 101 thin omitted)
-- Extraction: 95% EXTRACTED · 5% INFERRED · 0% AMBIGUOUS · INFERRED: 564 edges (avg confidence: 0.94)
+- 5685 nodes · 13702 edges · 322 communities (208 shown, 114 thin omitted)
+- Extraction: 95% EXTRACTED · 5% INFERRED · 0% AMBIGUOUS · INFERRED: 672 edges (avg confidence: 0.94)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `f85bd7ab`
+- Built from commit: `cfd7fed0`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
 - Illuminate\Http\Request
-- Illuminate\Foundation\Testing\RefreshDatabase
-- ServiceTypeTerm
-- Illuminate\Database\Eloquent\Relations\BelongsToMany
+- Platform
+- Client
 - Task10SharedInfraTest.php
 - Illuminate\Http\Resources\Json\JsonResource
-- ServiceBlock
+- MediaController.php
 - CenterFactory
-- Illuminate\Database\Eloquent\Factories\HasFactory
-- ServicePackagesTest.php
-- Illuminate\Foundation\Events\Dispatchable
-- Purchase
-- Payment
-- AuthAndCenterControllerTest.php
 - Center
-- Task1SkeletonTest.php
-- PlanFactory
+- ServicePackage
+- Client/AuthController.php
+- CreateReservationTest.php
+- Payment
+- CenterRegisterServiceTest.php
+- Illuminate\Routing\Controller
+- PaymentGatewayException
+- CenterHorseCareService.php
 - Illuminate\Database\Eloquent\Factories\Factory
 - payment-gateways-tamara-moyasar-implementation-prompt.md
-- EventDispatchTest.php
-- Spatie\MediaLibrary\MediaCollections\Models\Media
-- Illuminate\Database\Eloquent\Model
+- DiscountResolverTest.php
+- PurchaseController.php
+- CenterRegisterService.php
 - Subscription
-- PlanFeature
+- Illuminate\Foundation\Testing\RefreshDatabase
 - OtpVerificationServiceTest.php
-- DiscountFactory
-- SubscriptionController.php
-- Service
-- Symfony\Component\HttpFoundation\Response
-- PaymentGatewayManager
+- Promotion Module — Implementation Plan
+- Implementation Tasks — Purchase Module
+- Acceptance Criteria
+- Visit
+- Goals
 - PaymentFactory
 - Payment Gateways (Tamara + Moyasar) — Implementation Tasks Plan
-- SubscriptionFactory
+- SubscriptionStatus
 - Illuminate\Database\Schema\Blueprint
-- RatingService
-- Illuminate\Foundation\Http\FormRequest
-- Client
-- DiscountUsageServiceTest.php
-- Event
+- HorseCareController.php
+- ReservationStateServiceTest.php
+- ReservationNotAllowedException
 - ServiceType
+- ServiceBlock
 - Resort
-- Visit
-- CenterEventService.php
+- SlugTest.php
+- Spatie\MediaLibrary\MediaCollections\Models\Media
 - TemporaryMediaServiceTest.php
-- Billing/tests/Unit/ScrambleAttributesTest.php
+- PlanFactory
 - What You Must Do When Invoked
 - CityFactory
-- PromotionStatus
-- .count
+- DiscountScope
+- Illuminate\Database\Eloquent\Model
 - Illuminate\Support\ServiceProvider
 - Cloud CLI
-- Modules\Centers\Models\Center
-- ResortController.php
-- CityService
-- StorePlanRequest
-- HorseCareServiceTest.php
-- HorseServiceServiceTest.php
-- TrainerFactory
-- DiscountResolverTest.php
-- PlanStatus
+- User
+- Promotion Module — Technical Review
+- EventController.php
 - CenterSearchService.php
-- Illuminate\Database\Migrations\Migration
+- HorseCare
+- HorseService
+- CenterTrainingServiceTest.php
+- Trainer
+- .count
+- Reservation
+- 2026_09_22_114915_create_centers_table.php
 - Laravel Boost Guidelines
 - purchase-module-implementation (1).md
-- Illuminate\Support\Facades\Route
-- CenterHorseCareService.php
+- AuthAndCenterControllerTest.php
+- Illuminate\Database\Eloquent\Builder
 - SystemPermission
-- Acceptance Criteria
+- Caching Best Practices
 - SystemUser
-- CenterRegisterServiceTest.php
-- Illuminate\Http\JsonResponse
-- Illuminate\Support\Facades\DB
-- CenterResortService.php
-- Implementation Tasks — Purchase Module
+- CenterAdminService.php
+- PlanFactory.php
+- .event
+- PriceOption
+- DiscountFactory
 - psr-4
-- TemporaryMediaService
-- Trainer
+- Purchase
+- Event
 - WebhookEvent
-- WebhookEventFactory
-- CenterHorseServiceService.php
+- DiscountUsageServiceTest.php
 - Acceptance Criteria
-- RegisterControllerTest.php
-- Illuminate\Routing\Controller
-- Billing Module - Implementation Plan
-- User
+- EventAvailabilityTest.php
+- ClientServiceDetailsTest.php
+- TrainingServiceController.php
+- Illuminate\Database\Eloquent\Relations\MorphMany
 - Services/routes/center.php
 - Illuminate\Database\Seeder
-- Goals
-- SupportServiceProvider.php
-- package.json
-- Illuminate\Support\Str
-- TrainingServiceResource.php
-- SystemRole
-- SystemRole
-- Goals
-- CenterRecreationRidingService.php
-- SlugTest.php
-- DiscountRedemption
-- SMSService
-- Illuminate\Database\Eloquent\Builder
-- VisitEnterType
-- CenterAdminService
-- CenterTrainingServiceService.php
-- CenterRegisterService.php
-- ServiceBlockService
-- OtpVerificationService
-- ServicePackageFactory.php
-- CouponFactory
-- ServiceSettingsTest.php
-- Task 5: Database migrations — purchases, purchase_items, payments, webhook_events
-- ActionLog
-- HorseCareController.php
 - VisitController.php
-- Illuminate\Http\Resources\Json\AnonymousResourceCollection
-- TrainingServiceController
-- Caching Best Practices
-- Illuminate\Database\Eloquent\Relations\MorphMany
 - Task-local Test Requirements (TR)
+- package.json
+- Feature
+- Detection Checklist
+- Illuminate\Foundation\Events\Dispatchable
+- CenterRecreationRidingService.php
+- CenterEventService.php
+- SupportServiceProvider.php
+- CenterVisitService.php
+- Carbon\CarbonImmutable
+- PlanFeature
+- Error Handling Best Practices
+- BookingFixtures
+- database/factories/UserFactory.php
+- Billing Module - Product Requirements Document
+- HorseServiceController.php
+- Illuminate\Support\Facades\DB
+- OtpVerificationService
+- Center/PackageController.php
+- EventDispatchTest.php
+- RatingService
+- Service
+- Illuminate\Support\Facades\Schema
+- PaymentProviderUnavailableException
+- SystemUserFactory.php
+- ResortController.php
+- Task-local Test Requirements (TR)
+- SystemRole
+- Illuminate\Database\Migrations\Migration
+- PaymentGatewayClientHelpers.php
 - composer.json
-- BlockTimeScope
+- ServiceFactory
 - Khyyal Backend
 - Centers Module: Phone + OTP Login & Center-Selection Endpoints
-- Task-local Test Requirements (TR)
-- Detection Checklist
+- 2026_09_28_000002_create_coupons_table.php
+- Illuminate\Database\Eloquent\Factories\HasFactory
 - Process
 - Centers/composer.json
 - Clients/composer.json
+- ServiceSetting
 - Support/composer.json
-- SupportServiceProvider
+- HasCity
 - Independent Review — Centers Phone+OTP Login & Center-Selection Endpoints
 - Acceptance Criteria
 - Architecture Best Practices
 - Events and Notifications Best Practices
 - Security Best Practices
 - require
-- TrainingService
+- SupportServiceProvider
 - 2026_10_08_120000_add_center_id_type_index_to_services_table.php
 - Advanced Query Best Practices
 - Migration Best Practices
 - Queue and Job Best Practices
 - require-dev
-- RatingFactory
+- UpcomingAvailabilityService
+- /graphify
 - Important scenarios
-- 2026_09_22_123438_create_tags_table.php
+- 2026_09_28_000008_create_plan_features_table.php
+- Support Module API Layer Specification
 - graphify reference: extra exports and benchmark
 - Database Performance Best Practices
 - Eloquent Best Practices
 - scripts
 - 2026_09_23_083152_create_clients_table.php
-- 2026_10_10_090000_create_training_services_table.php
-- CenterSearchService
+- 2026_09_23_213417_create_personal_access_tokens_table.php
+- Purchase Module Implementation — Independent Review
 - bootstrap/app.php
 - laravel-best-practices/SKILL.md
 - Blade and View Best Practices
-- Error Handling Best Practices
+- DiscountCalculatorTest.php
 - Task Scheduling Best Practices
 - Assertions
 - Endpoint Tests
@@ -180,34 +180,40 @@
 - HTTP Client Best Practices
 - Mail Best Practices
 - Routing and Controller Best Practices
-- 2026_10_10_090002_create_trainer_training_service_table.php
-- City
+- WebhookEventFactory
 - Validation and Forms Best Practices
 - Fakes, Mocks, and Determinism
 - Reviewing Tests
 - config
-- PurchaseServiceProvider.php
-- SystemUserFactory.php
-- Task 2: Enums — PurchaseSource, PurchaseStatus, PaymentMethod, PaymentStatus
+- PaymentMethod
+- 2026_10_07_180000_add_max_tickets_per_hour_to_recreational_ridings_table.php
+- Symfony\Component\HttpFoundation\Response
+- Client/EventResource.php
+- EventAvailability
 - 14. Payment Status
-- Implementation Tasks — Centers Phone+OTP Login & Center-Selection
+- 2026_09_28_000005_create_plans_table.php
 - Task 7: Create CenterController for listing + viewing + access endpoints
 - graphify reference: query, path, explain
-- Configuration Best Practices
+- RatingFactory
 - Naming and Structure
-- Functional Requirements
-- Task 4: Create Resource classes
-- Task 8: Register routes in modules/Centers/routes/center.php
-- AppServiceProvider
+- RecreationRidingController.php
+- SMSService
+- Illuminate\Foundation\Http\FormRequest
+- 2026_09_22_154022_create_center_user_assignment.php
+- TemporaryMediaService
+- CouponFactory
 - Factories and Test Data
 - Testing Best Practices
-- DiscountCalculatorTest.php
-- Illuminate\Support\Facades\Schema
-- HasDevices
-- 2026_10_07_172102_create_visits_table.php
-- 2026_10_07_200403_create_horse_cares_table.php
+- 2026_09_28_000010_create_subscriptions_table.php
+- 2026_10_21_100000_create_client_packages_table.php
+- 2026_09_30_134805_create_recreational_ridings_table.php
+- Implementation Tasks — Centers Phone+OTP Login & Center-Selection
+- Illuminate\Http\JsonResponse
+- 2026_10_21_100001_create_reservations_table.php
 - 2026_10_11_120000_create_service_settings_table.php
-- 2026_10_08_110000_add_timestamps_to_ratings_table.php
+- ClientPackage
+- 2026_10_21_100002_create_reservation_lines_table.php
+- Convention and Style Best Practices
 - 27. Database Constraints
 - 3.1 Purchase
 - 8. Purchase Status
@@ -217,320 +223,338 @@
 - graphify reference: commit hook and native CLAUDE.md integration
 - graphify reference: incremental update and cluster-only
 - psr-4
-- database/factories/UserFactory.php
-- 2026_09_23_213417_create_personal_access_tokens_table.php
+- 2026_10_22_100000_add_refunds_to_payments_table.php
+- 2026_10_07_183835_create_resorts_table.php
 - 2026_09_28_000006_create_features_table.php
-- 2026_09_28_000007_create_limits_table.php
-- 2026_09_28_000008_create_plan_features_table.php
-- 2026_09_28_000009_create_plan_limits_table.php
+- 2026_10_08_090001_create_service_block_periods_table.php
+- Task1SkeletonTest.php
+- ListClientPackagesRequest
+- 2026_09_22_104900_create_city_table.php
 - 2026_09_22_123844_create_tag_center_table.php
 - 2026_09_22_123999_create_users_table.php
-- 2026_09_22_154022_create_center_user_assignment.php
-- 2026_10_08_130000_create_center_favorites_table.php
-- 2026_09_28_000002_create_coupons_table.php
-- 2026_09_28_000003_create_discountables_table.php
-- 2026_09_28_000004_create_discount_redemptions_table.php
-- 2026_09_26_000002_create_purchase_items_table.php
+- Illuminate\Database\Eloquent\Relations\BelongsToMany
+- 2026_09_23_111656_create_o_t_ps_table.php
+- CenterStatus
+- Functional Requirements
+- PurchaseServiceProvider
+- 2026_09_22_144258_create_ratings_table.php
 - 2026_09_26_000003_create_payments_table.php
-- 2026_09_26_000004_create_webhook_events_table.php
+- City
 - 2026_09_30_105748_create_services_table.php
-- UpdateCenterTest.php
-- 2026_10_07_180000_add_max_tickets_per_hour_to_recreational_ridings_table.php
+- Modules\Services\Models\Service
+- 2026_10_08_110000_add_timestamps_to_ratings_table.php
 - 2026_10_07_180642_create_events_table.php
-- 2026_09_28_000001_create_discounts_table.php
+- HTTP Status Code Matrix per Endpoint
 - 2026_10_03_102340_create_price_options_table.php
-- 2026_10_08_090000_create_service_blocks_table.php
-- 2026_10_08_090001_create_service_block_periods_table.php
-- 2026_10_07_183835_create_resorts_table.php
+- Task 6: Create AuthController for /auth/phone and /auth/phone/verify
+- 2026_10_03_092351_create_schedules_table.php
 - 2026_10_10_090001_create_trainers_table.php
 - 2026_10_11_130000_create_service_packages_table.php
-- 2026_09_22_104900_create_city_table.php
+- 2026_10_07_195829_create_service_type_terms_table.php
 - 2026_09_22_110713_create_devices_table.php
 - 2026_10_11_100000_create_blocks_table.php
-- 2026_09_22_144258_create_ratings_table.php
-- 2026_09_23_111656_create_o_t_ps_table.php
+- 2026_09_28_000004_create_discount_redemptions_table.php
+- ServiceBlockService.php
 - 2026_10_07_100000_create_temporary_uploads_table.php
+- 2026_09_26_000002_create_purchase_items_table.php
 - Authentication
 - References
 - 26. Suggested Eloquent Models
-- Task 1: Module skeleton, autoload registration, and composer.json
+- 2026_10_07_200403_create_horse_cares_table.php
+- 45. Provider Differences Must Remain Explicit
 - Recreational Riding Create/Update Service - Independent Review
 - graphify reference: GitHub clone and cross-repo merge
 - graphify reference: transcribe video and audio
 - laravel-boost
-- 45. Provider Differences Must Remain Explicit
+- 4. Idempotency
+- 5. Tamara Gateway
 - .claude/CLAUDE.md
 - extraction-spec.md
-- 4. Idempotency
 - 10. PurchaseItem
 - 12. Payment
 - Purchase Module --- Implementation Specification
-- 5. Tamara Gateway
+- 2026_10_08_090000_create_service_blocks_table.php
+- Task 4: Create Resource classes
+- 2026_10_10_090002_create_trainer_training_service_table.php
+- PaymentGatewayManager
+- Task 3: Create FormRequest classes for phone login + verify + access
+- Task 5: Add CenterAuthService helper methods (optional but recommended for thin controllers)
+- Task 2: Fix User::centers() withPivot (missing is_primary)
+- 2026_10_08_120000_add_lat_lng_index_to_centers_table.php
+- Task 2: Enums — PurchaseSource, PurchaseStatus, PaymentMethod, PaymentStatus
+- TrainingService
+- 2026_10_08_130000_create_center_favorites_table.php
+- 2026_09_28_000001_create_discounts_table.php
+- Task 1: Skeleton — Extend PaymentGateway Contract & Add Exception Hierarchy
+- 2026_09_26_000001_create_purchases_table.php
+- 2026_09_26_000004_create_webhook_events_table.php
+- 2026_10_10_090000_create_training_services_table.php
+- Task 4: TamaraStatusMapper & TamaraGateway
+- Task 6: MoyasarStatusMapper + MoyasarSourceNormalizer + MoyasarGateway
+- Task 10: Shared Infrastructure Tests — PaymentGatewayExceptions & StatusMapping Edge Cases
+- HasService
+- Task 2: Tamara/Moyasar Namespace Folders + Shared HTTP Client Helper
 
 ## God Nodes (most connected - your core abstractions)
-1. `CenterFactory` - 250 edges
-2. `Center` - 205 edges
-3. `Service` - 118 edges
-4. `ClientFactory` - 96 edges
-5. `Payment` - 78 edges
-6. `Discount` - 73 edges
-7. `PaymentStatus` - 69 edges
-8. `TestCase` - 64 edges
-9. `Purchase` - 61 edges
-10. `SystemUser` - 60 edges
+1. `CenterFactory` - 309 edges
+2. `Center` - 284 edges
+3. `Service` - 190 edges
+4. `ClientFactory` - 134 edges
+5. `Payment` - 108 edges
+6. `Reservation` - 101 edges
+7. `PaymentStatus` - 98 edges
+8. `TestCase` - 94 edges
+9. `ServiceType` - 84 edges
+10. `UserFactory` - 79 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `AC-19 (rule): NFR-6 Scope hygiene` --references--> `Discount`  [INFERRED]
-  .trae/specs/billing-module/spec.md → modules/Promotion/src/Models/Discount.php
-- `Task 14: Final Integration + Cross-module regression + hygiene greps` --references--> `Discount`  [INFERRED]
-  .trae/specs/billing-module/tasks.md → modules/Promotion/src/Models/Discount.php
-- `NFR-4 — Concurrency safety for redemptions` --references--> `Discount`  [INFERRED]
-  .trae/specs/promotion-module/spec.md → modules/Promotion/src/Models/Discount.php
-- `Task 2: Enums (DiscountType, DiscountScope, ApplicationMethod, PromotionStatus)` --references--> `Discount`  [INFERRED]
-  .trae/specs/promotion-module/tasks.md → modules/Promotion/src/Models/Discount.php
 - `2. Provider Abstraction` --references--> `PaymentGateway`  [INFERRED]
   .trae/documents/payment-gateways-tamara-moyasar-implementation-prompt.md → modules/Purchase/src/Contracts/PaymentGateway.php
+- `46. Reference Repositories` --references--> `PaymentGateway`  [INFERRED]
+  .trae/documents/payment-gateways-tamara-moyasar-implementation-prompt.md → modules/Purchase/src/Contracts/PaymentGateway.php
+- `Confirmed Assumptions` --references--> `PaymentGateway`  [INFERRED]
+  .trae/specs/payment-gateways-tamara-moyasar/spec.md → modules/Purchase/src/Contracts/PaymentGateway.php
+- `Scope` --references--> `PaymentGateway`  [INFERRED]
+  .trae/specs/purchase-module/tasks.md → modules/Purchase/src/Contracts/PaymentGateway.php
+- `Problem` --references--> `FakeGateway`  [INFERRED]
+  .trae/specs/payment-gateways-tamara-moyasar/spec.md → modules/Purchase/src/Gateways/FakeGateway.php
 
 ## Import Cycles
 - None detected.
 
-## Communities (286 total, 101 thin omitted)
+## Communities (322 total, 114 thin omitted)
 
 ### Community 0 - "Illuminate\Http\Request"
 Cohesion: 0.07
-Nodes (25): DiscountCreated, {closure#1}(), {closure#2}(), DiscountController, {closure#1}(), {closure#2}(), DiscountController, AttachDiscountablesRequest (+17 more)
+Nodes (10): CenterWithRoleResource, ReservationController, PackageController, ReservationController, CancelReservationRequest, CenterReservationResource, CheckoutResource, ClientPackageResource (+2 more)
 
-### Community 1 - "Illuminate\Foundation\Testing\RefreshDatabase"
-Cohesion: 0.02
-Nodes (57): UserFactory, {closure#1}(), {closure#2}(), {closure#3}(), {closure#4}(), {closure#6}(), {closure#7}(), {closure#8}() (+49 more)
+### Community 2 - "Platform"
+Cohesion: 0.10
+Nodes (7): Platform, {closure#7}(), {closure#8}(), {closure#9}(), Scope, Task 4: Platform merchant morph class & PurchaseServiceProvider boot, Test Requirements
 
-### Community 2 - "ServiceTypeTerm"
-Cohesion: 0.09
-Nodes (15): G. Database & migrations, PlanFeatureLimitLookup, ServiceTypeTerm, {closure#1}(), {closure#2}(), ServiceTypeTermService, {closure#1}(), {closure#2}() (+7 more)
+### Community 3 - "Client"
+Cohesion: 0.08
+Nodes (6): FavoriteService, Client, ClientAuthService, {closure#1}(), BookingRequest, RecreationRidingRules
 
 ### Community 4 - "Task10SharedInfraTest.php"
 Cohesion: 0.05
-Nodes (38): MoyasarSourceNormalizer, MoyasarStatusMapper, {closure#1}(), TamaraClient, TamaraGateway, TamaraStatusMapper, {closure#10}(), {closure#18}() (+30 more)
+Nodes (37): MoyasarSourceNormalizer, MoyasarStatusMapper, {closure#1}(), TamaraClient, TamaraGateway, TamaraStatusMapper, {closure#10}(), {closure#18}() (+29 more)
 
 ### Community 5 - "Illuminate\Http\Resources\Json\JsonResource"
-Cohesion: 0.07
-Nodes (8): {closure#3}(), {closure#4}(), {closure#5}(), RatingResource, EventController, EventRequest, EventResource, MediaResource
+Cohesion: 0.04
+Nodes (12): {closure#3}(), {closure#4}(), {closure#5}(), HorseCareResource, HorseServiceResource, RecreationRidingResource, ResortResource, ServiceDetailsResource (+4 more)
 
-### Community 6 - "ServiceBlock"
-Cohesion: 0.09
-Nodes (14): ServiceBlock, {closure#1}(), {closure#11}(), {closure#3}(), {closure#4}(), {closure#8}(), {closure#2}(), {closure#3}() (+6 more)
+### Community 6 - "MediaController.php"
+Cohesion: 0.12
+Nodes (6): Controller, AuthController, MediaController, LoginRequest, UploadMediaRequest, SystemUserResource
 
 ### Community 7 - "CenterFactory"
-Cohesion: 0.06
-Nodes (55): CenterFactory, {closure#1}(), {closure#2}(), {closure#4}(), {closure#5}(), {closure#10}(), {closure#11}(), {closure#2}() (+47 more)
+Cohesion: 0.04
+Nodes (80): CenterFactory, TagFactory, {closure#7}(), {closure#1}(), {closure#2}(), {closure#4}(), {closure#5}(), {closure#10}() (+72 more)
 
-### Community 8 - "Illuminate\Database\Eloquent\Factories\HasFactory"
+### Community 8 - "Center"
+Cohesion: 0.09
+Nodes (20): Center, 4.2 `coupons`, 6. HTTP API, Fixed by the center-only refactor, DiscountController, StoreCouponRequest, StoreDiscountRequest, UpdateCouponStatusRequest (+12 more)
+
+### Community 9 - "ServicePackage"
 Cohesion: 0.05
-Nodes (4): TagSeeder, Tag, Coupon, ServiceBlockPeriod
+Nodes (37): ClientPackageFactory, {closure#1}(), {closure#2}(), {closure#1}(), {closure#10}(), {closure#2}(), {closure#3}(), {closure#4}() (+29 more)
 
-### Community 9 - "ServicePackagesTest.php"
-Cohesion: 0.11
-Nodes (12): ServicePackage, {closure#1}(), {closure#10}(), {closure#12}(), {closure#13}(), {closure#15}(), {closure#16}(), {closure#17}() (+4 more)
+### Community 10 - "Client/AuthController.php"
+Cohesion: 0.09
+Nodes (6): AuthController, ProfileController, LoginOtpRequest, UpdateProfileRequest, VerifyOtpRequest, ClientResource
 
-### Community 10 - "Illuminate\Foundation\Events\Dispatchable"
-Cohesion: 0.08
-Nodes (29): SubscriptionCanceled, DiscountRedeemed, PaymentCancelled, PaymentExpired, PaymentFailed, PaymentProcessing, PaymentSucceeded, {closure#1}() (+21 more)
-
-### Community 11 - "Purchase"
+### Community 11 - "CreateReservationTest.php"
 Cohesion: 0.06
-Nodes (40): HasDiscountable, {closure#5}(), {closure#1}(), {closure#2}(), PurchaseFactory, PurchaseItemFactory, PurchaseStatus, Cancelled (+32 more)
+Nodes (23): {closure#1}(), BookFromPackage, {closure#1}(), {closure#1}(), {closure#2}(), CreateReservation, CapacityLock, ClientPackageStatus (+15 more)
 
 ### Community 12 - "Payment"
-Cohesion: 0.06
-Nodes (22): PaymentGateway, PaymentStatus, Cancelled, Expired, Failed, Pending, Processing, Succeeded (+14 more)
+Cohesion: 0.05
+Nodes (54): PaymentGateway, PaymentStatus, Cancelled, Expired, Failed, Pending, Processing, Refunded (+46 more)
 
-### Community 13 - "AuthAndCenterControllerTest.php"
-Cohesion: 0.10
-Nodes (3): {closure#2}(), {closure#3}(), {closure#9}()
+### Community 13 - "CenterRegisterServiceTest.php"
+Cohesion: 0.09
+Nodes (4): RegisterCenterFormRequest, CenterRegisterService, {closure#1}(), {closure#2}()
 
-### Community 14 - "Center"
-Cohesion: 0.06
-Nodes (13): Interpreter guard for subcommands, Use `Cache::add()` for Atomic Conditional Writes, FavoriteController, FavoriteCenterRequest, Center, FavoriteService, HorseServiceController, TrainerController (+5 more)
+### Community 14 - "Illuminate\Routing\Controller"
+Cohesion: 0.04
+Nodes (20): CenterController, FavoriteController, RatingController, FavoriteCenterRequest, ListCentersRequest, RateCenterRequest, CenterResource, {closure#3}() (+12 more)
 
-### Community 15 - "Task1SkeletonTest.php"
-Cohesion: 0.06
-Nodes (25): PaymentAuthorizationException, PaymentGatewayException, PaymentInitializationException, PaymentProviderUnavailableException, PaymentProviderValidationException, PaymentStateConflictException, PaymentVerificationException, {closure#2}() (+17 more)
+### Community 15 - "PaymentGatewayException"
+Cohesion: 0.16
+Nodes (6): PaymentAuthorizationException, PaymentGatewayException, PaymentInitializationException, PaymentVerificationException, PaymentGatewayClientHelpers, {closure#8}()
 
-### Community 16 - "PlanFactory"
-Cohesion: 0.08
-Nodes (25): FeatureFactory, LimitFactory, PlanFactory, PlanLimit, {closure#1}(), {closure#3}(), {closure#4}(), {closure#5}() (+17 more)
+### Community 16 - "CenterHorseCareService.php"
+Cohesion: 0.15
+Nodes (5): CenterHorseCareService, {closure#1}(), {closure#2}(), {closure#3}(), {closure#7}()
 
 ### Community 17 - "Illuminate\Database\Eloquent\Factories\Factory"
-Cohesion: 0.07
-Nodes (12): DiscountableFactory, HorseCareFactory, HorseServiceFactory, RecreationalRidingFactory, ResortFactory, ScheduleFactory, ServiceBlockFactory, ServiceBlockPeriodFactory (+4 more)
+Cohesion: 0.06
+Nodes (10): ReservationLineFactory, HorseCareFactory, HorseServiceFactory, PriceOptionFactory, ScheduleFactory, ServiceBlockFactory, ServiceBlockPeriodFactory, ActionLogFactory (+2 more)
 
 ### Community 18 - "payment-gateways-tamara-moyasar-implementation-prompt.md"
 Cohesion: 0.05
 Nodes (43): 10. Tamara Callback, 11. Tamara Webhook Authentication, 12. Tamara Webhooks, 13. Tamara Authorize, 14. Tamara Capture, 15. Tamara Cancel, 16. Tamara Refund, 17. Tamara Sync (+35 more)
 
-### Community 19 - "EventDispatchTest.php"
-Cohesion: 0.20
-Nodes (9): PlanCreated, {closure#2}(), {closure#1}(), {closure#2}(), {closure#4}(), {closure#5}(), {closure#6}(), {closure#7}() (+1 more)
+### Community 19 - "DiscountResolverTest.php"
+Cohesion: 0.16
+Nodes (14): {closure#1}(), {closure#2}(), {closure#3}(), {closure#4}(), {closure#5}(), rCreate(), CP2 — Correctness of Business Rules (AC-19…AC-49 rubrics), CP3 — Security / Data Integrity / Cross-Module Hygiene (+6 more)
 
-### Community 20 - "Spatie\MediaLibrary\MediaCollections\Models\Media"
-Cohesion: 0.11
-Nodes (5): {closure#1}(), {closure#2}(), {closure#3}(), {closure#4}(), {closure#5}()
-
-### Community 21 - "Illuminate\Database\Eloquent\Model"
+### Community 20 - "PurchaseController.php"
 Cohesion: 0.09
-Nodes (6): {closure#2}(), BlockFactory, Block, Device, BlockService, DeviceService
+Nodes (8): BlockedClientController, PurchaseController, RatingController, BlockClientRequest, BlockedClientResource, PurchaseDetailsResource, PurchaseResource, RatingResource
+
+### Community 21 - "CenterRegisterService.php"
+Cohesion: 0.12
+Nodes (6): CenterUserPermissionRoleSeeder, {closure#1}(), CenterUserPermission, CenterUserRole, Owner, {closure#1}()
 
 ### Community 22 - "Subscription"
-Cohesion: 0.08
-Nodes (22): SubscriptionStatus, Active, Canceled, Expired, Trialing, SubscriptionCreated, SubscriptionRenewed, SubscriptionIneligibleException (+14 more)
+Cohesion: 0.10
+Nodes (14): SubscriptionCanceled, SubscriptionIneligibleException, Subscription, SubscriptionEligibilityService, {closure#1}(), {closure#2}(), {closure#3}(), {closure#4}() (+6 more)
+
+### Community 23 - "Illuminate\Foundation\Testing\RefreshDatabase"
+Cohesion: 0.02
+Nodes (57): UserFactory, {closure#1}(), {closure#2}(), {closure#3}(), {closure#4}(), {closure#6}(), {closure#8}(), {closure#1}() (+49 more)
 
 ### Community 24 - "OtpVerificationServiceTest.php"
 Cohesion: 0.09
 Nodes (14): OTP, {closure#13}(), {closure#16}(), {closure#17}(), {closure#18}(), {closure#19}(), {closure#21}(), {closure#22}() (+6 more)
 
-### Community 25 - "DiscountFactory"
-Cohesion: 0.12
-Nodes (12): DiscountFactory, {closure#1}(), {closure#3}(), {closure#4}(), {closure#7}(), {closure#8}(), FR-1 — Module skeleton & autoload registration, FR-2 — Enums (+4 more)
+### Community 25 - "Promotion Module — Implementation Plan"
+Cohesion: 0.09
+Nodes (17): 4.5 Traits, HasDiscountable, HasDiscountRedemptions, HasDiscounts, CP1 — Spec-to-Implementation Traceability (FR-1 … FR-7 + NFR), Discount model integrity, Traits applied to existing models, Promotion Module — Implementation Plan (+9 more)
 
-### Community 26 - "SubscriptionController.php"
-Cohesion: 0.06
-Nodes (12): FeatureController, SubscriptionController, CancelSubscriptionRequest, StoreFeatureRequest, UpdateFeatureRequest, FeatureCollection, FeatureResource, LimitCollection (+4 more)
+### Community 26 - "Implementation Tasks — Purchase Module"
+Cohesion: 0.07
+Nodes (28): Implementation Tasks — Purchase Module, References, References, References, References, Scope, Scope, Scope (+20 more)
 
-### Community 27 - "Service"
-Cohesion: 0.05
-Nodes (59): PriceOptionFactory, HasSchedules, PriceOption, RecreationalRiding, Schedule, {closure#1}(), Service, DurationOptionService (+51 more)
-
-### Community 28 - "Symfony\Component\HttpFoundation\Response"
-Cohesion: 0.08
-Nodes (7): AuthController, RegisterController, EnsureCenterAccessScope, UserResource, CenterAuthService, SetLocaleFromAcceptLanguage, TrackClientSession
-
-### Community 29 - "PaymentGatewayManager"
-Cohesion: 0.10
-Nodes (21): PaymentGatewayManager, Acceptance Criteria, Configuration, Confirmed Assumptions, Constraints, Constraints & Dependencies, Dependencies, Domain Contract Extension (+13 more)
-
-### Community 30 - "PaymentFactory"
-Cohesion: 0.10
-Nodes (26): PaymentFactory, {closure#1}(), MoyasarClient, MoyasarGateway, {closure#1}(), {closure#2}(), {closure#3}(), {closure#5}() (+18 more)
-
-### Community 31 - "Payment Gateways (Tamara + Moyasar) — Implementation Tasks Plan"
-Cohesion: 0.05
-Nodes (39): Cancelled Tasks, Payment Gateways (Tamara + Moyasar) — Implementation Tasks Plan, Reviewer Notes, Scope, Scope, Scope, Scope, Scope (+31 more)
-
-### Community 32 - "SubscriptionFactory"
-Cohesion: 0.16
-Nodes (9): SubscriptionFactory, {closure#1}(), {closure#2}(), {closure#3}(), {closure#4}(), {closure#5}(), {closure#6}(), {closure#7}() (+1 more)
-
-### Community 33 - "Illuminate\Database\Schema\Blueprint"
-Cohesion: 0.08
-Nodes (20): {closure#1}(), {closure#2}(), {closure#3}(), {closure#1}(), {closure#2}(), {closure#1}(), {closure#2}(), {closure#3}() (+12 more)
-
-### Community 35 - "Illuminate\Foundation\Http\FormRequest"
-Cohesion: 0.04
-Nodes (15): AttachFeaturesRequest, UpdatePlanStatusRequest, CenterController, CenterController, ListCentersRequest, StoreCenterRequest, UpdateCenterRequest, CenterAccessRequest (+7 more)
-
-### Community 36 - "Client"
-Cohesion: 0.05
-Nodes (11): BlockedClientController, BlockClientRequest, BlockedClientResource, AuthController, ProfileController, LoginOtpRequest, UpdateProfileRequest, VerifyOtpRequest (+3 more)
-
-### Community 37 - "DiscountUsageServiceTest.php"
-Cohesion: 0.15
-Nodes (14): DiscountRedemptionFactory, baseCreate(), {closure#2}(), {closure#3}(), {closure#4}(), {closure#5}(), {closure#6}(), {closure#7}() (+6 more)
-
-### Community 38 - "Event"
-Cohesion: 0.06
-Nodes (30): HasService, HasSettings, {closure#1}(), HasStartPrice, EventOccurrenceType, General, SpecificDay, Event (+22 more)
-
-### Community 39 - "ServiceType"
-Cohesion: 0.15
-Nodes (21): EventFactory, ServiceType, Event, HorseCare, HorseService, RecreationRiding, Resort, Training (+13 more)
-
-### Community 40 - "Resort"
+### Community 27 - "Acceptance Criteria"
 Cohesion: 0.13
-Nodes (24): Resort, {closure#1}(), {closure#2}(), {closure#3}(), ResortService, {closure#10}(), {closure#11}(), {closure#12}() (+16 more)
+Nodes (15): 9.1 🟠 Not wired into checkout, 9.2 🟠 Calculator ignores `specific_items`, 9.3 🟡 `is_stackable` not enforced, 9.4 🟡 Coupon creation robustness, 9.5 🟡 `UpdateDiscountRequest`, 9.7 🟢 Minor, 9. Open findings, Acceptance Criteria (+7 more)
 
-### Community 41 - "Visit"
+### Community 28 - "Visit"
 Cohesion: 0.13
 Nodes (25): Visit, {closure#1}(), {closure#2}(), {closure#3}(), VisitService, {closure#10}(), {closure#11}(), {closure#12}() (+17 more)
 
-### Community 42 - "CenterEventService.php"
-Cohesion: 0.15
-Nodes (5): CenterEventService, {closure#1}(), {closure#2}(), {closure#3}(), {closure#7}()
+### Community 29 - "Goals"
+Cohesion: 0.13
+Nodes (21): 1. Acceptance criteria, Coupon, CouponValidator, DiscountCalculator, DiscountEligibilityService, DiscountResolver, DiscountUsageService, Confirmed Open Questions / Assumptions (+13 more)
+
+### Community 30 - "PaymentFactory"
+Cohesion: 0.09
+Nodes (28): PaymentFactory, {closure#1}(), MoyasarClient, MoyasarGateway, {closure#1}(), {closure#2}(), {closure#3}(), {closure#5}() (+20 more)
+
+### Community 31 - "Payment Gateways (Tamara + Moyasar) — Implementation Tasks Plan"
+Cohesion: 0.07
+Nodes (27): Cancelled Tasks, Payment Gateways (Tamara + Moyasar) — Implementation Tasks Plan, Reviewer Notes, Scope, Scope, Scope, Scope, Scope (+19 more)
+
+### Community 32 - "SubscriptionStatus"
+Cohesion: 0.07
+Nodes (25): BillingInterval, Monthly, Yearly, PlanStatus, Active, InActive, SubscriptionAction, Cancel (+17 more)
+
+### Community 33 - "Illuminate\Database\Schema\Blueprint"
+Cohesion: 0.09
+Nodes (19): {closure#1}(), {closure#2}(), {closure#3}(), {closure#1}(), {closure#2}(), {closure#1}(), {closure#2}(), {closure#3}() (+11 more)
+
+### Community 35 - "HorseCareController.php"
+Cohesion: 0.25
+Nodes (3): HorseCareController, HorseCareRequest, HorseCareResource
+
+### Community 36 - "ReservationStateServiceTest.php"
+Cohesion: 0.07
+Nodes (25): ReservationStatus, Cancelled, Completed, Confirmed, NoShow, Pending, {closure#1}(), {closure#10}() (+17 more)
+
+### Community 37 - "ReservationNotAllowedException"
+Cohesion: 0.07
+Nodes (19): {closure#1}(), PurchasePackage, BookingGuard, {closure#1}(), BookingQuote, ReservationRules, ReservationRulesResolver, EventRules (+11 more)
+
+### Community 38 - "ServiceType"
+Cohesion: 0.05
+Nodes (47): G. Database & migrations, EventFactory, ServiceTypeTermFactory, EventOccurrenceType, General, SpecificDay, ServiceType, Event (+39 more)
+
+### Community 39 - "ServiceBlock"
+Cohesion: 0.09
+Nodes (22): {closure#1}(), {closure#10}(), {closure#11}(), {closure#12}(), {closure#13}(), {closure#14}(), {closure#15}(), {closure#16}() (+14 more)
+
+### Community 40 - "Resort"
+Cohesion: 0.08
+Nodes (29): Resort, {closure#1}(), {closure#2}(), {closure#3}(), ResortService, {closure#1}(), {closure#11}(), {closure#3}() (+21 more)
+
+### Community 41 - "SlugTest.php"
+Cohesion: 0.39
+Nodes (7): callSlugResolve(), callStoreResolve(), {closure#1}(), {closure#2}(), {closure#3}(), {closure#4}(), {closure#5}()
+
+### Community 42 - "Spatie\MediaLibrary\MediaCollections\Models\Media"
+Cohesion: 0.11
+Nodes (7): {closure#1}(), {closure#2}(), {closure#3}(), {closure#2}(), {closure#4}(), {closure#5}(), MediaPolicy
 
 ### Community 43 - "TemporaryMediaServiceTest.php"
 Cohesion: 0.06
 Nodes (27): TemporaryUploadFactory, MediaStatus, Attached, Temporary, InvalidTemporaryMediaException, TemporaryUpload, {closure#1}(), {closure#3}() (+19 more)
 
-### Community 44 - "Billing/tests/Unit/ScrambleAttributesTest.php"
-Cohesion: 0.18
-Nodes (13): {closure#1}(), {closure#4}(), {closure#5}(), {closure#6}(), {closure#7}(), {closure#8}(), methodHasAttr(), publicControllerMethods() (+5 more)
+### Community 44 - "PlanFactory"
+Cohesion: 0.10
+Nodes (22): PlanFactory, SubscriptionFactory, {closure#1}(), {closure#3}(), {closure#5}(), {closure#6}(), {closure#8}(), {closure#1}() (+14 more)
 
 ### Community 45 - "What You Must Do When Invoked"
-Cohesion: 0.08
-Nodes (23): For /graphify add and --watch, For /graphify query, For the commit hook and native CLAUDE.md integration, For --update and --cluster-only, /graphify, Honesty Rules, Part A - Structural extraction for code files, Part B - Semantic extraction (parallel subagents) (+15 more)
+Cohesion: 0.13
+Nodes (15): Part A - Structural extraction for code files, Part B - Semantic extraction (parallel subagents), Part C - Merge AST + semantic into final extraction, Step 0 - GitHub repos and multi-path merge (only if a URL or several paths), Step 1 - Ensure graphify is installed, Step 2.5 - Video and audio (only if video files detected), Step 2 - Detect files, Step 3 - Extract entities and relationships (+7 more)
 
 ### Community 46 - "CityFactory"
-Cohesion: 0.10
-Nodes (15): {closure#1}(), {closure#2}(), {closure#1}(), CityFactory, {closure#2}(), {closure#4}(), {closure#6}(), {closure#8}() (+7 more)
+Cohesion: 0.11
+Nodes (15): {closure#1}(), {closure#2}(), {closure#1}(), {closure#1}(), CityFactory, {closure#2}(), {closure#4}(), {closure#8}() (+7 more)
 
-### Community 47 - "PromotionStatus"
+### Community 47 - "DiscountScope"
 Cohesion: 0.08
-Nodes (16): ApplicationMethod, Automatic, Coupon, DiscountScope, All, SpecificItems, DiscountType, Fixed (+8 more)
+Nodes (14): ApplicationMethod, Automatic, Coupon, DiscountScope, All, SpecificItems, DiscountType, Fixed (+6 more)
 
-### Community 48 - ".count"
-Cohesion: 0.15
-Nodes (11): {closure#3}(), {closure#3}(), {closure#4}(), HasPackages, {closure#1}(), {closure#2}(), {closure#1}(), {closure#1}() (+3 more)
+### Community 48 - "Illuminate\Database\Eloquent\Model"
+Cohesion: 0.09
+Nodes (7): TrainingRules, {closure#4}(), BlockFactory, Block, Device, BlockService, DeviceService
 
 ### Community 49 - "Illuminate\Support\ServiceProvider"
-Cohesion: 0.17
-Nodes (5): BillingServiceProvider, CentersServiceProvider, ClientsServiceProvider, PromotionServiceProvider, ServicesServiceProvider
+Cohesion: 0.11
+Nodes (8): AppServiceProvider, BillingServiceProvider, CentersServiceProvider, ClientsServiceProvider, 3. Module layout, PromotionServiceProvider, ReservationsServiceProvider, ServicesServiceProvider
 
 ### Community 50 - "Cloud CLI"
 Cohesion: 0.06
 Nodes (30): Adding a cache to an existing environment, Adding a database to an existing environment, Checklists for Multi-Step Operations, Custom domain setup, Full environment setup (app + database + cache + domain), New app from scratch, Application Setup, Billing and Usage (+22 more)
 
-### Community 51 - "Modules\Centers\Models\Center"
-Cohesion: 0.32
-Nodes (3): RecreationRidingController, RecreationRidingRequest, RecreationRidingResource
+### Community 52 - "Promotion Module — Technical Review"
+Cohesion: 0.09
+Nodes (20): Choose Where to Report and Render Exceptions, 2. TL;DR, 4.1 `discounts`, 4.3 `discount_service`, 4.4 `discount_redemptions`, 4. Domain model, 5.1 `DiscountEligibilityService::isEligible(Discount, ?Model $user, $subtotal, $services): bool`, 5.2 `DiscountCalculator::calculate(Discount, $items, $subtotal): float` (+12 more)
 
-### Community 52 - "ResortController.php"
-Cohesion: 0.23
-Nodes (3): ResortController, ResortRequest, ResortResource
+### Community 53 - "EventController.php"
+Cohesion: 0.25
+Nodes (3): EventController, EventRequest, EventResource
 
-### Community 53 - "CityService"
+### Community 54 - "CenterSearchService.php"
 Cohesion: 0.10
-Nodes (18): Convention and Style Best Practices, Follow Project Naming Conventions, Keep Presentation Code Maintainable, Prefer Clear, Idiomatic Syntax, Use Utilities When They Clarify Intent, Write Comments That Explain Why, CityService, Assumptions (+10 more)
+Nodes (12): CenterOrder, MostPopular, Nearest, CenterSearchService, {closure#1}(), {closure#3}(), {closure#4}(), {closure#5}() (+4 more)
 
-### Community 54 - "StorePlanRequest"
+### Community 55 - "HorseCare"
 Cohesion: 0.12
-Nodes (8): AttachLimitsRequest, CreateSubscriptionRequest, StorePlanRequest, {closure#2}(), {closure#3}(), {closure#4}(), {closure#5}(), Task 10: FormRequest classes
+Nodes (23): HorseCare, {closure#1}(), {closure#2}(), {closure#3}(), HorseCareService, {closure#10}(), {closure#11}(), {closure#12}() (+15 more)
 
-### Community 55 - "HorseCareServiceTest.php"
-Cohesion: 0.11
-Nodes (26): PriceOptionUnit, MINUTE, OPTION, HorseCare, {closure#1}(), {closure#2}(), {closure#3}(), HorseCareService (+18 more)
-
-### Community 56 - "HorseServiceServiceTest.php"
-Cohesion: 0.14
-Nodes (23): HorseService, {closure#1}(), {closure#2}(), {closure#3}(), HorseServiceService, {closure#10}(), {closure#11}(), {closure#12}() (+15 more)
-
-### Community 57 - "TrainerFactory"
-Cohesion: 0.18
-Nodes (10): TrainerFactory, TrainingServiceFactory, {closure#9}(), {closure#5}(), {closure#7}(), {closure#8}(), {closure#1}(), {closure#2}() (+2 more)
-
-### Community 58 - "DiscountResolverTest.php"
-Cohesion: 0.15
-Nodes (14): {closure#2}(), {closure#3}(), {closure#4}(), {closure#5}(), rCreate(), CP1 — Spec-to-Implementation Traceability (FR-1 … FR-7 + NFR), CP2 — Correctness of Business Rules (AC-19…AC-49 rubrics), CP3 — Security / Data Integrity / Cross-Module Hygiene (+6 more)
-
-### Community 59 - "PlanStatus"
-Cohesion: 0.06
-Nodes (22): {closure#6}(), {closure#7}(), BillingInterval, Monthly, Yearly, PlanStatus, Active, InActive (+14 more)
-
-### Community 60 - "CenterSearchService.php"
+### Community 56 - "HorseService"
 Cohesion: 0.13
-Nodes (10): CenterOrder, MostPopular, Nearest, {closure#1}(), {closure#3}(), {closure#4}(), {closure#5}(), {closure#6}() (+2 more)
+Nodes (24): HorseService, {closure#1}(), {closure#2}(), {closure#3}(), HorseServiceService, {closure#1}(), {closure#10}(), {closure#11}() (+16 more)
 
-### Community 61 - "Illuminate\Database\Migrations\Migration"
-Cohesion: 0.10
-Nodes (5): {closure#1}(), {closure#1}(), {closure#1}(), {closure#1}(), {closure#1}()
+### Community 57 - "CenterTrainingServiceTest.php"
+Cohesion: 0.07
+Nodes (20): {closure#1}(), {closure#1}(), TrainerFactory, TrainingServiceFactory, {closure#1}(), {closure#4}(), {closure#5}(), {closure#7}() (+12 more)
+
+### Community 58 - "Trainer"
+Cohesion: 0.13
+Nodes (8): {closure#2}(), {closure#2}(), {closure#2}(), Trainer, {closure#1}(), {closure#2}(), {closure#3}(), TrainerService
+
+### Community 59 - ".count"
+Cohesion: 0.05
+Nodes (28): {closure#1}(), {closure#3}(), {closure#4}(), {closure#5}(), {closure#6}(), {closure#7}(), {closure#8}(), methodHasAttr() (+20 more)
+
+### Community 60 - "Reservation"
+Cohesion: 0.08
+Nodes (19): BookAndCheckout, CheckoutReservations, {closure#2}(), ReservationCancelled, ReservationCompleted, ReservationConfirmed, ReservationMarkedNoShow, ReservationRescheduled (+11 more)
 
 ### Community 62 - "Laravel Boost Guidelines"
 Cohesion: 0.07
@@ -540,209 +564,225 @@ Nodes (28): APIs & Eloquent Resources, Application Structure & Architecture, Art
 Cohesion: 0.07
 Nodes (29): 11. Money, 13. Payment Method, 15. Cash on Arrival, 16. Online Payment Flow, 17. Payment Gateway Contract, 18. Gateway Resolution, 19. Webhooks, 20. Webhook Event Storage (+21 more)
 
-### Community 65 - "CenterHorseCareService.php"
-Cohesion: 0.16
-Nodes (5): CenterHorseCareService, {closure#1}(), {closure#2}(), {closure#3}(), {closure#7}()
+### Community 64 - "AuthAndCenterControllerTest.php"
+Cohesion: 0.10
+Nodes (3): {closure#2}(), {closure#3}(), {closure#9}()
+
+### Community 65 - "Illuminate\Database\Eloquent\Builder"
+Cohesion: 0.11
+Nodes (23): {closure#1}(), {closure#1}(), {closure#2}(), {closure#10}(), {closure#2}(), {closure#3}(), {closure#4}(), {closure#5}() (+15 more)
 
 ### Community 66 - "SystemPermission"
-Cohesion: 0.08
-Nodes (23): SystemPermission, AssignSystemUserRoles, CreateCenter, CreateSystemRole, CreateSystemUser, DeleteCenter, DeleteSystemRole, DeleteSystemUser (+15 more)
+Cohesion: 0.06
+Nodes (26): SystemPermission, AssignSystemUserRoles, CreateCenter, CreateSystemRole, CreateSystemUser, DeleteCenter, DeleteSystemRole, DeleteSystemUser (+18 more)
 
-### Community 67 - "Acceptance Criteria"
-Cohesion: 0.12
-Nodes (16): Acceptance Criteria, Architectural, CreatePayment action, Critical cross-cutting scenarios, Events, Gateway contract & manager, NFR-2 — Test coverage, NFR-3 — No external network calls during tests (+8 more)
+### Community 67 - "Caching Best Practices"
+Cohesion: 0.18
+Nodes (9): Interpreter guard for subcommands, Caching Best Practices, Configure Failover Cache Stores in Production, Consider `Cache::flexible()` for Stale-While-Revalidate, Use `Cache::add()` for Atomic Conditional Writes, Use `Cache::memo()` to Avoid Redundant Hits Within an Execution, Use `Cache::remember()` for Cache-Aside Reads, Use Cache Tags to Invalidate Related Groups (+1 more)
 
 ### Community 68 - "SystemUser"
 Cohesion: 0.07
-Nodes (25): {closure#1}(), {closure#10}(), {closure#11}(), {closure#12}(), {closure#13}(), {closure#2}(), {closure#3}(), {closure#4}() (+17 more)
+Nodes (24): {closure#1}(), {closure#10}(), {closure#11}(), {closure#12}(), {closure#13}(), {closure#2}(), {closure#3}(), {closure#4}() (+16 more)
 
-### Community 70 - "CenterRegisterServiceTest.php"
-Cohesion: 0.09
-Nodes (4): RegisterCenterFormRequest, CenterRegisterService, {closure#1}(), {closure#2}()
+### Community 70 - "CenterAdminService.php"
+Cohesion: 0.13
+Nodes (8): I. Responses & API resources, CenterAdminService, {closure#1}(), {closure#2}(), {closure#3}(), {closure#4}(), {closure#5}(), {closure#6}()
 
-### Community 71 - "Illuminate\Http\JsonResponse"
-Cohesion: 0.07
-Nodes (10): LimitController, {closure#1}(), PlanController, PlanController, StoreLimitRequest, UpdateLimitRequest, LimitResource, PlanResource (+2 more)
+### Community 72 - ".event"
+Cohesion: 0.19
+Nodes (6): {closure#2}(), {closure#6}(), AvailabilityController, AvailabilityService, {closure#8}(), {closure#8}()
 
-### Community 72 - "Illuminate\Support\Facades\DB"
+### Community 73 - "PriceOption"
 Cohesion: 0.08
-Nodes (12): {closure#1}(), {closure#2}(), PaymentMethod, CashOnArrival, Manual, Online, PaymentCreated, {closure#10}() (+4 more)
+Nodes (46): PriceOptionUnit, MINUTE, OPTION, PriceOption, RecreationalRiding, Schedule, {closure#1}(), {closure#2}() (+38 more)
 
-### Community 73 - "CenterResortService.php"
-Cohesion: 0.16
-Nodes (5): CenterResortService, {closure#1}(), {closure#2}(), {closure#3}(), {closure#7}()
-
-### Community 74 - "Implementation Tasks — Purchase Module"
-Cohesion: 0.10
-Nodes (18): Implementation Tasks — Purchase Module, References, References, Scope, Scope, Scope, Scope, Task 11: PaymentGateway interface and FakeGateway (+10 more)
+### Community 74 - "DiscountFactory"
+Cohesion: 0.09
+Nodes (21): DiscountFactory, {closure#1}(), {closure#3}(), {closure#4}(), {closure#5}(), {closure#6}(), {closure#7}(), {closure#8}() (+13 more)
 
 ### Community 75 - "psr-4"
-Cohesion: 0.08
-Nodes (25): psr-4, App\\, Database\\Factories\\, Database\\Seeders\\, Modules\\Billing\\, Modules\\Billing\\Database\\Factories\\, Modules\\Billing\\Database\\Seeders\\, Modules\\Centers\\ (+17 more)
+Cohesion: 0.07
+Nodes (28): psr-4, App\\, Database\\Factories\\, Database\\Seeders\\, Modules\\Billing\\, Modules\\Billing\\Database\\Factories\\, Modules\\Billing\\Database\\Seeders\\, Modules\\Centers\\ (+20 more)
 
-### Community 76 - "TemporaryMediaService"
-Cohesion: 0.08
-Nodes (11): CenterUpdateService, {closure#1}(), {closure#5}(), CenterVisitService, {closure#1}(), {closure#2}(), {closure#3}(), {closure#7}() (+3 more)
+### Community 76 - "Purchase"
+Cohesion: 0.05
+Nodes (46): {closure#2}(), {closure#1}(), {closure#2}(), PurchaseFactory, PurchaseStatus, Cancelled, Completed, Confirmed (+38 more)
 
-### Community 77 - "Trainer"
-Cohesion: 0.32
-Nodes (5): Trainer, {closure#1}(), {closure#2}(), {closure#3}(), TrainerService
+### Community 77 - "Event"
+Cohesion: 0.13
+Nodes (24): {closure#7}(), Event, {closure#1}(), {closure#2}(), {closure#3}(), EventService, {closure#10}(), {closure#11}() (+16 more)
 
 ### Community 78 - "WebhookEvent"
-Cohesion: 0.06
-Nodes (28): WebhookEventHandler, FakeWebhookEventHandler, MoyasarWebhookEventHandler, TamaraWebhookEventHandler, WebhookEvent, {closure#1}(), WebhookProcessorService, {closure#1}() (+20 more)
+Cohesion: 0.07
+Nodes (26): WebhookEventHandler, FakeWebhookEventHandler, MoyasarWebhookEventHandler, TamaraWebhookEventHandler, WebhookEvent, {closure#1}(), WebhookProcessorService, {closure#1}() (+18 more)
 
-### Community 80 - "CenterHorseServiceService.php"
+### Community 80 - "DiscountUsageServiceTest.php"
 Cohesion: 0.16
-Nodes (5): CenterHorseServiceService, {closure#1}(), {closure#2}(), {closure#3}(), {closure#7}()
+Nodes (14): DiscountRedemptionFactory, baseCreate(), {closure#2}(), {closure#3}(), {closure#4}(), {closure#5}(), {closure#6}(), {closure#7}() (+6 more)
 
 ### Community 81 - "Acceptance Criteria"
-Cohesion: 0.06
-Nodes (32): AC-10 (rule): FR-6.4 cancel action (at period end), AC-11 (rule): FR-6.4 cancel action (immediate), AC-12 (rule): FR-6.4 renew action, AC-14 (rule): FR-7 Admin Plan CRUD structural, AC-15 (rule): FR-7 Admin Feature and Limit CRUD structural, AC-16 (rule): FR-7 Center Plan catalog, AC-17 (rule): FR-7 Center Subscribe + Cancel, AC-18 (rubric): NFR-2 Scramble attribute completeness (+24 more)
-
-### Community 82 - "RegisterControllerTest.php"
 Cohesion: 0.08
-Nodes (3): CenterStatus, INVISIBLE, VISIBLE
+Nodes (24): AC-10 (rule): FR-6.4 cancel action (at period end), AC-11 (rule): FR-6.4 cancel action (immediate), AC-12 (rule): FR-6.4 renew action, AC-14 (rule): FR-7 Admin Plan CRUD structural, AC-15 (rule): FR-7 Admin Feature and Limit CRUD structural, AC-16 (rule): FR-7 Center Plan catalog, AC-17 (rule): FR-7 Center Subscribe + Cancel, AC-18 (rubric): NFR-2 Scramble attribute completeness (+16 more)
 
-### Community 83 - "Illuminate\Routing\Controller"
-Cohesion: 0.09
-Nodes (8): RatingController, CenterController, RatingController, ListCentersRequest, RateCenterRequest, CenterResource, {closure#3}(), {closure#4}()
+### Community 82 - "EventAvailabilityTest.php"
+Cohesion: 0.13
+Nodes (6): {closure#1}(), {closure#2}(), {closure#4}(), {closure#1}(), {closure#3}(), {closure#7}()
 
-### Community 84 - "Billing Module - Implementation Plan"
-Cohesion: 0.25
-Nodes (7): Billing Module - Implementation Plan, Task 12: Controllers + Routes (Admin 3 controllers, Center 2 controllers + 2 route files), Task 13: Comprehensive Pest Unit test suite (all AC rubrics & rules), Task 14: Final Integration + Cross-module regression + hygiene greps, Task 1: Module skeleton, PSR-4 registration, ServiceProvider boot, routes placeholders + Pest.php + lang files, Task 4: 6 Database migrations + indexes + FK + unique triples (ensure ORDER after promotion migrations), Task 7: Domain Services Part A — Lookup + Calculator
+### Community 83 - "ClientServiceDetailsTest.php"
+Cohesion: 0.16
+Nodes (10): RecreationalRidingFactory, ResortFactory, {closure#1}(), {closure#10}(), {closure#11}(), {closure#12}(), {closure#6}(), {closure#7}() (+2 more)
+
+### Community 84 - "TrainingServiceController.php"
+Cohesion: 0.23
+Nodes (3): TrainingServiceController, TrainingServiceRequest, TrainingServiceResource
+
+### Community 85 - "Illuminate\Database\Eloquent\Relations\MorphMany"
+Cohesion: 0.08
+Nodes (8): Actionable, ActionActor, Blockable, Blocker, HasDevices, Rateable, Rater, ActionLog
 
 ### Community 86 - "Services/routes/center.php"
-Cohesion: 0.08
-Nodes (5): ServiceTypeCountController, ServiceTypeTermController, ServiceTypeCountResource, ServiceTypeTermResource, ServiceTypeCountService
+Cohesion: 0.05
+Nodes (10): ServicePeriodController, ServiceTypeCountController, ServiceTypeTermController, ServicePeriodRequest, ServiceTypeTermRequest, ServicePeriodResource, ServiceTypeCountResource, ServiceTypeTermResource (+2 more)
 
 ### Community 87 - "Illuminate\Database\Seeder"
 Cohesion: 0.22
 Nodes (4): DatabaseSeeder, DatabaseSeeder, CitySeeder, DatabaseSeeder
 
-### Community 88 - "Goals"
-Cohesion: 0.10
-Nodes (28): CouponValidator, DiscountCalculator, DiscountEligibilityService, DiscountResolver, DiscountUsageService, Acceptance Criteria, Architectural & cross-cutting, CouponValidator (+20 more)
-
-### Community 89 - "SupportServiceProvider.php"
+### Community 88 - "VisitController.php"
 Cohesion: 0.23
-Nodes (3): CleanupExpiredMedia, MediaPolicy, {closure#1}()
+Nodes (3): VisitController, VisitRequest, VisitResource
+
+### Community 89 - "Task-local Test Requirements (TR)"
+Cohesion: 0.11
+Nodes (18): CenterCitiesIndexTest (GET /api/v1/center/cities), ClientCitiesIndexTest (GET /api/v1/client/cities), Completion Evidence, Completion Evidence, Files to Create, rubric, rule, rule (+10 more)
 
 ### Community 90 - "package.json"
 Cohesion: 0.10
 Nodes (20): devDependencies, concurrently, laravel-vite-plugin, tailwindcss, @tailwindcss/vite, vite, optionalDependencies, @laravel/multiplex (+12 more)
 
-### Community 93 - "SystemRole"
-Cohesion: 0.14
-Nodes (6): {closure#1}(), {closure#2}(), {closure#3}(), HasSystemRoles, SystemRole, SuperAdmin
+### Community 91 - "Feature"
+Cohesion: 0.10
+Nodes (15): FeatureFactory, LimitFactory, Feature, {closure#4}(), {closure#2}(), {closure#3}(), {closure#4}(), {closure#5}() (+7 more)
 
-### Community 95 - "Goals"
-Cohesion: 0.03
-Nodes (67): CreatePayment, {closure#1}(), {closure#2}(), {closure#3}(), CreatePurchase, Buyer, Purchasable, PurchaseSource (+59 more)
+### Community 92 - "Detection Checklist"
+Cohesion: 0.20
+Nodes (9): A. Validation & HTTP input, B. Controllers & routing, C. Authorization, D. Eloquent & models, Detection Checklist, E. Architecture & organization, F. Frontend & views, H. Testing (+1 more)
 
-### Community 96 - "CenterRecreationRidingService.php"
+### Community 93 - "Illuminate\Foundation\Events\Dispatchable"
+Cohesion: 0.11
+Nodes (10): SubscriptionCreated, CouponRedeemed, DiscountCreated, DiscountRedeemed, DiscountRedemption, {closure#1}(), {closure#2}(), DiscountUsageService + concurrency safety (+2 more)
+
+### Community 94 - "CenterRecreationRidingService.php"
 Cohesion: 0.15
 Nodes (5): CenterRecreationRidingService, {closure#1}(), {closure#2}(), {closure#3}(), {closure#7}()
 
-### Community 97 - "SlugTest.php"
-Cohesion: 0.39
-Nodes (7): callSlugResolve(), callStoreResolve(), {closure#1}(), {closure#2}(), {closure#3}(), {closure#4}(), {closure#5}()
+### Community 95 - "CenterEventService.php"
+Cohesion: 0.15
+Nodes (5): CenterEventService, {closure#1}(), {closure#2}(), {closure#3}(), {closure#7}()
 
-### Community 98 - "DiscountRedemption"
-Cohesion: 0.09
-Nodes (17): CouponRedeemed, DiscountLimitExceededException, DiscountRedemption, {closure#1}(), {closure#2}(), DiscountUsageService + concurrency safety, Promotion Module — Implementation Plan, Task 13: Comprehensive Pest test suite (+9 more)
+### Community 96 - "SupportServiceProvider.php"
+Cohesion: 0.31
+Nodes (3): {closure#3}(), CleanupExpiredMedia, {closure#1}()
 
-### Community 100 - "Illuminate\Database\Eloquent\Builder"
-Cohesion: 0.22
-Nodes (10): {closure#1}(), {closure#2}(), {closure#3}(), {closure#4}(), {closure#1}(), {closure#2}(), {closure#1}(), {closure#2}() (+2 more)
+### Community 97 - "CenterVisitService.php"
+Cohesion: 0.15
+Nodes (5): CenterVisitService, {closure#1}(), {closure#2}(), {closure#3}(), {closure#7}()
 
-### Community 101 - "VisitEnterType"
-Cohesion: 0.33
-Nodes (4): VisitFactory, VisitEnterType, AllDay, SpecificTime
+### Community 98 - "Carbon\CarbonImmutable"
+Cohesion: 0.07
+Nodes (20): PlanFeatureLimitLookup, {closure#1}(), {closure#10}(), {closure#11}(), {closure#2}(), {closure#3}(), {closure#4}(), {closure#5}() (+12 more)
 
-### Community 102 - "CenterAdminService"
-Cohesion: 0.24
-Nodes (3): CenterAdminService, {closure#5}(), {closure#6}()
+### Community 99 - "PlanFeature"
+Cohesion: 0.15
+Nodes (5): PlanFeature, PlanLimit, {closure#7}(), CenterUser, Task 5: Eloquent Models (6) + Pivot Direct Models (2) total 8
 
-### Community 103 - "CenterTrainingServiceService.php"
-Cohesion: 0.16
-Nodes (5): CenterTrainingServiceService, {closure#1}(), {closure#2}(), {closure#3}(), {closure#7}()
+### Community 100 - "Error Handling Best Practices"
+Cohesion: 0.29
+Nodes (6): Add Context to Exception Classes, Define JSON Rendering for API Routes, Error Handling Best Practices, Mark Exceptions the Handler Should Not Report, Prevent Duplicate Reports of One Exception Instance, Throttle High-Volume Exception Reports
 
-### Community 104 - "CenterRegisterService.php"
+### Community 101 - "BookingFixtures"
+Cohesion: 0.02
+Nodes (69): ReservationFactory, {closure#12}(), {closure#13}(), {closure#14}(), {closure#15}(), {closure#2}(), {closure#3}(), {closure#4}() (+61 more)
+
+### Community 103 - "Billing Module - Product Requirements Document"
 Cohesion: 0.12
-Nodes (6): CenterUserPermissionRoleSeeder, {closure#1}(), CenterUserPermission, CenterUserRole, Owner, {closure#1}()
+Nodes (9): Assumptions, Background & Context, Billing Module - Product Requirements Document, Constraints, Goals, Non-Functional Requirements, Non-Goals, Open Questions (+1 more)
+
+### Community 104 - "HorseServiceController.php"
+Cohesion: 0.25
+Nodes (3): HorseServiceController, HorseServiceRequest, HorseServiceResource
+
+### Community 105 - "Illuminate\Support\Facades\DB"
+Cohesion: 0.03
+Nodes (72): {closure#2}(), {closure#4}(), {closure#5}(), PurchaseItemFactory, {closure#1}(), {closure#2}(), CreatePayment, {closure#1}() (+64 more)
 
 ### Community 106 - "OtpVerificationService"
-Cohesion: 0.23
-Nodes (6): OtpVerificationService, {closure#1}(), References, Scope, Task 1: Pre-Work — Modify OtpVerificationService for distinction + HTTP-safe exceptions, Test Requirements (local)
+Cohesion: 0.20
+Nodes (7): OtpVerificationService, {closure#1}(), FR-1 — Pre-Work: OtpVerificationService distinction + HTTP-safe exceptions, References, Scope, Task 1: Pre-Work — Modify OtpVerificationService for distinction + HTTP-safe exceptions, Test Requirements (local)
 
-### Community 109 - "CouponFactory"
-Cohesion: 0.24
-Nodes (6): CouponFactory, {closure#3}(), {closure#4}(), {closure#5}(), {closure#6}(), vCreate()
+### Community 107 - "Center/PackageController.php"
+Cohesion: 0.12
+Nodes (11): {closure#1}(), {closure#10}(), {closure#2}(), {closure#3}(), {closure#5}(), {closure#6}(), {closure#7}(), {closure#8}() (+3 more)
 
-### Community 110 - "ServiceSettingsTest.php"
+### Community 108 - "EventDispatchTest.php"
+Cohesion: 0.16
+Nodes (12): PlanCreated, SubscriptionRenewed, {closure#2}(), {closure#6}(), {closure#1}(), {closure#2}(), {closure#4}(), {closure#5}() (+4 more)
+
+### Community 110 - "Service"
+Cohesion: 0.06
+Nodes (17): {closure#1}(), {closure#1}(), {closure#1}(), {closure#1}(), {closure#1}(), {closure#2}(), {closure#1}(), Service (+9 more)
+
+### Community 111 - "Illuminate\Support\Facades\Schema"
+Cohesion: 0.10
+Nodes (5): {closure#1}(), {closure#1}(), {closure#1}(), {closure#1}(), {closure#1}()
+
+### Community 112 - "PaymentProviderUnavailableException"
+Cohesion: 0.15
+Nodes (11): PaymentProviderUnavailableException, PaymentProviderValidationException, Acceptance Criteria Evidence (27 ACs), Cross-cutting checks, Final gate (reviewer re-ran), Independent Review — Payment Gateways (Tamara + Moyasar) Implementation, Review History, Rubric ACs (4) — all meet thresholds ✅ (+3 more)
+
+### Community 113 - "SystemUserFactory.php"
 Cohesion: 0.14
-Nodes (6): ServiceSettingFactory, ServiceSetting, {closure#1}(), {closure#2}(), {closure#3}(), {closure#6}()
+Nodes (4): {closure#1}(), {closure#2}(), SystemUserFactory, SystemUserAuthService
 
-### Community 111 - "Task 5: Database migrations — purchases, purchase_items, payments, webhook_events"
-Cohesion: 0.50
-Nodes (4): References, Scope, Task 5: Database migrations — purchases, purchase_items, payments, webhook_events, Test Requirements
+### Community 114 - "ResortController.php"
+Cohesion: 0.27
+Nodes (3): ResortController, ResortRequest, ResortResource
 
-### Community 112 - "ActionLog"
-Cohesion: 0.24
-Nodes (3): Actionable, ActionActor, ActionLog
-
-### Community 113 - "HorseCareController.php"
-Cohesion: 0.23
-Nodes (3): HorseCareController, HorseCareRequest, HorseCareResource
-
-### Community 114 - "VisitController.php"
-Cohesion: 0.23
-Nodes (3): VisitController, VisitRequest, VisitResource
-
-### Community 115 - "Illuminate\Http\Resources\Json\AnonymousResourceCollection"
-Cohesion: 0.07
-Nodes (10): Controller, ServiceBlockController, ServiceBlockRequest, ServiceBlockResource, AuthController, CityController, CityController, LoginRequest (+2 more)
-
-### Community 116 - "TrainingServiceController"
+### Community 115 - "Task-local Test Requirements (TR)"
 Cohesion: 0.25
-Nodes (3): TrainingServiceController, TrainingServiceRequest, TrainingServiceResource
+Nodes (8): rubric, rule, rule, rule, rule, rule, rule, Task-local Test Requirements (TR)
 
-### Community 117 - "Caching Best Practices"
-Cohesion: 0.25
-Nodes (7): Caching Best Practices, Configure Failover Cache Stores in Production, Consider `Cache::flexible()` for Stale-While-Revalidate, Use `Cache::memo()` to Avoid Redundant Hits Within an Execution, Use `Cache::remember()` for Cache-Aside Reads, Use Cache Tags to Invalidate Related Groups, Use `once()` for In-Process Memoization
-
-### Community 118 - "Illuminate\Database\Eloquent\Relations\MorphMany"
-Cohesion: 0.08
-Nodes (9): HasSubscriptions, HasDiscounts, Blockable, Blocker, Rateable, Rater, Task 3: HasSubscriptions trait + apply to Center model (cross-module edit), Traits applied to existing models (+1 more)
-
-### Community 119 - "Task-local Test Requirements (TR)"
+### Community 116 - "SystemRole"
 Cohesion: 0.14
-Nodes (14): CenterCitiesIndexTest (GET /api/v1/center/cities), ClientCitiesIndexTest (GET /api/v1/client/cities), Completion Evidence, rubric, rule, rule, rule, rule (+6 more)
+Nodes (6): {closure#1}(), {closure#2}(), {closure#3}(), HasSystemRoles, SystemRole, SuperAdmin
+
+### Community 117 - "Illuminate\Database\Migrations\Migration"
+Cohesion: 0.12
+Nodes (4): {closure#1}(), {closure#1}(), {closure#1}(), {closure#1}()
+
+### Community 118 - "PaymentGatewayClientHelpers.php"
+Cohesion: 0.20
+Nodes (3): PaymentStateConflictException, {closure#2}(), {closure#3}()
 
 ### Community 120 - "composer.json"
 Cohesion: 0.15
 Nodes (12): autoload, description, extra, laravel, keywords, dont-discover, license, minimum-stability (+4 more)
 
-### Community 121 - "BlockTimeScope"
-Cohesion: 0.29
-Nodes (4): BlockTimeScope, AllDay, SpecificTime, {closure#1}()
+### Community 121 - "ServiceFactory"
+Cohesion: 0.20
+Nodes (5): {closure#10}(), {closure#11}(), ServiceFactory, {closure#4}(), {closure#5}()
 
 ### Community 122 - "Khyyal Backend"
 Cohesion: 0.15
 Nodes (12): 1. Support Module, 2. Centers Module, 3. Clients Module, Khyyal Backend, Module Architecture, Notes, Overview, Project Structure (+4 more)
 
 ### Community 123 - "Centers Module: Phone + OTP Login & Center-Selection Endpoints"
-Cohesion: 0.11
-Nodes (19): Acceptance Criteria, Additional findings reported to user, Assumptions (flagged, not confirmed), Centers Module: Phone + OTP Login & Center-Selection Endpoints, Confirmed Open Questions (from user), Endpoint 1: POST /api/centers/auth/phone, Endpoint 2: POST /api/centers/auth/phone/verify, Endpoint 3: GET /api/centers (+11 more)
-
-### Community 124 - "Task-local Test Requirements (TR)"
 Cohesion: 0.15
-Nodes (12): Completion Evidence, Files to Create, rubric, rule, rule, rule, rule, rule (+4 more)
+Nodes (13): Acceptance Criteria, Additional findings reported to user, Assumptions (flagged, not confirmed), Centers Module: Phone + OTP Login & Center-Selection Endpoints, Confirmed Open Questions (from user), Goals, Migrations Required, Non-Functional Requirements (+5 more)
 
-### Community 125 - "Detection Checklist"
-Cohesion: 0.15
-Nodes (10): A. Validation & HTTP input, B. Controllers & routing, C. Authorization, D. Eloquent & models, Detection Checklist, E. Architecture & organization, F. Frontend & views, H. Testing (+2 more)
+### Community 125 - "Illuminate\Database\Eloquent\Factories\HasFactory"
+Cohesion: 0.05
+Nodes (9): TagSeeder, Tag, ReservationLine, {closure#5}(), {closure#5}(), ServiceBlockPeriod, ServicePeriod, {closure#5}() (+1 more)
 
 ### Community 126 - "Process"
 Cohesion: 0.17
@@ -756,13 +796,13 @@ Nodes (11): autoload, psr-4, description, extra, laravel, providers, name, Modul
 Cohesion: 0.17
 Nodes (11): autoload, psr-4, description, extra, laravel, providers, name, Modules\\Clients\\ (+3 more)
 
+### Community 129 - "ServiceSetting"
+Cohesion: 0.22
+Nodes (3): ServiceSettingFactory, ServiceSetting, {closure#3}()
+
 ### Community 130 - "Support/composer.json"
 Cohesion: 0.17
 Nodes (11): autoload, psr-4, description, extra, laravel, providers, name, Modules\\Support\\ (+3 more)
-
-### Community 131 - "SupportServiceProvider"
-Cohesion: 0.17
-Nodes (10): SupportServiceProvider, Constraints, Completion Evidence, rule, rule, rule, rule, Scope (+2 more)
 
 ### Community 132 - "Independent Review — Centers Phone+OTP Login & Center-Selection Endpoints"
 Cohesion: 0.18
@@ -788,9 +828,9 @@ Nodes (11): Apply Cross-Site Request Forgery Protection, Audit Dependencies, Aut
 Cohesion: 0.18
 Nodes (11): require, dedoc/scramble, laravel/framework, laravel/sanctum, laravel/tinker, php, spatie/laravel-medialibrary, spatie/laravel-permission (+3 more)
 
-### Community 138 - "TrainingService"
-Cohesion: 0.11
-Nodes (10): {closure#1}(), ServiceFactory, TrainingService, {closure#1}(), {closure#2}(), {closure#3}(), TrainingServiceService, {closure#1}() (+2 more)
+### Community 138 - "SupportServiceProvider"
+Cohesion: 0.18
+Nodes (9): SupportServiceProvider, Completion Evidence, rule, rule, rule, rule, Scope, Task 2: Wire Client & Center Route Files (+1 more)
 
 ### Community 140 - "Advanced Query Best Practices"
 Cohesion: 0.20
@@ -808,9 +848,17 @@ Nodes (9): Back Off Transient Failures, Batch Jobs for Group Coordination, Confi
 Cohesion: 0.20
 Nodes (10): require-dev, fakerphp/faker, laravel/boost, laravel/pail, laravel/pao, laravel/pint, mockery/mockery, nunomaduro/collision (+2 more)
 
+### Community 145 - "/graphify"
+Cohesion: 0.22
+Nodes (8): For /graphify add and --watch, For /graphify query, For the commit hook and native CLAUDE.md integration, For --update and --cluster-only, /graphify, Honesty Rules, Usage, What graphify is for
+
 ### Community 146 - "Important scenarios"
 Cohesion: 0.20
 Nodes (10): 35. Testing Requirements, Abandoned payment, Cash on arrival, Failed online attempt, Important scenarios, Payment, Purchase, Retry (+2 more)
+
+### Community 148 - "Support Module API Layer Specification"
+Cohesion: 0.20
+Nodes (9): Assumptions, Dependencies, Goals, Non-Functional Requirements, Non-Goals, Open Questions, Problem, Support Module API Layer Specification (+1 more)
 
 ### Community 149 - "graphify reference: extra exports and benchmark"
 Cohesion: 0.22
@@ -832,21 +880,25 @@ Nodes (9): scripts, dev, post-autoload-dump, post-create-project-cmd, post-root-
 Cohesion: 0.22
 Nodes (5): {closure#1}(), Gender, FEMALE, MALE, OTHER
 
+### Community 155 - "Purchase Module Implementation — Independent Review"
+Cohesion: 0.29
+Nodes (6): 1. Final Test Evidence (AC-44 Rule), 3. Non-Goals Validation (from spec.md), 4. Architectural Review (Rubric AC-48), 6. Cross-Module Impact Summary, 7. Final Recommendation: PASS, Purchase Module Implementation — Independent Review
+
 ### Community 156 - "bootstrap/app.php"
 Cohesion: 0.32
 Nodes (3): {closure#1}(), {closure#2}(), {closure#3}()
 
 ### Community 157 - "laravel-best-practices/SKILL.md"
-Cohesion: 0.29
-Nodes (5): Consistency First, Decision Rules, How to Apply, Laravel Best Practices, Rule Index
+Cohesion: 0.15
+Nodes (10): Configuration Best Practices, Name Repeated Domain Values, Protect Production Secrets, Read Environment Variables in Configuration Files, Use `App::environment()` for Environment Checks, Consistency First, Decision Rules, How to Apply (+2 more)
 
 ### Community 158 - "Blade and View Best Practices"
 Cohesion: 0.25
 Nodes (7): Blade and View Best Practices, Prefer Components for Explicit Interfaces, Return Blade Fragments for Partial Rendering, Share Compatible View Data with a View Composer, Share Parent Component Props with `@aware`, Use `$attributes->merge()` in Component Templates, Use `@pushOnce` for Per-Component Scripts
 
-### Community 159 - "Error Handling Best Practices"
-Cohesion: 0.25
-Nodes (7): Add Context to Exception Classes, Choose Where to Report and Render Exceptions, Define JSON Rendering for API Routes, Error Handling Best Practices, Mark Exceptions the Handler Should Not Report, Prevent Duplicate Reports of One Exception Instance, Throttle High-Volume Exception Reports
+### Community 159 - "DiscountCalculatorTest.php"
+Cohesion: 0.39
+Nodes (7): cCreate(), {closure#2}(), {closure#3}(), {closure#4}(), {closure#5}(), {closure#6}(), {closure#7}()
 
 ### Community 160 - "Task Scheduling Best Practices"
 Cohesion: 0.25
@@ -884,10 +936,6 @@ Nodes (6): Assert the Delivery Mode, Dispatch Queued Mail After Commit, Mail Bes
 Cohesion: 0.29
 Nodes (6): Keep Controllers Focused on HTTP Concerns, Organize Controllers Around Resources, Routing and Controller Best Practices, Scope Nested Bindings, Use Implicit Route Model Binding, Use Resource Routes for Resourceful Actions
 
-### Community 170 - "City"
-Cohesion: 0.20
-Nodes (3): HasCity, City, {closure#7}()
-
 ### Community 171 - "Validation and Forms Best Practices"
 Cohesion: 0.29
 Nodes (6): Add Cross-Field Validation After Base Rules, Express Conditional Rules Clearly, Extract Validation When It Improves the Boundary, Prefer Readable Rule Syntax, Use Only Intended Validated Data, Validation and Forms Best Practices
@@ -904,25 +952,17 @@ Nodes (6): Assertions, Coverage, Data and Determinism, Names and Structure, Revi
 Cohesion: 0.29
 Nodes (7): pestphp/pest-plugin, php-http/discovery, config, allow-plugins, optimize-autoloader, preferred-install, sort-packages
 
-### Community 177 - "PurchaseServiceProvider.php"
-Cohesion: 0.22
-Nodes (5): {closure#1}(), PurchaseServiceProvider, Scope, Task 15: Integration check, final polish, and cross-module consistency, Test Requirements
+### Community 175 - "PaymentMethod"
+Cohesion: 0.05
+Nodes (34): PaymentMethod, CashOnArrival, Manual, Online, PurchaseSource, Center, Client, System (+26 more)
 
-### Community 178 - "SystemUserFactory.php"
-Cohesion: 0.14
-Nodes (4): {closure#1}(), {closure#2}(), SystemUserFactory, SystemUserAuthService
-
-### Community 179 - "Task 2: Enums — PurchaseSource, PurchaseStatus, PaymentMethod, PaymentStatus"
-Cohesion: 0.50
-Nodes (4): References, Scope, Task 2: Enums — PurchaseSource, PurchaseStatus, PaymentMethod, PaymentStatus, Test Requirements
+### Community 177 - "Symfony\Component\HttpFoundation\Response"
+Cohesion: 0.04
+Nodes (13): AuthController, CenterController, RegisterController, EnsureCenterAccessScope, CenterAccessRequest, SendLoginOtpRequest, UpdateCenterRequest, VerifyLoginOtpRequest (+5 more)
 
 ### Community 180 - "14. Payment Status"
 Cohesion: 0.29
 Nodes (7): 14. Payment Status, cancelled, expired, failed, pending, processing, succeeded
-
-### Community 181 - "Implementation Tasks — Centers Phone+OTP Login & Center-Selection"
-Cohesion: 0.07
-Nodes (27): 3a. `SendLoginOtpRequest.php` (for /auth/phone), 3b. `VerifyLoginOtpRequest.php` (for /auth/phone/verify), 3c. `CenterAccessRequest.php` (for /centers/{center}/access), Behavior details login, Behavior details verify, Implementation Tasks — Centers Phone+OTP Login & Center-Selection, References, References (+19 more)
 
 ### Community 182 - "Task 7: Create CenterController for listing + viewing + access endpoints"
 Cohesion: 0.29
@@ -932,25 +972,25 @@ Nodes (7): Behavior details (access), Behavior details (index), Behavior details
 Cohesion: 0.33
 Nodes (5): For /graphify explain, For /graphify path, graphify reference: query, path, explain, Step 0 — Constrained query expansion (REQUIRED before traversal), Step 1 — Traversal
 
-### Community 184 - "Configuration Best Practices"
-Cohesion: 0.33
-Nodes (5): Configuration Best Practices, Name Repeated Domain Values, Protect Production Secrets, Read Environment Variables in Configuration Files, Use `App::environment()` for Environment Checks
-
 ### Community 185 - "Naming and Structure"
 Cohesion: 0.33
 Nodes (5): File Layout, Grouping, Naming and Structure, Naming Tests, Test Function
 
-### Community 187 - "Functional Requirements"
-Cohesion: 0.29
-Nodes (7): FR-1 — Pre-Work: OtpVerificationService distinction + HTTP-safe exceptions, FR-2 — POST /api/centers/auth/phone — Request OTP, FR-3 — POST /api/centers/auth/phone/verify — Verify OTP + Issue Token, FR-4 — GET /api/centers — List User's Centers, FR-5 — GET /api/centers/{center} — View Single Center, FR-6 — POST /api/centers/{center}/access — Obtain Center-Scoped Access, Functional Requirements
+### Community 186 - "RecreationRidingController.php"
+Cohesion: 0.23
+Nodes (3): RecreationRidingController, RecreationRidingRequest, RecreationRidingResource
 
-### Community 188 - "Task 4: Create Resource classes"
-Cohesion: 0.33
-Nodes (6): 4a. `CenterWithRoleResource.php`, 4b. (Optional) Confirm existing CenterResource + UserResource suffice, References, Scope, Task 4: Create Resource classes, Test Requirements
+### Community 188 - "Illuminate\Foundation\Http\FormRequest"
+Cohesion: 0.04
+Nodes (15): CenterController, ListCentersRequest, StoreCenterRequest, UpdateCenterRequest, PromotionStatus, Active, InActive, AttachServicesRequest (+7 more)
 
-### Community 189 - "Task 8: Register routes in modules/Centers/routes/center.php"
-Cohesion: 0.50
-Nodes (4): References, Scope, Task 8: Register routes in modules/Centers/routes/center.php, Test Requirements
+### Community 190 - "TemporaryMediaService"
+Cohesion: 0.06
+Nodes (16): CenterUpdateService, {closure#1}(), {closure#5}(), CenterHorseServiceService, {closure#1}(), {closure#2}(), {closure#3}(), {closure#7}() (+8 more)
+
+### Community 191 - "CouponFactory"
+Cohesion: 0.23
+Nodes (8): CouponFactory, {closure#2}(), {closure#3}(), {closure#4}(), {closure#5}(), {closure#6}(), {closure#7}(), vCreate()
 
 ### Community 192 - "Factories and Test Data"
 Cohesion: 0.40
@@ -960,13 +1000,21 @@ Nodes (4): Datasets, Each Test Makes Its Own Data, Factories and Test Data, Reco
 Cohesion: 0.40
 Nodes (5): Consistency First, How to Apply, Rule Index, Testing Best Practices, What to Test
 
-### Community 195 - "DiscountCalculatorTest.php"
-Cohesion: 0.39
-Nodes (7): cCreate(), {closure#2}(), {closure#3}(), {closure#4}(), {closure#5}(), {closure#6}(), {closure#7}()
+### Community 198 - "Implementation Tasks — Centers Phone+OTP Login & Center-Selection"
+Cohesion: 0.20
+Nodes (10): Implementation Tasks — Centers Phone+OTP Login & Center-Selection, References, References, Scope, Scope, Task 8: Register routes in modules/Centers/routes/center.php, Task 9: Feature tests, Task Summary Table (+2 more)
 
-### Community 196 - "Illuminate\Support\Facades\Schema"
-Cohesion: 0.10
-Nodes (5): {closure#1}(), {closure#1}(), {closure#1}(), {closure#1}(), {closure#1}()
+### Community 199 - "Illuminate\Http\JsonResponse"
+Cohesion: 0.03
+Nodes (34): FeatureController, LimitController, {closure#1}(), PlanController, PlanController, SubscriptionController, AttachFeaturesRequest, AttachLimitsRequest (+26 more)
+
+### Community 202 - "ClientPackage"
+Cohesion: 0.13
+Nodes (8): ClientPackageActivated, {closure#1}(), {closure#2}(), ConfirmPurchasedReservations, ClientPackage, {closure#22}(), {closure#24}(), {closure#26}()
+
+### Community 204 - "Convention and Style Best Practices"
+Cohesion: 0.29
+Nodes (6): Convention and Style Best Practices, Follow Project Naming Conventions, Keep Presentation Code Maintainable, Prefer Clear, Idiomatic Syntax, Use Utilities When They Clarify Intent, Write Comments That Explain Why
 
 ### Community 205 - "27. Database Constraints"
 Cohesion: 0.40
@@ -1001,18 +1049,42 @@ Cohesion: 0.50
 Nodes (3): For --cluster-only, For --update (incremental re-extraction), graphify reference: incremental update and cluster-only
 
 ### Community 213 - "psr-4"
-Cohesion: 0.50
-Nodes (4): autoload-dev, psr-4, Modules\\Purchase\\Tests\\, Tests\\
+Cohesion: 0.40
+Nodes (5): autoload-dev, psr-4, Modules\\Purchase\\Tests\\, Modules\\Reservations\\Tests\\, Tests\\
 
-### Community 233 - "UpdateCenterTest.php"
-Cohesion: 0.13
-Nodes (4): TagFactory, {closure#1}(), {closure#5}(), {closure#6}()
+### Community 218 - "Task1SkeletonTest.php"
+Cohesion: 0.43
+Nodes (4): {closure#1}(), {closure#2}(), {closure#3}(), {closure#4}()
 
-### Community 249 - "Authentication"
+### Community 225 - "CenterStatus"
+Cohesion: 0.33
+Nodes (3): CenterStatus, INVISIBLE, VISIBLE
+
+### Community 226 - "Functional Requirements"
+Cohesion: 0.33
+Nodes (6): FR-2 — POST /api/centers/auth/phone — Request OTP, FR-3 — POST /api/centers/auth/phone/verify — Verify OTP + Issue Token, FR-4 — GET /api/centers — List User's Centers, FR-5 — GET /api/centers/{center} — View Single Center, FR-6 — POST /api/centers/{center}/access — Obtain Center-Scoped Access, Functional Requirements
+
+### Community 227 - "PurchaseServiceProvider"
+Cohesion: 0.33
+Nodes (4): PurchaseServiceProvider, Scope, Task 15: Integration check, final polish, and cross-module consistency, Test Requirements
+
+### Community 230 - "City"
+Cohesion: 0.23
+Nodes (7): City, CityService, {closure#6}(), {closure#7}(), Constraints, Functional Requirements, Scope
+
+### Community 236 - "HTTP Status Code Matrix per Endpoint"
+Cohesion: 0.33
+Nodes (6): Endpoint 1: POST /api/centers/auth/phone, Endpoint 2: POST /api/centers/auth/phone/verify, Endpoint 3: GET /api/centers, Endpoint 4: GET /api/centers/{center}, Endpoint 5: POST /api/centers/{center}/access, HTTP Status Code Matrix per Endpoint
+
+### Community 238 - "Task 6: Create AuthController for /auth/phone and /auth/phone/verify"
+Cohesion: 0.33
+Nodes (6): Behavior details login, Behavior details verify, References, Scope, Task 6: Create AuthController for /auth/phone and /auth/phone/verify, Test Requirements
+
+### Community 250 - "Authentication"
 Cohesion: 0.50
 Nodes (4): 18. Moyasar Gateway, Authentication, Publishable key, Secret key
 
-### Community 250 - "References"
+### Community 251 - "References"
 Cohesion: 0.50
 Nodes (4): AI Agent Implementation Prompt — Tamara + Moyasar Payment Gateways, Moyasar, References, Tamara
 
@@ -1020,41 +1092,89 @@ Nodes (4): AI Agent Implementation Prompt — Tamara + Moyasar Payment Gateways,
 Cohesion: 0.50
 Nodes (4): 26. Suggested Eloquent Models, Payment, Purchase, PurchaseItem
 
-### Community 254 - "Task 1: Module skeleton, autoload registration, and composer.json"
-Cohesion: 0.50
-Nodes (4): References, Scope, Task 1: Module skeleton, autoload registration, and composer.json, Test Requirements (local)
+### Community 254 - "45. Provider Differences Must Remain Explicit"
+Cohesion: 0.67
+Nodes (3): 45. Provider Differences Must Remain Explicit, Moyasar, Tamara
 
 ### Community 255 - "Recreational Riding Create/Update Service - Independent Review"
 Cohesion: 0.50
 Nodes (3): Recreational Riding Create/Update Service - Independent Review, Review History, Review R1
 
-### Community 261 - "45. Provider Differences Must Remain Explicit"
-Cohesion: 0.67
-Nodes (3): 45. Provider Differences Must Remain Explicit, Moyasar, Tamara
-
-### Community 266 - "4. Idempotency"
+### Community 260 - "4. Idempotency"
 Cohesion: 0.67
 Nodes (3): 4. Idempotency, Moyasar, Tamara
 
+### Community 301 - "Task 4: Create Resource classes"
+Cohesion: 0.33
+Nodes (6): 4a. `CenterWithRoleResource.php`, 4b. (Optional) Confirm existing CenterResource + UserResource suffice, References, Scope, Task 4: Create Resource classes, Test Requirements
+
+### Community 303 - "PaymentGatewayManager"
+Cohesion: 0.07
+Nodes (25): PaymentGatewayManager, {closure#1}(), RefundLatePayment, Configuration, Confirmed Assumptions, Constraints, Constraints & Dependencies, Dependencies (+17 more)
+
+### Community 304 - "Task 3: Create FormRequest classes for phone login + verify + access"
+Cohesion: 0.29
+Nodes (7): 3a. `SendLoginOtpRequest.php` (for /auth/phone), 3b. `VerifyLoginOtpRequest.php` (for /auth/phone/verify), 3c. `CenterAccessRequest.php` (for /centers/{center}/access), References, Scope, Task 3: Create FormRequest classes for phone login + verify + access, Test Requirements
+
+### Community 305 - "Task 5: Add CenterAuthService helper methods (optional but recommended for thin controllers)"
+Cohesion: 0.50
+Nodes (4): References, Scope, Task 5: Add CenterAuthService helper methods (optional but recommended for thin controllers), Test Requirements
+
+### Community 306 - "Task 2: Fix User::centers() withPivot (missing is_primary)"
+Cohesion: 0.50
+Nodes (4): References, Scope, Task 2: Fix User::centers() withPivot (missing is_primary), Test Requirements
+
+### Community 308 - "Task 2: Enums — PurchaseSource, PurchaseStatus, PaymentMethod, PaymentStatus"
+Cohesion: 0.50
+Nodes (4): References, Scope, Task 2: Enums — PurchaseSource, PurchaseStatus, PaymentMethod, PaymentStatus, Test Requirements
+
+### Community 309 - "TrainingService"
+Cohesion: 0.07
+Nodes (15): {closure#1}(), {closure#5}(), {closure#7}(), {closure#2}(), TrainingService, CenterTrainingServiceService, {closure#1}(), {closure#2}() (+7 more)
+
+### Community 312 - "Task 1: Skeleton — Extend PaymentGateway Contract & Add Exception Hierarchy"
+Cohesion: 0.67
+Nodes (3): Scope, Task 1: Skeleton — Extend PaymentGateway Contract & Add Exception Hierarchy, Test Requirements (TR)
+
+### Community 317 - "Task 4: TamaraStatusMapper & TamaraGateway"
+Cohesion: 0.67
+Nodes (3): Scope, Task 4: TamaraStatusMapper & TamaraGateway, Test Requirements (TR)
+
+### Community 318 - "Task 6: MoyasarStatusMapper + MoyasarSourceNormalizer + MoyasarGateway"
+Cohesion: 0.67
+Nodes (3): Scope, Task 6: MoyasarStatusMapper + MoyasarSourceNormalizer + MoyasarGateway, Test Requirements (TR)
+
+### Community 319 - "Task 10: Shared Infrastructure Tests — PaymentGatewayExceptions & StatusMapping Edge Cases"
+Cohesion: 0.67
+Nodes (3): Scope, Task 10: Shared Infrastructure Tests — PaymentGatewayExceptions & StatusMapping Edge Cases, Test Requirements (TR)
+
+### Community 320 - "HasService"
+Cohesion: 0.09
+Nodes (6): HasPackages, HasSchedules, HasService, HasSettings, {closure#1}(), HasStartPrice
+
+### Community 321 - "Task 2: Tamara/Moyasar Namespace Folders + Shared HTTP Client Helper"
+Cohesion: 0.67
+Nodes (3): Scope, Task 2: Tamara/Moyasar Namespace Folders + Shared HTTP Client Helper, Test Requirements (TR)
+
 ## Knowledge Gaps
-- **817 isolated node(s):** `ACTIVE`, `INACTIVE`, `Test Requirements`, `Owner`, `References` (+812 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 1707 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **101 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **837 isolated node(s):** `Add Context to Exception Classes`, `Define JSON Rendering for API Routes`, `Mark Exceptions the Handler Should Not Report`, `Prevent Duplicate Reports of One Exception Instance`, `AllDay` (+832 more)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 1916 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **114 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Center` connect `Center` to `Illuminate\Http\Request`, `ServiceTypeTerm`, `Illuminate\Database\Eloquent\Relations\BelongsToMany`, `SupportServiceProvider`, `Illuminate\Http\Resources\Json\JsonResource`, `CenterFactory`, `Illuminate\Database\Eloquent\Factories\HasFactory`, `Payment`, `AuthAndCenterControllerTest.php`, `SubscriptionFactory.php`, `Illuminate\Database\Eloquent\Factories\Factory`, `Spatie\MediaLibrary\MediaCollections\Models\Media`, `Illuminate\Database\Eloquent\Model`, `SubscriptionController.php`, `CenterSearchService`, `Symfony\Component\HttpFoundation\Response`, `Service`, `SubscriptionFactory`, `Illuminate\Foundation\Http\FormRequest`, `Client`, `Event`, `ServiceType`, `City`, `CenterEventService.php`, `.count`, `PurchaseServiceProvider.php`, `ResortController.php`, `CenterSearchService.php`, `Illuminate\Database\Migrations\Migration`, `Illuminate\Support\Facades\Route`, `CenterHorseCareService.php`, `SystemUser`, `Illuminate\Http\JsonResponse`, `CenterResortService.php`, `TemporaryMediaService`, `Trainer`, `CenterHorseServiceService.php`, `Illuminate\Routing\Controller`, `User`, `Services/routes/center.php`, `Goals`, `Goals`, `Illuminate\Database\Eloquent\Builder`, `CenterAdminService`, `2026_09_30_105748_create_services_table.php`, `CenterRegisterService.php`, `UpdateCenterTest.php`, `ServiceBlockService`, `2026_10_08_090000_create_service_blocks_table.php`, `ActionLog`, `2026_10_10_090001_create_trainers_table.php`, `HorseCareController.php`, `Illuminate\Http\Resources\Json\AnonymousResourceCollection`, `VisitController.php`, `Illuminate\Database\Eloquent\Relations\MorphMany`, `BlockTimeScope`, `Task-local Test Requirements (TR)`, `Detection Checklist`?**
+- **Why does `Center` connect `Center` to `Illuminate\Http\Request`, `HasCity`, `Client`, `CenterFactory`, `Payment`, `Illuminate\Routing\Controller`, `CenterHorseCareService.php`, `PurchaseController.php`, `CenterRegisterService.php`, `Subscription`, `Illuminate\Foundation\Testing\RefreshDatabase`, `Promotion Module — Implementation Plan`, `Acceptance Criteria`, `Goals`, `HorseCareController.php`, `ServiceType`, `ServiceBlock`, `SubscriptionFactory.php`, `Spatie\MediaLibrary\MediaCollections\Models\Media`, `2026_10_08_090000_create_service_blocks_table.php`, `PlanFactory`, `PaymentGatewayManager`, `Illuminate\Database\Eloquent\Model`, `Symfony\Component\HttpFoundation\Response`, `User`, `TrainingService`, `CenterSearchService.php`, `EventController.php`, `RecreationRidingController.php`, `.count`, `Illuminate\Foundation\Http\FormRequest`, `Trainer`, `TemporaryMediaService`, `AuthAndCenterControllerTest.php`, `Illuminate\Database\Eloquent\Builder`, `HasService`, `Caching Best Practices`, `SystemUser`, `CenterAdminService.php`, `Illuminate\Http\JsonResponse`, `PriceOption`, `DiscountFactory`, `EventAvailabilityTest.php`, `TrainingServiceController.php`, `Illuminate\Database\Eloquent\Relations\MorphMany`, `Services/routes/center.php`, `VisitController.php`, `Task-local Test Requirements (TR)`, `ListClientPackagesRequest`, `CenterRecreationRidingService.php`, `Illuminate\Database\Eloquent\Relations\BelongsToMany`, `CenterEventService.php`, `CenterVisitService.php`, `Carbon\CarbonImmutable`, `BookingFixtures`, `City`, `2026_09_30_105748_create_services_table.php`, `HorseServiceController.php`, `Illuminate\Support\Facades\DB`, `Center/PackageController.php`, `Service`, `2026_10_10_090001_create_trainers_table.php`, `ResortController.php`, `2026_10_07_195829_create_service_type_terms_table.php`, `ServiceBlockService.php`, `ServiceFactory`, `Illuminate\Database\Eloquent\Factories\HasFactory`?**
   _High betweenness centrality (0.129) - this node is a cross-community bridge._
-- **Why does `CenterFactory` connect `CenterFactory` to `Illuminate\Foundation\Testing\RefreshDatabase`, `ServiceTypeTerm`, `ServiceBlock`, `ServicePackagesTest.php`, `PlanFactory`, `SubscriptionFactory.php`, `Illuminate\Database\Eloquent\Factories\Factory`, `EventDispatchTest.php`, `DiscountFactory`, `Service`, `SubscriptionFactory`, `Event`, `ServiceType`, `Resort`, `Visit`, `City`, `CityFactory`, `PromotionStatus`, `CityService`, `HorseCareServiceTest.php`, `HorseServiceServiceTest.php`, `TrainerFactory`, `DiscountResolverTest.php`, `SystemUser`, `Implementation Tasks — Purchase Module`, `SlugTest.php`, `UpdateCenterTest.php`, `ServiceSettingsTest.php`?**
-  _High betweenness centrality (0.076) - this node is a cross-community bridge._
-- **Why does `Discount` connect `Illuminate\Http\Request` to `DiscountRedemption`, `DiscountCalculatorTest.php`, `Illuminate\Database\Eloquent\Builder`, `DiscountUsageServiceTest.php`, `Illuminate\Database\Eloquent\Factories\HasFactory`, `Illuminate\Foundation\Events\Dispatchable`, `Purchase`, `CouponFactory`, `PromotionStatus`, `Acceptance Criteria`, `Billing Module - Implementation Plan`, `Illuminate\Database\Eloquent\Model`, `Illuminate\Database\Eloquent\Relations\MorphMany`, `Goals`, `DiscountFactory`, `DiscountResolverTest.php`, `Illuminate\Support\Str`?**
-  _High betweenness centrality (0.065) - this node is a cross-community bridge._
-- **Are the 3 inferred relationships involving `CenterFactory` (e.g. with `{closure#1}()` and `Scope`) actually correct?**
-  _`CenterFactory` has 3 INFERRED edges - model-reasoned connections that need verification._
-- **Are the 8 inferred relationships involving `Center` (e.g. with `FR-3 — Traits: HasDiscounts & HasDiscountable` and `Goals`) actually correct?**
-  _`Center` has 8 INFERRED edges - model-reasoned connections that need verification._
-- **What connects `ACTIVE`, `INACTIVE`, `Test Requirements` to the rest of the system?**
-  _817 weakly-connected nodes found - possible documentation gaps or missing edges._
-- **Should `Illuminate\Http\Request` be split into smaller, more focused modules?**
-  _Cohesion score 0.06526610644257703 - nodes in this community are weakly interconnected._
+- **Why does `CenterFactory` connect `CenterFactory` to `ServicePackage`, `CreateReservationTest.php`, `Illuminate\Database\Eloquent\Factories\Factory`, `DiscountResolverTest.php`, `Support Module API Layer Specification`, `Illuminate\Foundation\Testing\RefreshDatabase`, `Implementation Tasks — Purchase Module`, `Visit`, `ReservationStateServiceTest.php`, `ServiceType`, `ServiceBlock`, `Resort`, `SubscriptionFactory.php`, `SlugTest.php`, `PlanFactory`, `CityFactory`, `DiscountScope`, `PaymentMethod`, `TrainingService`, `HorseCare`, `HorseService`, `CenterTrainingServiceTest.php`, `CouponFactory`, `SystemUser`, `PriceOption`, `DiscountFactory`, `Event`, `EventAvailabilityTest.php`, `ClientServiceDetailsTest.php`, `BookingFixtures`, `City`, `Illuminate\Support\Facades\DB`, `EventDispatchTest.php`, `ServiceFactory`?**
+  _High betweenness centrality (0.078) - this node is a cross-community bridge._
+- **Why does `Service` connect `Service` to `Illuminate\Http\Request`, `ServiceSetting`, `Client`, `Center`, `ServicePackage`, `CreateReservationTest.php`, `Illuminate\Routing\Controller`, `CenterHorseCareService.php`, `Illuminate\Database\Eloquent\Factories\Factory`, `Promotion Module — Implementation Plan`, `Visit`, `Goals`, `ReservationNotAllowedException`, `ServiceType`, `ServiceBlock`, `Resort`, `Spatie\MediaLibrary\MediaCollections\Models\Media`, `2026_10_08_090000_create_service_blocks_table.php`, `Illuminate\Database\Eloquent\Model`, `Illuminate\Support\ServiceProvider`, `Promotion Module — Technical Review`, `TrainingService`, `HorseCare`, `HorseService`, `CenterTrainingServiceTest.php`, `.count`, `TemporaryMediaService`, `HasService`, `Illuminate\Database\Eloquent\Builder`, `.event`, `PriceOption`, `Purchase`, `Event`, `Services/routes/center.php`, `Illuminate\Foundation\Events\Dispatchable`, `CenterRecreationRidingService.php`, `CenterEventService.php`, `CenterVisitService.php`, `Carbon\CarbonImmutable`, `BookingFixtures`, `2026_10_03_102340_create_price_options_table.php`, `ServiceBlockService.php`, `ServiceFactory`, `Illuminate\Database\Eloquent\Factories\HasFactory`?**
+  _High betweenness centrality (0.053) - this node is a cross-community bridge._
+- **Are the 6 inferred relationships involving `CenterFactory` (e.g. with `{closure#1}()` and `{closure#1}()`) actually correct?**
+  _`CenterFactory` has 6 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 9 inferred relationships involving `Center` (e.g. with `1. Acceptance criteria` and `FR-3 — Traits: HasDiscounts & HasDiscountable`) actually correct?**
+  _`Center` has 9 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 10 inferred relationships involving `Service` (e.g. with `1. Acceptance criteria` and `5. Service layer`) actually correct?**
+  _`Service` has 10 INFERRED edges - model-reasoned connections that need verification._
+- **What connects `Add Context to Exception Classes`, `Define JSON Rendering for API Routes`, `Mark Exceptions the Handler Should Not Report` to the rest of the system?**
+  _837 weakly-connected nodes found - possible documentation gaps or missing edges._

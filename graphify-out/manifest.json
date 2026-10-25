@@ -54,15 +54,15 @@
     "semantic_hash": ""
   },
   "bootstrap/providers.php": {
-    "mtime": 1791372288.4553154,
-    "seen": 1791718976.4869518,
-    "ast_hash": "b34063580e1080a4adc481ad5ef9e24d",
+    "mtime": 1792579966.2725706,
+    "seen": 1792580495.452151,
+    "ast_hash": "4f14f41a8538ed38b93a7d8d18f0acb7",
     "semantic_hash": ""
   },
   "composer.json": {
-    "mtime": 1790776138.8899853,
-    "seen": 1791718976.486954,
-    "ast_hash": "f6014775d51825d9238cc1f456432eac",
+    "mtime": 1792580392.830949,
+    "seen": 1792580495.4521532,
+    "ast_hash": "0e6e8a337d3886239ff9a29686e7d7a0",
     "semantic_hash": ""
   },
   "config/app.php": {
@@ -738,9 +738,9 @@
     "semantic_hash": ""
   },
   "modules/Centers/routes/admin.php": {
-    "mtime": 1791719636.4729836,
-    "seen": 1791719693.226242,
-    "ast_hash": "c8564c675276babbd6e16dd469c64945",
+    "mtime": 1792789562.7466023,
+    "seen": 1792789620.73757,
+    "ast_hash": "150da95ed6c67f9c8546ce5855409be0",
     "semantic_hash": ""
   },
   "modules/Centers/routes/api.php": {
@@ -750,9 +750,9 @@
     "semantic_hash": ""
   },
   "modules/Centers/routes/center.php": {
-    "mtime": 1791718021.1189036,
-    "seen": 1791718976.48712,
-    "ast_hash": "8fe358461d94ddc3f62e98efc0fb7cec",
+    "mtime": 1792789562.744974,
+    "seen": 1792789620.7375739,
+    "ast_hash": "b76d174138f7c6dd48ff889fb4c131d8",
     "semantic_hash": ""
   },
   "modules/Centers/routes/client.php": {
@@ -960,9 +960,9 @@
     "semantic_hash": ""
   },
   "modules/Centers/src/Policies/CenterPolicy.php": {
-    "mtime": 1791719599.3711262,
-    "seen": 1791719693.2263172,
-    "ast_hash": "920f4fc2dc7d41e0ee58bfe03cc3d0ad",
+    "mtime": 1792582413.6015906,
+    "seen": 1792582795.540988,
+    "ast_hash": "bc94cf81224c134b80d0123ce0790808",
     "semantic_hash": ""
   },
   "modules/Centers/src/Services/CenterAuthService.php": {
@@ -1080,9 +1080,9 @@
     "semantic_hash": ""
   },
   "modules/Clients/routes/api.php": {
-    "mtime": 1791643565.9626255,
-    "seen": 1791718976.487197,
-    "ast_hash": "84d2c80a6d4a0c9637f68e4fc6dd8db9",
+    "mtime": 1792788864.7126193,
+    "seen": 1792788948.371915,
+    "ast_hash": "c28bf109e5dc2956c268996b36a42252",
     "semantic_hash": ""
   },
   "modules/Clients/src/ClientsServiceProvider.php": {
@@ -1140,9 +1140,9 @@
     "semantic_hash": ""
   },
   "modules/Clients/src/Models/Client.php": {
-    "mtime": 1791717666.6429286,
-    "seen": 1791718976.487211,
-    "ast_hash": "d8e4f911b784fd17a9ba559244356799",
+    "mtime": 1792580274.8846436,
+    "seen": 1792580495.452491,
+    "ast_hash": "3f855dd7db490b8117f518ab3b1368fb",
     "semantic_hash": ""
   },
   "modules/Clients/src/Services/ClientAuthService.php": {
@@ -1176,9 +1176,9 @@
     "semantic_hash": ""
   },
   "modules/Promotion/database/factories/DiscountFactory.php": {
-    "mtime": 1790596114.6253905,
-    "seen": 1791718976.4872189,
-    "ast_hash": "77282cdece5d812afa85ceed169b09c9",
+    "mtime": 1791734881.646863,
+    "seen": 1791735002.4019358,
+    "ast_hash": "4a6a120dc9196b15d851c0c62f87ba93",
     "semantic_hash": ""
   },
   "modules/Promotion/database/factories/DiscountRedemptionFactory.php": {
@@ -1187,28 +1187,16 @@
     "ast_hash": "0d72bf7571bc0cb08edaea3758876251",
     "semantic_hash": ""
   },
-  "modules/Promotion/database/factories/DiscountableFactory.php": {
-    "mtime": 1790598672.5023503,
-    "seen": 1791718976.487222,
-    "ast_hash": "61df163dc74ba23906ebc7109607ab50",
-    "semantic_hash": ""
-  },
   "modules/Promotion/database/migrations/2026_09_28_000001_create_discounts_table.php": {
-    "mtime": 1790595323.3732328,
-    "seen": 1791718976.4872231,
-    "ast_hash": "e875b81b902b6f096d4af09167fe0486",
+    "mtime": 1791734777.705285,
+    "seen": 1791735002.4019399,
+    "ast_hash": "ccbb0ac69e9b98946cecf19a85e658dc",
     "semantic_hash": ""
   },
   "modules/Promotion/database/migrations/2026_09_28_000002_create_coupons_table.php": {
     "mtime": 1790595323.5041616,
     "seen": 1791718976.487224,
     "ast_hash": "37045dcef7e53284374d35d8fb9b036a",
-    "semantic_hash": ""
-  },
-  "modules/Promotion/database/migrations/2026_09_28_000003_create_discountables_table.php": {
-    "mtime": 1790595323.6299474,
-    "seen": 1791718976.487226,
-    "ast_hash": "c3905256fcc323055e753cea330a89f8",
     "semantic_hash": ""
   },
   "modules/Promotion/database/migrations/2026_09_28_000004_create_discount_redemptions_table.php": {
@@ -1229,16 +1217,10 @@
     "ast_hash": "6023496c83810a0d0fdde010648f0b55",
     "semantic_hash": ""
   },
-  "modules/Promotion/routes/admin.php": {
-    "mtime": 1790595792.9102056,
-    "seen": 1791718976.487232,
-    "ast_hash": "c82a89d8d25a637bb8b6d3fcf721e09d",
-    "semantic_hash": ""
-  },
   "modules/Promotion/routes/center.php": {
-    "mtime": 1790595792.916256,
-    "seen": 1791718976.487233,
-    "ast_hash": "90b742a06a79c19f0e06c7228515a311",
+    "mtime": 1791734881.590142,
+    "seen": 1791735002.401952,
+    "ast_hash": "e1e3785f52268cc806f1020bd63b54b1",
     "semantic_hash": ""
   },
   "modules/Promotion/src/Enums/ApplicationMethod.php": {
@@ -1289,22 +1271,10 @@
     "ast_hash": "67c0128f27c1d6862fabc3551edbce57",
     "semantic_hash": ""
   },
-  "modules/Promotion/src/Http/Controllers/Admin/DiscountController.php": {
-    "mtime": 1790596390.8182945,
-    "seen": 1791718976.487245,
-    "ast_hash": "01136a3c9374fc9446b6a25c53b2c432",
-    "semantic_hash": ""
-  },
   "modules/Promotion/src/Http/Controllers/Center/DiscountController.php": {
-    "mtime": 1790596446.1697445,
-    "seen": 1791718976.487247,
-    "ast_hash": "4dc1f7af0b4d71ad5f68bdbd96e4a806",
-    "semantic_hash": ""
-  },
-  "modules/Promotion/src/Http/Requests/AttachDiscountablesRequest.php": {
-    "mtime": 1790595554.275835,
-    "seen": 1791718976.487248,
-    "ast_hash": "74f334d1cc29bdd4d90c078e5c644fe1",
+    "mtime": 1791734953.1408496,
+    "seen": 1791735002.4019682,
+    "ast_hash": "24cad09755f09982ffcf24d4f3e1931e",
     "semantic_hash": ""
   },
   "modules/Promotion/src/Http/Requests/StoreCouponRequest.php": {
@@ -1356,9 +1326,9 @@
     "semantic_hash": ""
   },
   "modules/Promotion/src/Http/Resources/DiscountResource.php": {
-    "mtime": 1790595596.4818883,
-    "seen": 1791718976.4872608,
-    "ast_hash": "a73bfbec723c2270228691fce2cebedf",
+    "mtime": 1791734881.5786836,
+    "seen": 1791735002.4019861,
+    "ast_hash": "fd68bacbf1352c55d581ffda85ad5679",
     "semantic_hash": ""
   },
   "modules/Promotion/src/Models/Coupon.php": {
@@ -1368,9 +1338,9 @@
     "semantic_hash": ""
   },
   "modules/Promotion/src/Models/Discount.php": {
-    "mtime": 1790596297.0712895,
-    "seen": 1791718976.487264,
-    "ast_hash": "7415e27a67b21731db2570e889ca1fe5",
+    "mtime": 1791734796.8318975,
+    "seen": 1791735002.4019892,
+    "ast_hash": "11ee6fea8e042a83546c346500fd1c28",
     "semantic_hash": ""
   },
   "modules/Promotion/src/Models/DiscountRedemption.php": {
@@ -1379,22 +1349,16 @@
     "ast_hash": "dea0d8c65232788391a5ddb73d65d7ff",
     "semantic_hash": ""
   },
-  "modules/Promotion/src/Models/Discountable.php": {
-    "mtime": 1790596278.8001957,
-    "seen": 1791718976.487266,
-    "ast_hash": "3298be2fb86921c9f40436651d777881",
-    "semantic_hash": ""
-  },
   "modules/Promotion/src/PromotionServiceProvider.php": {
-    "mtime": 1790595666.9524662,
-    "seen": 1791718976.4872682,
-    "ast_hash": "84ba95f3a61f2be439517bb4705266f1",
+    "mtime": 1791734881.5797143,
+    "seen": 1791735002.401993,
+    "ast_hash": "7490a9e40c764c1168cdcddfeccd12fb",
     "semantic_hash": ""
   },
   "modules/Promotion/src/Services/CouponValidator.php": {
-    "mtime": 1790595509.0448732,
-    "seen": 1791718976.4872692,
-    "ast_hash": "2a3d72a49bdc7c1810e0a37b5318c01d",
+    "mtime": 1791734985.9746137,
+    "seen": 1791735002.401994,
+    "ast_hash": "2b4e04fb66f7ac6fc62f395ff9fd948d",
     "semantic_hash": ""
   },
   "modules/Promotion/src/Services/DiscountCalculator.php": {
@@ -1404,33 +1368,33 @@
     "semantic_hash": ""
   },
   "modules/Promotion/src/Services/DiscountEligibilityService.php": {
-    "mtime": 1790596329.0195792,
-    "seen": 1791718976.487272,
-    "ast_hash": "e712109ad4444620699f1b92a8ec418b",
+    "mtime": 1791734826.977654,
+    "seen": 1791735002.401998,
+    "ast_hash": "d70ca6e8e503d4343f4e995bf9760a29",
     "semantic_hash": ""
   },
   "modules/Promotion/src/Services/DiscountResolver.php": {
-    "mtime": 1790595509.2083812,
-    "seen": 1791718976.487273,
-    "ast_hash": "41f2961f9aa442c13f5d2df2b9771501",
+    "mtime": 1791734826.9801247,
+    "seen": 1791735002.402,
+    "ast_hash": "fc9d1a9892cb40646cf961a296e42e64",
     "semantic_hash": ""
   },
   "modules/Promotion/src/Services/DiscountUsageService.php": {
-    "mtime": 1790596102.5528114,
-    "seen": 1791718976.487274,
-    "ast_hash": "1946d78e39e791f399ac5a231cbd7a5c",
+    "mtime": 1791734826.984593,
+    "seen": 1791735002.402001,
+    "ast_hash": "58b440ed925c493ff9444e5f13e14a37",
     "semantic_hash": ""
   },
   "modules/Promotion/src/Traits/HasDiscountable.php": {
-    "mtime": 1790595266.8063965,
-    "seen": 1791718976.487276,
-    "ast_hash": "f53319ee09f126053468a8bf3713f3a3",
+    "mtime": 1791734796.859103,
+    "seen": 1791735002.402004,
+    "ast_hash": "ee741f97344c1bc4d9f8468bca4a141b",
     "semantic_hash": ""
   },
   "modules/Promotion/src/Traits/HasDiscounts.php": {
-    "mtime": 1790595266.756317,
-    "seen": 1791718976.487277,
-    "ast_hash": "9216a4fc4d79cc4e60a09c9c5204ae2c",
+    "mtime": 1791734796.8517885,
+    "seen": 1791735002.402006,
+    "ast_hash": "62a8c389ec5013b4d5375edbc4e6dcd5",
     "semantic_hash": ""
   },
   "modules/Promotion/tests/Pest.php": {
@@ -1446,9 +1410,9 @@
     "semantic_hash": ""
   },
   "modules/Promotion/tests/Unit/CouponValidatorTest.php": {
-    "mtime": 1790596561.8114102,
-    "seen": 1791718976.4872808,
-    "ast_hash": "ac648227d5e2269e9227b9c11f460c49",
+    "mtime": 1791735024.490616,
+    "seen": 1791738464.186614,
+    "ast_hash": "cbe57829d14d9594c7198621450ecceb",
     "semantic_hash": ""
   },
   "modules/Promotion/tests/Unit/DiscountCalculatorTest.php": {
@@ -1458,15 +1422,15 @@
     "semantic_hash": ""
   },
   "modules/Promotion/tests/Unit/DiscountEligibilityServiceTest.php": {
-    "mtime": 1790596561.202486,
-    "seen": 1791718976.487284,
-    "ast_hash": "0a0fffed32d73db977ea9bccd067aece",
+    "mtime": 1791734985.241371,
+    "seen": 1791735002.402016,
+    "ast_hash": "8a6ac9f52c95a3ede29c8db21c1790e3",
     "semantic_hash": ""
   },
   "modules/Promotion/tests/Unit/DiscountResolverTest.php": {
-    "mtime": 1790596561.3001297,
-    "seen": 1791718976.487286,
-    "ast_hash": "c3ac34f909b1f0c2c6ebd583c19d3128",
+    "mtime": 1791734985.388088,
+    "seen": 1791735002.402017,
+    "ast_hash": "50821172c41cd6438f1cc64f6fa6feef",
     "semantic_hash": ""
   },
   "modules/Promotion/tests/Unit/DiscountUsageServiceTest.php": {
@@ -1482,15 +1446,15 @@
     "semantic_hash": ""
   },
   "modules/Promotion/tests/Unit/ModelStructureTest.php": {
-    "mtime": 1791037889.1398928,
-    "seen": 1791718976.4872901,
-    "ast_hash": "7455aaa412c29eb2535f9e4fce1b923a",
+    "mtime": 1791734985.4589736,
+    "seen": 1791735002.402022,
+    "ast_hash": "9abbb42eb08329ffb0561dfa1327aded",
     "semantic_hash": ""
   },
   "modules/Promotion/tests/Unit/ScrambleAttributesTest.php": {
-    "mtime": 1790599813.0417416,
-    "seen": 1791718976.4872909,
-    "ast_hash": "7dbdb7d7fe37a25ed909ffc9b1d5a243",
+    "mtime": 1791734985.3295426,
+    "seen": 1791735002.402024,
+    "ast_hash": "9b230c5f75478a8e8ad004f1cf8a0e76",
     "semantic_hash": ""
   },
   "modules/Purchase/config/purchase.php": {
@@ -1590,9 +1554,9 @@
     "semantic_hash": ""
   },
   "modules/Purchase/src/Enums/PaymentStatus.php": {
-    "mtime": 1790423083.157519,
-    "seen": 1791718976.487314,
-    "ast_hash": "58d5de623d6a4343cec997b2509d0a01",
+    "mtime": 1792583511.8485181,
+    "seen": 1792583743.691726,
+    "ast_hash": "8e0834c7afbe6bd6561db5321f14a8a2",
     "semantic_hash": ""
   },
   "modules/Purchase/src/Enums/PurchaseSource.php": {
@@ -1788,21 +1752,21 @@
     "semantic_hash": ""
   },
   "modules/Purchase/src/Models/Payment.php": {
-    "mtime": 1790423288.4103487,
-    "seen": 1791718976.48736,
-    "ast_hash": "99e9ee0621c063cd1bd0cd811d9e5f6b",
+    "mtime": 1792583525.4437263,
+    "seen": 1792583743.6917918,
+    "ast_hash": "cc3daf65c54195d46d71de8ddaeef3bf",
     "semantic_hash": ""
   },
   "modules/Purchase/src/Models/Purchase.php": {
-    "mtime": 1790595286.5795314,
-    "seen": 1791718976.487361,
-    "ast_hash": "29527a9fd91e080709901e3f1cd425ea",
+    "mtime": 1791734986.1029866,
+    "seen": 1791735002.402117,
+    "ast_hash": "d0536e4b71503c60c50a87f9a224ac0a",
     "semantic_hash": ""
   },
   "modules/Purchase/src/Models/PurchaseItem.php": {
-    "mtime": 1790595286.995885,
-    "seen": 1791718976.487363,
-    "ast_hash": "f5e85c020ed3e262d647f35cd6b948bb",
+    "mtime": 1791734986.0746276,
+    "seen": 1791735002.402118,
+    "ast_hash": "a7f5e2791a49a5428cc15281db0cdba9",
     "semantic_hash": ""
   },
   "modules/Purchase/src/Models/WebhookEvent.php": {
@@ -1812,15 +1776,15 @@
     "semantic_hash": ""
   },
   "modules/Purchase/src/PurchaseServiceProvider.php": {
-    "mtime": 1790423203.2206068,
-    "seen": 1791718976.487365,
-    "ast_hash": "9d48832859e8421c44cfc92e83a02be1",
+    "mtime": 1792581529.1598432,
+    "seen": 1792581672.289481,
+    "ast_hash": "3eedd0e02256d0dee000bbb6e06cb1c3",
     "semantic_hash": ""
   },
   "modules/Purchase/src/Services/PaymentStateService.php": {
-    "mtime": 1790423457.2698314,
-    "seen": 1791718976.487367,
-    "ast_hash": "cdbbb0e076e587ea52b42e9166070d51",
+    "mtime": 1792583525.4455366,
+    "seen": 1792583743.691801,
+    "ast_hash": "0bb93fb4dc0274738c526ba9bf255cec",
     "semantic_hash": ""
   },
   "modules/Purchase/src/Services/PurchaseStateService.php": {
@@ -1854,9 +1818,9 @@
     "semantic_hash": ""
   },
   "modules/Purchase/tests/Feature/PurchaseScenariosTest.php": {
-    "mtime": 1790424533.9791088,
-    "seen": 1791718976.487375,
-    "ast_hash": "4cdfd040266e398d807d72dcb1fc1475",
+    "mtime": 1792581600.3518083,
+    "seen": 1792581672.28955,
+    "ast_hash": "2e11db6f514196beb1d8e1253d35d953",
     "semantic_hash": ""
   },
   "modules/Purchase/tests/Feature/WebhookIdempotencyTest.php": {
@@ -1896,9 +1860,9 @@
     "semantic_hash": ""
   },
   "modules/Purchase/tests/Unit/EnumTest.php": {
-    "mtime": 1790424034.0597143,
-    "seen": 1791718976.487385,
-    "ast_hash": "45051c9488707b4d72e107dc28048d56",
+    "mtime": 1792583673.787416,
+    "seen": 1792583743.691827,
+    "ast_hash": "fd8513f7b136256d670e639349d68c57",
     "semantic_hash": ""
   },
   "modules/Purchase/tests/Unit/Gateways/MoyasarScenariosTest.php": {
@@ -1938,9 +1902,9 @@
     "semantic_hash": ""
   },
   "modules/Purchase/tests/Unit/PaymentStateServiceTest.php": {
-    "mtime": 1790424521.4381554,
-    "seen": 1791718976.487394,
-    "ast_hash": "aed347c9dad2f89fc225dfadb5b62e8c",
+    "mtime": 1792583673.7426903,
+    "seen": 1792583743.691839,
+    "ast_hash": "a357b104268c3a1f3169086eef0b847e",
     "semantic_hash": ""
   },
   "modules/Purchase/tests/Unit/PurchaseStateServiceTest.php": {
@@ -2136,15 +2100,15 @@
     "semantic_hash": ""
   },
   "modules/Services/routes/api.php": {
-    "mtime": 1791719636.4777684,
-    "seen": 1791719693.226667,
-    "ast_hash": "89224c091d7c737f8bfe7025c40db23e",
+    "mtime": 1792870949.033599,
+    "seen": 1792871032.051434,
+    "ast_hash": "c0f450999d45c82db6515685d1a4a290",
     "semantic_hash": ""
   },
   "modules/Services/routes/center.php": {
-    "mtime": 1791646297.9026408,
-    "seen": 1791718976.487446,
-    "ast_hash": "9198cb43942f50224ca6a21db2425c45",
+    "mtime": 1792500123.1354702,
+    "seen": 1792500168.681234,
+    "ast_hash": "58b2edba77573d55ac57ca584bddb92a",
     "semantic_hash": ""
   },
   "modules/Services/src/Concerns/HasSchedules.php": {
@@ -2418,9 +2382,9 @@
     "semantic_hash": ""
   },
   "modules/Services/src/Models/Resort.php": {
-    "mtime": 1791722124.4175205,
-    "seen": 1791722210.634976,
-    "ast_hash": "4af5b4eded4a24f0ce73e4a1e63d6f0e",
+    "mtime": 1792580111.2213128,
+    "seen": 1792580495.452969,
+    "ast_hash": "915f09d70091bf1a67475df472669c9f",
     "semantic_hash": ""
   },
   "modules/Services/src/Models/Schedule.php": {
@@ -2430,9 +2394,9 @@
     "semantic_hash": ""
   },
   "modules/Services/src/Models/Service.php": {
-    "mtime": 1791729863.1400995,
-    "seen": 1791729988.6294012,
-    "ast_hash": "37581c6cd90a4edcf872c817461d3e2d",
+    "mtime": 1792500123.1335852,
+    "seen": 1792500168.681334,
+    "ast_hash": "f66934eb5a8ec0cb65055c9792290b61",
     "semantic_hash": ""
   },
   "modules/Services/src/Models/ServiceBlock.php": {
@@ -2964,9 +2928,9 @@
     "semantic_hash": ""
   },
   "modules/Support/src/Enums/SystemPermission.php": {
-    "mtime": 1791719599.3603272,
-    "seen": 1791719693.226909,
-    "ast_hash": "cbfca5cd28527e5a7041f03dceaa2eb3",
+    "mtime": 1792582413.5992332,
+    "seen": 1792582795.542251,
+    "ast_hash": "4dbce152ca216af86b66f006cf117cbe",
     "semantic_hash": ""
   },
   "modules/Support/src/Enums/SystemRole.php": {
@@ -3768,9 +3732,9 @@
     "semantic_hash": ""
   },
   "modules/Services/routes/admin.php": {
-    "mtime": 1791719636.4770498,
-    "seen": 1791719693.226665,
-    "ast_hash": "1295dd6a628cc3e5a4cd7dc2d8dcf755",
+    "mtime": 1792500123.1379776,
+    "seen": 1792500168.68123,
+    "ast_hash": "07604e3936415d8a4f7586635ee5a316",
     "semantic_hash": ""
   },
   "modules/Services/database/factories/ServiceSettingFactory.php": {
@@ -3843,6 +3807,876 @@
     "mtime": 1791729869.11878,
     "seen": 1791729988.629528,
     "ast_hash": "e3e924209d221e29ae9fdc0d8fc790fb",
+    "semantic_hash": ""
+  },
+  "modules/Promotion/database/migrations/2026_10_11_140000_create_discount_service_table.php": {
+    "mtime": 1791734777.7147832,
+    "seen": 1791735002.401946,
+    "ast_hash": "fd6e4759273ec1f3131b271d0e439045",
+    "semantic_hash": ""
+  },
+  "modules/Promotion/src/Http/Requests/AttachServicesRequest.php": {
+    "mtime": 1791734835.9164865,
+    "seen": 1791735002.401969,
+    "ast_hash": "afe81e7005b82928b97fba0a98ca5319",
+    "semantic_hash": ""
+  },
+  "modules/Promotion/src/Traits/HasDiscountRedemptions.php": {
+    "mtime": 1791734796.8670623,
+    "seen": 1791735002.4020019,
+    "ast_hash": "ec0d9f8125de84119fd7c003a3a66c39",
+    "semantic_hash": ""
+  },
+  "modules/Promotion/tests/Feature/CenterDiscountTest.php": {
+    "mtime": 1791734945.034703,
+    "seen": 1791735002.402007,
+    "ast_hash": "bf1e913d1132f292623725a97df2ae3b",
+    "semantic_hash": ""
+  },
+  "modules/Promotion/REVIEW.md": {
+    "mtime": 1791735091.006869,
+    "seen": 1791738464.1873438,
+    "ast_hash": "6b7716796f2d9702e647c4a4a3268bd6",
+    "semantic_hash": ""
+  },
+  "modules/Services/database/factories/ServicePeriodFactory.php": {
+    "mtime": 1792500123.0421307,
+    "seen": 1792500168.681175,
+    "ast_hash": "551bf95737d2210eb77077bd8aed1dde",
+    "semantic_hash": ""
+  },
+  "modules/Services/database/migrations/2026_10_20_100000_create_service_periods_table.php": {
+    "mtime": 1792500123.027223,
+    "seen": 1792500168.681228,
+    "ast_hash": "9d3ba99020f5ec430a0688a633daa172",
+    "semantic_hash": ""
+  },
+  "modules/Services/src/Enums/PeriodGender.php": {
+    "mtime": 1792500123.0319643,
+    "seen": 1792500168.6812491,
+    "ast_hash": "7db553d9f6006a98129fa5a35226b2fe",
+    "semantic_hash": ""
+  },
+  "modules/Services/src/Http/Controllers/Center/ServicePeriodController.php": {
+    "mtime": 1792500123.061009,
+    "seen": 1792500168.681267,
+    "ast_hash": "4a9d9a648a2b5bcaa766ee12fc15f034",
+    "semantic_hash": ""
+  },
+  "modules/Services/src/Http/Requests/Center/ServicePeriodRequest.php": {
+    "mtime": 1792500123.0516717,
+    "seen": 1792500168.681289,
+    "ast_hash": "1710713d73ad3fc321dc8b8b0f2a4cec",
+    "semantic_hash": ""
+  },
+  "modules/Services/src/Http/Resources/Center/ServicePeriodResource.php": {
+    "mtime": 1792500123.0566418,
+    "seen": 1792500168.68131,
+    "ast_hash": "9d05400b26ced78f2dd598623469d297",
+    "semantic_hash": ""
+  },
+  "modules/Services/src/Models/ServicePeriod.php": {
+    "mtime": 1792500123.0371616,
+    "seen": 1792500168.681341,
+    "ast_hash": "7ad24ee13533b7b9fb8c15294007269f",
+    "semantic_hash": ""
+  },
+  "modules/Services/src/Services/ServicePeriodService.php": {
+    "mtime": 1792500123.0469182,
+    "seen": 1792500168.681377,
+    "ast_hash": "1313d88c83900c9662f92de9c360d096",
+    "semantic_hash": ""
+  },
+  "modules/Services/tests/Feature/ServicePeriodsTest.php": {
+    "mtime": 1792500135.7108097,
+    "seen": 1792500168.68141,
+    "ast_hash": "7f096d9eb514a7ca438e0d4c914c4ccd",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/config/reservations.php": {
+    "mtime": 1792583569.4142008,
+    "seen": 1792583743.691843,
+    "ast_hash": "61b6be02410726b63b55e83bdad60264",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/database/factories/ClientPackageFactory.php": {
+    "mtime": 1792580048.280556,
+    "seen": 1792580495.452728,
+    "ast_hash": "5f850d9bbc2dad5ab186007a9fd267d0",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/database/factories/ReservationFactory.php": {
+    "mtime": 1792580048.2651663,
+    "seen": 1792580495.4527302,
+    "ast_hash": "4d7d757f504717a89498d30ea37b2708",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/database/factories/ReservationLineFactory.php": {
+    "mtime": 1792580048.273621,
+    "seen": 1792580495.452731,
+    "ast_hash": "bfa1c464817dd8a6ba5613e13ddd28a7",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/database/migrations/2026_10_21_100000_create_client_packages_table.php": {
+    "mtime": 1792580002.776649,
+    "seen": 1792580495.452733,
+    "ast_hash": "291ab2b1bd9d155e3ec634bf7ea9223f",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/database/migrations/2026_10_21_100001_create_reservations_table.php": {
+    "mtime": 1792580002.7803297,
+    "seen": 1792580495.452734,
+    "ast_hash": "0c1294f4322d3d964eff21a2065f7a0b",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/database/migrations/2026_10_21_100002_create_reservation_lines_table.php": {
+    "mtime": 1792580002.784226,
+    "seen": 1792580495.452736,
+    "ast_hash": "f9847b16ab1bab516aa0ab79e9d0640d",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/lang/ar/booking.php": {
+    "mtime": 1792580728.1481962,
+    "seen": 1792580980.635508,
+    "ast_hash": "33c6ebae69f8c9b458cbe5cb68f58a64",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/lang/en/booking.php": {
+    "mtime": 1792580728.14746,
+    "seen": 1792580980.635512,
+    "ast_hash": "8a3a1063c0e87cbb77dd231e31241697",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Booking/BookingGuard.php": {
+    "mtime": 1792872461.5861278,
+    "seen": 1792872618.1745741,
+    "ast_hash": "227d2cd5ce9bf9391c6ed8864198072d",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Booking/BookingQuote.php": {
+    "mtime": 1792580149.5337589,
+    "seen": 1792580495.4527419,
+    "ast_hash": "0748b73bf782b33ed40c42a5b312cb8d",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Booking/BookingRequest.php": {
+    "mtime": 1792580675.2959213,
+    "seen": 1792580980.635529,
+    "ast_hash": "339f629213b51c3f3ed8fbb2f10490a9",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Booking/ReservationRules.php": {
+    "mtime": 1792580149.537256,
+    "seen": 1792580495.452745,
+    "ast_hash": "d7d9f19759917d673e9d0f45ce03ccc7",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Booking/ReservationRulesResolver.php": {
+    "mtime": 1792580256.9359233,
+    "seen": 1792580495.452746,
+    "ast_hash": "fa966de364593cc1ef6db41c46dec648",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Booking/Rules/EventRules.php": {
+    "mtime": 1792580256.9267282,
+    "seen": 1792580495.452748,
+    "ast_hash": "11749c5b7057e080ffdef62ab37d75e5",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Booking/Rules/HourlySlotRules.php": {
+    "mtime": 1792580675.2963946,
+    "seen": 1792580980.6355479,
+    "ast_hash": "6bee49720741387c20be2635a39bcac7",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Booking/Rules/RecreationRidingRules.php": {
+    "mtime": 1792580256.9154494,
+    "seen": 1792580495.4527512,
+    "ast_hash": "172d4dd66d228d3cb759301e79fb2758",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Booking/Rules/ResortRules.php": {
+    "mtime": 1792580256.9317682,
+    "seen": 1792580495.4527519,
+    "ast_hash": "bfdcdc6703469a6894c3c4a5cb99af84",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Booking/Rules/TrainingRules.php": {
+    "mtime": 1792580256.9183385,
+    "seen": 1792580495.452754,
+    "ast_hash": "11419130ee5dfe0155ece5a9c0432e34",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Booking/Rules/VisitRules.php": {
+    "mtime": 1792580256.9216685,
+    "seen": 1792580495.452755,
+    "ast_hash": "046918783babf950502e7fefc5a5a6c8",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Enums/ClientPackageStatus.php": {
+    "mtime": 1792579988.731632,
+    "seen": 1792580495.452757,
+    "ast_hash": "a53ff6632c374cd74c6b371b72b83c0c",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Enums/ReservationLineKind.php": {
+    "mtime": 1792579988.725599,
+    "seen": 1792580495.452758,
+    "ast_hash": "cfc32f15735f11150ee504710eaa6eb2",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Enums/ReservationSource.php": {
+    "mtime": 1792579988.676938,
+    "seen": 1792580495.452759,
+    "ast_hash": "f49dda56c2a24d160c6309c5901f68e4",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Enums/ReservationStatus.php": {
+    "mtime": 1792579988.6693568,
+    "seen": 1792580495.4527612,
+    "ast_hash": "ed6448a469dc229cef7454f0bc4e3bdd",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Exceptions/ReservationNotAllowedException.php": {
+    "mtime": 1792582413.6038907,
+    "seen": 1792582795.541601,
+    "ast_hash": "3e40c0b371eaa57c56af01de3990d956",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Models/ClientPackage.php": {
+    "mtime": 1792580675.2968748,
+    "seen": 1792580980.635597,
+    "ast_hash": "d69b740e96a8eead347e9434e43fc765",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Models/Reservation.php": {
+    "mtime": 1792580048.2409613,
+    "seen": 1792580495.452765,
+    "ast_hash": "ac0b3bb382c4203fb6c0d1f089796ada",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Models/ReservationLine.php": {
+    "mtime": 1792580048.248478,
+    "seen": 1792580495.452767,
+    "ast_hash": "603cbca40686a35703b2da2c04fabace",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/ReservationsServiceProvider.php": {
+    "mtime": 1792873813.350479,
+    "seen": 1792873907.8846238,
+    "ast_hash": "e123fe917a096b0e67572bcda885a95f",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/tests/Pest.php": {
+    "mtime": 1792580392.8319569,
+    "seen": 1792580495.45277,
+    "ast_hash": "a7bce2ee8dcea3512a7c623fdbd53b0e",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/tests/Support/BookingFixtures.php": {
+    "mtime": 1792580853.6930923,
+    "seen": 1792580980.635612,
+    "ast_hash": "752e0fade87aa6d0db17e71c361c3d74",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/tests/Unit/BookingGuardTest.php": {
+    "mtime": 1792580451.8242664,
+    "seen": 1792580495.452773,
+    "ast_hash": "ee2df716fd0a2ede4fab91c4056f5b6e",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/tests/Unit/EventRulesTest.php": {
+    "mtime": 1792580451.822212,
+    "seen": 1792580495.4527738,
+    "ast_hash": "3988620e88665e832429461564293dd7",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/tests/Unit/RecreationRidingRulesTest.php": {
+    "mtime": 1792580451.8231304,
+    "seen": 1792580495.452776,
+    "ast_hash": "7401a6df77e16b44543cce249510db61",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/tests/Unit/ReservationModelTest.php": {
+    "mtime": 1792580451.8225436,
+    "seen": 1792580495.452785,
+    "ast_hash": "868f0443add9d3b7af81bced3b133eb7",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/tests/Unit/ResortRulesTest.php": {
+    "mtime": 1792580451.8239293,
+    "seen": 1792580495.452787,
+    "ast_hash": "fc3e4ebe05b8abbcf58a83fbeb641389",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/tests/Unit/TrainingRulesTest.php": {
+    "mtime": 1792580451.8246105,
+    "seen": 1792580495.4527879,
+    "ast_hash": "a563b6787b15f88991cb889c6a87c6ea",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/tests/Unit/VisitRulesTest.php": {
+    "mtime": 1792580451.8235772,
+    "seen": 1792580495.45279,
+    "ast_hash": "63365052537ba604e5cb4ae500dbffa4",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Actions/BookFromPackage.php": {
+    "mtime": 1792580701.071465,
+    "seen": 1792580980.635514,
+    "ast_hash": "8d57b660a05e0078123e48ebb3963782",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Actions/CheckoutReservations.php": {
+    "mtime": 1792580776.834721,
+    "seen": 1792580980.635516,
+    "ast_hash": "902256b0d6fc4bc0f8b8600eda268e11",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Actions/CreateReservation.php": {
+    "mtime": 1792580701.0660923,
+    "seen": 1792580980.635517,
+    "ast_hash": "90e3f0d0f1d0ce2047aa2ef168f20965",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Actions/PurchasePackage.php": {
+    "mtime": 1792580701.0764165,
+    "seen": 1792580980.635519,
+    "ast_hash": "4dd88c67ac699c4a4b298546f36e3820",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Actions/StartCheckout.php": {
+    "mtime": 1792582413.6070175,
+    "seen": 1792582795.541503,
+    "ast_hash": "61f136b7e611ad7c577d6afc5af3876d",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Booking/CapacityLock.php": {
+    "mtime": 1792580701.0604875,
+    "seen": 1792580980.6355321,
+    "ast_hash": "735582106bfd6ae5f0c5361a593ca41d",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Booking/CheckoutResult.php": {
+    "mtime": 1792582413.6063204,
+    "seen": 1792582795.541518,
+    "ast_hash": "799586c714156d5134e93017e224c7fe",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Events/ClientPackageActivated.php": {
+    "mtime": 1792580701.0512505,
+    "seen": 1792580980.635566,
+    "ast_hash": "948c7f5e22d92db3e58214de73cb08fe",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Events/ReservationCancelled.php": {
+    "mtime": 1792580701.026249,
+    "seen": 1792580980.6355672,
+    "ast_hash": "f70faa7c2c0899e1c75330eff4732d3a",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Events/ReservationCompleted.php": {
+    "mtime": 1792580701.0334945,
+    "seen": 1792580980.6355689,
+    "ast_hash": "7396cbe163fdd0e4efe10ef40a0edd98",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Events/ReservationConfirmed.php": {
+    "mtime": 1792580701.019081,
+    "seen": 1792580980.635571,
+    "ast_hash": "6a6234bfba79d591cda73912598bc821",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Events/ReservationCreated.php": {
+    "mtime": 1792580701.011161,
+    "seen": 1792580980.635573,
+    "ast_hash": "42cb7a750c73c2aa8cc2dabb74f2ed2d",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Events/ReservationMarkedNoShow.php": {
+    "mtime": 1792580701.0445256,
+    "seen": 1792580980.635574,
+    "ast_hash": "3314fe506eaf28d9fe5bbdcbf7d616d2",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Events/ReservationRescheduled.php": {
+    "mtime": 1792580701.0392003,
+    "seen": 1792580980.635576,
+    "ast_hash": "29842630753b48b8b4778b3a67bb7c6c",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Listeners/ConfirmPurchasedReservations.php": {
+    "mtime": 1792580798.6056333,
+    "seen": 1792580980.6355789,
+    "ast_hash": "65c674d88474f206442df03de937ed6c",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Listeners/ReleaseCancelledPurchase.php": {
+    "mtime": 1792580798.6088326,
+    "seen": 1792580980.635581,
+    "ast_hash": "a848d42d6fe264d500f760585ecf74af",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Services/ReservationStateService.php": {
+    "mtime": 1792583569.4153938,
+    "seen": 1792583743.692096,
+    "ast_hash": "399606a9c2b2657f9d2781a1fc50a9ed",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/tests/Feature/CheckoutTest.php": {
+    "mtime": 1792581579.281111,
+    "seen": 1792581672.289821,
+    "ast_hash": "af7cbc59b3bc24ddca423cf014fe6273",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/tests/Feature/CreateReservationTest.php": {
+    "mtime": 1792580869.513301,
+    "seen": 1792580980.635607,
+    "ast_hash": "2d7fc8f0228c888832a14915cef16a3a",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/tests/Feature/ReservationStateServiceTest.php": {
+    "mtime": 1792583638.27799,
+    "seen": 1792583743.692111,
+    "ast_hash": "3fcfb63a71a5b9a5ebd4d12d7db179d0",
+    "semantic_hash": ""
+  },
+  "modules/Purchase/src/Listeners/ConfirmPaidPurchase.php": {
+    "mtime": 1792581529.1011643,
+    "seen": 1792581672.2894561,
+    "ast_hash": "9782ad4a9671a13eeb37613f4ae19640",
+    "semantic_hash": ""
+  },
+  "modules/Purchase/tests/Unit/ConfirmPaidPurchaseTest.php": {
+    "mtime": 1792581579.194918,
+    "seen": 1792581672.2895691,
+    "ast_hash": "92a0a9bccdcf68e234b292f617570119",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/routes/admin.php": {
+    "mtime": 1792788864.7117727,
+    "seen": 1792788948.3721879,
+    "ast_hash": "fb0ba40cef6fc4136f5948e8b8a7855f",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/routes/api.php": {
+    "mtime": 1792582595.6764739,
+    "seen": 1792582795.5414789,
+    "ast_hash": "c0f450999d45c82db6515685d1a4a290",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/routes/center.php": {
+    "mtime": 1792788864.7110276,
+    "seen": 1792788948.372191,
+    "ast_hash": "d537678f31d2023d8877c492a7cb114b",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/routes/client.php": {
+    "mtime": 1792582595.6796386,
+    "seen": 1792582795.541483,
+    "ast_hash": "ba1a43ea9ad51605ca4f0ccb043a7c03",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/routes/partials/center-reservations.php": {
+    "mtime": 1792787555.4197967,
+    "seen": 1792787634.1157382,
+    "ast_hash": "46cbeee970b566e16e782505ff1b7966",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Actions/BookAndCheckout.php": {
+    "mtime": 1792582681.5287337,
+    "seen": 1792582795.541486,
+    "ast_hash": "f0d72c7baca084d498435c239324904d",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Http/Controllers/Center/ReservationController.php": {
+    "mtime": 1792787555.4185672,
+    "seen": 1792787634.116104,
+    "ast_hash": "44db2156bae2a602a6435892aa832744",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Http/Controllers/Client/AvailabilityController.php": {
+    "mtime": 1792582572.6380448,
+    "seen": 1792582795.5416052,
+    "ast_hash": "7a03145c6c2dbec2fd5c703276e3c3e4",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Http/Controllers/Client/PackageController.php": {
+    "mtime": 1792582572.6439714,
+    "seen": 1792582795.541607,
+    "ast_hash": "086f19af5943f8829d9a6558c97c65da",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Http/Controllers/Client/ReservationController.php": {
+    "mtime": 1792582572.6410437,
+    "seen": 1792582795.541609,
+    "ast_hash": "b82b33c5146fb721294be231ef1b7934",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Http/Requests/CancelReservationRequest.php": {
+    "mtime": 1792582500.9770887,
+    "seen": 1792582795.541611,
+    "ast_hash": "1e00cab4eafb05dd46b00f5e866bd592",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Http/Requests/Center/RescheduleReservationRequest.php": {
+    "mtime": 1792582500.9705446,
+    "seen": 1792582795.5416121,
+    "ast_hash": "52d0fd152fbeada140a8ca247c34bcb7",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Http/Requests/Center/StoreReservationRequest.php": {
+    "mtime": 1792582500.9630117,
+    "seen": 1792582795.541614,
+    "ast_hash": "ce7bdb3141241a0753e337128a7e90f4",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Http/Requests/Client/AvailabilityRequest.php": {
+    "mtime": 1792582500.9834757,
+    "seen": 1792582795.5416162,
+    "ast_hash": "e85b30784f7e64f45cb6eecf3b9f5aa3",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Http/Requests/Client/BookFromPackageRequest.php": {
+    "mtime": 1792582500.9990268,
+    "seen": 1792582795.5416179,
+    "ast_hash": "462c2965d391b7832793762e23aa2190",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Http/Requests/Client/PurchasePackageRequest.php": {
+    "mtime": 1792582500.9914165,
+    "seen": 1792582795.54162,
+    "ast_hash": "03b8eee5a8ae4312e81461267c2d0be8",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Http/Requests/Client/StoreReservationRequest.php": {
+    "mtime": 1792582500.9554796,
+    "seen": 1792582795.541622,
+    "ast_hash": "9f58cc9b7ef773fea3871d846177c07d",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Http/Requests/Concerns/HasBookingRules.php": {
+    "mtime": 1792582500.945414,
+    "seen": 1792582795.541624,
+    "ast_hash": "925539af58ad65cdf68d0d9d8e11b930",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Http/Resources/CenterReservationResource.php": {
+    "mtime": 1792582501.022917,
+    "seen": 1792582795.541625,
+    "ast_hash": "92d13f57ce51021ba42a11643f6be680",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Http/Resources/CheckoutResource.php": {
+    "mtime": 1792582501.0456605,
+    "seen": 1792582795.541627,
+    "ast_hash": "98866a51f86e75d4374811cd36d3e23d",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Http/Resources/ClientPackageResource.php": {
+    "mtime": 1792582501.0314052,
+    "seen": 1792582795.5416288,
+    "ast_hash": "a771e7df767c32ed560640287a97d3d6",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Http/Resources/ReservationLineResource.php": {
+    "mtime": 1792582501.0063558,
+    "seen": 1792582795.54163,
+    "ast_hash": "ab7b5054d8c45faa0f938ae53c3cc54b",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Http/Resources/ReservationResource.php": {
+    "mtime": 1792582501.0134652,
+    "seen": 1792582795.541632,
+    "ast_hash": "f1fd720efaf4f13ceb448522ff558b03",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Services/AvailabilityService.php": {
+    "mtime": 1792582455.402785,
+    "seen": 1792582795.5416472,
+    "ast_hash": "d7dc46da6c877c6549db1fba5d6048ac",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/tests/Feature/Http/CenterReservationApiTest.php": {
+    "mtime": 1792787555.429554,
+    "seen": 1792787634.116226,
+    "ast_hash": "fc78f6bc1d7cca1993a2efb9b30d45bf",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/tests/Feature/Http/ClientPackageApiTest.php": {
+    "mtime": 1792582664.1094232,
+    "seen": 1792582795.541656,
+    "ast_hash": "5184db5d05f913f32b893851ddd12280",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/tests/Feature/Http/ClientReservationApiTest.php": {
+    "mtime": 1792582709.0030468,
+    "seen": 1792582795.5416582,
+    "ast_hash": "96de9c918d8693bbbfef93dd93941c0c",
+    "semantic_hash": ""
+  },
+  "modules/Purchase/database/migrations/2026_10_22_100000_add_refunds_to_payments_table.php": {
+    "mtime": 1792583511.7751186,
+    "seen": 1792583743.69171,
+    "ast_hash": "d3d5cca12df35c28d34ddcd32565acc3",
+    "semantic_hash": ""
+  },
+  "modules/Purchase/src/Events/PaymentRefunded.php": {
+    "mtime": 1792583511.7801275,
+    "seen": 1792583743.691742,
+    "ast_hash": "215e74f0bbfa7ad1626f83d97a4488b0",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Console/Commands/ExpirePackagesCommand.php": {
+    "mtime": 1792583569.351591,
+    "seen": 1792583743.691906,
+    "ast_hash": "460540f6803fdd7cbf22c131c49574a1",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Console/Commands/ReleaseUnpaidBookingsCommand.php": {
+    "mtime": 1792583600.2089927,
+    "seen": 1792583743.6919081,
+    "ast_hash": "1044f430f15925ae5ee0f0dbbe63154c",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Listeners/RefundLatePayment.php": {
+    "mtime": 1792583569.3596265,
+    "seen": 1792583743.692082,
+    "ast_hash": "b179f4e7be10c3b8e98c4ca031b9d72f",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/tests/Feature/ScheduledCommandsTest.php": {
+    "mtime": 1792583638.4171047,
+    "seen": 1792583743.692113,
+    "ast_hash": "5d816229646ba2338cf6d36838b3bfbe",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/routes/partials/center-packages.php": {
+    "mtime": 1792789662.5472648,
+    "seen": 1792790988.569252,
+    "ast_hash": "cbe19a11e85f40207dd5ff4b1e87261c",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Http/Controllers/Center/PackageController.php": {
+    "mtime": 1792789662.5469027,
+    "seen": 1792790988.569315,
+    "ast_hash": "71aa91ef0d834f9ae62fd25e6d022fda",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Http/Requests/Center/ListClientPackagesRequest.php": {
+    "mtime": 1792788178.392587,
+    "seen": 1792788450.636492,
+    "ast_hash": "8d12a453aa9387c463b5bd63be1c0512",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Http/Resources/CenterClientPackageResource.php": {
+    "mtime": 1792788178.401174,
+    "seen": 1792788450.6365068,
+    "ast_hash": "7b24bb1d926cd0729687cd33f6d12746",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/tests/Feature/Http/CenterClientPackageApiTest.php": {
+    "mtime": 1792789662.5640497,
+    "seen": 1792790988.569371,
+    "ast_hash": "9ee60edbebcbe227885a3fc27b35ea87",
+    "semantic_hash": ""
+  },
+  "modules/Clients/routes/admin.php": {
+    "mtime": 1792788864.7120245,
+    "seen": 1792788948.371912,
+    "ast_hash": "da31d89f1e9b47a89d4fcf18bd7f3566",
+    "semantic_hash": ""
+  },
+  "modules/Clients/routes/center.php": {
+    "mtime": 1792788864.711319,
+    "seen": 1792788948.371917,
+    "ast_hash": "733bbc859f1186d50d733c10b13a36fa",
+    "semantic_hash": ""
+  },
+  "modules/Clients/routes/partials/center-clients.php": {
+    "mtime": 1792788864.640068,
+    "seen": 1792788948.371918,
+    "ast_hash": "adf9814b6544c4bc31395b061056e610",
+    "semantic_hash": ""
+  },
+  "modules/Clients/src/Http/Controllers/Center/ClientController.php": {
+    "mtime": 1792788865.419434,
+    "seen": 1792788948.371922,
+    "ast_hash": "2a6e99419ab0cc2935d3ef898180bdc9",
+    "semantic_hash": ""
+  },
+  "modules/Clients/src/Http/Resources/CenterClientResource.php": {
+    "mtime": 1792788864.631879,
+    "seen": 1792788948.371935,
+    "ast_hash": "ade58a9be87a8aa15b527fdab76e2f43",
+    "semantic_hash": ""
+  },
+  "modules/Clients/tests/Feature/CenterClientApiTest.php": {
+    "mtime": 1792788620.5759225,
+    "seen": 1792788948.371944,
+    "ast_hash": "ab66ea5ff9106d392eea17389a21919e",
+    "semantic_hash": ""
+  },
+  "modules/Centers/src/Http/Controllers/Center/PurchaseController.php": {
+    "mtime": 1792789562.6805642,
+    "seen": 1792789620.7375941,
+    "ast_hash": "b0b667bf95f248a7c7c0835285617d6b",
+    "semantic_hash": ""
+  },
+  "modules/Centers/src/Http/Resources/Center/PurchaseDetailsResource.php": {
+    "mtime": 1792789562.6753545,
+    "seen": 1792789620.737632,
+    "ast_hash": "777438de1df90d7098433af9a22f1529",
+    "semantic_hash": ""
+  },
+  "modules/Centers/src/Http/Resources/Center/PurchaseResource.php": {
+    "mtime": 1792789562.6690354,
+    "seen": 1792789620.737634,
+    "ast_hash": "376aa4b8317f2e861f6b7eefbadfca6f",
+    "semantic_hash": ""
+  },
+  "modules/Centers/tests/Feature/CenterPurchaseApiTest.php": {
+    "mtime": 1792789572.900596,
+    "seen": 1792789620.737664,
+    "ast_hash": "93aad48225ecbb189dcbde4a7dd9cb1c",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Http/Resources/CenterClientPackageDetailsResource.php": {
+    "mtime": 1792789662.4855802,
+    "seen": 1792790988.56934,
+    "ast_hash": "b4bb29a91daa46e673d2f0fb78a40fd8",
+    "semantic_hash": ""
+  },
+  "modules/Services/routes/client.php": {
+    "mtime": 1792870949.0280817,
+    "seen": 1792871032.051438,
+    "ast_hash": "04109e6ae1d7e33bbf0e42870f1f4719",
+    "semantic_hash": ""
+  },
+  "modules/Services/src/Http/Controllers/Client/ServiceController.php": {
+    "mtime": 1792874822.033567,
+    "seen": 1792874923.32164,
+    "ast_hash": "4c7a3dbf345d90749b8047fdaa840ba7",
+    "semantic_hash": ""
+  },
+  "modules/Services/src/Http/Resources/Client/ServiceDetailsResource.php": {
+    "mtime": 1792874822.0315883,
+    "seen": 1792874923.321708,
+    "ast_hash": "0abecfb43ab2816c3db27f4f307795f0",
+    "semantic_hash": ""
+  },
+  "modules/Services/src/Services/ServiceDetailsService.php": {
+    "mtime": 1792873209.8388104,
+    "seen": 1792873292.795163,
+    "ast_hash": "8874af942174a1f675bfec498b04694d",
+    "semantic_hash": ""
+  },
+  "modules/Services/tests/Feature/ClientServiceDetailsTest.php": {
+    "mtime": 1792874840.7751439,
+    "seen": 1792874923.321815,
+    "ast_hash": "afc4a660d7f129489ffc818941fbbc67",
+    "semantic_hash": ""
+  },
+  "modules/Services/src/Http/Resources/Client/EventResource.php": {
+    "mtime": 1792874822.0305078,
+    "seen": 1792874923.321698,
+    "ast_hash": "b7b6a569ad1f4401af480ae8481c4cdf",
+    "semantic_hash": ""
+  },
+  "modules/Services/src/Http/Resources/Client/HorseCareResource.php": {
+    "mtime": 1792871254.840583,
+    "seen": 1792871518.1877959,
+    "ast_hash": "b737d85a5eed0dda81afab21d6b94e34",
+    "semantic_hash": ""
+  },
+  "modules/Services/src/Http/Resources/Client/HorseServiceResource.php": {
+    "mtime": 1792871254.8409154,
+    "seen": 1792871518.187797,
+    "ast_hash": "c7a14209b7bc77492deaf99a6ff813a9",
+    "semantic_hash": ""
+  },
+  "modules/Services/src/Http/Resources/Client/RecreationRidingResource.php": {
+    "mtime": 1792873219.9773595,
+    "seen": 1792873292.7950919,
+    "ast_hash": "5de878f41c455830a13983be0b9fcb97",
+    "semantic_hash": ""
+  },
+  "modules/Services/src/Http/Resources/Client/ResortResource.php": {
+    "mtime": 1792871254.8402956,
+    "seen": 1792871518.1878002,
+    "ast_hash": "9b07f46cbd286ada8bfb0725d76b912e",
+    "semantic_hash": ""
+  },
+  "modules/Services/src/Http/Resources/Client/TrainingServiceResource.php": {
+    "mtime": 1792873754.3025002,
+    "seen": 1792873907.8848372,
+    "ast_hash": "b0a3c5731c9dcc67f7d9151defed05f0",
+    "semantic_hash": ""
+  },
+  "modules/Services/src/Http/Resources/Client/VisitResource.php": {
+    "mtime": 1792871254.8396134,
+    "seen": 1792871518.187806,
+    "ast_hash": "76f806c56d9edd918589178f3a9742b6",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Services/Availability/RecreationRidingAvailability.php": {
+    "mtime": 1792873783.631729,
+    "seen": 1792873907.884629,
+    "ast_hash": "a5c8ee0575551b19300f6ec855ed5321",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Services/Availability/ServiceAvailability.php": {
+    "mtime": 1792873813.3495047,
+    "seen": 1792873907.8846312,
+    "ast_hash": "c8e94ad48a3681779f73aec3fd97e49a",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Services/Availability/UpcomingAvailabilityService.php": {
+    "mtime": 1792874812.309593,
+    "seen": 1792874923.321395,
+    "ast_hash": "f97333bf1720ff34d1054b70da8e04d7",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/tests/Feature/RecreationRidingAvailabilityTest.php": {
+    "mtime": 1792873235.1530612,
+    "seen": 1792873292.79489,
+    "ast_hash": "3090187e2bd418e5937fbbfccfc96930",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Services/Availability/HourlySlots.php": {
+    "mtime": 1792873783.627498,
+    "seen": 1792873907.8846269,
+    "ast_hash": "d1374181d8b3cf113d0f2f506213a9d6",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Services/Availability/TrainingServiceAvailability.php": {
+    "mtime": 1792873813.34905,
+    "seen": 1792873907.884632,
+    "ast_hash": "748510bf08ece654401c2171005cfe43",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/tests/Feature/TrainingAvailabilityTest.php": {
+    "mtime": 1792873838.4532356,
+    "seen": 1792873907.8846562,
+    "ast_hash": "990a2898e030ae2c7d69f404fe1ce03b",
+    "semantic_hash": ""
+  },
+  "modules/Services/src/Http/Resources/Client/TrainerResource.php": {
+    "mtime": 1792873754.237485,
+    "seen": 1792873907.8848362,
+    "ast_hash": "3e19312e528c8029c96f919a5dd8d376",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/src/Services/Availability/EventAvailability.php": {
+    "mtime": 1792874812.247706,
+    "seen": 1792874923.321383,
+    "ast_hash": "28ffbb1d069d7b23bf41881a31271b22",
+    "semantic_hash": ""
+  },
+  "modules/Reservations/tests/Feature/EventAvailabilityTest.php": {
+    "mtime": 1792874876.2904046,
+    "seen": 1792874923.321404,
+    "ast_hash": "d6d71a06e2fc1d1fcc19f046aa1a7a55",
     "semantic_hash": ""
   }
 }
