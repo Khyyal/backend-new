@@ -4,9 +4,11 @@ namespace Modules\Promotion\Services;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Modules\Centers\Models\Center;
 use Modules\Promotion\Enums\ApplicationMethod;
 use Modules\Promotion\Enums\PromotionStatus;
 use Modules\Promotion\Models\Discount;
+use Modules\Services\Models\Service;
 
 class DiscountResolver
 {
@@ -14,13 +16,20 @@ class DiscountResolver
         private readonly DiscountEligibilityService $eligibility,
     ) {}
 
+    /**
+     * Eligible automatic discounts of the given center, ordered by id.
+     *
+     * @param  iterable<Service|int>  $services
+     * @return array<int, Discount>
+     */
     public function resolveAutomatic(
-        ?Model $owner = null,
+        Center $center,
         ?Model $user = null,
         float|int $subtotal = 0,
-        iterable $items = [],
+        iterable $services = [],
     ): array {
-        $query = Discount::query()
+        return Discount::query()
+            ->whereBelongsTo($center)
             ->where('application_method', ApplicationMethod::Automatic)
             ->where('status', PromotionStatus::Active)
             ->where('starts_at', '<=', now())
@@ -28,18 +37,11 @@ class DiscountResolver
                 $q->whereNull('ends_at')
                     ->orWhere('ends_at', '>=', now());
             })
-            ->with('discountables')
-            ->orderBy('id', 'asc');
-
-        if ($owner !== null) {
-            $query->where('owner_type', $owner->getMorphClass())
-                ->where('owner_id', $owner->getKey());
-        }
-
-        return $query
+            ->with('services')
+            ->orderBy('id', 'asc')
             ->get()
-            ->filter(function (Discount $d) use ($user, $subtotal, $items) {
-                return $this->eligibility->isEligible($d, $user, $subtotal, $items);
+            ->filter(function (Discount $d) use ($user, $subtotal, $services) {
+                return $this->eligibility->isEligible($d, $user, $subtotal, $services);
             })
             ->values()
             ->all();

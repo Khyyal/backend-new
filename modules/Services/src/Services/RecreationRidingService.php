@@ -3,13 +3,14 @@
 namespace Modules\Services\Services;
 
 use Illuminate\Support\Facades\DB;
-use Modules\Services\Enums\PriceOptionUnit;
 use Modules\Services\Enums\ServiceType;
 use Modules\Services\Models\RecreationalRiding;
 use Modules\Support\Enums\ActivationStatus;
 
 class RecreationRidingService
 {
+    public function __construct(private readonly DurationOptionService $durationOptions = new DurationOptionService) {}
+
     public function create(array $data): RecreationalRiding
     {
         return DB::transaction(function () use ($data) {
@@ -27,7 +28,9 @@ class RecreationRidingService
                 $description['en'] = $data['description']['en'];
             }
 
-            $riding = RecreationalRiding::query()->create();
+            $riding = RecreationalRiding::query()->create([
+                'max_tickets_per_hour' => $data['max_tickets_per_hour'] ?? null,
+            ]);
 
             $service = $riding->service()->create([
                 'name' => $name,
@@ -37,14 +40,7 @@ class RecreationRidingService
                 'type' => ServiceType::RecreationRiding,
             ]);
 
-            foreach ($data['price_options'] as $option) {
-                $service->priceOptions()->create([
-                    'name' => null,
-                    'price' => $option['price'],
-                    'quantity' => $option['duration'],
-                    'unit' => PriceOptionUnit::MINUTE,
-                ]);
-            }
+            $this->durationOptions->sync($service, $data['price_options'], $data['packages'] ?? null);
 
             $hours = $data['hours'];
             $slotCount = (int) (count($hours) / 2);
@@ -60,7 +56,11 @@ class RecreationRidingService
                 }
             }
 
-            $riding->load(['service.priceOptions', 'schedules']);
+            if (isset($data['settings'])) {
+                $riding->syncSettings($data['settings']);
+            }
+
+            $riding->load(['service.priceOptions.package', 'service.settings', 'schedules']);
 
             return $riding;
         });
@@ -92,15 +92,11 @@ class RecreationRidingService
                 'description' => $description,
             ]);
 
-            $service->priceOptions()->forceDelete();
-            foreach ($data['price_options'] as $option) {
-                $service->priceOptions()->create([
-                    'name' => null,
-                    'price' => $option['price'],
-                    'quantity' => $option['duration'],
-                    'unit' => PriceOptionUnit::MINUTE,
-                ]);
-            }
+            $riding->update([
+                'max_tickets_per_hour' => $data['max_tickets_per_hour'] ?? null,
+            ]);
+
+            $this->durationOptions->sync($service, $data['price_options'], $data['packages'] ?? null);
 
             $riding->schedules()->forceDelete();
             $hours = $data['hours'];
@@ -118,7 +114,11 @@ class RecreationRidingService
             }
 
             $riding = $riding->fresh();
-            $riding->load(['service.priceOptions', 'schedules']);
+            if (array_key_exists('settings', $data)) {
+                $riding->syncSettings($data['settings']);
+            }
+
+            $riding->load(['service.priceOptions.package', 'service.settings', 'schedules']);
 
             return $riding;
         });

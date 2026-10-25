@@ -16,6 +16,7 @@ class Payment extends Model
     protected $fillable = [
         'purchase_id',
         'amount',
+        'refunded_amount',
         'method',
         'status',
         'payment_company',
@@ -24,6 +25,7 @@ class Payment extends Model
         'provider_data',
         'metadata',
         'paid_at',
+        'refunded_at',
     ];
 
     protected function casts(): array
@@ -34,8 +36,18 @@ class Payment extends Model
             'provider_data' => 'array',
             'metadata' => 'array',
             'paid_at' => 'datetime',
+            'refunded_at' => 'datetime',
             'amount' => 'decimal:2',
+            'refunded_amount' => 'decimal:2',
         ];
+    }
+
+    /**
+     * What is left to refund on a succeeded payment.
+     */
+    public function refundableAmount(): float
+    {
+        return round((float) $this->amount - (float) $this->refunded_amount, 2);
     }
 
     public function purchase(): BelongsTo

@@ -5,19 +5,19 @@ namespace Modules\Promotion\Http\Controllers\Center;
 use Dedoc\Scramble\Attributes\Group;
 use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Modules\Centers\Models\Center;
-use Modules\Centers\Models\User as CenterUser;
 use Modules\Promotion\Enums\PromotionStatus;
 use Modules\Promotion\Events\DiscountCreated;
-use Modules\Promotion\Http\Requests\AttachDiscountablesRequest;
+use Modules\Promotion\Http\Requests\AttachServicesRequest;
 use Modules\Promotion\Http\Requests\StoreCouponRequest;
 use Modules\Promotion\Http\Requests\StoreDiscountRequest;
 use Modules\Promotion\Http\Requests\UpdateCouponStatusRequest;
@@ -29,67 +29,52 @@ use Modules\Promotion\Http\Resources\DiscountCollection;
 use Modules\Promotion\Http\Resources\DiscountResource;
 use Modules\Promotion\Models\Coupon;
 use Modules\Promotion\Models\Discount;
-use Modules\Promotion\Models\Discountable;
+use Modules\Services\Models\Service;
 use Symfony\Component\HttpFoundation\Response as ResponseAlias;
 
-#[Group(name: 'Center / Discounts', description: 'Authenticated center user: manage discounts, coupons, and discountable items for their center.')]
+/**
+ * Discounts and coupons belong to a center. Route bindings are scoped, so a
+ * discount of another center (or a coupon/service not under the discount)
+ * resolves to 404.
+ */
+#[Group(name: 'Center / Discounts', description: 'Manage the discounts, coupons and discounted services of a center. Requires a center-scoped Bearer token (see `POST /centers/{center}/access`).')]
 class DiscountController extends Controller
 {
-    public function __construct()
+    #[Response(status: 200, description: 'Paginated list of the center\'s discounts with counts.')]
+    #[Response(status: 401, description: 'Missing or invalid Bearer token for the `center_user` guard.')]
+    #[Response(status: 403, description: 'The token has no access to this center, or the user is not assigned to it.')]
+    public function index(Request $request, Center $center): DiscountCollection
     {
-        $this->middleware('auth:center_user');
-    }
+        $this->authorizeCenter($request, $center);
 
-    private function owner(Request $request): Center
-    {
-        /** @var CenterUser $user */
-        $user = $request->user('center_user');
-
-        $center = $user->centers()->first();
-        abort_if($center === null, ResponseAlias::HTTP_FORBIDDEN, 'No center assignment found for user.');
-
-        return $center;
-    }
-
-    #[Response(status: 200, description: 'Paginated list of center-owned discounts with counts.')]
-    #[Response(status: 401, description: 'Missing or invalid center_user Bearer token.')]
-    public function index(Request $request): AnonymousResourceCollection
-    {
-        $owner = $this->owner($request);
-        $query = Discount::query()
-            ->where('owner_type', $owner->getMorphClass())
-            ->where('owner_id', $owner->getKey())
-            ->withCount(['coupons', 'redemptions']);
+        $query = $center->discounts()->withCount(['coupons', 'redemptions', 'services']);
 
         $this->applyFilters($query, $request);
 
         return DiscountCollection::make($query->latest()->paginate(25));
     }
 
-    #[Response(status: 200, description: 'Single discount detail.')]
-    #[Response(status: 401, description: 'Unauthenticated.')]
-    #[Response(status: 403, description: 'Discount does not belong to user\'s center.')]
-    #[Response(status: 404, description: 'Discount not found.')]
-    public function show(Request $request, Discount $discount): DiscountResource
+    #[Response(status: 200, description: 'Single discount with counts and attached `service_ids`.')]
+    #[Response(status: 403, description: 'The token has no access to this center, or the user is not assigned to it.')]
+    #[Response(status: 404, description: 'Discount not found in this center.')]
+    public function show(Request $request, Center $center, Discount $discount): DiscountResource
     {
-        $this->assertOwned($request, $discount);
-        $discount->loadCount(['coupons', 'redemptions']);
+        $this->authorizeCenter($request, $center);
 
-        return DiscountResource::make($discount);
+        return DiscountResource::make($this->loadDetails($discount));
     }
 
-    #[Response(status: 201, description: 'Discount created for center.')]
-    #[Response(status: 401, description: 'Unauthenticated.')]
+    #[Response(status: 201, description: 'Discount created for the center.')]
+    #[Response(status: 403, description: 'The token has no access to this center, or the user is not assigned to it.')]
     #[Response(status: 422, description: 'Invalid payload.')]
-    public function store(StoreDiscountRequest $request): DiscountResource
+    public function store(StoreDiscountRequest $request, Center $center): JsonResponse
     {
-        $validated = $request->validated();
-        $owner = $this->owner($request);
+        $this->authorizeCenter($request, $center);
 
-        $discount = DB::transaction(function () use ($validated, $owner) {
-            $discount = Discount::query()->create(array_merge($validated, [
-                'owner_type' => $owner->getMorphClass(),
-                'owner_id' => $owner->getKey(),
+        $validated = $request->validated();
+
+        $discount = DB::transaction(function () use ($validated, $center) {
+            $discount = $center->discounts()->create(array_merge($validated, [
                 'is_stackable' => $validated['is_stackable'] ?? true,
                 'status' => $validated['status'] ?? PromotionStatus::Active,
             ]));
@@ -99,30 +84,31 @@ class DiscountController extends Controller
             return $discount;
         });
 
-        $discount->loadCount(['coupons', 'redemptions']);
-
-        return DiscountResource::make($discount)->response()->setStatusCode(201);
+        return DiscountResource::make($this->loadDetails($discount))
+            ->response()
+            ->setStatusCode(ResponseAlias::HTTP_CREATED);
     }
 
     #[Response(status: 200, description: 'Discount updated.')]
-    #[Response(status: 403, description: 'Discount does not belong to user\'s center.')]
-    #[Response(status: 404, description: 'Discount not found.')]
+    #[Response(status: 403, description: 'The token has no access to this center, or the user is not assigned to it.')]
+    #[Response(status: 404, description: 'Discount not found in this center.')]
     #[Response(status: 422, description: 'Invalid payload.')]
-    public function update(UpdateDiscountRequest $request, Discount $discount): DiscountResource
+    public function update(UpdateDiscountRequest $request, Center $center, Discount $discount): DiscountResource
     {
-        $this->assertOwned($request, $discount);
-        $discount->update($request->validated());
-        $discount->loadCount(['coupons', 'redemptions']);
+        $this->authorizeCenter($request, $center);
 
-        return DiscountResource::make($discount);
+        $discount->update($request->validated());
+
+        return DiscountResource::make($this->loadDetails($discount));
     }
 
     #[Response(status: 204, description: 'Discount deleted.')]
-    #[Response(status: 403, description: 'Discount does not belong to user\'s center.')]
-    #[Response(status: 422, description: 'Discount has redemptions.')]
-    public function destroy(Request $request, Discount $discount): JsonResponse
+    #[Response(status: 403, description: 'The token has no access to this center, or the user is not assigned to it.')]
+    #[Response(status: 404, description: 'Discount not found in this center.')]
+    #[Response(status: 422, description: 'Discount has redemptions and cannot be deleted.')]
+    public function destroy(Request $request, Center $center, Discount $discount): JsonResponse
     {
-        $this->assertOwned($request, $discount);
+        $this->authorizeCenter($request, $center);
 
         if ($discount->redemptions()->exists()) {
             throw ValidationException::withMessages([
@@ -132,28 +118,30 @@ class DiscountController extends Controller
 
         $discount->delete();
 
-        return response()->json(null, 204);
+        return response()->json(null, ResponseAlias::HTTP_NO_CONTENT);
     }
 
     #[Response(status: 200, description: 'Discount status updated.')]
-    #[Response(status: 403, description: 'Discount does not belong to user\'s center.')]
+    #[Response(status: 403, description: 'The token has no access to this center, or the user is not assigned to it.')]
     #[Response(status: 422, description: 'Invalid status value.')]
-    public function updateStatus(UpdateDiscountStatusRequest $request, Discount $discount): DiscountResource
+    public function updateStatus(UpdateDiscountStatusRequest $request, Center $center, Discount $discount): DiscountResource
     {
-        $this->assertOwned($request, $discount);
-        $discount->update(['status' => $request->validated()['status']]);
-        $discount->loadCount(['coupons', 'redemptions']);
+        $this->authorizeCenter($request, $center);
 
-        return DiscountResource::make($discount);
+        $discount->update(['status' => $request->validated()['status']]);
+
+        return DiscountResource::make($this->loadDetails($discount));
     }
 
     // ---------- Nested Coupons ----------
 
     #[Group(name: 'Center / Discount Coupons')]
     #[Response(status: 200, description: 'Paginated coupons for the discount.')]
-    public function couponsIndex(Request $request, Discount $discount): AnonymousResourceCollection
+    #[Response(status: 404, description: 'Discount not found in this center.')]
+    public function couponsIndex(Request $request, Center $center, Discount $discount): CouponCollection
     {
-        $this->assertOwned($request, $discount);
+        $this->authorizeCenter($request, $center);
+
         $query = $discount->coupons()->withCount('redemptions');
 
         if ($status = $request->input('status')) {
@@ -166,9 +154,9 @@ class DiscountController extends Controller
     #[Group(name: 'Center / Discount Coupons')]
     #[Response(status: 201, description: 'Coupons created.')]
     #[Response(status: 422, description: 'Missing coupons array or generator config.')]
-    public function couponsStore(StoreCouponRequest $request, Discount $discount): CouponCollection
+    public function couponsStore(StoreCouponRequest $request, Center $center, Discount $discount): JsonResponse
     {
-        $this->assertOwned($request, $discount);
+        $this->authorizeCenter($request, $center);
 
         $validated = $request->validated();
         $coupons = DB::transaction(function () use ($discount, $validated) {
@@ -198,7 +186,7 @@ class DiscountController extends Controller
                 }
             }
 
-            $created = collect();
+            $created = new Collection;
             foreach ($toCreate as $data) {
                 $created->push($discount->coupons()->create($data));
             }
@@ -208,16 +196,16 @@ class DiscountController extends Controller
 
         $coupons->loadCount('redemptions');
 
-        return CouponCollection::make($coupons)->response()->setStatusCode(201);
+        return CouponCollection::make($coupons)->response()->setStatusCode(ResponseAlias::HTTP_CREATED);
     }
 
     #[Group(name: 'Center / Discount Coupons')]
     #[Response(status: 204, description: 'Coupon deleted.')]
+    #[Response(status: 404, description: 'Coupon not found under this discount.')]
     #[Response(status: 422, description: 'Coupon has redemptions.')]
-    public function couponsDestroy(Request $request, Discount $discount, Coupon $coupon): JsonResponse
+    public function couponsDestroy(Request $request, Center $center, Discount $discount, Coupon $coupon): JsonResponse
     {
-        $this->assertOwned($request, $discount);
-        abort_if((int) $coupon->discount_id !== (int) $discount->id, 404);
+        $this->authorizeCenter($request, $center);
 
         if ($coupon->redemptions()->exists()) {
             throw ValidationException::withMessages([
@@ -227,94 +215,74 @@ class DiscountController extends Controller
 
         $coupon->delete();
 
-        return response()->json(null, 204);
+        return response()->json(null, ResponseAlias::HTTP_NO_CONTENT);
     }
 
     #[Group(name: 'Center / Discount Coupons')]
     #[Response(status: 200, description: 'Coupon status updated.')]
-    public function couponsUpdateStatus(UpdateCouponStatusRequest $request, Discount $discount, Coupon $coupon): CouponResource
+    #[Response(status: 404, description: 'Coupon not found under this discount.')]
+    public function couponsUpdateStatus(UpdateCouponStatusRequest $request, Center $center, Discount $discount, Coupon $coupon): CouponResource
     {
-        $this->assertOwned($request, $discount);
-        abort_if((int) $coupon->discount_id !== (int) $discount->id, 404);
+        $this->authorizeCenter($request, $center);
+
         $coupon->update(['status' => $request->validated()['status']]);
         $coupon->loadCount('redemptions');
 
         return CouponResource::make($coupon);
     }
 
-    // ---------- Nested Discountables ----------
+    // ---------- Nested Services ----------
 
-    #[Group(name: 'Center / Discount Items')]
-    #[Response(status: 201, description: 'Items attached to discount.')]
-    public function discountablesAttach(AttachDiscountablesRequest $request, Discount $discount): JsonResponse
+    /**
+     * Attach services of this center to the discount.
+     *
+     * **Request body:** `services` required array of service ids belonging to
+     * the center. Already attached services are ignored.
+     */
+    #[Group(name: 'Center / Discount Services')]
+    #[Response(status: 200, description: 'The discount with its updated `service_ids`.')]
+    #[Response(status: 422, description: 'A service id does not exist or belongs to another center.')]
+    public function servicesAttach(AttachServicesRequest $request, Center $center, Discount $discount): DiscountResource
     {
-        $this->assertOwned($request, $discount);
+        $this->authorizeCenter($request, $center);
 
-        $items = $request->validated()['items'];
-        $now = now();
-        $upsert = [];
-        foreach ($items as $item) {
-            $upsert[] = [
-                'discount_id' => $discount->id,
-                'discountable_type' => $item['discountable_type'],
-                'discountable_id' => $item['discountable_id'],
-                'created_at' => $now,
-                'updated_at' => $now,
-            ];
-        }
+        $discount->services()->syncWithoutDetaching($request->validated()['services']);
 
-        if (count($upsert) > 0) {
-            Discountable::query()->upsert(
-                $upsert,
-                ['discount_id', 'discountable_type', 'discountable_id'],
-                ['updated_at' => $now]
-            );
-        }
-
-        return response()->json([
-            'attached' => count($items),
-            'discountable_count' => $discount->discountables()->count(),
-        ], 201);
+        return DiscountResource::make($this->loadDetails($discount));
     }
 
-    #[Group(name: 'Center / Discount Items')]
-    #[Response(status: 204, description: 'Item detached.')]
-    #[Response(status: 404, description: 'Item not attached.')]
-    public function discountablesDetach(Request $request, Discount $discount, string $discountableType, string $discountableId): JsonResponse
+    #[Group(name: 'Center / Discount Services')]
+    #[Response(status: 204, description: 'Service detached.')]
+    #[Response(status: 404, description: 'Service is not attached to this discount.')]
+    public function servicesDetach(Request $request, Center $center, Discount $discount, Service $service): JsonResponse
     {
-        $this->assertOwned($request, $discount);
+        $this->authorizeCenter($request, $center);
 
-        $detached = Discountable::query()
-            ->where('discount_id', $discount->id)
-            ->where('discountable_type', $discountableType)
-            ->where('discountable_id', $discountableId)
-            ->delete();
+        $discount->services()->detach($service);
 
-        if ($detached === 0) {
-            abort(404);
-        }
-
-        return response()->json(null, 204);
+        return response()->json(null, ResponseAlias::HTTP_NO_CONTENT);
     }
 
     // ---------- helpers ----------
 
-    private function applyFilters(Builder $query, Request $request): void
+    private function authorizeCenter(Request $request, Center $center): void
+    {
+        Gate::forUser($request->user())->authorize('manageDiscounts', $center);
+    }
+
+    private function loadDetails(Discount $discount): Discount
+    {
+        return $discount
+            ->load('services:id')
+            ->loadCount(['coupons', 'redemptions', 'services']);
+    }
+
+    private function applyFilters(Builder|HasMany $query, Request $request): void
     {
         foreach (['status', 'type', 'scope', 'application_method'] as $f) {
             if ($v = $request->input($f)) {
                 $query->where($f, $v);
             }
         }
-    }
-
-    private function assertOwned(Request $request, Discount $discount): void
-    {
-        $owner = $this->owner($request);
-        abort_unless(
-            $discount->owner_type === $owner->getMorphClass()
-            && (string) $discount->owner_id === (string) $owner->getKey(),
-            ResponseAlias::HTTP_FORBIDDEN
-        );
     }
 }

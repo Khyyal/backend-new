@@ -2,6 +2,7 @@
 
 namespace Modules\Promotion;
 
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 
 class PromotionServiceProvider extends ServiceProvider
@@ -16,7 +17,8 @@ class PromotionServiceProvider extends ServiceProvider
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
         $this->loadTranslationsFrom(__DIR__.'/../lang', 'promotion');
 
-        require __DIR__.'/../routes/admin.php';
-        require __DIR__.'/../routes/center.php';
+        Route::middleware(['api'])
+            ->prefix('api/v1')
+            ->group(__DIR__.'/../routes/center.php');
     }
 }

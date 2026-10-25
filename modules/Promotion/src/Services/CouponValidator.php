@@ -4,8 +4,11 @@ namespace Modules\Promotion\Services;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
+use Modules\Centers\Models\Center;
 use Modules\Promotion\Enums\PromotionStatus;
 use Modules\Promotion\Models\Coupon;
+use Modules\Promotion\Models\Discount;
+use Modules\Services\Models\Service;
 
 class CouponValidator
 {
@@ -13,17 +16,26 @@ class CouponValidator
         private readonly DiscountEligibilityService $eligibility,
     ) {}
 
+    /**
+     * Validate a coupon code for a purchase at the given center. Coupons of
+     * other centers are reported as not found.
+     *
+     * @param  iterable<Service|int>  $services
+     * @return array{valid: bool, reason?: string, code?: int, coupon?: Coupon, discount?: Discount}
+     */
     public function validate(
         string $code,
+        Center $center,
         ?Model $user = null,
         float|int $subtotal = 0,
-        iterable $items = [],
+        iterable $services = [],
     ): array {
         $normalized = Str::upper(trim($code));
 
         $coupon = Coupon::query()
-            ->with('discount')
+            ->with('discount.services')
             ->where('code', $normalized)
+            ->whereRelation('discount', 'center_id', $center->getKey())
             ->first();
 
         if ($coupon === null) {
@@ -65,7 +77,7 @@ class CouponValidator
 
         $discount = $coupon->discount;
 
-        if (! $this->eligibility->isEligible($discount, $user, $subtotal, $items)) {
+        if (! $this->eligibility->isEligible($discount, $user, $subtotal, $services)) {
             return [
                 'valid' => false,
                 'reason' => 'discount_ineligible',

@@ -12,6 +12,7 @@
         "php": "^8.3",
         "dedoc/scramble": "^0.13.45",
         "laravel/framework": "^13.17",
+        "laravel/octane": "^2.22",
         "laravel/sanctum": "^4.3",
         "laravel/tinker": "^3.0",
         "spatie/laravel-medialibrary": "^11.23",
@@ -57,6 +58,9 @@
             "Modules\\Services\\": "modules/Services/src/",
             "Modules\\Services\\Database\\Factories\\": "modules/Services/database/factories/",
             "Modules\\Services\\Database\\Seeders\\":  "modules/Services/database/seeders/",
+            "Modules\\Reservations\\": "modules/Reservations/src/",
+            "Modules\\Reservations\\Database\\Factories\\": "modules/Reservations/database/factories/",
+            "Modules\\Reservations\\Database\\Seeders\\":  "modules/Reservations/database/seeders/",
 
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/"
@@ -65,7 +69,8 @@
     "autoload-dev": {
         "psr-4": {
             "Tests\\": "tests/",
-            "Modules\\Purchase\\Tests\\": "modules/Purchase/tests/"
+            "Modules\\Purchase\\Tests\\": "modules/Purchase/tests/",
+            "Modules\\Reservations\\Tests\\": "modules/Reservations/tests/"
         }
     },
     "scripts": {

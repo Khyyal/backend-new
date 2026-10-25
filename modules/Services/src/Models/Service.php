@@ -10,6 +10,8 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 use Modules\Centers\Models\Center;
+use Modules\Promotion\Traits\HasDiscountable;
+use Modules\Services\Database\Factories\ServiceFactory;
 use Modules\Services\Enums\ServiceType;
 use Modules\Support\Enums\ActivationStatus;
 use Spatie\Image\Enums\Fit;
@@ -22,19 +24,23 @@ use Spatie\Translatable\HasTranslations;
 #[Translatable('name', 'description')]
 class Service extends Model implements HasMedia
 {
-    use HasFactory, SoftDeletes, HasTranslations, InteractsWithMedia;
-
+    use HasDiscountable, HasFactory, HasTranslations, InteractsWithMedia, SoftDeletes;
 
     protected $fillable = [
         'name',
         'center_id',
         'description',
         'status',
-        "slug",
+        'slug',
         'type',
         'serviceable_type',
         'serviceable_id',
     ];
+
+    protected static function newFactory(): ServiceFactory
+    {
+        return ServiceFactory::new();
+    }
 
     public function center(): BelongsTo
     {
@@ -54,8 +60,11 @@ class Service extends Model implements HasMedia
         static::creating(function (Service $service) {
             $service->slug = $service->generateSlug();
         });
-    }
 
+        $flush = fn () => Center::flushSearchCache();
+        static::saved($flush);
+        static::deleted($flush);
+    }
 
     public function generateSlug(): string
     {
@@ -66,11 +75,11 @@ class Service extends Model implements HasMedia
         $counter = 1;
 
         while (
-        static::query()
-            ->where('center_id', $this->center_id)
-            ->where('slug', $slug)
-            ->when($this->exists, fn($query) => $query->whereKeyNot($this->getKey()))
-            ->exists()
+            static::query()
+                ->where('center_id', $this->center_id)
+                ->where('slug', $slug)
+                ->when($this->exists, fn ($query) => $query->whereKeyNot($this->getKey()))
+                ->exists()
         ) {
             $slug = "{$originalSlug}-{$counter}";
             $counter++;
@@ -82,7 +91,6 @@ class Service extends Model implements HasMedia
     public function registerMediaCollections(): void
     {
 
-
         $this->addMediaCollection('cover')
             ->singleFile()
 
@@ -93,7 +101,6 @@ class Service extends Model implements HasMedia
                     ->fit(Fit::Crop, 1200, 400);
             });
 
-
         $this->addMediaCollection('images')
             ->acceptsMimeTypes(['image/jpeg', 'image/png', 'image/jpg'])
             ->registerMediaConversions(function (?Media $media = null): void {
@@ -102,23 +109,29 @@ class Service extends Model implements HasMedia
             });
     }
 
-
-    /// price options
+    // / price options
     public function priceOptions(): HasMany|Service
     {
         return $this->hasMany(PriceOption::class);
     }
 
+    public function packages(): HasMany
+    {
+        return $this->hasMany(ServicePackage::class);
+    }
+
+    public function settings(): HasMany
+    {
+        return $this->hasMany(ServiceSetting::class);
+    }
+
+    public function periods(): HasMany
+    {
+        return $this->hasMany(ServicePeriod::class);
+    }
 
     public function serviceable(): MorphTo
     {
         return $this->morphTo();
     }
-
-
-
-
-
-
-
 }

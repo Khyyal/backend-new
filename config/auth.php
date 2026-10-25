@@ -2,6 +2,7 @@
 
 use Modules\Centers\Models\User as CenterUser;
 use Modules\Clients\Models\Client;
+use Modules\Support\Models\SystemUser;
 
 return [
 
@@ -51,6 +52,10 @@ return [
             'driver' => 'sanctum',
             'provider' => 'center_users',
         ],
+        'system_user' => [
+            'driver' => 'sanctum',
+            'provider' => 'system_users',
+        ],
     ],
 
     /*
@@ -71,10 +76,6 @@ return [
     */
 
     'providers' => [
-//        'users' => [
-//            'driver' => 'eloquent',
-//            'model' => env('AUTH_MODEL', User::class),
-//        ],
 
         'clients' => [
             'driver' => 'eloquent',
@@ -84,6 +85,11 @@ return [
         'center_users' => [
             'driver' => 'eloquent',
             'model' => CenterUser::class,
+        ],
+
+        'system_users' => [
+            'driver' => 'eloquent',
+            'model' => SystemUser::class,
         ],
 
         // 'users' => [

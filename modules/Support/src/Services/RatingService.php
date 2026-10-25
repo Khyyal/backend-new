@@ -5,7 +5,7 @@ namespace Modules\Support\Services;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use InvalidArgumentException;
-use Modules\Centers\Models\Rating;
+use Modules\Support\Models\Rating;
 
 class RatingService
 {

@@ -3,7 +3,7 @@
 namespace Modules\Support\Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Modules\Centers\Models\Rating;
+use Modules\Support\Models\Rating;
 
 class RatingFactory extends Factory
 {

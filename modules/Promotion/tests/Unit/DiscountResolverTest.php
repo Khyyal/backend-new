@@ -1,21 +1,26 @@
 <?php
 
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Centers\Database\Factories\CenterFactory;
 use Modules\Clients\Database\Factories\ClientFactory;
 use Modules\Promotion\Database\Factories\DiscountFactory;
 use Modules\Promotion\Database\Factories\DiscountRedemptionFactory;
 use Modules\Promotion\Enums\ApplicationMethod;
 use Modules\Promotion\Enums\DiscountScope;
+use Modules\Promotion\Enums\PromotionStatus;
+use Modules\Promotion\Models\Discount;
 use Modules\Promotion\Services\DiscountEligibilityService;
 use Modules\Promotion\Services\DiscountResolver;
+use Tests\TestCase;
 
-uses(\Tests\TestCase::class, \Illuminate\Foundation\Testing\RefreshDatabase::class);
+uses(TestCase::class, RefreshDatabase::class);
 
-function rCreate(array $overrides = []): \Modules\Promotion\Models\Discount
+function rCreate(array $overrides = []): Discount
 {
     return DiscountFactory::new()->create(array_merge([
+        'center_id' => test()->center->id,
         'application_method' => ApplicationMethod::Automatic,
-        'status' => \Modules\Promotion\Enums\PromotionStatus::Active,
+        'status' => PromotionStatus::Active,
         'starts_at' => now()->subDay(),
         'ends_at' => null,
         'scope' => DiscountScope::All,
@@ -27,15 +32,16 @@ function rCreate(array $overrides = []): \Modules\Promotion\Models\Discount
 
 beforeEach(function (): void {
     $this->resolver = app(DiscountResolver::class);
+    $this->center = CenterFactory::new()->create();
 });
 
 test('resolveAutomatic returns only automatic active date-valid discounts', function (): void {
     $auto = rCreate();
     $couponOnly = rCreate(['application_method' => ApplicationMethod::Coupon]);
-    $inactive = rCreate(['status' => \Modules\Promotion\Enums\PromotionStatus::InActive]);
+    $inactive = rCreate(['status' => PromotionStatus::InActive]);
     $future = rCreate(['starts_at' => now()->addDay()]);
 
-    $ids = collect($this->resolver->resolveAutomatic())->pluck('id');
+    $ids = collect($this->resolver->resolveAutomatic($this->center))->pluck('id');
 
     expect($ids)->toContain($auto->id);
     expect($ids)->not->toContain($couponOnly->id);
@@ -43,11 +49,11 @@ test('resolveAutomatic returns only automatic active date-valid discounts', func
     expect($ids)->not->toContain($future->id);
 });
 
-test('resolveAutomatic filters by owner when provided', function (): void {
+test('resolveAutomatic only returns discounts of the given center', function (): void {
     $c1 = CenterFactory::new()->create();
     $c2 = CenterFactory::new()->create();
-    $d1 = rCreate(['owner_type' => $c1->getMorphClass(), 'owner_id' => $c1->getKey()]);
-    $d2 = rCreate(['owner_type' => $c2->getMorphClass(), 'owner_id' => $c2->getKey()]);
+    $d1 = rCreate(['center_id' => $c1->id]);
+    $d2 = rCreate(['center_id' => $c2->id]);
 
     $ids1 = collect($this->resolver->resolveAutomatic($c1))->pluck('id');
     $ids2 = collect($this->resolver->resolveAutomatic($c2))->pluck('id');
@@ -73,7 +79,7 @@ test('every returned discount passes independent eligibility check', function ()
     ]);
     rCreate(['minimum_amount' => 5]);
 
-    $results = $this->resolver->resolveAutomatic(null, $client, 100);
+    $results = $this->resolver->resolveAutomatic($this->center, $client, 100);
     foreach ($results as $disc) {
         expect($elig->isEligible($disc, $client, 100))->toBeTrue();
     }
@@ -85,7 +91,7 @@ test('results are ordered by id ascending', function (): void {
     rCreate();
     rCreate();
 
-    $ids = collect($this->resolver->resolveAutomatic())->pluck('id')->all();
+    $ids = collect($this->resolver->resolveAutomatic($this->center))->pluck('id')->all();
     $sorted = $ids;
     sort($sorted, SORT_NUMERIC);
     expect($ids)->toBe($sorted);

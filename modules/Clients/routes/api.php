@@ -3,13 +3,11 @@
 use Illuminate\Support\Facades\Route;
 use Modules\Clients\Http\Controllers\Client\AuthController;
 use Modules\Clients\Http\Controllers\Client\ProfileController;
-use Modules\Clients\Http\Controllers\Client\RatingController;
 
 Route::middleware(['api', 'set.locale.from.accept.language'])
     ->prefix('clients')
     ->name('client.')
     ->group(function (): void {
-
 
         Route::middleware(['track.client.session'])
             ->group(function (): void {
@@ -18,9 +16,6 @@ Route::middleware(['api', 'set.locale.from.accept.language'])
                         ->name('profile.update');
                     Route::get('/me', [ProfileController::class, 'me'])
                         ->name('profile.me');
-
-                    Route::post('/ratings', [RatingController::class, 'rate'])
-                        ->name('ratings.rate');
                 });
             });
 
@@ -31,3 +26,5 @@ Route::middleware(['api', 'set.locale.from.accept.language'])
             ->name('auth.verify');
     });
 
+require __DIR__.'/center.php';
+require __DIR__.'/admin.php';

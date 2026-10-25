@@ -10,6 +10,7 @@ use Modules\Purchase\Events\PaymentCancelled;
 use Modules\Purchase\Events\PaymentExpired;
 use Modules\Purchase\Events\PaymentFailed;
 use Modules\Purchase\Events\PaymentProcessing;
+use Modules\Purchase\Events\PaymentRefunded;
 use Modules\Purchase\Events\PaymentSucceeded;
 use Modules\Purchase\Models\Payment;
 
@@ -68,6 +69,58 @@ class PaymentStateService
             to: PaymentStatus::Expired,
             eventClass: PaymentExpired::class,
         );
+    }
+
+    /**
+     * Records money given back on a succeeded payment. Refunds add up: the
+     * payment stays `succeeded` while partially refunded and becomes
+     * `refunded` once its whole amount has been returned. This is the only
+     * way a succeeded payment changes.
+     */
+    public function recordRefund(Payment $payment, float $amount): Payment
+    {
+        $amount = round($amount, 2);
+
+        if ($amount <= 0) {
+            throw new InvalidArgumentException('Refund amount must be greater than 0.');
+        }
+
+        return DB::transaction(function () use ($payment, $amount): Payment {
+            $locked = Payment::query()
+                ->whereKey($payment->getKey())
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($locked->status !== PaymentStatus::Succeeded) {
+                throw new InvalidArgumentException(sprintf(
+                    'Cannot refund payment with status "%s". Only succeeded payments can be refunded.',
+                    $locked->status->value
+                ));
+            }
+
+            if ($amount > $locked->refundableAmount()) {
+                throw new InvalidArgumentException(sprintf(
+                    'Cannot refund %.2f; only %.2f is left to refund.',
+                    $amount,
+                    $locked->refundableAmount()
+                ));
+            }
+
+            $locked->refunded_amount = round((float) $locked->refunded_amount + $amount, 2);
+            $locked->refunded_at = Carbon::now();
+
+            if ($locked->refundableAmount() <= 0) {
+                $locked->status = PaymentStatus::Refunded;
+            }
+
+            $locked->save();
+
+            DB::afterCommit(static function () use ($locked, $amount): void {
+                event(new PaymentRefunded($locked, $amount));
+            });
+
+            return $locked;
+        });
     }
 
     /**

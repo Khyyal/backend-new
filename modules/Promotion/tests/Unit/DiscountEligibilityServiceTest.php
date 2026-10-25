@@ -1,19 +1,23 @@
 <?php
 
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Clients\Database\Factories\ClientFactory;
 use Modules\Promotion\Database\Factories\DiscountFactory;
 use Modules\Promotion\Database\Factories\DiscountRedemptionFactory;
 use Modules\Promotion\Enums\DiscountScope;
+use Modules\Promotion\Enums\PromotionStatus;
+use Modules\Promotion\Models\Discount;
 use Modules\Promotion\Services\DiscountEligibilityService;
-use Modules\Purchase\Database\Factories\PurchaseFactory;
+use Modules\Services\Database\Factories\ServiceFactory;
+use Tests\TestCase;
 
-uses(\Tests\TestCase::class, \Illuminate\Foundation\Testing\RefreshDatabase::class);
+uses(TestCase::class, RefreshDatabase::class);
 
 beforeEach(function (): void {
     $this->elig = app(DiscountEligibilityService::class);
 });
 
-function baseCreate(array $overrides = []): \Modules\Promotion\Models\Discount
+function baseCreate(array $overrides = []): Discount
 {
     return DiscountFactory::new()->create(array_merge([
         'scope' => DiscountScope::All,
@@ -25,7 +29,7 @@ function baseCreate(array $overrides = []): \Modules\Promotion\Models\Discount
 }
 
 test('inactive discount is never eligible', function (): void {
-    $d = baseCreate(['status' => \Modules\Promotion\Enums\PromotionStatus::InActive]);
+    $d = baseCreate(['status' => PromotionStatus::InActive]);
     expect($this->elig->isEligible($d))->toBeFalse();
 });
 
@@ -83,18 +87,16 @@ test('usage_limit_per_customer is per-user', function (): void {
     expect($this->elig->isEligible($d, $uB))->toBeTrue();
 });
 
-test('specific_items scope requires at least one attached item provided', function (): void {
+test('specific_items scope requires at least one attached service', function (): void {
     $d = baseCreate(['scope' => DiscountScope::SpecificItems]);
-    $in = PurchaseFactory::new()->create();
-    $out = PurchaseFactory::new()->create();
-    $d->discountables()->create([
-        'discountable_type' => $in->getMorphClass(),
-        'discountable_id' => $in->getKey(),
-    ]);
+    $in = ServiceFactory::new()->create(['center_id' => $d->center_id]);
+    $out = ServiceFactory::new()->create(['center_id' => $d->center_id]);
+    $d->services()->attach($in);
     $d->refresh();
 
     expect($this->elig->isEligible($d, null, 100, []))->toBeFalse();
     expect($this->elig->isEligible($d, null, 100, [$out]))->toBeFalse();
     expect($this->elig->isEligible($d, null, 100, [$in]))->toBeTrue();
     expect($this->elig->isEligible($d, null, 100, [$out, $in]))->toBeTrue();
+    expect($this->elig->isEligible($d, null, 100, [$in->id]))->toBeTrue();
 });

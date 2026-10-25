@@ -2,14 +2,21 @@
 
 namespace Modules\Support\Concerns;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
-use Modules\Centers\Models\Rating;
+use Modules\Support\Models\Rating;
 
 trait Rateable
 {
     public function ratings(): MorphMany
     {
         return $this->morphMany(Rating::class, 'rateable');
+    }
+
+    public function scopeWithRatingStats(Builder $query): Builder
+    {
+        return $query->withAvg('ratings as rating_avg', 'stars')
+            ->withCount('ratings as ratings_count');
     }
 
     public function averageRating(): ?float

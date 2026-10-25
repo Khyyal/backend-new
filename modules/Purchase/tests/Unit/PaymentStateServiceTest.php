@@ -1,26 +1,30 @@
 <?php
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Event;
 use Modules\Purchase\Database\Factories\PaymentFactory;
 use Modules\Purchase\Database\Factories\PurchaseFactory;
 use Modules\Purchase\Enums\PaymentStatus;
+use Modules\Purchase\Enums\PurchaseStatus;
 use Modules\Purchase\Events\PaymentCancelled;
 use Modules\Purchase\Events\PaymentExpired;
 use Modules\Purchase\Events\PaymentFailed;
 use Modules\Purchase\Events\PaymentProcessing;
+use Modules\Purchase\Events\PaymentRefunded;
 use Modules\Purchase\Events\PaymentSucceeded;
+use Modules\Purchase\Models\Payment;
 use Modules\Purchase\Services\PaymentStateService;
+use Modules\Support\Database\Factories\CityFactory;
 use Tests\TestCase;
 
 uses(TestCase::class, RefreshDatabase::class);
 
 beforeEach(function (): void {
-    $this->city = \Modules\Support\Database\Factories\CityFactory::new()->create([
+    $this->city = CityFactory::new()->create([
         'name' => ['en' => 'Y', 'ar' => 'ز'],
     ]);
-    $this->svc = new PaymentStateService();
+    $this->svc = new PaymentStateService;
 });
 
 test('pending -> processing -> succeeds via PaymentStateService (AC-27)', function (): void {
@@ -45,7 +49,7 @@ test('succeeded payment cannot regress to failed (immutable, AC-28)', function (
     try {
         $this->svc->markFailed($succeededPayment);
         $this->fail('Expected exception not thrown');
-    } catch (\InvalidArgumentException $e) {
+    } catch (InvalidArgumentException $e) {
         expect($e->getMessage())->toContain('Succeeded payments are immutable');
     }
 
@@ -67,7 +71,7 @@ test('pending can transition to failed/cancelled/expired (AC-29 pending paths)',
 
     $res = $this->svc->$method($p);
     expect($res->status->value)->toBe(
-        match($eventClass) {
+        match ($eventClass) {
             PaymentFailed::class => 'failed',
             PaymentCancelled::class => 'cancelled',
             PaymentExpired::class => 'expired',
@@ -110,20 +114,20 @@ test('succeeded payment has paid_at set after markSucceeded (AC-30)', function (
 
 test('each transition dispatches its event once afterCommit with DB state visible', function (): void {
     $hits = [];
-    Event::listen(static function (\Modules\Purchase\Events\PaymentProcessing $e) use (&$hits): void {
-        $hits['PaymentProcessing'] = ['visible' => \Modules\Purchase\Models\Payment::query()->whereKey($e->payment->id)->where('status', PaymentStatus::Processing)->exists()];
+    Event::listen(static function (PaymentProcessing $e) use (&$hits): void {
+        $hits['PaymentProcessing'] = ['visible' => Payment::query()->whereKey($e->payment->id)->where('status', PaymentStatus::Processing)->exists()];
     });
-    Event::listen(static function (\Modules\Purchase\Events\PaymentSucceeded $e) use (&$hits): void {
-        $hits['PaymentSucceeded'] = ['visible' => \Modules\Purchase\Models\Payment::query()->whereKey($e->payment->id)->where('status', PaymentStatus::Succeeded)->exists()];
+    Event::listen(static function (PaymentSucceeded $e) use (&$hits): void {
+        $hits['PaymentSucceeded'] = ['visible' => Payment::query()->whereKey($e->payment->id)->where('status', PaymentStatus::Succeeded)->exists()];
     });
-    Event::listen(static function (\Modules\Purchase\Events\PaymentFailed $e) use (&$hits): void {
-        $hits['PaymentFailed'] = ['visible' => \Modules\Purchase\Models\Payment::query()->whereKey($e->payment->id)->where('status', PaymentStatus::Failed)->exists()];
+    Event::listen(static function (PaymentFailed $e) use (&$hits): void {
+        $hits['PaymentFailed'] = ['visible' => Payment::query()->whereKey($e->payment->id)->where('status', PaymentStatus::Failed)->exists()];
     });
-    Event::listen(static function (\Modules\Purchase\Events\PaymentCancelled $e) use (&$hits): void {
-        $hits['PaymentCancelled'] = ['visible' => \Modules\Purchase\Models\Payment::query()->whereKey($e->payment->id)->where('status', PaymentStatus::Cancelled)->exists()];
+    Event::listen(static function (PaymentCancelled $e) use (&$hits): void {
+        $hits['PaymentCancelled'] = ['visible' => Payment::query()->whereKey($e->payment->id)->where('status', PaymentStatus::Cancelled)->exists()];
     });
-    Event::listen(static function (\Modules\Purchase\Events\PaymentExpired $e) use (&$hits): void {
-        $hits['PaymentExpired'] = ['visible' => \Modules\Purchase\Models\Payment::query()->whereKey($e->payment->id)->where('status', PaymentStatus::Expired)->exists()];
+    Event::listen(static function (PaymentExpired $e) use (&$hits): void {
+        $hits['PaymentExpired'] = ['visible' => Payment::query()->whereKey($e->payment->id)->where('status', PaymentStatus::Expired)->exists()];
     });
 
     $p = PaymentFactory::new()->create(['status' => PaymentStatus::Pending]);
@@ -164,7 +168,7 @@ test('failed payment -> new payment succeeds: retry scenario (AC-34) and failed 
 });
 
 test('Failed payment does NOT auto-cancel its Purchase (AC-33)', function (): void {
-    $purchase = PurchaseFactory::new()->create(['status' => \Modules\Purchase\Enums\PurchaseStatus::Confirmed]);
+    $purchase = PurchaseFactory::new()->create(['status' => PurchaseStatus::Confirmed]);
     $payment = PaymentFactory::new()->for($purchase, 'purchase')->create([
         'status' => PaymentStatus::Pending,
     ]);
@@ -172,6 +176,50 @@ test('Failed payment does NOT auto-cancel its Purchase (AC-33)', function (): vo
     $this->svc->markFailed($payment);
 
     $purchaseFresh = $purchase->fresh();
-    expect($purchaseFresh->status)->toBe(\Modules\Purchase\Enums\PurchaseStatus::Confirmed);
+    expect($purchaseFresh->status)->toBe(PurchaseStatus::Confirmed);
     expect($payment->fresh()->status)->toBe(PaymentStatus::Failed);
+});
+
+describe('refunds', function (): void {
+    beforeEach(function (): void {
+        $this->payment = PaymentFactory::new()->create(['status' => PaymentStatus::Succeeded, 'amount' => 300, 'paid_at' => now()]);
+    });
+
+    test('a partial refund keeps the payment succeeded', function (): void {
+        Event::fake([PaymentRefunded::class]);
+
+        $payment = $this->svc->recordRefund($this->payment, 100);
+
+        expect($payment->status)->toBe(PaymentStatus::Succeeded)
+            ->and((float) $payment->refunded_amount)->toBe(100.0)
+            ->and($payment->refundableAmount())->toBe(200.0)
+            ->and($payment->refunded_at)->not->toBeNull();
+        Event::assertDispatched(PaymentRefunded::class, fn (PaymentRefunded $event) => $event->amount === 100.0);
+    });
+
+    test('refunds add up until the payment is refunded', function (): void {
+        $this->svc->recordRefund($this->payment, 100);
+        $payment = $this->svc->recordRefund($this->payment, 200);
+
+        expect($payment->status)->toBe(PaymentStatus::Refunded)
+            ->and($payment->refundableAmount())->toBe(0.0);
+    });
+
+    test('cannot refund more than what is left', function (): void {
+        $this->svc->recordRefund($this->payment, 250);
+
+        $this->svc->recordRefund($this->payment, 100);
+    })->throws(InvalidArgumentException::class, 'Cannot refund 100.00; only 50.00 is left to refund.');
+
+    test('only succeeded payments can be refunded', function (PaymentStatus $status): void {
+        $this->payment->update(['status' => $status]);
+
+        expect(fn () => $this->svc->recordRefund($this->payment, 10))->toThrow(InvalidArgumentException::class);
+    })->with([PaymentStatus::Pending, PaymentStatus::Failed, PaymentStatus::Refunded]);
+
+    test('a refunded payment cannot transition back', function (): void {
+        $this->svc->recordRefund($this->payment, 300);
+
+        $this->svc->markSucceeded($this->payment);
+    })->throws(InvalidArgumentException::class);
 });

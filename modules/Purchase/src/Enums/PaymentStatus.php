@@ -10,4 +10,5 @@ enum PaymentStatus: string
     case Failed = 'failed';
     case Cancelled = 'cancelled';
     case Expired = 'expired';
+    case Refunded = 'refunded';
 }

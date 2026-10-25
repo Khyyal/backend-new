@@ -3,7 +3,7 @@
 namespace Modules\Support\Concerns;
 
 use Illuminate\Database\Eloquent\Relations\MorphMany;
-use Modules\Centers\Models\Rating;
+use Modules\Support\Models\Rating;
 
 trait Rater
 {

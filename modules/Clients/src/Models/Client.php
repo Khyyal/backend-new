@@ -3,25 +3,27 @@
 namespace Modules\Clients\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Laravel\Sanctum\HasApiTokens;
+use Modules\Centers\Models\Center;
 use Modules\Purchase\Contracts\Buyer;
 use Modules\Purchase\Traits\IsBuyer;
+use Modules\Reservations\Models\ClientPackage;
+use Modules\Reservations\Models\Reservation;
 use Modules\Support\Concerns\ActionActor;
+use Modules\Support\Concerns\Blockable;
 use Modules\Support\Concerns\HasCity;
 use Modules\Support\Concerns\HasDevices;
 use Modules\Support\Concerns\Rater;
 
 class Client extends Authenticatable implements Buyer
 {
-    use HasApiTokens, HasFactory, SoftDeletes, HasDevices, Rater, ActionActor, HasCity, IsBuyer;
-
-
+    use ActionActor, Blockable, HasApiTokens, HasCity, HasDevices, HasFactory, IsBuyer, Rater, SoftDeletes;
 
     protected string $guard_name = 'client';
-
-
 
     protected $fillable = [
         'first_name',
@@ -31,11 +33,30 @@ class Client extends Authenticatable implements Buyer
         'city_id',
     ];
 
-
-
-    /// need onboarding where name is null
+    // / need onboarding where name is null
     public function getNeedsOnboardingAttribute(): bool
     {
         return $this->first_name === null || $this->last_name === null;
+    }
+
+    public function getFullNameAttribute(): string
+    {
+        return trim("{$this->first_name} {$this->last_name}");
+    }
+
+    public function favoriteCenters(): BelongsToMany
+    {
+        return $this->belongsToMany(Center::class, 'center_favorites', 'client_id', 'center_id')
+            ->withTimestamps();
+    }
+
+    public function reservations(): HasMany
+    {
+        return $this->hasMany(Reservation::class);
+    }
+
+    public function packages(): HasMany
+    {
+        return $this->hasMany(ClientPackage::class);
     }
 }

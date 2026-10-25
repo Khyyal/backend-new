@@ -11,8 +11,9 @@ return new class extends Migration
         Schema::create('discounts', function (Blueprint $table) {
             $table->id();
 
-            $table->string('owner_type');
-            $table->unsignedBigInteger('owner_id');
+            $table->foreignId('center_id')
+                ->constrained('centers')
+                ->cascadeOnDelete();
 
             $table->json('name');
             $table->json('description')->nullable();
@@ -38,7 +39,6 @@ return new class extends Migration
 
             $table->timestamps();
 
-            $table->index(['owner_type', 'owner_id']);
             $table->index('status');
             $table->index('application_method');
             $table->index(['starts_at', 'ends_at']);

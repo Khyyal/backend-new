@@ -10,6 +10,7 @@ use Modules\Promotion\Exceptions\DiscountLimitExceededException;
 use Modules\Promotion\Models\Coupon;
 use Modules\Promotion\Models\Discount;
 use Modules\Promotion\Models\DiscountRedemption;
+use Modules\Services\Models\Service;
 
 class DiscountUsageService
 {
@@ -17,6 +18,10 @@ class DiscountUsageService
         private readonly DiscountEligibilityService $eligibility,
     ) {}
 
+    /**
+     * @param  Model  $discountable  The record the discount was applied to (e.g. a purchase).
+     * @param  iterable<Service|int>  $services  Services being purchased; required for `specific_items` discounts.
+     */
     public function redeem(
         Discount $discount,
         Model $usedBy,
@@ -24,19 +29,15 @@ class DiscountUsageService
         float|int $discountAmount,
         ?Coupon $coupon = null,
         float|int $subtotal = 0,
+        iterable $services = [],
     ): DiscountRedemption {
-        return DB::transaction(function () use ($discount, $usedBy, $discountable, $discountAmount, $coupon, $subtotal) {
+        return DB::transaction(function () use ($discount, $usedBy, $discountable, $discountAmount, $coupon, $subtotal, $services) {
             $lockedDiscount = Discount::query()
                 ->whereKey($discount->id)
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            $items = [];
-            if (method_exists($discountable, 'items') && $discountable->relationLoaded('items')) {
-                $items = $discountable->items->all();
-            }
-
-            if (! $this->eligibility->isEligible($lockedDiscount, $usedBy, $subtotal, $items)) {
+            if (! $this->eligibility->isEligible($lockedDiscount, $usedBy, $subtotal, $services)) {
                 throw new DiscountLimitExceededException(
                     __('promotion::validation.discount_limit_exceeded')
                 );

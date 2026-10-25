@@ -10,11 +10,14 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Routing\Controller;
 use Illuminate\Validation\ValidationException;
 use Modules\Centers\Http\Requests\Center\CenterAccessRequest;
+use Modules\Centers\Http\Requests\Center\UpdateCenterRequest;
 use Modules\Centers\Http\Resources\Center\CenterResource;
 use Modules\Centers\Http\Resources\Center\CenterWithRoleResource;
 use Modules\Centers\Models\Center;
+use Modules\Centers\Models\CenterUser;
 use Modules\Centers\Models\User;
 use Modules\Centers\Services\CenterAuthService;
+use Modules\Centers\Services\CenterUpdateService;
 use Symfony\Component\HttpFoundation\Response as ResponseAlias;
 
 #[Group(name: 'Center / Centers', description: 'Authenticated center user: list centers, view a center, and request center-scoped access credentials.')]
@@ -35,7 +38,7 @@ class CenterController extends Controller
      * **Authentication:** Requires a valid Bearer token for the `center_user`
      * guard issued by either `/register` or `/auth/phone/verify`.
      *
-     * @param Request $request Current HTTP request used to resolve the user.
+     * @param  Request  $request  Current HTTP request used to resolve the user.
      * @return AnonymousResourceCollection 200 collection of
      *                                     `CenterWithRoleResource` items.
      */
@@ -68,8 +71,8 @@ class CenterController extends Controller
      * **Authentication:** Requires a valid Bearer token for the `center_user`
      * guard.
      *
-     * @param Request $request Current request.
-     * @param Center  $center  Center resolved via implicit model binding.
+     * @param  Request  $request  Current request.
+     * @param  Center  $center  Center resolved via implicit model binding.
      * @return CenterResource 200 `CenterResource` for the given center.
      */
     #[Response(
@@ -127,8 +130,8 @@ class CenterController extends Controller
      * - `token_type` — Always `"Bearer"`.
      * - `center`     — `CenterResource` for the selected center.
      *
-     * @param CenterAccessRequest $request Validated via {@see CenterAccessRequest}.
-     * @param Center              $center  Center resolved via implicit model binding.
+     * @param  CenterAccessRequest  $request  Validated via {@see CenterAccessRequest}.
+     * @param  Center  $center  Center resolved via implicit model binding.
      * @return JsonResponse 200 on success with token + center.
      *
      * @throws ValidationException When the user is primary but the password is
@@ -193,6 +196,26 @@ class CenterController extends Controller
         ]);
     }
 
+    /**
+     * Update a center (primary user only).
+     *
+     * Partial update: only the fields sent are changed. `tags` is the full
+     * list of tag ids. `logo` and `cover` take a media id (`null` removes it).
+     * `images` is the full list of media ids in display order: ids already on
+     * the center are kept, new temporary ids are attached, omitted ones are
+     * removed, and the order sent is stored.
+     */
+    #[Response(status: 200, description: 'The updated center as a `CenterResource`, with `tags`, `logo`, `cover` and `images`.')]
+    #[Response(status: 403, description: 'The authenticated user is not the primary user of this center.')]
+    #[Response(status: 422, description: 'Validation failed, or a media id is invalid, expired or not owned by the user.')]
+    public function update(UpdateCenterRequest $request, Center $center, CenterUpdateService $updateService): CenterResource
+    {
+        /** @var User $user */
+        $user = $request->user('center_user');
+
+        return CenterResource::make($updateService->update($center, $user, $request->validated()));
+    }
+
     private function hasAssignment(User $user, Center $center): bool
     {
         return $user->centers()
@@ -201,16 +224,16 @@ class CenterController extends Controller
     }
 
     /**
-     * @return \Modules\Centers\Models\CenterUser Pivot model for the (user, center) pair. Assumes hasAssignment returned true.
+     * @return CenterUser Pivot model for the (user, center) pair. Assumes hasAssignment returned true.
      */
-    private function getAssignmentPivot(User $user, Center $center): \Modules\Centers\Models\CenterUser
+    private function getAssignmentPivot(User $user, Center $center): CenterUser
     {
-        /** @var \Modules\Centers\Models\Center */
+        /** @var Center */
         $assigned = $user->centers()
             ->where('center_id', $center->id)
             ->firstOrFail();
 
-        /** @var \Modules\Centers\Models\CenterUser */
+        /** @var CenterUser */
         return $assigned->pivot;
     }
 }

@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Modules\Billing\Traits\HasSubscriptions;
 use Modules\Centers\Enums\CenterStatus;
 use Modules\Promotion\Traits\HasDiscounts;
@@ -15,6 +17,7 @@ use Modules\Purchase\Contracts\Buyer;
 use Modules\Purchase\Traits\IsBuyer;
 use Modules\Services\Models\Service;
 use Modules\Support\Concerns\Actionable;
+use Modules\Support\Concerns\Blocker;
 use Modules\Support\Concerns\HasCity;
 use Modules\Support\Concerns\Rateable;
 use Spatie\Image\Enums\Fit;
@@ -22,17 +25,18 @@ use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
-class Center extends Model implements HasMedia, Buyer
+class Center extends Model implements Buyer, HasMedia
 {
-    use HasFactory;
-    use HasCity;
     use Actionable;
-    use SoftDeletes;
-    use Rateable;
+    use Blocker;
+    use HasCity;
+    use HasDiscounts;
+    use HasFactory;
+    use HasSubscriptions;
     use InteractsWithMedia;
     use IsBuyer;
-    use HasDiscounts;
-    use HasSubscriptions;
+    use Rateable;
+    use SoftDeletes;
 
     protected $fillable = [
         'city_id',
@@ -44,9 +48,8 @@ class Center extends Model implements HasMedia, Buyer
         'address',
         'points',
         'status',
-        'contact_phone'
+        'contact_phone',
     ];
-
 
     public const MEDIA_COLLECTIONS = [
         'logo',
@@ -93,15 +96,12 @@ class Center extends Model implements HasMedia, Buyer
                     ->fit(Fit::Crop, 600, 600);
             });
 
-
     }
-
 
     public function tags(): BelongsToMany
     {
         return $this->belongsToMany(Tag::class, 'tag_center');
     }
-
 
     public function users(): BelongsToMany
     {
@@ -120,7 +120,6 @@ class Center extends Model implements HasMedia, Buyer
             ->withTimestamps();
     }
 
-
     public function primaryUser(): HasOneThrough
     {
         return $this->hasOneThrough(
@@ -133,9 +132,46 @@ class Center extends Model implements HasMedia, Buyer
         )->where('center_user_assignment.is_primary', true);
     }
 
-
     public function services(): HasMany
     {
         return $this->hasMany(Service::class);
+    }
+
+    // / scope list (status = visible)
+    public function scopeVisible($query)
+    {
+        return $query->where('status', CenterStatus::VISIBLE);
+    }
+
+    protected static function booted(): void
+    {
+        $flush = fn () => DB::afterCommit(fn () => self::flushSearchCache());
+
+        static::saved($flush);
+        static::deleted($flush);
+        static::restored($flush);
+    }
+
+    /**
+     * Invalidates the cached `centers.search` listing (see
+     * `Modules\Centers\Services\CenterSearchService`). Called whenever a
+     * center, its tags/media (via `CenterUpdateService::update()`, which
+     * always saves the center), or one of its services/ratings changes.
+     *
+     * A no-op when the configured cache store doesn't support tags (e.g.
+     * `array`/`database`) — there, the search cache only relies on its TTL.
+     */
+    public static function flushSearchCache(): void
+    {
+        if (! self::supportsCacheTags()) {
+            return;
+        }
+
+        Cache::tags(['centers'])->flush();
+    }
+
+    public static function supportsCacheTags(): bool
+    {
+        return in_array(config('cache.default'), ['redis', 'memcached', 'dynamodb'], true);
     }
 }

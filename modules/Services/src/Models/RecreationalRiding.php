@@ -5,19 +5,32 @@ namespace Modules\Services\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Services\Concerns\HasPackages;
 use Modules\Services\Concerns\HasSchedules;
 use Modules\Services\Concerns\HasService;
+use Modules\Services\Concerns\HasSettings;
+use Modules\Services\Concerns\HasStartPrice;
 
 class RecreationalRiding extends Model
 {
-
-    use HasFactory, SoftDeletes  , HasSchedules , HasService;
-
+    use HasFactory, HasPackages, HasSchedules, HasService, HasSettings, HasStartPrice, SoftDeletes;
 
     public $timestamps = false;
 
-    protected function getParentForSync(): ?Model
+    const array SETTINGS_KEYS = [
+        'enable_cash_on_arrival',
+        'enable_single_session_booking',
+        'enable_package_booking',
+    ];
+
+    protected $fillable = [
+        'max_tickets_per_hour',
+    ];
+
+    protected function casts(): array
     {
-        return $this->service;
+        return [
+            'max_tickets_per_hour' => 'integer',
+        ];
     }
 }

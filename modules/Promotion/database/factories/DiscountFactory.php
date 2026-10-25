@@ -23,8 +23,7 @@ class DiscountFactory extends Factory
         };
 
         return [
-            'owner_type' => 'center',
-            'owner_id' => CenterFactory::new(),
+            'center_id' => CenterFactory::new(),
 
             'name' => [
                 'en' => fake()->words(3, true),

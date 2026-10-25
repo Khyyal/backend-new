@@ -1,5 +1,7 @@
 <?php
 
+use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
 use Modules\Centers\Database\Factories\CenterFactory;
 use Modules\Promotion\Database\Factories\CouponFactory;
@@ -9,23 +11,24 @@ use Modules\Promotion\Enums\DiscountScope;
 use Modules\Promotion\Enums\DiscountType;
 use Modules\Promotion\Enums\PromotionStatus;
 use Modules\Promotion\Models\Discount;
-use Modules\Purchase\Database\Factories\PurchaseFactory;
-use Modules\Purchase\Database\Factories\PurchaseItemFactory;
+use Modules\Services\Database\Factories\ServiceFactory;
+use Modules\Support\Database\Factories\CityFactory;
+use Tests\TestCase;
 
-uses(\Tests\TestCase::class, \Illuminate\Foundation\Testing\RefreshDatabase::class);
+uses(TestCase::class, RefreshDatabase::class);
 
 beforeEach(function (): void {
-    \Modules\Support\Database\Factories\CityFactory::new()->create();
+    CityFactory::new()->create();
 });
 
 test('migrations create all four tables with expected columns', function (): void {
-    foreach (['discounts', 'coupons', 'discountables', 'discount_redemptions'] as $t) {
+    foreach (['discounts', 'coupons', 'discount_service', 'discount_redemptions'] as $t) {
         expect(Schema::hasTable($t))->toBeTrue("$t table missing");
     }
 
     $discountCols = Schema::getColumnListing('discounts');
     $expected = [
-        'id', 'owner_type', 'owner_id', 'name', 'description', 'type', 'value',
+        'id', 'center_id', 'name', 'description', 'type', 'value',
         'scope', 'application_method', 'minimum_amount', 'maximum_discount',
         'usage_limit', 'usage_limit_per_customer', 'is_stackable',
         'starts_at', 'ends_at', 'status',
@@ -45,17 +48,14 @@ test('migrations create all four tables with expected columns', function (): voi
     }
 });
 
-
-
-test('discount with center owner sets morphs correctly', function (): void {
+test('discount belongs to a center', function (): void {
     $center = CenterFactory::new()->create();
-    $discount = DiscountFactory::new()->for($center, 'owner')->create();
+    $discount = DiscountFactory::new()->for($center)->create();
 
     $fresh = Discount::query()->findOrFail($discount->id);
-    expect($fresh->owner_type)->toBe($center->getMorphClass());
-    expect($fresh->owner_id)->toBe($center->getKey());
-    expect($fresh->owner)->toBeInstanceOf(\Modules\Centers\Models\Center::class);
-    expect($fresh->owner->id)->toBe($center->id);
+    expect($fresh->center_id)->toBe($center->id);
+    expect($fresh->center->is($center))->toBeTrue();
+    expect($center->discounts()->pluck('id')->all())->toBe([$discount->id]);
 });
 
 test('multilingual name and description persist as arrays', function (): void {
@@ -69,29 +69,22 @@ test('multilingual name and description persist as arrays', function (): void {
     expect($d->description)->toBe($description);
 });
 
-test('specific items discount attaches three hasDiscountable models', function (): void {
+test('specific items discount attaches services', function (): void {
     $discount = DiscountFactory::new()->specificItems()->create();
-    $p1 = PurchaseFactory::new()->create();
-    $p2 = PurchaseFactory::new()->create();
-    $pi = PurchaseItemFactory::new()->create();
+    $services = ServiceFactory::new()->count(3)->create(['center_id' => $discount->center_id]);
 
-    $attach = fn ($m) => $discount->discountables()->create([
-        'discountable_type' => $m->getMorphClass(),
-        'discountable_id' => $m->getKey(),
-    ]);
-    $attach($p1);
-    $attach($p2);
-    $attach($pi);
+    $discount->services()->attach($services);
 
-    expect($discount->discountables()->count())->toBe(3);
-    $this->assertDatabaseCount('discountables', 3);
+    expect($discount->services()->count())->toBe(3);
+    expect($services->first()->discounts()->pluck('discounts.id')->all())->toBe([$discount->id]);
+    $this->assertDatabaseCount('discount_service', 3);
 });
 
 test('coupon code unique constraint prevents duplicates', function (): void {
     $d = DiscountFactory::new()->create();
     CouponFactory::new()->for($d, 'discount')->create(['code' => 'SAVE10']);
 
-    $this->expectException(\Illuminate\Database\UniqueConstraintViolationException::class);
+    $this->expectException(UniqueConstraintViolationException::class);
     CouponFactory::new()->for($d, 'discount')->create(['code' => 'SAVE10']);
 });
 

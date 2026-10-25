@@ -1,0 +1,131 @@
+<?php
+
+use Illuminate\Support\Facades\Route;
+use Modules\Services\Http\Controllers\Center\EventController;
+use Modules\Services\Http\Controllers\Center\HorseCareController;
+use Modules\Services\Http\Controllers\Center\HorseServiceController;
+use Modules\Services\Http\Controllers\Center\RecreationRidingController;
+use Modules\Services\Http\Controllers\Center\ResortController;
+use Modules\Services\Http\Controllers\Center\ServiceBlockController;
+use Modules\Services\Http\Controllers\Center\ServicePeriodController;
+use Modules\Services\Http\Controllers\Center\ServiceTypeCountController;
+use Modules\Services\Http\Controllers\Center\ServiceTypeTermController;
+use Modules\Services\Http\Controllers\Center\TrainerController;
+use Modules\Services\Http\Controllers\Center\TrainingServiceController;
+use Modules\Services\Http\Controllers\Center\VisitController;
+
+Route::prefix('centers/{center}/recreation-ridings')
+    ->name('centers.recreation-ridings.')
+    ->middleware(['auth:center_user', 'center.scope'])
+    ->group(function (): void {
+        Route::get('/', [RecreationRidingController::class, 'index'])->name('index');
+        Route::post('/', [RecreationRidingController::class, 'store'])->name('store');
+        Route::get('/{recreationRiding}', [RecreationRidingController::class, 'show'])->name('show');
+        Route::match(['put', 'patch'], '/{recreationRiding}', [RecreationRidingController::class, 'update'])->name('update');
+        Route::delete('/{recreationRiding}', [RecreationRidingController::class, 'destroy'])->name('destroy');
+    });
+
+Route::prefix('centers/{center}/visits')
+    ->name('centers.visits.')
+    ->middleware(['auth:center_user', 'center.scope'])
+    ->group(function (): void {
+        Route::get('/', [VisitController::class, 'index'])->name('index');
+        Route::post('/', [VisitController::class, 'store'])->name('store');
+        Route::get('/{visit}', [VisitController::class, 'show'])->name('show');
+        Route::match(['put', 'patch'], '/{visit}', [VisitController::class, 'update'])->name('update');
+        Route::delete('/{visit}', [VisitController::class, 'destroy'])->name('destroy');
+    });
+
+Route::prefix('centers/{center}/events')
+    ->name('centers.events.')
+    ->middleware(['auth:center_user', 'center.scope'])
+    ->group(function (): void {
+        Route::get('/', [EventController::class, 'index'])->name('index');
+        Route::post('/', [EventController::class, 'store'])->name('store');
+        Route::get('/{event}', [EventController::class, 'show'])->name('show');
+        Route::match(['put', 'patch'], '/{event}', [EventController::class, 'update'])->name('update');
+        Route::delete('/{event}', [EventController::class, 'destroy'])->name('destroy');
+    });
+
+Route::prefix('centers/{center}/resorts')
+    ->name('centers.resorts.')
+    ->middleware(['auth:center_user', 'center.scope'])
+    ->group(function (): void {
+        Route::get('/', [ResortController::class, 'index'])->name('index');
+        Route::post('/', [ResortController::class, 'store'])->name('store');
+        Route::get('/{resort}', [ResortController::class, 'show'])->name('show');
+        Route::match(['put', 'patch'], '/{resort}', [ResortController::class, 'update'])->name('update');
+        Route::delete('/{resort}', [ResortController::class, 'destroy'])->name('destroy');
+    });
+
+Route::prefix('centers/{center}/horse-cares')
+    ->name('centers.horse-cares.')
+    ->middleware(['auth:center_user', 'center.scope'])
+    ->group(function (): void {
+        Route::get('/', [HorseCareController::class, 'index'])->name('index');
+        Route::post('/', [HorseCareController::class, 'store'])->name('store');
+        Route::get('/{horseCare}', [HorseCareController::class, 'show'])->name('show');
+        Route::match(['put', 'patch'], '/{horseCare}', [HorseCareController::class, 'update'])->name('update');
+        Route::delete('/{horseCare}', [HorseCareController::class, 'destroy'])->name('destroy');
+    });
+
+Route::prefix('centers/{center}/horse-services')
+    ->name('centers.horse-services.')
+    ->middleware(['auth:center_user', 'center.scope'])
+    ->group(function (): void {
+        Route::get('/', [HorseServiceController::class, 'index'])->name('index');
+        Route::post('/', [HorseServiceController::class, 'store'])->name('store');
+        Route::get('/{horseService}', [HorseServiceController::class, 'show'])->name('show');
+        Route::match(['put', 'patch'], '/{horseService}', [HorseServiceController::class, 'update'])->name('update');
+        Route::delete('/{horseService}', [HorseServiceController::class, 'destroy'])->name('destroy');
+    });
+
+Route::prefix('centers/{center}/training-services')
+    ->name('centers.training-services.')
+    ->middleware(['auth:center_user', 'center.scope'])
+    ->group(function (): void {
+        Route::get('/', [TrainingServiceController::class, 'index'])->name('index');
+        Route::post('/', [TrainingServiceController::class, 'store'])->name('store');
+        Route::get('/{trainingService}', [TrainingServiceController::class, 'show'])->name('show');
+        Route::match(['put', 'patch'], '/{trainingService}', [TrainingServiceController::class, 'update'])->name('update');
+        Route::delete('/{trainingService}', [TrainingServiceController::class, 'destroy'])->name('destroy');
+    });
+
+Route::prefix('centers/{center}/trainers')
+    ->name('centers.trainers.')
+    ->middleware(['auth:center_user', 'center.scope'])
+    ->group(function (): void {
+        Route::get('/', [TrainerController::class, 'index'])->name('index');
+        Route::post('/', [TrainerController::class, 'store'])->name('store');
+        Route::get('/{trainer}', [TrainerController::class, 'show'])->name('show');
+        Route::match(['put', 'patch'], '/{trainer}', [TrainerController::class, 'update'])->name('update');
+        Route::delete('/{trainer}', [TrainerController::class, 'destroy'])->name('destroy');
+    });
+
+Route::prefix('centers/{center}/service-types')
+    ->name('centers.service-types.')
+    ->middleware(['auth:center_user', 'center.scope'])
+    ->group(function (): void {
+        Route::get('/', [ServiceTypeTermController::class, 'index'])->name('index');
+        Route::get('/counts', [ServiceTypeCountController::class, 'index'])->name('counts');
+        Route::put('/{type}/terms', [ServiceTypeTermController::class, 'updateTerms'])->name('terms.update');
+    });
+
+Route::prefix('centers/{center}/service-blocks')
+    ->name('centers.service-blocks.')
+    ->middleware(['auth:center_user', 'center.scope'])
+    ->group(function (): void {
+        Route::get('/', [ServiceBlockController::class, 'index'])->name('index');
+        Route::post('/', [ServiceBlockController::class, 'store'])->name('store');
+        Route::get('/{serviceBlock}', [ServiceBlockController::class, 'show'])->name('show');
+        Route::match(['put', 'patch'], '/{serviceBlock}', [ServiceBlockController::class, 'update'])->name('update');
+        Route::delete('/{serviceBlock}', [ServiceBlockController::class, 'destroy'])->name('destroy');
+    });
+
+Route::prefix('centers/{center}/services/{service}/periods')
+    ->name('centers.services.periods.')
+    ->middleware(['auth:center_user', 'center.scope'])
+    ->group(function (): void {
+        Route::get('/', [ServicePeriodController::class, 'show'])->name('show');
+        Route::match(['put', 'patch'], '/', [ServicePeriodController::class, 'update'])->name('update');
+    });

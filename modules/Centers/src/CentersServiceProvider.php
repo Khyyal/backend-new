@@ -3,9 +3,12 @@
 namespace Modules\Centers;
 
 use Illuminate\Contracts\Routing\Registrar;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Modules\Centers\Http\Middleware\EnsureCenterAccessScope;
+use Modules\Centers\Models\Center;
+use Modules\Centers\Policies\CenterPolicy;
 
 class CentersServiceProvider extends ServiceProvider
 {
@@ -18,6 +21,8 @@ class CentersServiceProvider extends ServiceProvider
             'center.scope',
             EnsureCenterAccessScope::class,
         );
+
+        Gate::policy(Center::class, CenterPolicy::class);
 
         Route::middleware(['api'])
             ->prefix('api/v1')
