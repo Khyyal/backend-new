@@ -186,6 +186,7 @@ test('index returns list of assigned centers with spatie role owner', function (
     $this->assertSame($center->id, $items[0]['id']);
     $this->assertSame($center->name, $items[0]['name']);
     $this->assertSame(CenterUserRole::Owner->value, $items[0]['role']);
+    $this->assertTrue($items[0]['is_primary']);
 });
 
 test('show returns 403 when user has no assignment', function () use ($createRegisteredUser): void {

@@ -28,6 +28,7 @@ class CenterWithRoleResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'role' => $role,
+            'is_primary' => (bool) ($this->pivot?->is_primary ?? false),
         ];
     }
 }
