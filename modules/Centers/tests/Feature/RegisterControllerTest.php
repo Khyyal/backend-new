@@ -1,10 +1,17 @@
 <?php
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Modules\Centers\Enums\CenterStatus;
 use Modules\Centers\Enums\CenterUserRole;
+use Modules\Centers\Models\User;
+use Modules\Support\Database\Factories\CityFactory;
+use Modules\Support\Database\Factories\OTPFactory;
 use Modules\Support\Enums\ActivationStatus;
 use Modules\Support\Services\SMSService;
+use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
 uses(TestCase::class, RefreshDatabase::class);
@@ -13,7 +20,7 @@ beforeEach(function (): void {
     $this->smsService = Mockery::mock(SMSService::class);
     $this->app->instance(SMSService::class, $this->smsService);
 
-    \Modules\Support\Database\Factories\CityFactory::new()->create([
+    CityFactory::new()->create([
         'name' => ['en' => 'Default Test City', 'ar' => 'المدينة الافتراضية'],
     ]);
 
@@ -36,7 +43,7 @@ $validPayload = fn (string $password = 'validpassword123'): array => [
     ],
 ];
 
-test('register returns 422 when top-level required fields are missing', function () use ($validPayload): void {
+test('register returns 422 when top-level required fields are missing', function (): void {
     $response = $this->postJson('/api/v1/centers/register', []);
 
     $response->assertStatus(422);
@@ -160,7 +167,7 @@ test('register succeeds with valid payload using dev otp', function () use ($val
     expect($response->json('user.name'))->toBe($payload['user']['name']);
     expect($response->json('user.phone'))->toBe($payload['user']['phone']);
     $userId = $response->json('user.id');
-    $this->assertNotNull(\Modules\Centers\Models\User::find($userId)->phone_verified_at);
+    $this->assertNotNull(User::find($userId)->phone_verified_at);
 
     expect($response->json('center.name'))->toBe($payload['name']);
     expect($response->json('center.description'))->toBe($payload['description']);
@@ -187,7 +194,7 @@ test('register persists correct db state for user, center and pivot', function (
     ]);
 
     $this->assertNotNull(
-        \Modules\Centers\Models\User::find($userId)->phone_verified_at
+        User::find($userId)->phone_verified_at
     );
 
     $this->assertDatabaseHas('centers', [
@@ -216,8 +223,8 @@ test('register assigns owner role to primary user within center', function () us
     $userId = $response->json('user.id');
     $centerId = $response->json('center.id');
 
-    $user = \Modules\Centers\Models\User::find($userId);
-    app(\Spatie\Permission\PermissionRegistrar::class)->setPermissionsTeamId($centerId);
+    $user = User::find($userId);
+    app(PermissionRegistrar::class)->setPermissionsTeamId($centerId);
 
     expect($user->hasRole(CenterUserRole::Owner->value))->toBeTrue();
 });
@@ -237,12 +244,12 @@ test('register auto-generates unique slug from center name', function (): void {
     ]);
 
     $response->assertStatus(201);
-    expect($response->json('center.slug'))->toBe(\Illuminate\Support\Str::slug($name));
+    expect($response->json('center.slug'))->toBe(Str::slug($name));
 
     $secondPhone = '+966500000222';
-    \Modules\Support\Database\Factories\OTPFactory::new()->create([
+    OTPFactory::new()->create([
         'phone_number' => $secondPhone,
-        'code' => \Illuminate\Support\Facades\Hash::make('2222'),
+        'code' => Hash::make('2222'),
         'expires_at' => now()->addMinutes(5),
         'verified_at' => null,
     ]);
@@ -260,7 +267,7 @@ test('register auto-generates unique slug from center name', function (): void {
 
     $response2->assertStatus(201);
     $secondSlug = $response2->json('center.slug');
-    expect($secondSlug)->toStartWith(\Illuminate\Support\Str::slug($name) . '-');
+    expect($secondSlug)->toStartWith(Str::slug($name).'-');
 });
 
 test('register works without description field (nullable)', function (): void {
@@ -299,9 +306,9 @@ test('register endpoint returns 429 after exceeding throttle limit', function ()
 test('register uses a non-conflicting phone for center user', function (): void {
     $newPhone = '+966509999111';
 
-    \Modules\Support\Database\Factories\OTPFactory::new()->create([
+    OTPFactory::new()->create([
         'phone_number' => $newPhone,
-        'code' => \Illuminate\Support\Facades\Hash::make('9999'),
+        'code' => Hash::make('9999'),
         'expires_at' => now()->addMinutes(5),
         'verified_at' => null,
     ]);
@@ -325,11 +332,33 @@ test('register joins user to center with today joined_at date', function () use 
     $response = $this->postJson('/api/v1/centers/register', $validPayload());
     $response->assertStatus(201);
 
-    $assignment = \Illuminate\Support\Facades\DB::table('center_user_assignment')
+    $assignment = DB::table('center_user_assignment')
         ->where('center_id', $response->json('center.id'))
         ->where('user_id', $response->json('user.id'))
         ->first();
 
     expect($assignment)->not->toBeNull();
     expect(str_starts_with((string) $assignment->joined_at, now()->toDateString()))->toBeTrue();
+});
+
+test('send register code succeeds for an unregistered phone', function (): void {
+    $response = $this->postJson('/api/v1/centers/register/phone', ['phone' => $this->devPhone]);
+
+    $response->assertOk()
+        ->assertJsonPath('expires_in_seconds', 300)
+        ->assertJsonStructure(['message']);
+});
+
+test('send register code returns 422 for an already registered phone', function () use ($validPayload): void {
+    $this->postJson('/api/v1/centers/register', $validPayload())->assertCreated();
+
+    $this->postJson('/api/v1/centers/register/phone', ['phone' => $this->devPhone])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors('phone');
+});
+
+test('send register code returns 422 when phone is missing', function (): void {
+    $this->postJson('/api/v1/centers/register/phone', [])
+        ->assertStatus(422)
+        ->assertJsonValidationErrors('phone');
 });

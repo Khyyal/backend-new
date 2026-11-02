@@ -17,6 +17,9 @@ Route::middleware(['api'])
             ->group(function (): void {
                 Route::post('/register', [RegisterController::class, 'store'])
                     ->name('register');
+
+                Route::post('/register/phone', [RegisterController::class, 'sendCode'])
+                    ->name('register.phone.send');
             });
 
         Route::prefix('auth')
