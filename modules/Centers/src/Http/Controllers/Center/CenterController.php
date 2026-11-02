@@ -44,7 +44,7 @@ class CenterController extends Controller
      */
     #[Response(
         status: 200,
-        description: 'Collection of centers the authenticated user belongs to, each with `id`, `name`, and the user\'s team-scoped `role` (e.g. "owner").'
+        description: 'Collection of centers the authenticated user belongs to, each with `id`, `name`, `is_primary`, and the user\'s team-scoped `role` (e.g. "owner").'
     )]
     #[Response(
         status: 401,
