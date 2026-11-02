@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Centers\Database\Factories\CenterFactory;
 use Modules\Centers\Database\Factories\UserFactory;
+use Modules\Centers\Enums\CenterUserPermission;
 use Modules\Promotion\Database\Factories\CouponFactory;
 use Modules\Promotion\Database\Factories\DiscountFactory;
 use Modules\Promotion\Models\Discount;
@@ -21,6 +22,7 @@ beforeEach(function (): void {
         'joined_at' => now()->toDateString(),
         'is_primary' => false,
     ]);
+    $this->user->syncCenterPermissions($this->center, [CenterUserPermission::ManageDiscounts]);
     $this->url = "/api/v1/centers/{$this->center->id}/discounts";
 
     $this->body = fn (array $extra = []) => [

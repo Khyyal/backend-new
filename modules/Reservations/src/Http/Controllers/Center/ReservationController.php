@@ -235,6 +235,8 @@ class ReservationController extends Controller
     #[Response(status: 422, description: 'The reservation cannot be cancelled (see `reason`).')]
     public function cancel(CancelReservationRequest $request, Center $center, int $reservation): CenterReservationResource
     {
+        $this->authorizeEdit($request, $center);
+
         $cancelled = $this->reservationState->cancel(
             $this->find($center, $reservation),
             $request->user(),
@@ -256,7 +258,7 @@ class ReservationController extends Controller
     #[Response(status: 422, description: 'The reservation cannot be completed (see `reason`).')]
     public function complete(Request $request, Center $center, int $reservation): CenterReservationResource
     {
-        $this->authorize($request, $center);
+        $this->authorizeEdit($request, $center);
 
         $completed = $this->reservationState->complete($this->find($center, $reservation));
 
@@ -275,7 +277,7 @@ class ReservationController extends Controller
     #[Response(status: 422, description: 'The reservation cannot be marked (see `reason`).')]
     public function noShow(Request $request, Center $center, int $reservation): CenterReservationResource
     {
-        $this->authorize($request, $center);
+        $this->authorizeEdit($request, $center);
 
         $marked = $this->reservationState->markNoShow($this->find($center, $reservation));
 
@@ -285,6 +287,14 @@ class ReservationController extends Controller
     private function authorize(Request $request, Center $center): void
     {
         Gate::forUser($request->user())->authorize('manageReservations', $center);
+    }
+
+    /**
+     * Reschedule, cancel, complete and no-show need `reservations.edit`.
+     */
+    private function authorizeEdit(Request $request, Center $center): void
+    {
+        Gate::forUser($request->user())->authorize('editReservations', $center);
     }
 
     private function find(Center $center, int $reservation): Reservation

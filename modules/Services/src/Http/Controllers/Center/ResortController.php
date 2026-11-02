@@ -11,6 +11,7 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Gate;
 use Modules\Centers\Models\Center;
+use Modules\Services\Enums\ServiceType;
 use Modules\Services\Http\Requests\Center\ResortRequest;
 use Modules\Services\Http\Resources\Center\ResortResource;
 use Modules\Services\Models\Resort;
@@ -33,7 +34,7 @@ class ResortController extends Controller
     #[Response(status: 403, description: 'The token has no access to this center, or the user is not assigned to it.')]
     public function index(Request $request, Center $center): AnonymousResourceCollection
     {
-        Gate::forUser($request->user())->authorize('manageServices', $center);
+        Gate::forUser($request->user())->authorize('manageServices', [$center, ServiceType::Resort]);
 
         $resorts = Resort::query()
             ->whereHas('service', fn ($query) => $query->where('center_id', $center->getKey()))
@@ -80,7 +81,7 @@ class ResortController extends Controller
     #[Response(status: 404, description: 'No such service in this center.')]
     public function show(Request $request, Center $center, int $resort): ResortResource
     {
-        Gate::forUser($request->user())->authorize('manageServices', $center);
+        Gate::forUser($request->user())->authorize('manageServices', [$center, ServiceType::Resort]);
 
         return ResortResource::make($this->service->findForCenter($center, $resort));
     }
@@ -119,7 +120,7 @@ class ResortController extends Controller
     #[Response(status: 404, description: 'No such service in this center.')]
     public function destroy(Request $request, Center $center, int $resort): \Illuminate\Http\Response
     {
-        Gate::forUser($request->user())->authorize('manageServices', $center);
+        Gate::forUser($request->user())->authorize('manageServices', [$center, ServiceType::Resort]);
 
         $this->service->delete($this->service->findForCenter($center, $resort));
 

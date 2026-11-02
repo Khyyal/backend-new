@@ -10,6 +10,7 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Gate;
 use Modules\Centers\Models\Center;
+use Modules\Services\Enums\ServiceType;
 use Modules\Services\Http\Requests\Center\TrainerRequest;
 use Modules\Services\Http\Resources\Center\TrainerResource;
 use Modules\Services\Services\TrainerService;
@@ -31,7 +32,7 @@ class TrainerController extends Controller
     #[Response(status: 403, description: 'The token has no access to this center, or the user is not assigned to it.')]
     public function index(Request $request, Center $center): AnonymousResourceCollection
     {
-        Gate::forUser($request->user())->authorize('manageServices', $center);
+        Gate::forUser($request->user())->authorize('manageServices', [$center, ServiceType::Training]);
 
         return TrainerResource::collection($this->service->list($center));
     }
@@ -65,7 +66,7 @@ class TrainerController extends Controller
     #[Response(status: 404, description: 'No such trainer in this center.')]
     public function show(Request $request, Center $center, int $trainer): TrainerResource
     {
-        Gate::forUser($request->user())->authorize('manageServices', $center);
+        Gate::forUser($request->user())->authorize('manageServices', [$center, ServiceType::Training]);
 
         return TrainerResource::make($this->service->findForCenter($center, $trainer));
     }
@@ -101,7 +102,7 @@ class TrainerController extends Controller
     #[Response(status: 404, description: 'No such trainer in this center.')]
     public function destroy(Request $request, Center $center, int $trainer): \Illuminate\Http\Response
     {
-        Gate::forUser($request->user())->authorize('manageServices', $center);
+        Gate::forUser($request->user())->authorize('manageServices', [$center, ServiceType::Training]);
 
         $this->service->delete($this->service->findForCenter($center, $trainer));
 

@@ -2,8 +2,10 @@
 
 namespace Modules\Centers\Policies;
 
+use Modules\Centers\Enums\CenterUserPermission;
 use Modules\Centers\Models\Center;
 use Modules\Centers\Models\User;
+use Modules\Services\Enums\ServiceType;
 use Modules\Support\Enums\SystemPermission;
 use Modules\Support\Models\SystemUser;
 
@@ -38,10 +40,7 @@ class CenterPolicy
             return $this->systemUserCan($user, SystemPermission::UpdateCenter);
         }
 
-        return $user->centers()
-            ->whereKey($center->getKey())
-            ->wherePivot('is_primary', true)
-            ->exists();
+        return $user->isPrimaryOf($center);
     }
 
     public function delete(User|SystemUser $user, Center $center): bool
@@ -50,48 +49,99 @@ class CenterPolicy
     }
 
     /**
-     * Center users: any user assigned to the center. System users: by permission.
+     * Center users: the primary user, or a user granted the service type's
+     * `services.{type}.manage` permission (any type when `$type` is null).
+     * System users: by permission.
      */
-    public function manageServices(User|SystemUser $user, Center $center): bool
+    public function manageServices(User|SystemUser $user, Center $center, ?ServiceType $type = null): bool
     {
-        return $this->canAccessCenter($user, $center, SystemPermission::ManageCenterServices);
+        $permissions = $type === null
+            ? CenterUserPermission::manageServicesPermissions()
+            : [CenterUserPermission::manageServicesFor($type)];
+
+        return $this->canAccessCenter($user, $center, $permissions, SystemPermission::ManageCenterServices);
+    }
+
+    /**
+     * Center-wide service changes (e.g. gender periods, center-wide blocks)
+     * need the manage permission of every service type.
+     */
+    public function manageAllServices(User|SystemUser $user, Center $center): bool
+    {
+        if ($user instanceof SystemUser) {
+            return $this->systemUserCan($user, SystemPermission::ManageCenterServices);
+        }
+
+        return $user->hasAllCenterPermissions($center, CenterUserPermission::manageServicesPermissions());
     }
 
     public function viewRatings(User|SystemUser $user, Center $center): bool
     {
-        return $this->canAccessCenter($user, $center, SystemPermission::ViewCenterRatings);
+        return $this->canAccessCenter($user, $center, [CenterUserPermission::ViewRatings], SystemPermission::ViewCenterRatings);
     }
 
     public function manageBlockedClients(User|SystemUser $user, Center $center): bool
     {
-        return $this->canAccessCenter($user, $center, SystemPermission::ManageCenterBlockedClients);
+        return $this->canAccessCenter($user, $center, [CenterUserPermission::ManageBlockedClients], SystemPermission::ManageCenterBlockedClients);
     }
 
-    /**
-     * Center users: any user assigned to the center. System users: by permission.
-     */
     public function manageReservations(User|SystemUser $user, Center $center): bool
     {
-        return $this->canAccessCenter($user, $center, SystemPermission::ManageCenterReservations);
+        return $this->canAccessCenter($user, $center, [CenterUserPermission::ManageReservations], SystemPermission::ManageCenterReservations);
     }
 
     /**
-     * Center users: any user assigned to the center. System users: denied,
-     * discounts are managed by the center only.
+     * Reschedule, cancel, complete or mark a reservation as no-show.
+     */
+    public function editReservations(User|SystemUser $user, Center $center): bool
+    {
+        return $this->canAccessCenter($user, $center, [CenterUserPermission::EditReservations], SystemPermission::ManageCenterReservations);
+    }
+
+    /**
+     * Center users: any `purchases.{type}.view` permission; which purchases
+     * they see is narrowed by `CenterPurchaseVisibility`.
+     */
+    public function viewPurchases(User|SystemUser $user, Center $center): bool
+    {
+        return $this->canAccessCenter($user, $center, CenterUserPermission::viewPurchasesPermissions(), SystemPermission::ManageCenterReservations);
+    }
+
+    public function viewPurchasePrices(User|SystemUser $user, Center $center): bool
+    {
+        return $this->canAccessCenter($user, $center, [CenterUserPermission::ViewPurchasePrices], SystemPermission::ManageCenterReservations);
+    }
+
+    /**
+     * Center users: the primary user, or a user granted `discounts.manage`.
+     * System users: denied, discounts are managed by the center only.
      */
     public function manageDiscounts(User|SystemUser $user, Center $center): bool
     {
         return $user instanceof User
-            && $user->centers()->whereKey($center->getKey())->exists();
+            && $user->hasCenterPermission($center, CenterUserPermission::ManageDiscounts);
     }
 
-    private function canAccessCenter(User|SystemUser $user, Center $center, SystemPermission $permission): bool
+    /**
+     * Center users: the primary user, or a user granted `users.manage`.
+     * System users: denied.
+     */
+    public function manageUsers(User|SystemUser $user, Center $center): bool
+    {
+        return $user instanceof User
+            && $user->hasCenterPermission($center, CenterUserPermission::ManageUsers);
+    }
+
+    /**
+     * @param  array<CenterUserPermission>  $centerPermissions  Any one of them grants access.
+     */
+    private function canAccessCenter(User|SystemUser $user, Center $center, array $centerPermissions, SystemPermission $systemPermission): bool
     {
         if ($user instanceof SystemUser) {
-            return $this->systemUserCan($user, $permission);
+            return $this->systemUserCan($user, $systemPermission);
         }
 
-        return $user->centers()->whereKey($center->getKey())->exists();
+        return $user->hasAnyCenterPermission($center, $centerPermissions);
     }
 
     private function systemUserCan(User|SystemUser $user, SystemPermission $permission): bool

@@ -8,4 +8,10 @@ return [
     'code_digits' => 'يجب أن يتكون رمز التحقق من 4 إلى 6 أرقام.',
     'password_string' => 'يجب أن تكون كلمة المرور نصاً.',
     'password_required' => 'حقل :attribute مطلوب.',
+    'member_already_assigned' => 'المستخدم مضاف بالفعل إلى هذا المركز.',
+    'cannot_modify_primary_user' => 'لا يمكن تعديل أو حذف المستخدم الرئيسي للمركز.',
+    'trainer_invalid' => 'المدرب المحدد لا ينتمي إلى هذا المركز.',
+    'trainer_already_linked' => 'المدرب المحدد مرتبط بالفعل بمستخدم آخر.',
+    'cannot_modify_self' => 'لا يمكنك تعديل أو حذف حسابك.',
+    'cannot_grant_permission' => 'لا يمكنك منح صلاحية لا تملكها.',
 ];

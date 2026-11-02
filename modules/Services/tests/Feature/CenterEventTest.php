@@ -5,6 +5,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Modules\Centers\Database\Factories\CenterFactory;
 use Modules\Centers\Database\Factories\UserFactory;
+use Modules\Centers\Enums\CenterUserPermission;
 use Modules\Services\Models\Event;
 use Modules\Support\Enums\ActivationStatus;
 use Modules\Support\Services\Media\TemporaryMediaService;
@@ -21,6 +22,7 @@ beforeEach(function (): void {
         'joined_at' => now()->toDateString(),
         'is_primary' => false,
     ]);
+    $this->user->syncCenterPermissions($this->center, [CenterUserPermission::ManageEventServices]);
     $this->url = "/api/v1/centers/{$this->center->id}/events";
     $this->body = fn (array $extra = []) => [
         'name' => ['ar' => 'فعالية', 'en' => 'Event'],
@@ -160,6 +162,7 @@ test('cannot access a service of another center', function (): void {
         'joined_at' => now()->toDateString(),
         'is_primary' => false,
     ]);
+    $this->user->syncCenterPermissions($other, [CenterUserPermission::ManageEventServices]);
 
     $this->getJson("/api/v1/centers/{$other->id}/events/{$id}")->assertNotFound();
     $this->deleteJson("/api/v1/centers/{$other->id}/events/{$id}")->assertNotFound();

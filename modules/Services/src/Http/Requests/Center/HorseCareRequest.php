@@ -4,6 +4,7 @@ namespace Modules\Services\Http\Requests\Center;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
+use Modules\Services\Enums\ServiceType;
 
 /**
  * Body shared by create and update. Update replaces the whole definition
@@ -14,7 +15,7 @@ class HorseCareRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return Gate::forUser($this->user())->allows('manageServices', $this->route('center'));
+        return Gate::forUser($this->user())->allows('manageServices', [$this->route('center'), ServiceType::HorseCare]);
     }
 
     /**

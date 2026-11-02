@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Centers\Database\Factories\CenterFactory;
 use Modules\Centers\Database\Factories\UserFactory;
+use Modules\Centers\Enums\CenterUserPermission;
 use Modules\Clients\Database\Factories\ClientFactory;
 use Modules\Reservations\Database\Factories\ReservationFactory;
 use Modules\Reservations\Enums\ReservationStatus;
@@ -24,6 +25,7 @@ beforeEach(function (): void {
         'joined_at' => now()->toDateString(),
         'is_primary' => false,
     ]);
+    $this->user->syncCenterPermissions($this->center, [CenterUserPermission::ManageReservations, CenterUserPermission::EditReservations]);
     $this->client = ClientFactory::new()->create();
     $this->service = BookingFixtures::riding($this->center);
     $this->url = "/api/v1/centers/{$this->center->id}/reservations";
@@ -122,6 +124,23 @@ test('reschedules a reservation', function (): void {
         ->assertJsonPath('data.date', '2026-11-02')
         ->assertJsonPath('data.start_time', '11:00')
         ->assertJsonPath('data.reschedules.0.date', '2026-10-26');
+});
+
+test('editing a reservation needs the edit permission', function (): void {
+    $reservation = ($this->reservation)();
+    $this->user->syncCenterPermissions($this->center, [CenterUserPermission::ManageReservations]);
+
+    $this->actingAs($this->user, 'center_user')
+        ->getJson("{$this->url}/{$reservation->id}")
+        ->assertOk();
+
+    $this->actingAs($this->user, 'center_user')
+        ->postJson("{$this->url}/{$reservation->id}/cancel", ['reason' => 'Weather'])
+        ->assertForbidden();
+
+    $this->actingAs($this->user, 'center_user')
+        ->postJson("{$this->url}/{$reservation->id}/complete")
+        ->assertForbidden();
 });
 
 test('cancels inside the client cutoff and records the staff member', function (): void {

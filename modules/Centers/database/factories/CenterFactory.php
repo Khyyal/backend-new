@@ -3,6 +3,7 @@
 namespace Modules\Centers\Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Modules\Centers\Enums\CenterState;
 use Modules\Centers\Models\Center;
 use Modules\Support\Models\City;
 
@@ -31,6 +32,18 @@ class CenterFactory extends Factory
                 'visible',
                 'invisible',
             ]),
+
+            'state' => CenterState::Active,
         ];
+    }
+
+    public function pending(): static
+    {
+        return $this->state(['state' => CenterState::Pending]);
+    }
+
+    public function blocked(): static
+    {
+        return $this->state(['state' => CenterState::Blocked]);
     }
 }

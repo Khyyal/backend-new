@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Centers\Database\Factories\CenterFactory;
 use Modules\Centers\Database\Factories\UserFactory;
+use Modules\Centers\Enums\CenterUserPermission;
 use Modules\Services\Database\Factories\TrainerFactory;
 use Modules\Services\Models\Schedule;
 use Modules\Services\Models\Trainer;
@@ -19,6 +20,7 @@ beforeEach(function (): void {
         'joined_at' => now()->toDateString(),
         'is_primary' => false,
     ]);
+    $this->user->syncCenterPermissions($this->center, [CenterUserPermission::ManageTrainingServices]);
     $this->url = "/api/v1/centers/{$this->center->id}/trainers";
     $this->body = fn (array $extra = []) => [
         'name' => 'Ahmed',
@@ -55,11 +57,11 @@ test('creates a trainer with schedules and training services', function (): void
         ->assertJsonPath('data.max_tickets_per_hour', 4)
         ->assertJsonPath('data.days', [0, 2])
         ->assertJsonPath('data.hours', ['09:00', '12:00', '14:00', '17:00'])
-        ->assertJsonPath('data.training_services.0.id', $trainingServiceId)
-        ->assertJsonPath('data.training_services.0.name.en', 'Training');
+        ->assertJsonMissingPath('data.training_services');
 
     expect(Trainer::count())->toBe(1)
-        ->and(Schedule::count())->toBe(4);
+        ->and(Schedule::count())->toBe(4)
+        ->and(Trainer::query()->sole()->trainingServices->modelKeys())->toBe([$trainingServiceId]);
 });
 
 test('validates the body', function (): void {
@@ -81,6 +83,7 @@ test('rejects training services of another center', function (): void {
         'joined_at' => now()->toDateString(),
         'is_primary' => false,
     ]);
+    $this->user->syncCenterPermissions($other, [CenterUserPermission::ManageTrainingServices]);
     $foreignTrainingServiceId = ($this->createTrainingService)($other->id);
 
     $this->actingAs($this->user, 'center_user')
@@ -105,13 +108,15 @@ test('lists, shows, updates and deletes', function (): void {
         ->assertJsonPath('data.name', 'Sara')
         ->assertJsonPath('data.max_tickets_per_hour', 4)
         ->assertJsonPath('data.days', [5])
-        ->assertJsonPath('data.hours', ['10:00', '11:00'])
-        ->assertJsonCount(1, 'data.training_services');
+        ->assertJsonPath('data.hours', ['10:00', '11:00']);
+
+    expect(Trainer::query()->findOrFail($id)->trainingServices)->toHaveCount(1);
 
     $this->putJson("{$this->url}/{$id}", ($this->body)(['max_tickets_per_hour' => null, 'training_service_ids' => []]))
         ->assertOk()
-        ->assertJsonPath('data.max_tickets_per_hour', null)
-        ->assertJsonCount(0, 'data.training_services');
+        ->assertJsonPath('data.max_tickets_per_hour', null);
+
+    expect(Trainer::query()->findOrFail($id)->trainingServices)->toHaveCount(0);
 
     $this->deleteJson("{$this->url}/{$id}")->assertNoContent();
     $this->getJson("{$this->url}/{$id}")->assertNotFound();

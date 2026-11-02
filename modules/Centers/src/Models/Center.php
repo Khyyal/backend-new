@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Modules\Billing\Traits\HasSubscriptions;
+use Modules\Centers\Enums\CenterState;
 use Modules\Centers\Enums\CenterStatus;
 use Modules\Promotion\Traits\HasDiscounts;
 use Modules\Purchase\Contracts\Buyer;
@@ -49,6 +50,7 @@ class Center extends Model implements Buyer, HasMedia
         'address',
         'points',
         'status',
+        'state',
         'contact_phone',
     ];
 
@@ -65,6 +67,7 @@ class Center extends Model implements Buyer, HasMedia
             'lng' => 'decimal:7',
             'points' => 'integer',
             'status' => CenterStatus::class,
+            'state' => CenterState::class,
         ];
     }
 
@@ -117,6 +120,7 @@ class Center extends Model implements Buyer, HasMedia
                 'status',
                 'joined_at',
                 'is_primary',
+                'trainer_id',
             ])
             ->withTimestamps();
     }
@@ -146,10 +150,18 @@ class Center extends Model implements Buyer, HasMedia
         return $this->hasMany(CenterPeriod::class);
     }
 
-    // / scope list (status = visible)
+    /**
+     * Centers shown to clients: listed by the center and active.
+     */
     public function scopeVisible($query)
     {
-        return $query->where('status', CenterStatus::VISIBLE);
+        return $query->where('status', CenterStatus::VISIBLE)
+            ->where('state', CenterState::Active);
+    }
+
+    public function isActive(): bool
+    {
+        return $this->state === CenterState::Active;
     }
 
     protected static function booted(): void

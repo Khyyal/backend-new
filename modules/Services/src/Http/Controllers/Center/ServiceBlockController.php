@@ -56,6 +56,8 @@ class ServiceBlockController extends Controller
     #[Response(status: 422, description: 'Validation failed.')]
     public function store(ServiceBlockRequest $request, Center $center): JsonResponse
     {
+        $this->authorizeBlockTarget($request, $center, $request->validated('service_id'));
+
         $block = $this->service->create($center, $request->validated());
 
         return ServiceBlockResource::make($block)->response()->setStatusCode(ResponseAlias::HTTP_CREATED);
@@ -86,6 +88,8 @@ class ServiceBlockController extends Controller
     public function update(ServiceBlockRequest $request, Center $center, int $serviceBlock): ServiceBlockResource
     {
         $block = $this->service->findForCenter($center, $serviceBlock);
+        $this->authorizeBlockTarget($request, $center, $block->service_id);
+        $this->authorizeBlockTarget($request, $center, $request->validated('service_id'));
 
         return ServiceBlockResource::make($this->service->update($block, $request->validated()));
     }
@@ -100,8 +104,30 @@ class ServiceBlockController extends Controller
     {
         Gate::forUser($request->user())->authorize('manageServices', $center);
 
-        $this->service->delete($this->service->findForCenter($center, $serviceBlock));
+        $block = $this->service->findForCenter($center, $serviceBlock);
+        $this->authorizeBlockTarget($request, $center, $block->service_id);
+
+        $this->service->delete($block);
 
         return response()->noContent();
+    }
+
+    /**
+     * A block on one service needs that service type's permission; a
+     * center-wide block (no service) needs every service type's permission.
+     */
+    private function authorizeBlockTarget(Request $request, Center $center, int|string|null $serviceId): void
+    {
+        $gate = Gate::forUser($request->user());
+
+        if ($serviceId === null) {
+            $gate->authorize('manageAllServices', $center);
+
+            return;
+        }
+
+        $service = $center->services()->findOrFail($serviceId);
+
+        $gate->authorize('manageServices', [$center, $service->type]);
     }
 }

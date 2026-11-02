@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Centers\Database\Factories\CenterFactory;
 use Modules\Centers\Database\Factories\UserFactory;
+use Modules\Centers\Enums\CenterUserPermission;
 use Modules\Clients\Database\Factories\ClientFactory;
 use Modules\Purchase\Database\Factories\PurchaseFactory;
 use Modules\Purchase\Enums\PurchaseStatus;
@@ -19,6 +20,7 @@ beforeEach(function (): void {
         'joined_at' => now()->toDateString(),
         'is_primary' => false,
     ]);
+    $this->user->syncCenterPermissions($this->center, [CenterUserPermission::ManageReservations]);
     $this->url = "/api/v1/centers/{$this->center->id}/clients";
 
     $this->purchase = fn ($client, string $at, PurchaseStatus $status = PurchaseStatus::Confirmed, $center = null) => PurchaseFactory::new()->create([

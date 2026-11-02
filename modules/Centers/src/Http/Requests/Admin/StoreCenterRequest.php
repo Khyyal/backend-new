@@ -5,6 +5,7 @@ namespace Modules\Centers\Http\Requests\Admin;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
+use Modules\Centers\Enums\CenterState;
 use Modules\Centers\Enums\CenterStatus;
 use Modules\Centers\Models\Center;
 
@@ -31,6 +32,7 @@ class StoreCenterRequest extends FormRequest
             'address' => ['nullable', 'string', 'max:255'],
             'contact_phone' => ['required', 'string', 'max:32'],
             'status' => ['sometimes', Rule::enum(CenterStatus::class)],
+            'state' => ['sometimes', Rule::enum(CenterState::class)],
             'primary_user_id' => ['nullable', 'integer', Rule::exists('center_users', 'id')->whereNull('deleted_at')],
             'tags' => ['sometimes', 'array'],
             'tags.*' => ['integer', 'distinct', 'exists:tags,id'],

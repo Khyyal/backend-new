@@ -5,6 +5,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Modules\Centers\Database\Factories\CenterFactory;
 use Modules\Centers\Database\Factories\UserFactory;
+use Modules\Centers\Enums\CenterUserPermission;
 use Modules\Services\Models\HorseCare;
 use Modules\Support\Enums\ActivationStatus;
 use Modules\Support\Services\Media\TemporaryMediaService;
@@ -21,6 +22,7 @@ beforeEach(function (): void {
         'joined_at' => now()->toDateString(),
         'is_primary' => false,
     ]);
+    $this->user->syncCenterPermissions($this->center, [CenterUserPermission::ManageHorseCareServices]);
     $this->url = "/api/v1/centers/{$this->center->id}/horse-cares";
     $this->body = fn (array $extra = []) => [
         'name' => ['ar' => 'رعاية الخيول', 'en' => 'Horse Care'],
@@ -128,6 +130,7 @@ test('cannot access a service of another center', function (): void {
         'joined_at' => now()->toDateString(),
         'is_primary' => false,
     ]);
+    $this->user->syncCenterPermissions($other, [CenterUserPermission::ManageHorseCareServices]);
 
     $this->getJson("/api/v1/centers/{$other->id}/horse-cares/{$id}")->assertNotFound();
     $this->deleteJson("/api/v1/centers/{$other->id}/horse-cares/{$id}")->assertNotFound();

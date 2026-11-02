@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Centers\Database\Factories\CenterFactory;
 use Modules\Centers\Database\Factories\UserFactory;
+use Modules\Centers\Enums\CenterUserPermission;
 use Modules\Clients\Database\Factories\ClientFactory;
 use Modules\Support\Enums\ActivationStatus;
 use Modules\Support\Services\RatingService;
@@ -18,6 +19,7 @@ beforeEach(function (): void {
         'joined_at' => now()->toDateString(),
         'is_primary' => false,
     ]);
+    $this->user->syncCenterPermissions($this->center, [CenterUserPermission::ViewRatings]);
     $this->url = "/api/v1/centers/{$this->center->id}/ratings";
 });
 
@@ -69,6 +71,7 @@ test('ratings are isolated per center', function (): void {
         'joined_at' => now()->toDateString(),
         'is_primary' => false,
     ]);
+    $this->user->syncCenterPermissions($other, [CenterUserPermission::ViewRatings]);
 
     $this->actingAs($this->user, 'center_user')
         ->getJson("/api/v1/centers/{$other->id}/ratings")

@@ -18,7 +18,7 @@ beforeEach(function (): void {
     $this->center->users()->attach($this->user->id, [
         'status' => ActivationStatus::ACTIVE->value,
         'joined_at' => now()->toDateString(),
-        'is_primary' => false,
+        'is_primary' => true,
     ]);
     $this->url = "/api/v1/centers/{$this->center->id}/purchases";
 

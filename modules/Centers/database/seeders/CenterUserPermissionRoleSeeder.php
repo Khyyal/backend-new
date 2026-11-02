@@ -9,6 +9,10 @@ use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
 
+/**
+ * Creates every `CenterUserPermission` on the `center_user` guard, removes
+ * permissions no longer defined, and gives the owner role all of them.
+ */
 class CenterUserPermissionRoleSeeder extends Seeder
 {
     private const GUARD = 'center_user';
@@ -17,24 +21,21 @@ class CenterUserPermissionRoleSeeder extends Seeder
     {
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
-        $guard = self::GUARD;
+        $permissions = CenterUserPermission::all();
 
-        $permissions = collect(CenterUserPermission::all())->map(
-            fn (string $name): Permission => Permission::findOrCreate($name, $guard)
-        );
+        foreach ($permissions as $name) {
+            Permission::findOrCreate($name, self::GUARD);
+        }
+
+        Permission::query()
+            ->where('guard_name', self::GUARD)
+            ->whereNotIn('name', $permissions)
+            ->delete();
 
         app(PermissionRegistrar::class)->forgetCachedPermissions();
 
-
-
-
-
-        $ownerPermissions = CenterUserPermission::all();
-
-
-
-        $owner = Role::findOrCreate(CenterUserRole::Owner->value, $guard);
-        $owner->givePermissionTo($ownerPermissions);
+        Role::findOrCreate(CenterUserRole::Owner->value, self::GUARD)
+            ->syncPermissions($permissions);
 
         app(PermissionRegistrar::class)->forgetCachedPermissions();
     }

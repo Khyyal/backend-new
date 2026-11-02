@@ -5,6 +5,7 @@ namespace Modules\Centers\Http\Requests\Admin;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
+use Modules\Centers\Enums\CenterState;
 use Modules\Centers\Enums\CenterStatus;
 
 class UpdateCenterRequest extends FormRequest
@@ -30,6 +31,7 @@ class UpdateCenterRequest extends FormRequest
             'address' => ['sometimes', 'nullable', 'string', 'max:255'],
             'contact_phone' => ['sometimes', 'required', 'string', 'max:32'],
             'status' => ['sometimes', 'required', Rule::enum(CenterStatus::class)],
+            'state' => ['sometimes', 'required', Rule::enum(CenterState::class)],
             'tags' => ['sometimes', 'array'],
             'tags.*' => ['integer', 'distinct', 'exists:tags,id'],
             'logo' => ['sometimes', 'nullable', 'uuid'],
