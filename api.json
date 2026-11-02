@@ -51,6 +51,10 @@
             "description": "What clients bought from the center. Requires a center-scoped Bearer token (see `POST /centers/{center}/access`)."
         },
         {
+            "name": "Center / Users",
+            "description": "The center's primary user, or a user granted `users.manage`, manages the other users of the center and their permissions. Requires a center-scoped Bearer token (see `POST /centers/{center}/access`)."
+        },
+        {
             "name": "Admin / Centers",
             "description": "System user management of centers. Requires a system user Bearer token (see `POST /admin/auth/login`) with the matching `centers.*` permission."
         },
@@ -159,8 +163,8 @@
             "description": "Block dates so a center's services (all of them, or one specific service) are not purchasable during them. Requires a center-scoped Bearer token (see `POST /centers/{center}/access`)."
         },
         {
-            "name": "Center / Service Periods",
-            "description": "Female and male periods of a service: the days of the week and hours reserved for each gender. A center may define one, both or neither. Requires a center-scoped Bearer token (see `POST /centers/{center}/access`)."
+            "name": "Center / Periods",
+            "description": "Female and male periods of a center: the days of the week and hours reserved for each gender. Defined once per center and applied to all of its services. A center may define one, both or neither. Requires a center-scoped Bearer token (see `POST /centers/{center}/access`)."
         },
         {
             "name": "Client / Services",
@@ -345,6 +349,20 @@
                             "anyOf": [
                                 {
                                     "$ref": "#/components/schemas/CenterStatus"
+                                },
+                                {
+                                    "type": "null"
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "name": "state",
+                        "in": "query",
+                        "schema": {
+                            "anyOf": [
+                                {
+                                    "$ref": "#/components/schemas/CenterState"
                                 },
                                 {
                                     "type": "null"
@@ -2850,16 +2868,23 @@
                                             "type": "object",
                                             "properties": {
                                                 "id": {
-                                                    "type": "string"
+                                                    "type": "integer"
                                                 },
                                                 "client_id": {
-                                                    "type": "string"
+                                                    "type": "integer"
                                                 },
                                                 "reason": {
-                                                    "type": "string"
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
                                                 },
                                                 "blocked_at": {
-                                                    "type": "string"
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "format": "date-time"
                                                 }
                                             },
                                             "required": [
@@ -3057,16 +3082,23 @@
                                             "type": "object",
                                             "properties": {
                                                 "id": {
-                                                    "type": "string"
+                                                    "type": "integer"
                                                 },
                                                 "client_id": {
-                                                    "type": "string"
+                                                    "type": "integer"
                                                 },
                                                 "reason": {
-                                                    "type": "string"
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
                                                 },
                                                 "blocked_at": {
-                                                    "type": "string"
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "format": "date-time"
                                                 }
                                             },
                                             "required": [
@@ -3159,7 +3191,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Collection of centers the authenticated user belongs to, each with `id`, `name`, and the user's team-scoped `role` (e.g. \"owner\").",
+                        "description": "Collection of centers the authenticated user belongs to, each with `id`, `name`, `is_primary`, and the user's team-scoped `role` (e.g. \"owner\").",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -9981,6 +10013,390 @@
                 }
             }
         },
+        "/v1/centers/{center}/periods": {
+            "get": {
+                "operationId": "centers.periods.show",
+                "description": "Returns `female` and `male`, each `null` when not defined, otherwise `{days, hours}`.",
+                "summary": "Show the center's periods",
+                "tags": [
+                    "Center / Periods"
+                ],
+                "parameters": [
+                    {
+                        "name": "center",
+                        "in": "path",
+                        "required": true,
+                        "description": "The center ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The periods as a `CenterPeriodResource`.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/CenterPeriodResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "description": "Missing or invalid Bearer token.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview."
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "The token has no access to this center, or the user is not assigned to it.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "operationId": "centers.periods.update",
+                "description": "**Request body:**\n- `female` / `male`  optional object or `null` (clears that gender's period).\n- `days`             required integer array (0-6, distinct) within a gender object.\n- `hours`            required flat list of `H:i` start/end pairs within a gender object, e.g. `[\"09:00\",\"12:00\",\"16:00\",\"18:00\"]`; each end is after its start.",
+                "summary": "Replace the center's periods",
+                "tags": [
+                    "Center / Periods"
+                ],
+                "parameters": [
+                    {
+                        "name": "center",
+                        "in": "path",
+                        "required": true,
+                        "description": "The center ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CenterPeriodRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The updated periods as a `CenterPeriodResource`.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/CenterPeriodResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "description": "Missing or invalid Bearer token.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview."
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation failed.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Errors overview."
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "description": "A detailed description of each field that failed validation.",
+                                            "additionalProperties": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "message",
+                                        "errors"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "The token has no access to this center, or the user is not assigned to it.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview."
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/admin/centers/{center}/periods": {
+            "get": {
+                "operationId": "admin.centers.periods.show",
+                "description": "Returns `female` and `male`, each `null` when not defined, otherwise `{days, hours}`.",
+                "summary": "Show the center's periods",
+                "tags": [
+                    "Center / Periods"
+                ],
+                "parameters": [
+                    {
+                        "name": "center",
+                        "in": "path",
+                        "required": true,
+                        "description": "The center ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The periods as a `CenterPeriodResource`.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/CenterPeriodResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "description": "Missing or invalid Bearer token.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview."
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "The token has no access to this center, or the user is not assigned to it.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "operationId": "admin.centers.periods.update",
+                "description": "**Request body:**\n- `female` / `male`  optional object or `null` (clears that gender's period).\n- `days`             required integer array (0-6, distinct) within a gender object.\n- `hours`            required flat list of `H:i` start/end pairs within a gender object, e.g. `[\"09:00\",\"12:00\",\"16:00\",\"18:00\"]`; each end is after its start.",
+                "summary": "Replace the center's periods",
+                "tags": [
+                    "Center / Periods"
+                ],
+                "parameters": [
+                    {
+                        "name": "center",
+                        "in": "path",
+                        "required": true,
+                        "description": "The center ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/CenterPeriodRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The updated periods as a `CenterPeriodResource`.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/CenterPeriodResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "description": "Missing or invalid Bearer token.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview."
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation failed.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Errors overview."
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "description": "A detailed description of each field that failed validation.",
+                                            "additionalProperties": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "message",
+                                        "errors"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "The token has no access to this center, or the user is not assigned to it.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview."
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/center/plans": {
             "get": {
                 "operationId": "center.plans.index",
@@ -10125,7 +10541,7 @@
         "/v1/centers/{center}/purchases": {
             "get": {
                 "operationId": "centers.purchases.index",
-                "description": "Paginated (25 per page), newest first.\n\n**Query:** `status`, optional: `pending`, `confirmed`, `cancelled` or `completed`.",
+                "description": "Paginated (25 per page), newest first. Non-primary users only see\npurchases for the service types they may view, narrowed by trainer\n(own trainer, other trainers, unassigned); amounts are omitted without\n`purchases.view_prices`.\n\n**Query:** `status`, optional: `pending`, `confirmed`, `cancelled` or `completed`.",
                 "summary": "List the center's purchases",
                 "tags": [
                     "Center / Purchases"
@@ -10381,7 +10797,7 @@
         "/v1/centers/{center}/purchases/{purchase}": {
             "get": {
                 "operationId": "centers.purchases.show",
-                "description": "With its line items and payments.",
+                "description": "With its line items and payments (amounts and payments omitted without\n`purchases.view_prices`). Purchases the user may not see return 404.",
                 "summary": "Show a purchase",
                 "tags": [
                     "Center / Purchases"
@@ -10422,8 +10838,7 @@
                                                     "type": "object",
                                                     "required": [
                                                         "client",
-                                                        "items",
-                                                        "payments"
+                                                        "items"
                                                     ]
                                                 }
                                             ]
@@ -10499,7 +10914,7 @@
         "/v1/admin/centers/{center}/purchases": {
             "get": {
                 "operationId": "admin.centers.purchases.index",
-                "description": "Paginated (25 per page), newest first.\n\n**Query:** `status`, optional: `pending`, `confirmed`, `cancelled` or `completed`.",
+                "description": "Paginated (25 per page), newest first. Non-primary users only see\npurchases for the service types they may view, narrowed by trainer\n(own trainer, other trainers, unassigned); amounts are omitted without\n`purchases.view_prices`.\n\n**Query:** `status`, optional: `pending`, `confirmed`, `cancelled` or `completed`.",
                 "summary": "List the center's purchases",
                 "tags": [
                     "Center / Purchases"
@@ -10755,7 +11170,7 @@
         "/v1/admin/centers/{center}/purchases/{purchase}": {
             "get": {
                 "operationId": "admin.centers.purchases.show",
-                "description": "With its line items and payments.",
+                "description": "With its line items and payments (amounts and payments omitted without\n`purchases.view_prices`). Purchases the user may not see return 404.",
                 "summary": "Show a purchase",
                 "tags": [
                     "Center / Purchases"
@@ -10796,8 +11211,7 @@
                                                     "type": "object",
                                                     "required": [
                                                         "client",
-                                                        "items",
-                                                        "payments"
+                                                        "items"
                                                     ]
                                                 }
                                             ]
@@ -12334,6 +12748,92 @@
                 }
             }
         },
+        "/v1/centers/register/phone": {
+            "post": {
+                "operationId": "centers.register.phone.send",
+                "description": "Sends a one-time password (OTP) by SMS to the provided phone number. The\nphone must not already belong to a registered center user. The returned\ncode is then submitted as `user.code` to `POST /centers/register`.\n\n**Request body:**\n- `phone` \u2014 required; string, max 32 characters, not yet registered.",
+                "summary": "Request a registration OTP for a new center user",
+                "tags": [
+                    "Center / Register"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/SendRegisterOtpRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "OTP generated and queued for delivery. Response includes a localized `message` and the TTL in `expires_in_seconds`.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "const": "Verification code sent."
+                                        },
+                                        "expires_in_seconds": {
+                                            "type": "integer",
+                                            "const": 300
+                                        }
+                                    },
+                                    "required": [
+                                        "message",
+                                        "expires_in_seconds"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation failure on `phone` (missing, too long, or already registered \u2014 error keyed under `phone`).",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Errors overview."
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "description": "A detailed description of each field that failed validation.",
+                                            "additionalProperties": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "message",
+                                        "errors"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "429": {
+                        "description": "Too many OTP requests for this phone or this IP. Retry after the period returned in the `Retry-After` header.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/v1/centers/{center}/reservations": {
             "get": {
                 "operationId": "centers.reservations.index",
@@ -13473,25 +13973,6 @@
                             }
                         }
                     },
-                    "403": {
-                        "description": "No access to this center's reservations.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "description": "Error overview."
-                                        }
-                                    },
-                                    "required": [
-                                        "message"
-                                    ]
-                                }
-                            }
-                        }
-                    },
                     "404": {
                         "description": "No such reservation in this center.",
                         "content": {
@@ -13526,6 +14007,16 @@
                                     "required": [
                                         "message"
                                     ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "No access to this center's reservations.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
                                 }
                             }
                         }
@@ -13602,25 +14093,6 @@
                             }
                         }
                     },
-                    "403": {
-                        "description": "No access to this center's reservations.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "description": "Error overview."
-                                        }
-                                    },
-                                    "required": [
-                                        "message"
-                                    ]
-                                }
-                            }
-                        }
-                    },
                     "404": {
                         "description": "No such reservation in this center.",
                         "content": {
@@ -13655,6 +14127,16 @@
                                     "required": [
                                         "message"
                                     ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "No access to this center's reservations.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
                                 }
                             }
                         }
@@ -14811,25 +15293,6 @@
                             }
                         }
                     },
-                    "403": {
-                        "description": "No access to this center's reservations.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "description": "Error overview."
-                                        }
-                                    },
-                                    "required": [
-                                        "message"
-                                    ]
-                                }
-                            }
-                        }
-                    },
                     "404": {
                         "description": "No such reservation in this center.",
                         "content": {
@@ -14864,6 +15327,16 @@
                                     "required": [
                                         "message"
                                     ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "No access to this center's reservations.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
                                 }
                             }
                         }
@@ -14940,25 +15413,6 @@
                             }
                         }
                     },
-                    "403": {
-                        "description": "No access to this center's reservations.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "description": "Error overview."
-                                        }
-                                    },
-                                    "required": [
-                                        "message"
-                                    ]
-                                }
-                            }
-                        }
-                    },
                     "404": {
                         "description": "No such reservation in this center.",
                         "content": {
@@ -14993,6 +15447,16 @@
                                     "required": [
                                         "message"
                                     ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "No access to this center's reservations.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
                                 }
                             }
                         }
@@ -17373,486 +17837,6 @@
                             "application/json": {
                                 "schema": {
                                     "type": "string"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/centers/{center}/services/{service}/periods": {
-            "get": {
-                "operationId": "centers.services.periods.show",
-                "description": "Returns `female` and `male`, each `null` when not defined, otherwise `{days, hours}`.",
-                "summary": "Show a service's periods",
-                "tags": [
-                    "Center / Service Periods"
-                ],
-                "parameters": [
-                    {
-                        "name": "center",
-                        "in": "path",
-                        "required": true,
-                        "description": "The center ID",
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "name": "service",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "The periods as a `ServicePeriodResource`.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/components/schemas/ServicePeriodResource"
-                                        }
-                                    },
-                                    "required": [
-                                        "data"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "No such service in this center.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "description": "Error overview."
-                                        }
-                                    },
-                                    "required": [
-                                        "message"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Missing or invalid Bearer token.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "description": "Error overview."
-                                        }
-                                    },
-                                    "required": [
-                                        "message"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "403": {
-                        "description": "The token has no access to this center, or the user is not assigned to it.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "string"
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "put": {
-                "operationId": "centers.services.periods.update",
-                "description": "**Request body:**\n- `female` / `male`  optional object or `null` (clears that gender's period).\n- `days`             required integer array (0-6, distinct) within a gender object.\n- `hours`            required flat list of `H:i` start/end pairs within a gender object, e.g. `[\"09:00\",\"12:00\",\"16:00\",\"18:00\"]`; each end is after its start.",
-                "summary": "Replace a service's periods",
-                "tags": [
-                    "Center / Service Periods"
-                ],
-                "parameters": [
-                    {
-                        "name": "center",
-                        "in": "path",
-                        "required": true,
-                        "description": "The center ID",
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "name": "service",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/ServicePeriodRequest"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "The updated periods as a `ServicePeriodResource`.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/components/schemas/ServicePeriodResource"
-                                        }
-                                    },
-                                    "required": [
-                                        "data"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "No such service in this center.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "description": "Error overview."
-                                        }
-                                    },
-                                    "required": [
-                                        "message"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Missing or invalid Bearer token.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "description": "Error overview."
-                                        }
-                                    },
-                                    "required": [
-                                        "message"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Validation failed.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "description": "Errors overview."
-                                        },
-                                        "errors": {
-                                            "type": "object",
-                                            "description": "A detailed description of each field that failed validation.",
-                                            "additionalProperties": {
-                                                "type": "array",
-                                                "items": {
-                                                    "type": "string"
-                                                }
-                                            }
-                                        }
-                                    },
-                                    "required": [
-                                        "message",
-                                        "errors"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "403": {
-                        "description": "The token has no access to this center, or the user is not assigned to it.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "description": "Error overview."
-                                        }
-                                    },
-                                    "required": [
-                                        "message"
-                                    ]
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/admin/centers/{center}/services/{service}/periods": {
-            "get": {
-                "operationId": "admin.centers.services.periods.show",
-                "description": "Returns `female` and `male`, each `null` when not defined, otherwise `{days, hours}`.",
-                "summary": "Show a service's periods",
-                "tags": [
-                    "Center / Service Periods"
-                ],
-                "parameters": [
-                    {
-                        "name": "center",
-                        "in": "path",
-                        "required": true,
-                        "description": "The center ID",
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "name": "service",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "The periods as a `ServicePeriodResource`.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/components/schemas/ServicePeriodResource"
-                                        }
-                                    },
-                                    "required": [
-                                        "data"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "No such service in this center.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "description": "Error overview."
-                                        }
-                                    },
-                                    "required": [
-                                        "message"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Missing or invalid Bearer token.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "description": "Error overview."
-                                        }
-                                    },
-                                    "required": [
-                                        "message"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "403": {
-                        "description": "The token has no access to this center, or the user is not assigned to it.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "string"
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            "put": {
-                "operationId": "admin.centers.services.periods.update",
-                "description": "**Request body:**\n- `female` / `male`  optional object or `null` (clears that gender's period).\n- `days`             required integer array (0-6, distinct) within a gender object.\n- `hours`            required flat list of `H:i` start/end pairs within a gender object, e.g. `[\"09:00\",\"12:00\",\"16:00\",\"18:00\"]`; each end is after its start.",
-                "summary": "Replace a service's periods",
-                "tags": [
-                    "Center / Service Periods"
-                ],
-                "parameters": [
-                    {
-                        "name": "center",
-                        "in": "path",
-                        "required": true,
-                        "description": "The center ID",
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "name": "service",
-                        "in": "path",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "$ref": "#/components/schemas/ServicePeriodRequest"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "200": {
-                        "description": "The updated periods as a `ServicePeriodResource`.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/components/schemas/ServicePeriodResource"
-                                        }
-                                    },
-                                    "required": [
-                                        "data"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "No such service in this center.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "description": "Error overview."
-                                        }
-                                    },
-                                    "required": [
-                                        "message"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Missing or invalid Bearer token.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "description": "Error overview."
-                                        }
-                                    },
-                                    "required": [
-                                        "message"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Validation failed.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "description": "Errors overview."
-                                        },
-                                        "errors": {
-                                            "type": "object",
-                                            "description": "A detailed description of each field that failed validation.",
-                                            "additionalProperties": {
-                                                "type": "array",
-                                                "items": {
-                                                    "type": "string"
-                                                }
-                                            }
-                                        }
-                                    },
-                                    "required": [
-                                        "message",
-                                        "errors"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "403": {
-                        "description": "The token has no access to this center, or the user is not assigned to it.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "description": "Error overview."
-                                        }
-                                    },
-                                    "required": [
-                                        "message"
-                                    ]
                                 }
                             }
                         }
@@ -21198,6 +21182,552 @@
                     },
                     "403": {
                         "description": "The token has no access to this center, or the user is not assigned to it.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/centers/{center}/users": {
+            "get": {
+                "operationId": "centers.users.index",
+                "description": "Returns every user assigned to the center, primary user first, each with\n`id`, `name`, `phone`, `is_primary`, `status`, `joined_at`, the linked\n`trainer` (`null` for the primary user) and the `permissions` they hold\non the center.",
+                "summary": "List center users",
+                "tags": [
+                    "Center / Users"
+                ],
+                "parameters": [
+                    {
+                        "name": "center",
+                        "in": "path",
+                        "required": true,
+                        "description": "The center ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`data`: `CenterMemberResource` collection.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/CenterMemberResource"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "description": "Missing or invalid Bearer token for the `center_user` guard.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview."
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "The token has no access to this center, or the user lacks `users.manage`.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "operationId": "centers.users.store",
+                "description": "Assigns a user to the center with the given `permissions`. When an\naccount with the `phone` already exists it is assigned as-is (its name is\nkept); otherwise a new account is created. The user signs in by OTP.\n\n`trainer_id` is required: a trainer of the center not already linked to\nanother user of the center.",
+                "summary": "Add a center user",
+                "tags": [
+                    "Center / Users"
+                ],
+                "parameters": [
+                    {
+                        "name": "center",
+                        "in": "path",
+                        "required": true,
+                        "description": "The center ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/StoreCenterUserRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "The assigned user as a `CenterMemberResource`.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/CenterMemberResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation failed, the trainer is invalid or already linked, or the phone already belongs to a user of this center.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Errors overview."
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "description": "A detailed description of each field that failed validation.",
+                                            "additionalProperties": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "message",
+                                        "errors"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "403": {
+                        "description": "The token has no access to this center, or the user lacks `users.manage`.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview."
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/centers/{center}/users/permissions": {
+            "get": {
+                "operationId": "centers.users.permissions",
+                "description": "Returns the permission names that can be granted to center users.",
+                "summary": "List grantable permissions",
+                "tags": [
+                    "Center / Users"
+                ],
+                "parameters": [
+                    {
+                        "name": "center",
+                        "in": "path",
+                        "required": true,
+                        "description": "The center ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`data`: list of permission names.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {}
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "403": {
+                        "description": "The token has no access to this center, or the user lacks `users.manage`.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/centers/{center}/users/{user}": {
+            "get": {
+                "operationId": "centers.users.show",
+                "summary": "Show a center user",
+                "tags": [
+                    "Center / Users"
+                ],
+                "parameters": [
+                    {
+                        "name": "center",
+                        "in": "path",
+                        "required": true,
+                        "description": "The center ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The user as a `CenterMemberResource`.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/CenterMemberResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No user with this id is assigned to the center.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview."
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "403": {
+                        "description": "The token has no access to this center, or the user lacks `users.manage`.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "operationId": "centers.users.update",
+                "description": "Partial update of `name`, `status`, `trainer_id` and `permissions` (the\nfull list of permissions the user holds on the center). The primary user\nand the acting user cannot be updated here; a non-primary manager can only\ngrant permissions they hold.",
+                "summary": "Update a center user",
+                "tags": [
+                    "Center / Users"
+                ],
+                "parameters": [
+                    {
+                        "name": "center",
+                        "in": "path",
+                        "required": true,
+                        "description": "The center ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UpdateCenterUserRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "The updated user as a `CenterMemberResource`.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/CenterMemberResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation failed, or the target is the primary user.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Errors overview."
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "description": "A detailed description of each field that failed validation.",
+                                            "additionalProperties": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "message",
+                                        "errors"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No user with this id is assigned to the center.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview."
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "403": {
+                        "description": "The token has no access to this center, or the user lacks `users.manage`.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview."
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "centers.users.destroy",
+                "description": "Unassigns the user from the center and revokes their access to it. An\naccount that no longer belongs to any center is deleted. The primary\nuser cannot be removed.",
+                "summary": "Remove a center user",
+                "tags": [
+                    "Center / Users"
+                ],
+                "parameters": [
+                    {
+                        "name": "center",
+                        "in": "path",
+                        "required": true,
+                        "description": "The center ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "user",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "The user was removed from the center.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "The target is the primary user.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Errors overview."
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "description": "A detailed description of each field that failed validation.",
+                                            "additionalProperties": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "message",
+                                        "errors"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "No user with this id is assigned to the center.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview."
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "403": {
+                        "description": "The token has no access to this center, or the user lacks `users.manage`.",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -24972,10 +25502,10 @@
                 "type": "object",
                 "properties": {
                     "id": {
-                        "type": "string"
+                        "type": "integer"
                     },
                     "client_id": {
-                        "type": "string"
+                        "type": "integer"
                     },
                     "client": {
                         "type": "string"
@@ -24984,10 +25514,17 @@
                         "type": "string"
                     },
                     "reason": {
-                        "type": "string"
+                        "type": [
+                            "string",
+                            "null"
+                        ]
                     },
                     "blocked_at": {
-                        "type": "string"
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
                     }
                 },
                 "required": [
@@ -25061,7 +25598,7 @@
                 "type": "object",
                 "properties": {
                     "id": {
-                        "type": "string"
+                        "type": "integer"
                     },
                     "status": {
                         "type": "string"
@@ -25087,7 +25624,10 @@
                         ]
                     },
                     "service_package_id": {
-                        "type": "string"
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
                     },
                     "duration_minutes": {
                         "type": [
@@ -25096,10 +25636,10 @@
                         ]
                     },
                     "total_sessions": {
-                        "type": "string"
+                        "type": "integer"
                     },
                     "remaining_sessions": {
-                        "type": "string"
+                        "type": "integer"
                     },
                     "price": {
                         "type": "number"
@@ -25159,7 +25699,7 @@
                 "type": "object",
                 "properties": {
                     "id": {
-                        "type": "string"
+                        "type": "integer"
                     },
                     "status": {
                         "type": "string"
@@ -25185,7 +25725,10 @@
                         ]
                     },
                     "service_package_id": {
-                        "type": "string"
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
                     },
                     "duration_minutes": {
                         "type": [
@@ -25194,10 +25737,10 @@
                         ]
                     },
                     "total_sessions": {
-                        "type": "string"
+                        "type": "integer"
                     },
                     "remaining_sessions": {
-                        "type": "string"
+                        "type": "integer"
                     },
                     "price": {
                         "type": "number"
@@ -25282,6 +25825,65 @@
                 ],
                 "title": "CenterClientResource"
             },
+            "CenterMemberResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "phone": {
+                        "type": "string"
+                    },
+                    "is_primary": {
+                        "type": "boolean"
+                    },
+                    "status": {
+                        "type": "string"
+                    },
+                    "joined_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "trainer": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "string"
+                            },
+                            "name": {
+                                "type": "string"
+                            }
+                        },
+                        "required": [
+                            "id",
+                            "name"
+                        ]
+                    },
+                    "permissions": {
+                        "type": "array",
+                        "items": {}
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "phone",
+                    "is_primary",
+                    "status",
+                    "joined_at",
+                    "trainer",
+                    "permissions"
+                ],
+                "title": "CenterMemberResource"
+            },
             "CenterOrder": {
                 "type": "string",
                 "enum": [
@@ -25290,11 +25892,92 @@
                 ],
                 "title": "CenterOrder"
             },
+            "CenterPeriodRequest": {
+                "type": "object",
+                "description": "Replaces a center's gender periods (applied to all its services). `female` and `male` are each optional\n(omit or `null` for none): `days` is a list of weekday numbers (0-6) and\n`hours` a flat list of `start, end` pairs (`[\"09:00\",\"12:00\"]`) applied to\nevery chosen day.",
+                "properties": {
+                    "female": {
+                        "type": "object",
+                        "properties": {
+                            "days": {
+                                "type": "array",
+                                "items": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 6
+                                },
+                                "minItems": 1,
+                                "maxItems": 7,
+                                "uniqueItems": true
+                            },
+                            "hours": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                },
+                                "minItems": 2,
+                                "maxItems": 48
+                            }
+                        },
+                        "required": [
+                            "days",
+                            "hours"
+                        ]
+                    },
+                    "male": {
+                        "type": "object",
+                        "properties": {
+                            "days": {
+                                "type": "array",
+                                "items": {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 6
+                                },
+                                "minItems": 1,
+                                "maxItems": 7,
+                                "uniqueItems": true
+                            },
+                            "hours": {
+                                "type": "array",
+                                "items": {
+                                    "type": "string"
+                                },
+                                "minItems": 2,
+                                "maxItems": 48
+                            }
+                        },
+                        "required": [
+                            "days",
+                            "hours"
+                        ]
+                    }
+                },
+                "title": "CenterPeriodRequest"
+            },
+            "CenterPeriodResource": {
+                "type": "object",
+                "properties": {
+                    "center_id": {
+                        "anyOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {}
+                        ]
+                    }
+                },
+                "required": [
+                    "center_id"
+                ],
+                "additionalProperties": {},
+                "title": "CenterPeriodResource"
+            },
             "CenterReservationResource": {
                 "type": "object",
                 "properties": {
                     "id": {
-                        "type": "string"
+                        "type": "integer"
                     },
                     "status": {
                         "type": "string"
@@ -25303,7 +25986,7 @@
                         "type": "string"
                     },
                     "center_id": {
-                        "type": "string"
+                        "type": "integer"
                     },
                     "service": {
                         "type": "object",
@@ -25332,7 +26015,7 @@
                         ],
                         "properties": {
                             "id": {
-                                "type": "string"
+                                "type": "integer"
                             },
                             "name": {
                                 "type": "string"
@@ -25344,10 +26027,16 @@
                         ]
                     },
                     "price_option_id": {
-                        "type": "string"
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
                     },
                     "client_package_id": {
-                        "type": "string"
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
                     },
                     "date": {
                         "type": "string"
@@ -25371,7 +26060,7 @@
                         ]
                     },
                     "quantity": {
-                        "type": "string"
+                        "type": "integer"
                     },
                     "unit_price": {
                         "type": "number"
@@ -25395,7 +26084,10 @@
                         ]
                     },
                     "cancellation_reason": {
-                        "type": "string"
+                        "type": [
+                            "string",
+                            "null"
+                        ]
                     },
                     "refund": {
                         "type": [
@@ -25489,6 +26181,9 @@
                     "status": {
                         "type": "string"
                     },
+                    "state": {
+                        "type": "string"
+                    },
                     "points": {
                         "type": "string"
                     },
@@ -25543,6 +26238,7 @@
                     "slug",
                     "contact_phone",
                     "status",
+                    "state",
                     "points",
                     "address",
                     "lat",
@@ -25551,6 +26247,16 @@
                 ],
                 "title": "CenterResource"
             },
+            "CenterState": {
+                "type": "string",
+                "description": "Admin-controlled account state of a center. Only active centers are shown to clients and can use their center-scoped endpoints. Independent of `CenterStatus`, which is the center's own listing visibility.\n",
+                "enum": [
+                    "pending",
+                    "active",
+                    "blocked"
+                ],
+                "title": "CenterState"
+            },
             "CenterStatus": {
                 "type": "string",
                 "enum": [
@@ -25558,6 +26264,36 @@
                     "invisible"
                 ],
                 "title": "CenterStatus"
+            },
+            "CenterUserPermission": {
+                "type": "string",
+                "description": "Permissions that can be granted to the users of a center. Stored as Spatie permissions on the `center_user` guard, scoped to the center through the permission team id. The primary user implicitly holds all of them.\n",
+                "enum": [
+                    "services.recreation_riding.manage",
+                    "services.visit.manage",
+                    "services.event.manage",
+                    "services.resort.manage",
+                    "services.horse_care.manage",
+                    "services.horse_service.manage",
+                    "services.training.manage",
+                    "purchases.recreation_riding.view",
+                    "purchases.visit.view",
+                    "purchases.event.view",
+                    "purchases.resort.view",
+                    "purchases.horse_care.view",
+                    "purchases.horse_service.view",
+                    "purchases.training.view",
+                    "users.manage",
+                    "purchases.view_prices",
+                    "reservations.edit",
+                    "purchases.view_other_trainers",
+                    "purchases.view_unassigned",
+                    "reservations.manage",
+                    "ratings.view",
+                    "blocked_clients.manage",
+                    "discounts.manage"
+                ],
+                "title": "CenterUserPermission"
             },
             "CenterWithRoleResource": {
                 "type": "object",
@@ -25568,17 +26304,25 @@
                     "name": {
                         "type": "string"
                     },
+                    "state": {
+                        "$ref": "#/components/schemas/CenterState"
+                    },
                     "role": {
                         "type": [
                             "string",
                             "null"
                         ]
+                    },
+                    "is_primary": {
+                        "type": "boolean"
                     }
                 },
                 "required": [
                     "id",
                     "name",
-                    "role"
+                    "state",
+                    "role",
+                    "is_primary"
                 ],
                 "title": "CenterWithRoleResource"
             },
@@ -25673,7 +26417,7 @@
                 "type": "object",
                 "properties": {
                     "id": {
-                        "type": "string"
+                        "type": "integer"
                     },
                     "status": {
                         "type": "string"
@@ -25699,7 +26443,10 @@
                         ]
                     },
                     "service_package_id": {
-                        "type": "string"
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
                     },
                     "duration_minutes": {
                         "type": [
@@ -25708,10 +26455,10 @@
                         ]
                     },
                     "total_sessions": {
-                        "type": "string"
+                        "type": "integer"
                     },
                     "remaining_sessions": {
-                        "type": "string"
+                        "type": "integer"
                     },
                     "price": {
                         "type": "number"
@@ -27371,16 +28118,16 @@
                                     ],
                                     "properties": {
                                         "id": {
-                                            "type": "string"
+                                            "type": "integer"
                                         },
                                         "count": {
-                                            "type": "string"
+                                            "type": "integer"
                                         },
                                         "price": {
-                                            "type": "string"
+                                            "type": "number"
                                         },
                                         "duration": {
-                                            "type": "string"
+                                            "type": "integer"
                                         }
                                     },
                                     "required": [
@@ -27559,7 +28306,7 @@
                 "type": "object",
                 "properties": {
                     "id": {
-                        "type": "string"
+                        "type": "integer"
                     },
                     "name": {
                         "type": "string"
@@ -27579,7 +28326,7 @@
                 "type": "object",
                 "properties": {
                     "id": {
-                        "type": "string"
+                        "type": "integer"
                     },
                     "service_id": {
                         "type": "integer"
@@ -27628,16 +28375,16 @@
                                     ],
                                     "properties": {
                                         "id": {
-                                            "type": "string"
+                                            "type": "integer"
                                         },
                                         "count": {
-                                            "type": "string"
+                                            "type": "integer"
                                         },
                                         "price": {
-                                            "type": "string"
+                                            "type": "number"
                                         },
                                         "duration": {
-                                            "type": "string"
+                                            "type": "integer"
                                         }
                                     },
                                     "required": [
@@ -27969,10 +28716,6 @@
                     "id",
                     "status",
                     "source",
-                    "subtotal",
-                    "discount_amount",
-                    "tax_amount",
-                    "total_amount",
                     "created_at"
                 ],
                 "title": "PurchaseDetailsResource"
@@ -28060,10 +28803,6 @@
                     "id",
                     "status",
                     "source",
-                    "subtotal",
-                    "discount_amount",
-                    "tax_amount",
-                    "total_amount",
                     "created_at"
                 ],
                 "title": "PurchaseResource"
@@ -28363,16 +29102,16 @@
                                     ],
                                     "properties": {
                                         "id": {
-                                            "type": "string"
+                                            "type": "integer"
                                         },
                                         "count": {
-                                            "type": "string"
+                                            "type": "integer"
                                         },
                                         "price": {
-                                            "type": "string"
+                                            "type": "number"
                                         },
                                         "duration": {
-                                            "type": "string"
+                                            "type": "integer"
                                         }
                                     },
                                     "required": [
@@ -28525,13 +29264,16 @@
                 "type": "object",
                 "properties": {
                     "id": {
-                        "type": "string"
+                        "type": "integer"
                     },
                     "kind": {
                         "type": "string"
                     },
                     "price_option_id": {
-                        "type": "string"
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
                     },
                     "name": {
                         "type": [
@@ -28540,7 +29282,7 @@
                         ]
                     },
                     "quantity": {
-                        "type": "string"
+                        "type": "integer"
                     },
                     "unit_price": {
                         "type": "number"
@@ -28564,7 +29306,7 @@
                 "type": "object",
                 "properties": {
                     "id": {
-                        "type": "string"
+                        "type": "integer"
                     },
                     "status": {
                         "type": "string"
@@ -28573,7 +29315,7 @@
                         "type": "string"
                     },
                     "center_id": {
-                        "type": "string"
+                        "type": "integer"
                     },
                     "service": {
                         "type": "object",
@@ -28602,7 +29344,7 @@
                         ],
                         "properties": {
                             "id": {
-                                "type": "string"
+                                "type": "integer"
                             },
                             "name": {
                                 "type": "string"
@@ -28614,10 +29356,16 @@
                         ]
                     },
                     "price_option_id": {
-                        "type": "string"
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
                     },
                     "client_package_id": {
-                        "type": "string"
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
                     },
                     "date": {
                         "type": "string"
@@ -28641,7 +29389,7 @@
                         ]
                     },
                     "quantity": {
-                        "type": "string"
+                        "type": "integer"
                     },
                     "unit_price": {
                         "type": "number"
@@ -28665,7 +29413,10 @@
                         ]
                     },
                     "cancellation_reason": {
-                        "type": "string"
+                        "type": [
+                            "string",
+                            "null"
+                        ]
                     },
                     "refund": {
                         "type": [
@@ -28981,6 +29732,19 @@
                 ],
                 "title": "SendLoginOtpRequest"
             },
+            "SendRegisterOtpRequest": {
+                "type": "object",
+                "properties": {
+                    "phone": {
+                        "type": "string",
+                        "maxLength": 32
+                    }
+                },
+                "required": [
+                    "phone"
+                ],
+                "title": "SendRegisterOtpRequest"
+            },
             "ServiceBlockRequest": {
                 "type": "object",
                 "description": "Body shared by create and update. `service_id` omitted or `null` blocks\nall of the center's services; otherwise it must be a service belonging\nto the center. A single-date block is `start_date` equal to `end_date`.\n`hours` is a flat list of `start, end` pairs (`[\"12:00\",\"13:00\",\"19:00\",\"20:00\"]`\nfor two separate periods); required when `time_scope` is `specific_time`\nand must be absent when it is `all_day`.",
@@ -29127,87 +29891,6 @@
                 ],
                 "title": "ServiceDetailsResource"
             },
-            "ServicePeriodRequest": {
-                "type": "object",
-                "description": "Replaces a service's gender periods. `female` and `male` are each optional\n(omit or `null` for none): `days` is a list of weekday numbers (0-6) and\n`hours` a flat list of `start, end` pairs (`[\"09:00\",\"12:00\"]`) applied to\nevery chosen day.",
-                "properties": {
-                    "female": {
-                        "type": "object",
-                        "properties": {
-                            "days": {
-                                "type": "array",
-                                "items": {
-                                    "type": "integer",
-                                    "minimum": 0,
-                                    "maximum": 6
-                                },
-                                "minItems": 1,
-                                "maxItems": 7,
-                                "uniqueItems": true
-                            },
-                            "hours": {
-                                "type": "array",
-                                "items": {
-                                    "type": "string"
-                                },
-                                "minItems": 2,
-                                "maxItems": 48
-                            }
-                        },
-                        "required": [
-                            "days",
-                            "hours"
-                        ]
-                    },
-                    "male": {
-                        "type": "object",
-                        "properties": {
-                            "days": {
-                                "type": "array",
-                                "items": {
-                                    "type": "integer",
-                                    "minimum": 0,
-                                    "maximum": 6
-                                },
-                                "minItems": 1,
-                                "maxItems": 7,
-                                "uniqueItems": true
-                            },
-                            "hours": {
-                                "type": "array",
-                                "items": {
-                                    "type": "string"
-                                },
-                                "minItems": 2,
-                                "maxItems": 48
-                            }
-                        },
-                        "required": [
-                            "days",
-                            "hours"
-                        ]
-                    }
-                },
-                "title": "ServicePeriodRequest"
-            },
-            "ServicePeriodResource": {
-                "type": "object",
-                "properties": {
-                    "service_id": {
-                        "anyOf": [
-                            {
-                                "type": "integer"
-                            },
-                            {}
-                        ]
-                    }
-                },
-                "required": [
-                    "service_id"
-                ],
-                "additionalProperties": {},
-                "title": "ServicePeriodResource"
-            },
             "ServiceType": {
                 "type": "string",
                 "enum": [
@@ -29341,6 +30024,9 @@
                     "status": {
                         "$ref": "#/components/schemas/CenterStatus"
                     },
+                    "state": {
+                        "$ref": "#/components/schemas/CenterState"
+                    },
                     "primary_user_id": {
                         "type": [
                             "integer",
@@ -29384,6 +30070,39 @@
                     "contact_phone"
                 ],
                 "title": "StoreCenterRequest"
+            },
+            "StoreCenterUserRequest": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "phone": {
+                        "type": "string",
+                        "maxLength": 32
+                    },
+                    "trainer_id": {
+                        "type": "integer"
+                    },
+                    "status": {
+                        "$ref": "#/components/schemas/ActivationStatus"
+                    },
+                    "permissions": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CenterUserPermission"
+                        },
+                        "uniqueItems": true
+                    }
+                },
+                "required": [
+                    "name",
+                    "phone",
+                    "trainer_id",
+                    "permissions"
+                ],
+                "title": "StoreCenterUserRequest"
             },
             "StoreCouponRequest": {
                 "type": "object",
@@ -29854,7 +30573,7 @@
                 "type": "object",
                 "properties": {
                     "id": {
-                        "type": "string"
+                        "type": "integer"
                     },
                     "name": {
                         "type": "string"
@@ -29937,16 +30656,19 @@
                 "type": "object",
                 "properties": {
                     "id": {
-                        "type": "string"
+                        "type": "integer"
                     },
                     "center_id": {
-                        "type": "string"
+                        "type": "integer"
                     },
                     "name": {
                         "type": "string"
                     },
                     "max_tickets_per_hour": {
-                        "type": "string"
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
                     },
                     "days": {
                         "type": "array",
@@ -29957,25 +30679,6 @@
                         "items": {
                             "type": "string"
                         }
-                    },
-                    "training_services": {
-                        "type": "array",
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "id": {
-                                    "type": "string"
-                                },
-                                "name": {
-                                    "type": "array",
-                                    "items": {}
-                                }
-                            },
-                            "required": [
-                                "id",
-                                "name"
-                            ]
-                        }
                     }
                 },
                 "required": [
@@ -29984,8 +30687,7 @@
                     "name",
                     "max_tickets_per_hour",
                     "days",
-                    "hours",
-                    "training_services"
+                    "hours"
                 ],
                 "title": "TrainerResource"
             },
@@ -30142,7 +30844,7 @@
                 "type": "object",
                 "properties": {
                     "id": {
-                        "type": "string"
+                        "type": "integer"
                     },
                     "service_id": {
                         "type": "integer"
@@ -30197,16 +30899,16 @@
                                     ],
                                     "properties": {
                                         "id": {
-                                            "type": "string"
+                                            "type": "integer"
                                         },
                                         "count": {
-                                            "type": "string"
+                                            "type": "integer"
                                         },
                                         "price": {
-                                            "type": "string"
+                                            "type": "number"
                                         },
                                         "duration": {
-                                            "type": "string"
+                                            "type": "integer"
                                         }
                                     },
                                     "required": [
@@ -30231,7 +30933,7 @@
                             "type": "object",
                             "properties": {
                                 "id": {
-                                    "type": "string"
+                                    "type": "integer"
                                 },
                                 "name": {
                                     "type": "string"
@@ -30322,6 +31024,9 @@
                     "status": {
                         "$ref": "#/components/schemas/CenterStatus"
                     },
+                    "state": {
+                        "$ref": "#/components/schemas/CenterState"
+                    },
                     "tags": {
                         "type": "array",
                         "items": {
@@ -30354,6 +31059,29 @@
                     }
                 },
                 "title": "UpdateCenterRequest"
+            },
+            "UpdateCenterUserRequest": {
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "trainer_id": {
+                        "type": "integer"
+                    },
+                    "status": {
+                        "$ref": "#/components/schemas/ActivationStatus"
+                    },
+                    "permissions": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/CenterUserPermission"
+                        },
+                        "uniqueItems": true
+                    }
+                },
+                "title": "UpdateCenterUserRequest"
             },
             "UpdateCouponStatusRequest": {
                 "type": "object",
