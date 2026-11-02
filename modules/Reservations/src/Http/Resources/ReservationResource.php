@@ -5,6 +5,7 @@ namespace Modules\Reservations\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Modules\Reservations\Models\Reservation;
+use Modules\Services\Models\Schedule;
 
 /**
  * A reservation as its client sees it.
@@ -35,8 +36,8 @@ class ReservationResource extends JsonResource
             'client_package_id' => $reservation->client_package_id,
             'date' => $reservation->date->toDateString(),
             'end_date' => $reservation->end_date?->toDateString(),
-            'start_time' => $reservation->start_time !== null ? substr($reservation->start_time, 0, 5) : null,
-            'end_time' => $reservation->end_time !== null ? substr($reservation->end_time, 0, 5) : null,
+            'start_time' => Schedule::clockTime($reservation->start_time),
+            'end_time' => Schedule::clockTime($reservation->end_time),
             'quantity' => $reservation->quantity,
             'unit_price' => (float) $reservation->unit_price,
             'subtotal' => (float) $reservation->subtotal,

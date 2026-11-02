@@ -5,6 +5,7 @@ namespace Modules\Services\Services;
 use Illuminate\Support\Facades\DB;
 use Modules\Services\Enums\ServiceType;
 use Modules\Services\Models\RecreationalRiding;
+use Modules\Services\Models\Schedule;
 use Modules\Support\Enums\ActivationStatus;
 
 class RecreationRidingService
@@ -51,7 +52,7 @@ class RecreationRidingService
                     $riding->schedules()->create([
                         'day_of_week' => $day,
                         'start_time' => $hours[$startIndex],
-                        'end_time' => $hours[$endIndex],
+                        'end_time' => Schedule::endTime($hours[$endIndex]),
                     ]);
                 }
             }
@@ -108,7 +109,7 @@ class RecreationRidingService
                     $riding->schedules()->create([
                         'day_of_week' => $day,
                         'start_time' => $hours[$startIndex],
-                        'end_time' => $hours[$endIndex],
+                        'end_time' => Schedule::endTime($hours[$endIndex]),
                     ]);
                 }
             }

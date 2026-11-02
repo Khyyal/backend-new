@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Modules\Centers\Models\Center;
+use Modules\Services\Models\Schedule;
 use Modules\Services\Models\Trainer;
 
 class TrainerService
@@ -99,7 +100,7 @@ class TrainerService
                 $trainer->schedules()->create([
                     'day_of_week' => $day,
                     'start_time' => $hours[$i * 2],
-                    'end_time' => $hours[$i * 2 + 1],
+                    'end_time' => Schedule::endTime($hours[$i * 2 + 1]),
                 ]);
             }
         }

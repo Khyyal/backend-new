@@ -102,7 +102,8 @@ final class HourlySlots
         return $this->slots($schedules, $date)
             ->map(function (CarbonImmutable $startsAt) use ($maxTickets, $blockedAllDay, $blockedPeriods, $dayReservations, $acceptsBookings): array {
                 $start = $startsAt->format('H:i:s');
-                $end = $startsAt->addHour()->format('H:i:s');
+                $endsAt = $startsAt->addHour();
+                $end = $endsAt->isSameDay($startsAt) ? $endsAt->format('H:i:s') : Schedule::END_OF_DAY;
 
                 $reserved = (int) $dayReservations
                     ->filter(fn (Reservation $reservation): bool => BookingGuard::normalizeTime($reservation->start_time) < $end

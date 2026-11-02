@@ -5,6 +5,7 @@ namespace Modules\Services\Http\Resources\Client;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Modules\Services\Models\RecreationalRiding;
+use Modules\Services\Models\Schedule;
 use Modules\Support\Http\Resources\MediaResource;
 
 /**
@@ -56,7 +57,7 @@ class RecreationRidingResource extends JsonResource
             ])->values(),
             'days' => $schedules->pluck('day_of_week')->unique()->values(),
             'hours' => $schedules->where('day_of_week', $firstDay)
-                ->flatMap(fn ($slot) => [substr($slot->start_time, 0, 5), substr($slot->end_time, 0, 5)])
+                ->flatMap(fn ($slot) => [Schedule::clockTime($slot->start_time), Schedule::clockTime($slot->end_time)])
                 ->values(),
             'availability' => $this->availability,
             'cover' => $this->singleMedia('cover'),

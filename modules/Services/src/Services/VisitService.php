@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\DB;
 use Modules\Services\Enums\PriceOptionUnit;
 use Modules\Services\Enums\ServiceType;
 use Modules\Services\Enums\VisitEnterType;
+use Modules\Services\Models\Schedule;
 use Modules\Services\Models\Visit;
 use Modules\Support\Enums\ActivationStatus;
 
@@ -150,7 +151,7 @@ class VisitService
                 $visit->schedules()->create([
                     'day_of_week' => $day,
                     'start_time' => $hours[$startIndex],
-                    'end_time' => $hours[$endIndex],
+                    'end_time' => Schedule::endTime($hours[$endIndex]),
                 ]);
             }
         }

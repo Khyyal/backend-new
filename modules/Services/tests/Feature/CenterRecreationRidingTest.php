@@ -7,6 +7,7 @@ use Modules\Centers\Database\Factories\CenterFactory;
 use Modules\Centers\Database\Factories\UserFactory;
 use Modules\Centers\Enums\CenterUserPermission;
 use Modules\Services\Models\RecreationalRiding;
+use Modules\Services\Models\Schedule;
 use Modules\Support\Enums\ActivationStatus;
 use Modules\Support\Services\Media\TemporaryMediaService;
 use Tests\TestCase;
@@ -69,6 +70,21 @@ test('validates the body', function (): void {
 
     $this->actingAs($this->user, 'center_user')
         ->postJson($this->url, ($this->body)(['hours' => ['12:00', '09:00']]))
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['hours.1']);
+});
+
+test('accepts 00:00 as the end of the day', function (): void {
+    $this->actingAs($this->user, 'center_user')
+        ->postJson($this->url, ($this->body)(['hours' => ['00:00', '01:00', '23:00', '00:00']]))
+        ->assertCreated()
+        ->assertJsonPath('data.hours', ['00:00', '01:00', '23:00', '00:00']);
+
+    expect(RecreationalRiding::query()->sole()->schedules()->where('start_time', '23:00')->pluck('end_time')->unique()->all())
+        ->toBe([Schedule::END_OF_DAY]);
+
+    $this->actingAs($this->user, 'center_user')
+        ->postJson($this->url, ($this->body)(['hours' => ['01:00', '00:30']]))
         ->assertUnprocessable()
         ->assertJsonValidationErrors(['hours.1']);
 });

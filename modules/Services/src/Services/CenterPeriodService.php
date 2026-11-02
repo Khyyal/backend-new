@@ -5,6 +5,7 @@ namespace Modules\Services\Services;
 use Illuminate\Support\Facades\DB;
 use Modules\Centers\Models\Center;
 use Modules\Services\Enums\PeriodGender;
+use Modules\Services\Models\Schedule;
 
 class CenterPeriodService
 {
@@ -32,7 +33,7 @@ class CenterPeriodService
                             'gender' => $gender->value,
                             'day_of_week' => $day,
                             'start_time' => $start,
-                            'end_time' => $end,
+                            'end_time' => Schedule::endTime($end),
                         ];
                     }
                 }

@@ -10,6 +10,7 @@ use Modules\Reservations\Booking\ReservationRules;
 use Modules\Reservations\Exceptions\ReservationNotAllowedException;
 use Modules\Services\Enums\PriceOptionUnit;
 use Modules\Services\Models\PriceOption;
+use Modules\Services\Models\Schedule;
 
 /**
  * Rules for services booked by the hour on a duration price option, alone or
@@ -42,12 +43,14 @@ abstract class HourlySlotRules implements ReservationRules
         $startsAt = $request->date->setTimeFromTimeString($request->startTime);
         $endsAt = $startsAt->addMinutes((int) $option->quantity);
 
-        if (! $endsAt->isSameDay($startsAt)) {
+        $endsAtMidnight = $endsAt->eq($startsAt->addDay()->startOfDay());
+
+        if (! $endsAt->isSameDay($startsAt) && ! $endsAtMidnight) {
             throw ReservationNotAllowedException::because('outside_schedule');
         }
 
         $startTime = $startsAt->format('H:i:s');
-        $endTime = $endsAt->format('H:i:s');
+        $endTime = $endsAtMidnight ? Schedule::END_OF_DAY : $endsAt->format('H:i:s');
 
         $this->guard->ensureNotInPast($request->date, $startTime);
 

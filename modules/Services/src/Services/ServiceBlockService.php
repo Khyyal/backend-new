@@ -7,6 +7,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Arr;
 use Modules\Centers\Models\Center;
 use Modules\Services\Enums\BlockTimeScope;
+use Modules\Services\Models\Schedule;
 use Modules\Services\Models\ServiceBlock;
 
 class ServiceBlockService
@@ -74,7 +75,7 @@ class ServiceBlockService
         for ($i = 0; $i < $slotCount; $i++) {
             $block->periods()->create([
                 'start_time' => $hours[$i * 2],
-                'end_time' => $hours[$i * 2 + 1],
+                'end_time' => Schedule::endTime($hours[$i * 2 + 1]),
             ]);
         }
     }

@@ -4,6 +4,7 @@ namespace Modules\Reservations\Http\Resources;
 
 use Illuminate\Http\Request;
 use Modules\Reservations\Models\Reservation;
+use Modules\Services\Models\Schedule;
 
 /**
  * A client package with the sessions booked from it.
@@ -18,8 +19,8 @@ class CenterClientPackageDetailsResource extends CenterClientPackageResource
                 'id' => $reservation->id,
                 'status' => $reservation->status->value,
                 'date' => $reservation->date->toDateString(),
-                'start_time' => $reservation->start_time !== null ? substr($reservation->start_time, 0, 5) : null,
-                'end_time' => $reservation->end_time !== null ? substr($reservation->end_time, 0, 5) : null,
+                'start_time' => Schedule::clockTime($reservation->start_time),
+                'end_time' => Schedule::clockTime($reservation->end_time),
             ])->all()),
         ];
     }

@@ -12,6 +12,7 @@ use Modules\Reservations\Tests\Support\BookingFixtures;
 use Modules\Services\Enums\PriceOptionUnit;
 use Modules\Services\Enums\ServiceType;
 use Modules\Services\Models\RecreationalRiding;
+use Modules\Services\Models\Schedule;
 use Modules\Services\Models\ServicePackage;
 use Tests\TestCase;
 
@@ -65,6 +66,17 @@ test('the slot must fit inside a schedule window', function (string $date, strin
     'starts before opening' => ['2026-10-26', '08:30'],
     'closed weekday' => ['2026-10-27', '10:00'],
 ]);
+
+test('a slot may end at midnight of a window that closes at midnight', function (): void {
+    BookingFixtures::schedule($this->riding, 1, '22:00', Schedule::END_OF_DAY);
+
+    $quote = ($this->book)(['startTime' => '23:00']);
+
+    expect($quote->startTime)->toBe('23:00:00')
+        ->and($quote->endTime)->toBe(Schedule::END_OF_DAY)
+        ->and(fn () => ($this->book)(['startTime' => '23:30']))
+        ->toThrow(ReservationNotAllowedException::class, 'The selected time is outside the service working hours.');
+});
 
 test('capacity counts overlapping active reservations only', function (): void {
     ReservationFactory::new()->forService($this->service)->at('2026-10-26', '10:30:00', '11:00:00')->state(['quantity' => 3])->create();
