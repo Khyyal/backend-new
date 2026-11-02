@@ -207,8 +207,15 @@ class BookingGuard
         }
     }
 
+    /**
+     * `H:i:s` form of a time; the end of the day stays `24:00:00` instead of rolling over to `00:00:00`.
+     */
     public static function normalizeTime(string $time): string
     {
+        if (str_starts_with($time, '24:00')) {
+            return Schedule::END_OF_DAY;
+        }
+
         return CarbonImmutable::parse($time)->format('H:i:s');
     }
 

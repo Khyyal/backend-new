@@ -6,6 +6,7 @@ use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
 use Modules\Services\Enums\PeriodGender;
+use Modules\Services\Models\Schedule;
 
 /**
  * Replaces a center's gender periods (applied to all its services). `female` and `male` are each optional
@@ -42,24 +43,7 @@ class CenterPeriodRequest extends FormRequest
         return [
             function (Validator $validator): void {
                 foreach (PeriodGender::cases() as $gender) {
-                    $key = $gender->value;
-                    $hours = $this->input("$key.hours");
-
-                    if (! is_array($hours) || $validator->errors()->has("$key.hours") || $validator->errors()->has("$key.hours.*")) {
-                        continue;
-                    }
-
-                    if (count($hours) % 2 !== 0) {
-                        $validator->errors()->add("$key.hours", 'hours must contain start and end pairs.');
-
-                        continue;
-                    }
-
-                    foreach (array_chunk($hours, 2) as $index => [$start, $end]) {
-                        if ($start >= $end) {
-                            $validator->errors()->add("$key.hours.".($index * 2 + 1), 'Each end time must be after its start time.');
-                        }
-                    }
+                    Schedule::validateHourPairs($validator, $this->input("{$gender->value}.hours"), "{$gender->value}.hours");
                 }
             },
         ];

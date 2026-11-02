@@ -9,6 +9,7 @@ use Modules\Reservations\Tests\Support\BookingFixtures;
 use Modules\Services\Enums\BlockTimeScope;
 use Modules\Services\Enums\ServiceType;
 use Modules\Services\Models\Resort;
+use Modules\Services\Models\Schedule;
 use Modules\Services\Models\ServiceBlock;
 use Tests\TestCase;
 
@@ -56,6 +57,14 @@ test('skips partial hours at the end of a window', function (): void {
     BookingFixtures::schedule($this->service->serviceable, 2, '14:00', '16:30');
 
     expect(collect(($this->availability)()['2026-10-20']['hours'])->pluck('hour')->all())->toBe(['14:00', '15:00']);
+});
+
+test('a window ending at midnight offers its last hour', function (): void {
+    BookingFixtures::schedule($this->service->serviceable, 2, '22:00', Schedule::END_OF_DAY);
+    ReservationFactory::new()->forService($this->service)->at('2026-10-20', '23:00:00', Schedule::END_OF_DAY)->create(['quantity' => 3]);
+
+    expect(collect(($this->availability)()['2026-10-20']['hours'])->pluck('available_tickets', 'hour')->all())
+        ->toBe(['22:00' => 4, '23:00' => 1]);
 });
 
 test('subtracts reserved tickets of overlapping reservations', function (): void {

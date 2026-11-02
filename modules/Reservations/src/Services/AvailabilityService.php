@@ -246,6 +246,6 @@ class AvailabilityService
 
     private static function hour(string $time): string
     {
-        return substr(BookingGuard::normalizeTime($time), 0, 5);
+        return Schedule::clockTime(BookingGuard::normalizeTime($time));
     }
 }
