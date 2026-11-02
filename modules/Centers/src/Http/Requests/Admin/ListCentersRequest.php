@@ -5,6 +5,7 @@ namespace Modules\Centers\Http\Requests\Admin;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
+use Modules\Centers\Enums\CenterState;
 use Modules\Centers\Enums\CenterStatus;
 use Modules\Centers\Models\Center;
 
@@ -23,6 +24,7 @@ class ListCentersRequest extends FormRequest
         return [
             'search' => ['sometimes', 'nullable', 'string', 'max:255'],
             'status' => ['sometimes', 'nullable', Rule::enum(CenterStatus::class)],
+            'state' => ['sometimes', 'nullable', Rule::enum(CenterState::class)],
             'city_id' => ['sometimes', 'nullable', 'integer', 'exists:cities,id'],
             'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
         ];

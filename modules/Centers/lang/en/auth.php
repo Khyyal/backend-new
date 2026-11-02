@@ -6,4 +6,6 @@ return [
     'password_field' => 'password',
     'invalid_password' => 'The provided password is incorrect.',
     'center_access_scope_required' => 'This action requires a center-scoped access credential. Please obtain one via POST /centers/{center}/access.',
+    'center_not_active' => 'This center is :state and cannot use this feature.',
+    'center_states' => ['pending' => 'pending review', 'active' => 'active', 'blocked' => 'blocked'],
 ];

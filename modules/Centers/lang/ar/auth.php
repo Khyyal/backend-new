@@ -6,4 +6,6 @@ return [
     'password_field' => 'كلمة المرور',
     'invalid_password' => 'كلمة المرور المقدمة غير صحيحة.',
     'center_access_scope_required' => 'هذا الإجراء يتطلب صلاحيات الدخول المخصصة للمركز. يرجى الحصول عليها عبر POST /centers/{center}/access.',
+    'center_not_active' => 'هذا المركز :state ولا يمكنه استخدام هذه الميزة.',
+    'center_states' => ['pending' => 'قيد المراجعة', 'active' => 'نشط', 'blocked' => 'محظور'],
 ];

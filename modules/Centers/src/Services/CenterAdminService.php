@@ -22,14 +22,14 @@ use Spatie\Permission\PermissionRegistrar;
  */
 class CenterAdminService
 {
-    private const ATTRIBUTES = ['city_id', 'status'];
+    private const ATTRIBUTES = ['city_id', 'status', 'state'];
 
-    private const CREATE_ATTRIBUTES = ['name', 'city_id', 'description', 'lat', 'lng', 'address', 'contact_phone', 'status'];
+    private const CREATE_ATTRIBUTES = ['name', 'city_id', 'description', 'lat', 'lng', 'address', 'contact_phone', 'status', 'state'];
 
     public function __construct(private readonly CenterUpdateService $updateService) {}
 
     /**
-     * @param  array{search?: ?string, status?: ?string, city_id?: ?int}  $filters
+     * @param  array{search?: ?string, status?: ?string, state?: ?string, city_id?: ?int}  $filters
      */
     public function paginate(array $filters, int $perPage = 15): LengthAwarePaginator
     {
@@ -40,6 +40,7 @@ class CenterAdminService
                     ->where('name', 'like', "%{$search}%")
                     ->orWhere('contact_phone', 'like', "%{$search}%")))
             ->when($filters['status'] ?? null, fn (Builder $query, string $status) => $query->where('status', $status))
+            ->when($filters['state'] ?? null, fn (Builder $query, string $state) => $query->where('state', $state))
             ->when($filters['city_id'] ?? null, fn (Builder $query, int $cityId) => $query->where('city_id', $cityId))
             ->latest('id')
             ->paginate($perPage);

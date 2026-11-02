@@ -3,6 +3,7 @@
 namespace Modules\Support\Services;
 
 use Illuminate\Database\Eloquent\Collection;
+use Modules\Centers\Enums\CenterState;
 use Modules\Centers\Enums\CenterStatus;
 use Modules\Support\Models\City;
 
@@ -25,7 +26,8 @@ class CityService
     {
         return City::query()
             ->whereHas('centers', function ($query) {
-                $query->where('status', CenterStatus::VISIBLE);
+                $query->where('status', CenterStatus::VISIBLE)
+                    ->where('state', CenterState::Active);
             })
             ->orderBy('name')
             ->get();
