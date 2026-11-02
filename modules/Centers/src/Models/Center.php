@@ -117,6 +117,7 @@ class Center extends Model implements Buyer, HasMedia
                 'status',
                 'joined_at',
                 'is_primary',
+                'trainer_id',
             ])
             ->withTimestamps();
     }

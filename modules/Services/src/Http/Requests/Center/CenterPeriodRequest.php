@@ -17,7 +17,7 @@ class CenterPeriodRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return Gate::forUser($this->user())->allows('manageServices', $this->route('center'));
+        return Gate::forUser($this->user())->allows('manageAllServices', $this->route('center'));
     }
 
     public function rules(): array

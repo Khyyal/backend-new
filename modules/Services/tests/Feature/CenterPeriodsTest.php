@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Centers\Database\Factories\CenterFactory;
 use Modules\Centers\Database\Factories\UserFactory;
+use Modules\Centers\Enums\CenterUserPermission;
 use Modules\Services\Enums\PeriodGender;
 use Modules\Services\Models\CenterPeriod;
 use Modules\Support\Enums\ActivationStatus;
@@ -18,6 +19,7 @@ beforeEach(function (): void {
         'joined_at' => now()->toDateString(),
         'is_primary' => false,
     ]);
+    $this->user->syncCenterPermissions($this->center, CenterUserPermission::manageServicesPermissions());
 
     $this->url = "/api/v1/centers/{$this->center->id}/periods";
 });

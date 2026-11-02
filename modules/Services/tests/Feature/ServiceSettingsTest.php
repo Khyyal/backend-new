@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Centers\Database\Factories\CenterFactory;
 use Modules\Centers\Database\Factories\UserFactory;
+use Modules\Centers\Enums\CenterUserPermission;
 use Modules\Services\Models\Event;
 use Modules\Services\Models\RecreationalRiding;
 use Modules\Services\Models\Resort;
@@ -24,6 +25,7 @@ beforeEach(function (): void {
         'joined_at' => now()->toDateString(),
         'is_primary' => false,
     ]);
+    $this->user->syncCenterPermissions($this->center, CenterUserPermission::manageServicesPermissions());
 
     $base = [
         'name' => ['ar' => 'اسم', 'en' => 'Name'],

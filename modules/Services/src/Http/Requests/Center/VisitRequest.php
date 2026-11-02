@@ -6,6 +6,7 @@ use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rules\Enum;
+use Modules\Services\Enums\ServiceType;
 use Modules\Services\Enums\VisitEnterType;
 use Modules\Services\Models\Visit;
 
@@ -18,7 +19,7 @@ class VisitRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return Gate::forUser($this->user())->allows('manageServices', $this->route('center'));
+        return Gate::forUser($this->user())->allows('manageServices', [$this->route('center'), ServiceType::Visit]);
     }
 
     /**

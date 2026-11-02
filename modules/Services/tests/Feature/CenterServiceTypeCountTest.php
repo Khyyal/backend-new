@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Centers\Database\Factories\CenterFactory;
 use Modules\Centers\Database\Factories\UserFactory;
+use Modules\Centers\Enums\CenterUserPermission;
 use Modules\Services\Enums\ServiceType;
 use Modules\Services\Models\Resort;
 use Modules\Services\Models\Service;
@@ -19,6 +20,7 @@ beforeEach(function (): void {
         'joined_at' => now()->toDateString(),
         'is_primary' => false,
     ]);
+    $this->user->syncCenterPermissions($this->center, CenterUserPermission::manageServicesPermissions());
     $this->url = "/api/v1/centers/{$this->center->id}/service-types/counts";
 });
 
@@ -76,6 +78,7 @@ test('counts are isolated per center', function (): void {
         'joined_at' => now()->toDateString(),
         'is_primary' => false,
     ]);
+    $this->user->syncCenterPermissions($other, CenterUserPermission::manageServicesPermissions());
     attachServiceOfType($other->id, ServiceType::Resort);
     attachServiceOfType($other->id, ServiceType::Resort);
 

@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Modules\Centers\Http\Controllers\Center\AuthController;
 use Modules\Centers\Http\Controllers\Center\BlockedClientController;
 use Modules\Centers\Http\Controllers\Center\CenterController;
+use Modules\Centers\Http\Controllers\Center\CenterUserController;
 use Modules\Centers\Http\Controllers\Center\PurchaseController;
 use Modules\Centers\Http\Controllers\Center\RatingController;
 use Modules\Centers\Http\Controllers\Center\RegisterController;
@@ -65,6 +66,31 @@ Route::middleware(['api'])
 
                         Route::get('/{center}/purchases/{purchase}', [PurchaseController::class, 'show'])
                             ->name('purchases.show');
+
+                        Route::prefix('/{center}/users')
+                            ->name('users.')
+                            ->group(function (): void {
+                                Route::get('/', [CenterUserController::class, 'index'])
+                                    ->name('index');
+
+                                Route::get('/permissions', [CenterUserController::class, 'permissions'])
+                                    ->name('permissions');
+
+                                Route::post('/', [CenterUserController::class, 'store'])
+                                    ->name('store');
+
+                                Route::get('/{user}', [CenterUserController::class, 'show'])
+                                    ->whereNumber('user')
+                                    ->name('show');
+
+                                Route::match(['put', 'patch'], '/{user}', [CenterUserController::class, 'update'])
+                                    ->whereNumber('user')
+                                    ->name('update');
+
+                                Route::delete('/{user}', [CenterUserController::class, 'destroy'])
+                                    ->whereNumber('user')
+                                    ->name('destroy');
+                            });
                     });
             });
 

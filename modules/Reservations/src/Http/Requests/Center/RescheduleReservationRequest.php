@@ -15,7 +15,7 @@ class RescheduleReservationRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return Gate::forUser($this->user())->allows('manageReservations', $this->route('center'));
+        return Gate::forUser($this->user())->allows('editReservations', $this->route('center'));
     }
 
     public function rules(): array

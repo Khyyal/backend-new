@@ -5,6 +5,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Modules\Centers\Database\Factories\CenterFactory;
 use Modules\Centers\Database\Factories\UserFactory;
+use Modules\Centers\Enums\CenterUserPermission;
 use Modules\Services\Database\Factories\TrainerFactory;
 use Modules\Services\Enums\ServiceType;
 use Modules\Services\Models\Service;
@@ -25,6 +26,7 @@ beforeEach(function (): void {
         'joined_at' => now()->toDateString(),
         'is_primary' => false,
     ]);
+    $this->user->syncCenterPermissions($this->center, [CenterUserPermission::ManageTrainingServices]);
     $this->url = "/api/v1/centers/{$this->center->id}/training-services";
     $this->body = fn (array $extra = []) => [
         'name' => ['ar' => 'تدريب', 'en' => 'Training'],
@@ -140,6 +142,7 @@ test('cannot access a training service of another center', function (): void {
         'joined_at' => now()->toDateString(),
         'is_primary' => false,
     ]);
+    $this->user->syncCenterPermissions($other, [CenterUserPermission::ManageTrainingServices]);
 
     $this->getJson("/api/v1/centers/{$other->id}/training-services/{$id}")->assertNotFound();
     $this->deleteJson("/api/v1/centers/{$other->id}/training-services/{$id}")->assertNotFound();

@@ -6,6 +6,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rules\Enum;
 use Modules\Services\Enums\EventOccurrenceType;
+use Modules\Services\Enums\ServiceType;
 use Modules\Services\Models\Event;
 
 /**
@@ -18,7 +19,7 @@ class EventRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return Gate::forUser($this->user())->allows('manageServices', $this->route('center'));
+        return Gate::forUser($this->user())->allows('manageServices', [$this->route('center'), ServiceType::Event]);
     }
 
     /**

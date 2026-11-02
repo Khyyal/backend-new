@@ -11,6 +11,7 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Gate;
 use Modules\Centers\Models\Center;
+use Modules\Services\Enums\ServiceType;
 use Modules\Services\Http\Requests\Center\HorseServiceRequest;
 use Modules\Services\Http\Resources\Center\HorseServiceResource;
 use Modules\Services\Models\HorseService;
@@ -33,7 +34,7 @@ class HorseServiceController extends Controller
     #[Response(status: 403, description: 'The token has no access to this center, or the user is not assigned to it.')]
     public function index(Request $request, Center $center): AnonymousResourceCollection
     {
-        Gate::forUser($request->user())->authorize('manageServices', $center);
+        Gate::forUser($request->user())->authorize('manageServices', [$center, ServiceType::HorseService]);
 
         $horseServices = HorseService::query()
             ->whereHas('service', fn ($query) => $query->where('center_id', $center->getKey()))
@@ -78,7 +79,7 @@ class HorseServiceController extends Controller
     #[Response(status: 404, description: 'No such service in this center.')]
     public function show(Request $request, Center $center, int $horseService): HorseServiceResource
     {
-        Gate::forUser($request->user())->authorize('manageServices', $center);
+        Gate::forUser($request->user())->authorize('manageServices', [$center, ServiceType::HorseService]);
 
         return HorseServiceResource::make($this->service->findForCenter($center, $horseService));
     }
@@ -116,7 +117,7 @@ class HorseServiceController extends Controller
     #[Response(status: 404, description: 'No such service in this center.')]
     public function destroy(Request $request, Center $center, int $horseService): \Illuminate\Http\Response
     {
-        Gate::forUser($request->user())->authorize('manageServices', $center);
+        Gate::forUser($request->user())->authorize('manageServices', [$center, ServiceType::HorseService]);
 
         $this->service->delete($this->service->findForCenter($center, $horseService));
 

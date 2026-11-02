@@ -7,6 +7,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Modules\Centers\Models\Center;
+use Modules\Services\Enums\ServiceType;
 use Modules\Services\Models\TrainingService;
 
 /**
@@ -18,7 +19,7 @@ class TrainingServiceRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return Gate::forUser($this->user())->allows('manageServices', $this->route('center'));
+        return Gate::forUser($this->user())->allows('manageServices', [$this->route('center'), ServiceType::Training]);
     }
 
     /**

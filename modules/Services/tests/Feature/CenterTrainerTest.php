@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Centers\Database\Factories\CenterFactory;
 use Modules\Centers\Database\Factories\UserFactory;
+use Modules\Centers\Enums\CenterUserPermission;
 use Modules\Services\Database\Factories\TrainerFactory;
 use Modules\Services\Models\Schedule;
 use Modules\Services\Models\Trainer;
@@ -19,6 +20,7 @@ beforeEach(function (): void {
         'joined_at' => now()->toDateString(),
         'is_primary' => false,
     ]);
+    $this->user->syncCenterPermissions($this->center, [CenterUserPermission::ManageTrainingServices]);
     $this->url = "/api/v1/centers/{$this->center->id}/trainers";
     $this->body = fn (array $extra = []) => [
         'name' => 'Ahmed',
@@ -81,6 +83,7 @@ test('rejects training services of another center', function (): void {
         'joined_at' => now()->toDateString(),
         'is_primary' => false,
     ]);
+    $this->user->syncCenterPermissions($other, [CenterUserPermission::ManageTrainingServices]);
     $foreignTrainingServiceId = ($this->createTrainingService)($other->id);
 
     $this->actingAs($this->user, 'center_user')

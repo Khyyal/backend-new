@@ -4,6 +4,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Centers\Database\Factories\CenterFactory;
 use Modules\Centers\Database\Factories\UserFactory;
+use Modules\Centers\Enums\CenterUserPermission;
 use Modules\Services\Models\PriceOption;
 use Modules\Services\Models\ServicePackage;
 use Modules\Support\Database\Seeders\SystemRolePermissionSeeder;
@@ -21,6 +22,7 @@ beforeEach(function (): void {
         'joined_at' => now()->toDateString(),
         'is_primary' => false,
     ]);
+    $this->user->syncCenterPermissions($this->center, CenterUserPermission::manageServicesPermissions());
 
     $base = [
         'name' => ['ar' => 'اسم', 'en' => 'Name'],

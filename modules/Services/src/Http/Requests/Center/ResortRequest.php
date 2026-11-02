@@ -4,6 +4,7 @@ namespace Modules\Services\Http\Requests\Center;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
+use Modules\Services\Enums\ServiceType;
 use Modules\Services\Models\Resort;
 
 /**
@@ -15,7 +16,7 @@ class ResortRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return Gate::forUser($this->user())->allows('manageServices', $this->route('center'));
+        return Gate::forUser($this->user())->allows('manageServices', [$this->route('center'), ServiceType::Resort]);
     }
 
     /**

@@ -16,9 +16,11 @@ class PurchaseDetailsResource extends PurchaseResource
      */
     public function toArray(Request $request): array
     {
+        $canViewPrices = $this->canViewPrices($request);
+
         return [
             ...parent::toArray($request),
-            'items' => $this->whenLoaded('items', fn (): array => $this->resource->items->map(fn (PurchaseItem $item): array => [
+            'items' => $this->whenLoaded('items', fn (): array => $this->resource->items->map(fn (PurchaseItem $item): array => $canViewPrices ? [
                 'id' => $item->id,
                 'name' => $item->name,
                 'purchasable_type' => class_basename($item->purchasable_type),
@@ -29,8 +31,14 @@ class PurchaseDetailsResource extends PurchaseResource
                 'discount_amount' => (float) $item->discount_amount,
                 'tax_amount' => (float) $item->tax_amount,
                 'total_amount' => (float) $item->total_amount,
+            ] : [
+                'id' => $item->id,
+                'name' => $item->name,
+                'purchasable_type' => class_basename($item->purchasable_type),
+                'purchasable_id' => $item->purchasable_id,
+                'quantity' => $item->quantity,
             ])->all()),
-            'payments' => $this->whenLoaded('payments', fn (): array => $this->resource->payments->map(fn (Payment $payment): array => [
+            'payments' => $this->when($canViewPrices, fn () => $this->whenLoaded('payments', fn (): array => $this->resource->payments->map(fn (Payment $payment): array => [
                 'id' => $payment->id,
                 'method' => $payment->method->value,
                 'status' => $payment->status->value,
@@ -39,7 +47,7 @@ class PurchaseDetailsResource extends PurchaseResource
                 'refunded_amount' => (float) $payment->refunded_amount,
                 'paid_at' => $payment->paid_at?->toIso8601String(),
                 'refunded_at' => $payment->refunded_at?->toIso8601String(),
-            ])->all()),
+            ])->all())),
         ];
     }
 }
