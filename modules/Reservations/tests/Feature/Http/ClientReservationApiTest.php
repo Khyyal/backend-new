@@ -162,7 +162,7 @@ describe('availability', function (): void {
     test('shows windows, booked slots, blocks and periods per day', function (): void {
         ReservationFactory::new()->forService($this->service)->at('2026-10-26', '10:00:00', '11:00:00')->create(['quantity' => 2]);
         ReservationFactory::new()->forService($this->service)->at('2026-10-26', '10:00:00', '11:00:00')->create(['quantity' => 1]);
-        $this->service->periods()->create(['gender' => PeriodGender::Female, 'day_of_week' => 1, 'start_time' => '09:00', 'end_time' => '10:00']);
+        $this->center->periods()->create(['gender' => PeriodGender::Female, 'day_of_week' => 1, 'start_time' => '09:00', 'end_time' => '10:00']);
         ServiceBlock::query()->create([
             'reason' => 'Holiday',
             'center_id' => $this->center->id,

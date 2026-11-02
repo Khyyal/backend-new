@@ -5,12 +5,12 @@ namespace Modules\Services\Http\Resources\Center;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Modules\Services\Enums\PeriodGender;
-use Modules\Services\Models\Service;
+use Modules\Centers\Models\Center;
 
 /**
- * @property Service $resource
+ * @property Center $resource
  */
-class ServicePeriodResource extends JsonResource
+class CenterPeriodResource extends JsonResource
 {
     public function toArray(Request $request): array
     {
@@ -30,6 +30,6 @@ class ServicePeriodResource extends JsonResource
             ];
         }
 
-        return ['service_id' => $this->resource->id, ...$result];
+        return ['center_id' => $this->resource->id, ...$result];
     }
 }

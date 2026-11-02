@@ -11,12 +11,12 @@ use Modules\Reservations\Models\Reservation;
 use Modules\Services\Enums\BlockTimeScope;
 use Modules\Services\Enums\ServiceType;
 use Modules\Services\Enums\VisitEnterType;
+use Modules\Services\Models\CenterPeriod;
 use Modules\Services\Models\Event;
 use Modules\Services\Models\Resort;
 use Modules\Services\Models\Schedule;
 use Modules\Services\Models\Service;
 use Modules\Services\Models\ServiceBlock;
-use Modules\Services\Models\ServicePeriod;
 use Modules\Services\Models\Trainer;
 use Modules\Services\Models\Visit;
 use Modules\Support\Enums\ActivationStatus;
@@ -49,7 +49,7 @@ class AvailabilityService
             ->whereDate('end_date', '>=', $from->toDateString())
             ->with('periods')
             ->get();
-        $periods = $service->periods()->get();
+        $periods = CenterPeriod::query()->where('center_id', $service->center_id)->get();
 
         $days = [];
 
@@ -70,7 +70,7 @@ class AvailabilityService
                     ->all(),
                 'periods' => $periods
                     ->where('day_of_week', $date->dayOfWeek)
-                    ->map(fn (ServicePeriod $period): array => [
+                    ->map(fn (CenterPeriod $period): array => [
                         'gender' => $period->gender->value,
                         'start' => self::hour($period->start_time),
                         'end' => self::hour($period->end_time),

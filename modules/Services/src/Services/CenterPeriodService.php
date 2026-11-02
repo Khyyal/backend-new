@@ -5,27 +5,18 @@ namespace Modules\Services\Services;
 use Illuminate\Support\Facades\DB;
 use Modules\Centers\Models\Center;
 use Modules\Services\Enums\PeriodGender;
-use Modules\Services\Models\Service;
 
-class ServicePeriodService
+class CenterPeriodService
 {
-    public function findServiceForCenter(Center $center, int|string $id): Service
-    {
-        return Service::query()
-            ->whereKey($id)
-            ->where('center_id', $center->getKey())
-            ->firstOrFail();
-    }
-
     /**
-     * Replaces the service's periods. A gender that is missing or null is cleared.
+     * Replaces the center's periods. A gender that is missing or null is cleared.
      *
      * @param  array<string, array{days: array<int, int>, hours: array<int, string>}|null>  $data
      */
-    public function sync(Service $service, array $data): Service
+    public function sync(Center $center, array $data): Center
     {
-        DB::transaction(function () use ($service, $data): void {
-            $service->periods()->delete();
+        DB::transaction(function () use ($center, $data): void {
+            $center->periods()->delete();
 
             $rows = [];
             foreach (PeriodGender::cases() as $gender) {
@@ -47,9 +38,9 @@ class ServicePeriodService
                 }
             }
 
-            $service->periods()->createMany($rows);
+            $center->periods()->createMany($rows);
         });
 
-        return $service->load('periods');
+        return $center->load('periods');
     }
 }

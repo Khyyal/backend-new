@@ -8,12 +8,12 @@ use Illuminate\Support\Facades\Gate;
 use Modules\Services\Enums\PeriodGender;
 
 /**
- * Replaces a service's gender periods. `female` and `male` are each optional
+ * Replaces a center's gender periods (applied to all its services). `female` and `male` are each optional
  * (omit or `null` for none): `days` is a list of weekday numbers (0-6) and
  * `hours` a flat list of `start, end` pairs (`["09:00","12:00"]`) applied to
  * every chosen day.
  */
-class ServicePeriodRequest extends FormRequest
+class CenterPeriodRequest extends FormRequest
 {
     public function authorize(): bool
     {
