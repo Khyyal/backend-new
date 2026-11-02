@@ -18,9 +18,9 @@
     "semantic_hash": ""
   },
   "app/Providers/AppServiceProvider.php": {
-    "mtime": 1792927495.567609,
-    "seen": 1792927515.0849211,
-    "ast_hash": "d4f59923249b481401a10a58691f52ac",
+    "mtime": 1792934337.2321525,
+    "seen": 1792934852.221897,
+    "ast_hash": "ded4161df9473ecee9b5fadd96a4ba43",
     "semantic_hash": ""
   },
   "artisan": {
@@ -620,7 +620,7 @@
   "api.json": {
     "mtime": 1792927495.563302,
     "seen": 1792930556.8223412,
-    "ast_hash": "8eba6d490ae60f263496769c75460785",
+    "ast_hash": "",
     "semantic_hash": ""
   },
   "config/media-library.php": {
@@ -4695,6 +4695,12 @@
     "mtime": 1792927496.0263312,
     "seen": 1792930556.823452,
     "ast_hash": "6b7716796f2d9702e647c4a4a3268bd6",
+    "semantic_hash": ""
+  },
+  "config/scramble.php": {
+    "mtime": 1792932914.2647507,
+    "seen": 1792934852.2228491,
+    "ast_hash": "d87745321194e9e6d7d3154c957746d1",
     "semantic_hash": ""
   }
 }
