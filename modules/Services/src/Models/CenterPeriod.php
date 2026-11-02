@@ -5,17 +5,21 @@ namespace Modules\Services\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Modules\Services\Database\Factories\ServicePeriodFactory;
+use Modules\Centers\Models\Center;
+use Modules\Services\Database\Factories\CenterPeriodFactory;
 use Modules\Services\Enums\PeriodGender;
 
-class ServicePeriod extends Model
+/**
+ * A gender period defined by a center; it applies to all of the center's services.
+ */
+class CenterPeriod extends Model
 {
     use HasFactory;
 
     public $timestamps = false;
 
     protected $fillable = [
-        'service_id',
+        'center_id',
         'gender',
         'day_of_week',
         'start_time',
@@ -30,13 +34,13 @@ class ServicePeriod extends Model
         ];
     }
 
-    protected static function newFactory(): ServicePeriodFactory
+    protected static function newFactory(): CenterPeriodFactory
     {
-        return ServicePeriodFactory::new();
+        return CenterPeriodFactory::new();
     }
 
-    public function service(): BelongsTo
+    public function center(): BelongsTo
     {
-        return $this->belongsTo(Service::class);
+        return $this->belongsTo(Center::class);
     }
 }

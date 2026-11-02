@@ -1,13 +1,13 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Modules\Services\Http\Controllers\Center\CenterPeriodController;
 use Modules\Services\Http\Controllers\Center\EventController;
 use Modules\Services\Http\Controllers\Center\HorseCareController;
 use Modules\Services\Http\Controllers\Center\HorseServiceController;
 use Modules\Services\Http\Controllers\Center\RecreationRidingController;
 use Modules\Services\Http\Controllers\Center\ResortController;
 use Modules\Services\Http\Controllers\Center\ServiceBlockController;
-use Modules\Services\Http\Controllers\Center\ServicePeriodController;
 use Modules\Services\Http\Controllers\Center\ServiceTypeCountController;
 use Modules\Services\Http\Controllers\Center\ServiceTypeTermController;
 use Modules\Services\Http\Controllers\Center\TrainerController;
@@ -38,11 +38,11 @@ Route::prefix('admin/centers/{center}')
             Route::apiResource($uri, $controller)->parameters([$uri => $parameter]);
         }
 
-        Route::prefix('services/{service}/periods')
-            ->name('services.periods.')
+        Route::prefix('periods')
+            ->name('periods.')
             ->group(function (): void {
-                Route::get('/', [ServicePeriodController::class, 'show'])->name('show');
-                Route::match(['put', 'patch'], '/', [ServicePeriodController::class, 'update'])->name('update');
+                Route::get('/', [CenterPeriodController::class, 'show'])->name('show');
+                Route::match(['put', 'patch'], '/', [CenterPeriodController::class, 'update'])->name('update');
             });
 
         Route::prefix('service-types')

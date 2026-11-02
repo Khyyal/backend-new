@@ -4,9 +4,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Centers\Database\Factories\CenterFactory;
 use Modules\Centers\Database\Factories\UserFactory;
 use Modules\Services\Enums\PeriodGender;
-use Modules\Services\Enums\ServiceType;
-use Modules\Services\Models\Resort;
-use Modules\Services\Models\ServicePeriod;
+use Modules\Services\Models\CenterPeriod;
 use Modules\Support\Enums\ActivationStatus;
 use Tests\TestCase;
 
@@ -21,16 +19,7 @@ beforeEach(function (): void {
         'is_primary' => false,
     ]);
 
-    $this->makeService = fn ($center) => Resort::query()->create()->service()->create([
-        'name' => ['ar' => 'منتجع'],
-        'description' => ['ar' => 'وصف'],
-        'center_id' => $center->id,
-        'status' => ActivationStatus::ACTIVE,
-        'type' => ServiceType::Resort,
-    ]);
-
-    $this->service = ($this->makeService)($this->center);
-    $this->url = "/api/v1/centers/{$this->center->id}/services/{$this->service->id}/periods";
+    $this->url = "/api/v1/centers/{$this->center->id}/periods";
 });
 
 test('guests and unassigned users are rejected', function (): void {
@@ -40,10 +29,11 @@ test('guests and unassigned users are rejected', function (): void {
         ->putJson($this->url, [])->assertForbidden();
 });
 
-test('a service without periods returns null for both genders', function (): void {
+test('a center without periods returns null for both genders', function (): void {
     $this->actingAs($this->user, 'center_user')
         ->getJson($this->url)
         ->assertOk()
+        ->assertJsonPath('data.center_id', $this->center->id)
         ->assertJsonPath('data.female', null)
         ->assertJsonPath('data.male', null);
 });
@@ -56,7 +46,7 @@ test('defines only a female period', function (): void {
         ->assertJsonPath('data.female.hours', ['09:00', '12:00', '16:00', '18:00'])
         ->assertJsonPath('data.male', null);
 
-    expect(ServicePeriod::count())->toBe(4);
+    expect(CenterPeriod::query()->where('center_id', $this->center->id)->count())->toBe(4);
 });
 
 test('defines both genders and reads them back', function (): void {
@@ -74,8 +64,8 @@ test('defines both genders and reads them back', function (): void {
 });
 
 test('update replaces periods and null or omitted clears a gender', function (): void {
-    ServicePeriod::factory()->for($this->service)->forGender(PeriodGender::Male)->create();
-    ServicePeriod::factory()->for($this->service)->forGender(PeriodGender::Female)->create();
+    CenterPeriod::factory()->for($this->center)->forGender(PeriodGender::Male)->create();
+    CenterPeriod::factory()->for($this->center)->forGender(PeriodGender::Female)->create();
 
     $this->actingAs($this->user, 'center_user')
         ->putJson($this->url, ['female' => ['days' => [2], 'hours' => ['10:00', '11:00']], 'male' => null])
@@ -85,7 +75,15 @@ test('update replaces periods and null or omitted clears a gender', function ():
 
     $this->actingAs($this->user, 'center_user')->putJson($this->url, [])->assertOk();
 
-    expect(ServicePeriod::count())->toBe(0);
+    expect(CenterPeriod::count())->toBe(0);
+});
+
+test('update leaves the periods of other centers untouched', function (): void {
+    $otherPeriod = CenterPeriod::factory()->for(CenterFactory::new()->create())->create();
+
+    $this->actingAs($this->user, 'center_user')->putJson($this->url, [])->assertOk();
+
+    expect(CenterPeriod::query()->whereKey($otherPeriod->id)->exists())->toBeTrue();
 });
 
 test('rejects invalid periods', function (array $body, string $field): void {
@@ -102,11 +100,3 @@ test('rejects invalid periods', function (array $body, string $field): void {
     'odd hours count' => [['female' => ['days' => [1], 'hours' => ['09:00', '10:00', '11:00']]], 'female.hours'],
     'end before start' => [['male' => ['days' => [1], 'hours' => ['10:00', '09:00']]], 'male.hours.1'],
 ]);
-
-test('a service of another center is not found', function (): void {
-    $other = ($this->makeService)(CenterFactory::new()->create());
-
-    $this->actingAs($this->user, 'center_user')
-        ->getJson("/api/v1/centers/{$this->center->id}/services/{$other->id}/periods")
-        ->assertNotFound();
-});

@@ -15,6 +15,7 @@ use Modules\Centers\Enums\CenterStatus;
 use Modules\Promotion\Traits\HasDiscounts;
 use Modules\Purchase\Contracts\Buyer;
 use Modules\Purchase\Traits\IsBuyer;
+use Modules\Services\Models\CenterPeriod;
 use Modules\Services\Models\Service;
 use Modules\Support\Concerns\Actionable;
 use Modules\Support\Concerns\Blocker;
@@ -135,6 +136,14 @@ class Center extends Model implements Buyer, HasMedia
     public function services(): HasMany
     {
         return $this->hasMany(Service::class);
+    }
+
+    /**
+     * Gender periods defined by the center; they apply to all of its services.
+     */
+    public function periods(): HasMany
+    {
+        return $this->hasMany(CenterPeriod::class);
     }
 
     // / scope list (status = visible)

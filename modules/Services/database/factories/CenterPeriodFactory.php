@@ -3,18 +3,18 @@
 namespace Modules\Services\Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
+use Modules\Centers\Database\Factories\CenterFactory;
 use Modules\Services\Enums\PeriodGender;
-use Modules\Services\Models\Service;
-use Modules\Services\Models\ServicePeriod;
+use Modules\Services\Models\CenterPeriod;
 
-class ServicePeriodFactory extends Factory
+class CenterPeriodFactory extends Factory
 {
-    protected $model = ServicePeriod::class;
+    protected $model = CenterPeriod::class;
 
     public function definition(): array
     {
         return [
-            'service_id' => Service::factory(),
+            'center_id' => CenterFactory::new(),
             'gender' => PeriodGender::Female,
             'day_of_week' => 0,
             'start_time' => '09:00',

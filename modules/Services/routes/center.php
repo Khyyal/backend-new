@@ -1,13 +1,13 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Modules\Services\Http\Controllers\Center\CenterPeriodController;
 use Modules\Services\Http\Controllers\Center\EventController;
 use Modules\Services\Http\Controllers\Center\HorseCareController;
 use Modules\Services\Http\Controllers\Center\HorseServiceController;
 use Modules\Services\Http\Controllers\Center\RecreationRidingController;
 use Modules\Services\Http\Controllers\Center\ResortController;
 use Modules\Services\Http\Controllers\Center\ServiceBlockController;
-use Modules\Services\Http\Controllers\Center\ServicePeriodController;
 use Modules\Services\Http\Controllers\Center\ServiceTypeCountController;
 use Modules\Services\Http\Controllers\Center\ServiceTypeTermController;
 use Modules\Services\Http\Controllers\Center\TrainerController;
@@ -122,10 +122,10 @@ Route::prefix('centers/{center}/service-blocks')
         Route::delete('/{serviceBlock}', [ServiceBlockController::class, 'destroy'])->name('destroy');
     });
 
-Route::prefix('centers/{center}/services/{service}/periods')
-    ->name('centers.services.periods.')
+Route::prefix('centers/{center}/periods')
+    ->name('centers.periods.')
     ->middleware(['auth:center_user', 'center.scope'])
     ->group(function (): void {
-        Route::get('/', [ServicePeriodController::class, 'show'])->name('show');
-        Route::match(['put', 'patch'], '/', [ServicePeriodController::class, 'update'])->name('update');
+        Route::get('/', [CenterPeriodController::class, 'show'])->name('show');
+        Route::match(['put', 'patch'], '/', [CenterPeriodController::class, 'update'])->name('update');
     });
