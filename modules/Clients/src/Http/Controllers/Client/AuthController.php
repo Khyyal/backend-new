@@ -12,9 +12,9 @@ use Modules\Clients\Http\Requests\Client\LoginOtpRequest;
 use Modules\Clients\Http\Requests\Client\VerifyOtpRequest;
 use Modules\Clients\Http\Resources\ClientResource;
 use Modules\Clients\Services\ClientAuthService;
+use Modules\Support\Enums\DevicePlatform;
 use Modules\Support\Services\DeviceService;
 use Modules\Support\Services\OtpVerificationService;
-
 
 #[Group(name: 'Client / Auth', description: 'Client authentication via phone number + OTP.')]
 class AuthController extends Controller
@@ -24,7 +24,6 @@ class AuthController extends Controller
         private readonly ClientAuthService $authService,
         private readonly DeviceService $deviceService,
     ) {}
-
 
     /**
      * Request a login OTP.
@@ -39,7 +38,7 @@ class AuthController extends Controller
      * - `phone_number` — required, international format (e.g. `+966501234567`),
      *   6–20 digits with optional leading `+`.
      *
-     * @param LoginOtpRequest $request Validated via {@see LoginOtpRequest}.
+     * @param  LoginOtpRequest  $request  Validated via {@see LoginOtpRequest}.
      * @return JsonResponse 200 with `message` and `expires_in_seconds`.
      */
     #[Response(
@@ -65,13 +64,12 @@ class AuthController extends Controller
         ]);
     }
 
-
     /**
      * Verify OTP and issue a Bearer token.
      *
      * Validates the 6-digit OTP sent to the phone number. When the OTP is
      * correct, a client record is looked up (or created on the fly for new
-     * phone numbers), a device record is registered/updated when a
+     * phone numbers), the device registered on `/launch` is linked when a
      * `X-Device-Identifier` header or `device_identifier` field is provided,
      * and a Sanctum Bearer token is minted for subsequent requests.
      *
@@ -80,6 +78,7 @@ class AuthController extends Controller
      * - `code`           — required; 6-digit OTP.
      * - `device_identifier` — optional; unique device ID for push-token
      *   registration. May also be passed via the `X-Device-Identifier` header.
+     * - `platform` — optional; `ios` or `android`, same value sent to `/launch`.
      *
      * **Response body:**
      * - `token`              — Sanctum plain-text Bearer token.
@@ -88,7 +87,7 @@ class AuthController extends Controller
      *   yet set on the client profile.
      * - `client`             — Client record as a `ClientResource`.
      *
-     * @param VerifyOtpRequest $request Validated via {@see VerifyOtpRequest}.
+     * @param  VerifyOtpRequest  $request  Validated via {@see VerifyOtpRequest}.
      * @return JsonResponse 200 on success with token + client; 422 on bad input
      *                      or invalid code.
      *
@@ -119,7 +118,11 @@ class AuthController extends Controller
 
         $deviceId = $this->deviceService->extractDeviceIdentifier($request);
         if ($deviceId !== null) {
-            $this->deviceService->registerOrUpdateDevice($client, $deviceId);
+            $this->deviceService->attachTo(
+                $client,
+                $deviceId,
+                DevicePlatform::tryFrom((string) $request->validated('platform')),
+            );
         }
         $client->load('city');
         $token = $this->authService->issueAppToken($client, $request instanceof Request ? $request : null);

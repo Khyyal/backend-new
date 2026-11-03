@@ -2,11 +2,12 @@
 
 namespace Modules\Centers\Services;
 
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Modules\Centers\Enums\CenterStatus;
 use Modules\Centers\Enums\CenterUserRole;
+use Modules\Centers\Events\CenterRegistered;
 use Modules\Centers\Http\Requests\Center\RegisterCenterFormRequest;
 use Modules\Centers\Models\Center;
 use Modules\Centers\Models\User;
@@ -20,9 +21,8 @@ readonly class CenterRegisterService
 {
     public function __construct(
         private OtpVerificationService $otpVerificationService,
-        private CenterAuthService      $centerAuthService,
-    ) {
-    }
+        private CenterAuthService $centerAuthService,
+    ) {}
 
     public function register(RegisterCenterFormRequest $request): array
     {
@@ -71,6 +71,8 @@ readonly class CenterRegisterService
             return compact('user', 'center');
         });
 
+        event(new CenterRegistered($result['center'], $result['user']));
+
         $token = $this->centerAuthService->issueAppToken($result['user'], $request);
 
         return [
@@ -87,7 +89,7 @@ readonly class CenterRegisterService
         $counter = 1;
 
         while (Center::query()->where('slug', $slug)->exists()) {
-            $slug = $base . '-' . $counter++;
+            $slug = $base.'-'.$counter++;
         }
 
         return $slug;

@@ -2,6 +2,7 @@
 
 namespace Modules\Centers\Models;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -23,6 +24,7 @@ use Modules\Support\Concerns\Actionable;
 use Modules\Support\Concerns\Blocker;
 use Modules\Support\Concerns\HasCity;
 use Modules\Support\Concerns\Rateable;
+use Modules\Support\Enums\ActivationStatus;
 use Spatie\Image\Enums\Fit;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -124,6 +126,18 @@ class Center extends Model implements Buyer, HasMedia
                 'trainer_id',
             ])
             ->withTimestamps();
+    }
+
+    /**
+     * Active staff of the center, who receive its notifications.
+     *
+     * @return Collection<int, User>
+     */
+    public function notifiableUsers(): Collection
+    {
+        return $this->users()
+            ->wherePivot('status', ActivationStatus::ACTIVE->value)
+            ->get();
     }
 
     /**

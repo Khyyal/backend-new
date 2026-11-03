@@ -10,10 +10,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Modules\Centers\Enums\CenterUserPermission;
 use Modules\Support\Concerns\HasDevices;
+use Modules\Support\Concerns\HasNotificationInbox;
 use Modules\Support\Enums\ActivationStatus;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\PermissionRegistrar;
@@ -25,7 +25,7 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasApiTokens,HasDevices, HasFactory, HasRoles, Notifiable;
+    use HasApiTokens, HasDevices, HasFactory, HasNotificationInbox, HasRoles;
 
     use SoftDeletes;
 

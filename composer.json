@@ -11,6 +11,7 @@
     "require": {
         "php": "^8.3",
         "dedoc/scramble": "^0.13.45",
+        "laravel-notification-channels/fcm": "^6.1",
         "laravel/framework": "^13.17",
         "laravel/octane": "^2.22",
         "laravel/sanctum": "^4.3",
@@ -63,6 +64,8 @@
             "Modules\\Reservations\\": "modules/Reservations/src/",
             "Modules\\Reservations\\Database\\Factories\\": "modules/Reservations/database/factories/",
             "Modules\\Reservations\\Database\\Seeders\\":  "modules/Reservations/database/seeders/",
+            "Modules\\Notifications\\": "modules/Notifications/src/",
+            "Modules\\Notifications\\Database\\Factories\\": "modules/Notifications/database/factories/",
 
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/"

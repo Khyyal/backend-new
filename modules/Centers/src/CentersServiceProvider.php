@@ -3,10 +3,13 @@
 namespace Modules\Centers;
 
 use Illuminate\Contracts\Routing\Registrar;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use Modules\Centers\Events\CenterRegistered;
 use Modules\Centers\Http\Middleware\EnsureCenterAccessScope;
+use Modules\Centers\Listeners\SendCenterRegisteredNotification;
 use Modules\Centers\Models\Center;
 use Modules\Centers\Policies\CenterPolicy;
 
@@ -16,6 +19,8 @@ class CentersServiceProvider extends ServiceProvider
     {
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
         $this->loadTranslationsFrom(__DIR__.'/../lang', 'centers');
+
+        Event::listen(CenterRegistered::class, SendCenterRegisteredNotification::class);
 
         $this->app->make(Registrar::class)->aliasMiddleware(
             'center.scope',

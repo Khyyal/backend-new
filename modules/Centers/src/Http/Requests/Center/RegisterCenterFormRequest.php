@@ -3,6 +3,8 @@
 namespace Modules\Centers\Http\Requests\Center;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
+use Modules\Support\Enums\DevicePlatform;
 
 class RegisterCenterFormRequest extends FormRequest
 {
@@ -21,6 +23,8 @@ class RegisterCenterFormRequest extends FormRequest
             'user.phone' => ['required', 'string', 'max:32'],
             'user.code' => ['required', 'string'],
             'user.password' => ['required', 'string', 'min:8', 'max:255'],
+            'device_identifier' => ['nullable', 'string', 'max:255'],
+            'platform' => ['nullable', Rule::enum(DevicePlatform::class)],
         ];
     }
 }

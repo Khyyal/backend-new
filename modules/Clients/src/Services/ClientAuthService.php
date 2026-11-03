@@ -3,17 +3,23 @@
 namespace Modules\Clients\Services;
 
 use Illuminate\Http\Request;
+use Modules\Clients\Events\ClientRegistered;
 use Modules\Clients\Models\Client;
 
 class ClientAuthService
 {
     public function findOrCreateByPhone(string $phoneNumber): Client
     {
-        return Client::query()->firstOrCreate([
+        $client = Client::query()->firstOrCreate([
             'phone_number' => $phoneNumber,
         ]);
-    }
 
+        if ($client->wasRecentlyCreated) {
+            event(new ClientRegistered($client));
+        }
+
+        return $client;
+    }
 
     public function setClientName(Client $client, string $firstName, string $lastName): Client
     {

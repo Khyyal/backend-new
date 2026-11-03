@@ -18,6 +18,7 @@
             <directory>modules/Billing/tests</directory>
             <directory>modules/Services/tests</directory>
             <directory>modules/Reservations/tests</directory>
+            <directory>modules/Notifications/tests</directory>
         </testsuite>
     </testsuites>
     <source>

@@ -4,6 +4,7 @@ use App\Providers\AppServiceProvider;
 use Modules\Billing\BillingServiceProvider;
 use Modules\Centers\CentersServiceProvider;
 use Modules\Clients\ClientsServiceProvider;
+use Modules\Notifications\NotificationsServiceProvider;
 use Modules\Promotion\PromotionServiceProvider;
 use Modules\Purchase\PurchaseServiceProvider;
 use Modules\Reservations\ReservationsServiceProvider;
@@ -20,4 +21,5 @@ return [
     BillingServiceProvider::class,
     ServicesServiceProvider::class,
     ReservationsServiceProvider::class,
+    NotificationsServiceProvider::class,
 ];
