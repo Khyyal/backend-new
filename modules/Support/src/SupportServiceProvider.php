@@ -3,6 +3,7 @@
 namespace Modules\Support;
 
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Http\Client\Factory as HttpFactory;
 use Illuminate\Notifications\Events\NotificationFailed;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
@@ -15,6 +16,8 @@ use Modules\Support\Notifications\Contracts\NotificationServiceContract;
 use Modules\Support\Notifications\NotificationService;
 use Modules\Support\Policies\MediaPolicy;
 use Modules\Support\Policies\SystemUserPolicy;
+use Modules\Support\WhatsApp\Contracts\WhatsAppGateway;
+use Modules\Support\WhatsApp\VoxaWhatsAppGateway;
 
 class SupportServiceProvider extends ServiceProvider
 {
@@ -23,6 +26,11 @@ class SupportServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(__DIR__.'/../config/media.php', 'support-media');
 
         $this->app->bind(NotificationServiceContract::class, NotificationService::class);
+        $this->app->bind(WhatsAppGateway::class, fn ($app): VoxaWhatsAppGateway => new VoxaWhatsAppGateway(
+            $app->make(HttpFactory::class),
+            $app->make('cache.store'),
+            (array) config('services.voxa'),
+        ));
     }
 
     public function boot(): void

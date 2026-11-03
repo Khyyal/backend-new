@@ -29,6 +29,9 @@ enum SystemPermission: string
     case ManageCenterBlockedClients = 'centers.manage_blocked_clients';
     case ManageCenterReservations = 'centers.manage_reservations';
 
+    case ManageNotificationCampaigns = 'notification_campaigns.manage';
+    case ManageWhatsAppTemplates = 'whatsapp_templates.manage';
+
     /** @return array<string> */
     public static function all(): array
     {
