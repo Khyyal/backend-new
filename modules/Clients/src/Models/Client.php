@@ -17,11 +17,12 @@ use Modules\Support\Concerns\ActionActor;
 use Modules\Support\Concerns\Blockable;
 use Modules\Support\Concerns\HasCity;
 use Modules\Support\Concerns\HasDevices;
+use Modules\Support\Concerns\HasNotificationInbox;
 use Modules\Support\Concerns\Rater;
 
 class Client extends Authenticatable implements Buyer
 {
-    use ActionActor, Blockable, HasApiTokens, HasCity, HasDevices, HasFactory, IsBuyer, Rater, SoftDeletes;
+    use ActionActor, Blockable, HasApiTokens, HasCity, HasDevices, HasFactory, HasNotificationInbox, IsBuyer, Rater, SoftDeletes;
 
     protected string $guard_name = 'client';
 

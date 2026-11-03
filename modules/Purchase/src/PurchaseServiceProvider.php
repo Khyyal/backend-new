@@ -9,6 +9,7 @@ use Modules\Centers\Models\Center;
 use Modules\Clients\Models\Client;
 use Modules\Purchase\Events\PaymentSucceeded;
 use Modules\Purchase\Listeners\ConfirmPaidPurchase;
+use Modules\Purchase\Listeners\SendPurchaseNotifications;
 use Modules\Purchase\Managers\PaymentGatewayManager;
 use Modules\Purchase\Models\Merchant\Platform;
 
@@ -29,6 +30,7 @@ class PurchaseServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
+        $this->loadTranslationsFrom(__DIR__.'/../lang', 'purchase');
 
         Relation::morphMap([
             'platform' => Platform::class,
@@ -37,5 +39,6 @@ class PurchaseServiceProvider extends ServiceProvider
         ]);
 
         Event::listen(PaymentSucceeded::class, ConfirmPaidPurchase::class);
+        Event::subscribe(SendPurchaseNotifications::class);
     }
 }

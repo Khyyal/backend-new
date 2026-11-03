@@ -9,6 +9,7 @@ use Modules\Centers\Http\Controllers\Center\LaunchController;
 use Modules\Centers\Http\Controllers\Center\PurchaseController;
 use Modules\Centers\Http\Controllers\Center\RatingController;
 use Modules\Centers\Http\Controllers\Center\RegisterController;
+use Modules\Support\Http\Controllers\NotificationController;
 
 Route::middleware(['api'])
     ->prefix('centers')
@@ -39,6 +40,16 @@ Route::middleware(['api'])
 
                 Route::post('/phone/verify', [AuthController::class, 'verify'])
                     ->name('phone.verify');
+            });
+
+        Route::middleware(['auth:center_user', 'set.locale.from.accept.language'])
+            ->prefix('notifications')
+            ->name('notifications.')
+            ->group(function (): void {
+                Route::get('/', [NotificationController::class, 'index'])->name('index');
+                Route::get('/unread-count', [NotificationController::class, 'unreadCount'])->name('unread-count');
+                Route::post('/mark-all-as-read', [NotificationController::class, 'markAllAsRead'])->name('mark-all-as-read');
+                Route::post('/{notification}/mark-as-read', [NotificationController::class, 'markAsRead'])->name('mark-as-read');
             });
 
         Route::middleware(['auth:center_user'])

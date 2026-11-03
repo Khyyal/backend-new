@@ -38,8 +38,8 @@ trait HasDevices
     public function unregisterDevice(string $deviceIdentifier): bool
     {
         return $this->devices()
-                ->where('device_identifier', $deviceIdentifier)
-                ->delete() > 0;
+            ->where('device_identifier', $deviceIdentifier)
+            ->delete() > 0;
     }
 
     /**
@@ -74,5 +74,23 @@ trait HasDevices
         return $this->devices()
             ->whereNotNull('fcm_token')
             ->pluck('fcm_token');
+    }
+
+    /**
+     * FCM tokens grouped by device locale, falling back to the app locale.
+     *
+     * @return array<string, list<string>>
+     */
+    public function fcmTokensByLocale(): array
+    {
+        $fallback = (string) config('app.locale');
+
+        return $this->devices()
+            ->whereNotNull('fcm_token')
+            ->where('fcm_token', '!=', '')
+            ->get(['fcm_token', 'locale'])
+            ->groupBy(fn (Device $device): string => $device->locale ?: $fallback)
+            ->map(fn ($devices): array => $devices->pluck('fcm_token')->unique()->values()->all())
+            ->all();
     }
 }

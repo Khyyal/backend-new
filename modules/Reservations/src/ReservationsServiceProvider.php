@@ -15,6 +15,7 @@ use Modules\Reservations\Console\Commands\ReleaseUnpaidBookingsCommand;
 use Modules\Reservations\Listeners\ConfirmPurchasedReservations;
 use Modules\Reservations\Listeners\RefundLatePayment;
 use Modules\Reservations\Listeners\ReleaseCancelledPurchase;
+use Modules\Reservations\Listeners\SendReservationNotifications;
 use Modules\Reservations\Models\ClientPackage;
 use Modules\Reservations\Models\Reservation;
 use Modules\Services\Models\Service;
@@ -51,6 +52,7 @@ class ReservationsServiceProvider extends ServiceProvider
         Event::listen(PurchaseConfirmed::class, ConfirmPurchasedReservations::class);
         Event::listen(PurchaseCancelled::class, ReleaseCancelledPurchase::class);
         Event::listen(PaymentSucceeded::class, RefundLatePayment::class);
+        Event::subscribe(SendReservationNotifications::class);
 
         if ($this->app->runningInConsole()) {
             $this->commands([
