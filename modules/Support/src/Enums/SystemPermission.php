@@ -32,6 +32,15 @@ enum SystemPermission: string
     case ManageNotificationCampaigns = 'notification_campaigns.manage';
     case ManageWhatsAppTemplates = 'whatsapp_templates.manage';
 
+    case ViewAnyPromotions = 'promotions.view_any';
+    case ViewPromotion = 'promotions.view';
+    case CreatePromotion = 'promotions.create';
+    case UpdatePromotion = 'promotions.update';
+    case DeletePromotion = 'promotions.delete';
+    case ActivatePromotion = 'promotions.activate';
+    case ManageCampaigns = 'campaigns.manage';
+    case ManageCoupons = 'coupons.manage';
+
     /** @return array<string> */
     public static function all(): array
     {

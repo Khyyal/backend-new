@@ -7,6 +7,7 @@ use Modules\Purchase\Enums\PaymentMethod;
 use Modules\Purchase\Enums\PurchaseSource;
 use Modules\Reservations\Booking\BookingRequest;
 use Modules\Reservations\Booking\CheckoutResult;
+use Modules\Reservations\Booking\DiscountInput;
 use Modules\Reservations\Enums\ReservationSource;
 use Modules\Reservations\Exceptions\ReservationNotAllowedException;
 use Modules\Reservations\Models\Reservation;
@@ -36,8 +37,9 @@ class BookAndCheckout
         PaymentMethod $method,
         ?string $paymentCompany = null,
         ?string $notes = null,
+        DiscountInput $discount = new DiscountInput,
     ): array {
-        [$reservation, $checkout] = DB::transaction(function () use ($request, $source, $method, $paymentCompany, $notes): array {
+        [$reservation, $checkout] = DB::transaction(function () use ($request, $source, $method, $paymentCompany, $notes, $discount): array {
             $reservation = $this->createReservation->execute($request, $source, notes: $notes);
 
             if ($reservation->total_amount <= 0) {
@@ -50,6 +52,7 @@ class BookAndCheckout
                 $source === ReservationSource::Center ? PurchaseSource::Center : PurchaseSource::Client,
                 $method,
                 $paymentCompany,
+                $discount,
             );
 
             return [$reservation, $checkout];

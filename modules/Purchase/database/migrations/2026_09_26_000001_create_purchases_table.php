@@ -36,6 +36,7 @@ return new class extends Migration
             $table->unsignedBigInteger('discount_amount')->default(0);
             $table->unsignedBigInteger('tax_amount')->default(0);
             $table->unsignedBigInteger('total_amount');
+            $table->string('coupon_code', 32)->nullable();
 
             $table->json('metadata')->nullable();
 

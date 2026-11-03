@@ -13,10 +13,13 @@ use Illuminate\Validation\Rule;
 use Modules\Clients\Models\Client;
 use Modules\Purchase\Enums\PaymentMethod;
 use Modules\Reservations\Actions\BookAndCheckout;
+use Modules\Reservations\Actions\QuoteCheckout;
 use Modules\Reservations\Enums\ReservationSource;
 use Modules\Reservations\Enums\ReservationStatus;
 use Modules\Reservations\Http\Requests\CancelReservationRequest;
+use Modules\Reservations\Http\Requests\Client\QuoteReservationRequest;
 use Modules\Reservations\Http\Requests\Client\StoreReservationRequest;
+use Modules\Reservations\Http\Resources\CheckoutQuoteResource;
 use Modules\Reservations\Http\Resources\CheckoutResource;
 use Modules\Reservations\Http\Resources\ReservationResource;
 use Modules\Reservations\Models\Reservation;
@@ -31,6 +34,7 @@ class ReservationController extends Controller
     public function __construct(
         private readonly BookAndCheckout $bookAndCheckout,
         private readonly ReservationStateService $reservationState,
+        private readonly QuoteCheckout $quoteCheckout,
     ) {}
 
     /**
@@ -91,6 +95,8 @@ class ReservationController extends Controller
      * - `lines`: `[{price_option_id, quantity}]`. Exactly one ticket option for events; any number of add-ons for resorts.
      * - `payment_method`: `online` or `cash_on_arrival`.
      * - `payment_company`: optional, for online payments.
+     * - `coupon_code`: optional; a code that cannot be applied fails the booking (422, `code: coupon_rejected`).
+     * - `expected_total_amount`: optional, the quoted total; a different price fails the booking (409, `code: price_changed`).
      */
     #[Response(status: 201, description: '`{data: ReservationResource, checkout: CheckoutResource|null}`.')]
     #[Response(status: 401, description: 'Missing or invalid Bearer token.')]
@@ -105,12 +111,34 @@ class ReservationController extends Controller
             ReservationSource::Client,
             PaymentMethod::from($request->validated('payment_method')),
             $request->validated('payment_company'),
+            discount: $request->toDiscountInput(),
         );
 
         return ReservationResource::make($reservation->load(self::RELATIONS))
             ->additional(['checkout' => $checkout !== null ? CheckoutResource::make($checkout) : null])
             ->response()
             ->setStatusCode(201);
+    }
+
+    /**
+     * Price a reservation.
+     *
+     * Takes the booking fields of `store` plus an optional `coupon_code`, and
+     * returns the total after the running offers, without booking anything.
+     * Send the returned `total_amount` as `expected_total_amount` when booking
+     * to be refused (409) rather than charged a different price.
+     */
+    #[Response(status: 200, description: '`{data: CheckoutQuoteResource}`.')]
+    #[Response(status: 401, description: 'Missing or invalid Bearer token.')]
+    #[Response(status: 422, description: 'Validation failed, or the slot cannot be booked (see `reason`).')]
+    public function quote(QuoteReservationRequest $request): CheckoutQuoteResource
+    {
+        $service = Service::query()->with(['serviceable', 'center'])->findOrFail($request->validated('service_id'));
+
+        return CheckoutQuoteResource::make($this->quoteCheckout->forBooking(
+            $request->toBookingRequest($service, $this->client($request)),
+            $request->validated('coupon_code'),
+        ));
     }
 
     /**

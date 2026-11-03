@@ -98,7 +98,7 @@ class PurchaseController extends Controller
     {
         $this->authorize($request, $center);
 
-        $purchase = $this->purchases($request, $center)->with(['buyer', 'items', 'payments', 'latestPayment'])->withCount('items')->findOrFail($purchase);
+        $purchase = $this->purchases($request, $center)->with(['buyer', 'items', 'payments', 'latestPayment', 'adjustments'])->withCount('items')->findOrFail($purchase);
 
         $purchase->items
             ->whereIn('purchasable_type', [(new Reservation)->getMorphClass(), (new ClientPackage)->getMorphClass()])

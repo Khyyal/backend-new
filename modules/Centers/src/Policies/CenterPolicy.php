@@ -113,13 +113,13 @@ class CenterPolicy
     }
 
     /**
-     * Center users: the primary user, or a user granted `discounts.manage`.
-     * System users: denied, discounts are managed by the center only.
+     * Center users: the primary user, or a user granted `promotions.manage`.
+     * System users: denied; they manage promotions through the admin API.
      */
-    public function manageDiscounts(User|SystemUser $user, Center $center): bool
+    public function managePromotions(User|SystemUser $user, Center $center): bool
     {
         return $user instanceof User
-            && $user->hasCenterPermission($center, CenterUserPermission::ManageDiscounts);
+            && $user->hasCenterPermission($center, CenterUserPermission::ManagePromotions);
     }
 
     /**

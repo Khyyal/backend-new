@@ -37,7 +37,7 @@ enum CenterUserPermission: string
     case ManageReservations = 'reservations.manage';
     case ViewRatings = 'ratings.view';
     case ManageBlockedClients = 'blocked_clients.manage';
-    case ManageDiscounts = 'discounts.manage';
+    case ManagePromotions = 'promotions.manage';
 
     public static function manageServicesFor(ServiceType $type): self
     {

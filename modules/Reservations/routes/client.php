@@ -16,7 +16,8 @@ Route::middleware(['set.locale.from.accept.language', 'track.client.session', 'a
             ->name('reservations.')
             ->group(function (): void {
                 Route::get('/', [ReservationController::class, 'index'])->name('index');
-                Route::post('/', [ReservationController::class, 'store'])->name('store');
+                Route::post('/', [ReservationController::class, 'store'])->middleware('throttle:coupon')->name('store');
+                Route::post('/quote', [ReservationController::class, 'quote'])->middleware('throttle:coupon')->name('quote');
                 Route::get('/{reservation}', [ReservationController::class, 'show'])->name('show');
                 Route::post('/{reservation}/cancel', [ReservationController::class, 'cancel'])->name('cancel');
             });
@@ -25,7 +26,8 @@ Route::middleware(['set.locale.from.accept.language', 'track.client.session', 'a
             ->name('packages.')
             ->group(function (): void {
                 Route::get('/', [PackageController::class, 'index'])->name('index');
-                Route::post('/', [PackageController::class, 'store'])->name('store');
+                Route::post('/', [PackageController::class, 'store'])->middleware('throttle:coupon')->name('store');
+                Route::post('/quote', [PackageController::class, 'quote'])->middleware('throttle:coupon')->name('quote');
                 Route::post('/{package}/reservations', [PackageController::class, 'book'])->name('reservations.store');
             });
     });

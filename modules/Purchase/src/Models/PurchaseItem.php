@@ -6,12 +6,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
-use Modules\Promotion\Traits\HasDiscountRedemptions;
 use Modules\Purchase\Database\Factories\PurchaseItemFactory;
 
 class PurchaseItem extends Model
 {
-    use HasDiscountRedemptions;
     use HasFactory;
 
     protected $fillable = [

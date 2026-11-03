@@ -8,6 +8,7 @@ use Modules\Purchase\Enums\PaymentMethod;
 use Modules\Purchase\Enums\PurchaseSource;
 use Modules\Reservations\Booking\BookingGuard;
 use Modules\Reservations\Booking\CheckoutResult;
+use Modules\Reservations\Booking\DiscountInput;
 use Modules\Reservations\Enums\ReservationStatus;
 use Modules\Reservations\Exceptions\ReservationNotAllowedException;
 use Modules\Reservations\Models\Reservation;
@@ -39,6 +40,7 @@ class CheckoutReservations
         PurchaseSource $source,
         PaymentMethod $method,
         ?string $paymentCompany = null,
+        DiscountInput $discount = new DiscountInput,
     ): CheckoutResult {
         $reservations = array_values($reservations);
         $this->ensureCheckoutable($client, $reservations);
@@ -49,7 +51,7 @@ class CheckoutReservations
             }
         }
 
-        return DB::transaction(function () use ($client, $reservations, $source, $method, $paymentCompany): CheckoutResult {
+        return DB::transaction(function () use ($client, $reservations, $source, $method, $paymentCompany, $discount): CheckoutResult {
             $result = $this->startCheckout->execute(
                 buyer: $client,
                 merchant: $reservations[0]->center,
@@ -59,9 +61,11 @@ class CheckoutReservations
                     'purchasable' => $reservation,
                     'name' => $reservation->service->name,
                     'unit_price' => $reservation->total_amount,
+                    'service_id' => $reservation->service_id,
                     'metadata' => ['quantity' => $reservation->quantity],
                 ], $reservations),
                 paymentCompany: $paymentCompany,
+                discount: $discount,
             );
 
             if ($method === PaymentMethod::CashOnArrival) {

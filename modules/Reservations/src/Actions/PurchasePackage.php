@@ -8,6 +8,7 @@ use Modules\Purchase\Enums\PaymentMethod;
 use Modules\Purchase\Enums\PurchaseSource;
 use Modules\Reservations\Booking\BookingGuard;
 use Modules\Reservations\Booking\CheckoutResult;
+use Modules\Reservations\Booking\DiscountInput;
 use Modules\Reservations\Enums\ClientPackageStatus;
 use Modules\Reservations\Exceptions\ReservationNotAllowedException;
 use Modules\Reservations\Models\ClientPackage;
@@ -33,6 +34,7 @@ class PurchasePackage
         PurchaseSource $source,
         PaymentMethod $method,
         ?string $paymentCompany = null,
+        DiscountInput $discount = new DiscountInput,
     ): CheckoutResult {
         if ($method === PaymentMethod::CashOnArrival) {
             throw ReservationNotAllowedException::because('cash_on_arrival_disabled');
@@ -43,7 +45,7 @@ class PurchasePackage
         $this->guard->ensureServiceOpenTo($service, $client);
         $this->guard->ensureSettingEnabled($service, 'enable_package_booking', 'package_booking_disabled');
 
-        return DB::transaction(function () use ($client, $servicePackage, $source, $method, $paymentCompany): CheckoutResult {
+        return DB::transaction(function () use ($client, $servicePackage, $source, $method, $paymentCompany, $discount): CheckoutResult {
             $clientPackage = ClientPackage::query()->create([
                 'client_id' => $client->getKey(),
                 'service_id' => $servicePackage->service_id,
@@ -64,9 +66,11 @@ class PurchasePackage
                     'purchasable' => $clientPackage,
                     'name' => $servicePackage->service->name,
                     'unit_price' => $servicePackage->price,
+                    'service_id' => $servicePackage->service_id,
                     'metadata' => ['sessions' => $servicePackage->count],
                 ]],
                 paymentCompany: $paymentCompany,
+                discount: $discount,
             );
         });
     }

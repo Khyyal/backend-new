@@ -15,7 +15,7 @@ use Modules\Billing\Traits\HasSubscriptions;
 use Modules\Centers\Enums\CenterState;
 use Modules\Centers\Enums\CenterStatus;
 use Modules\Clients\Models\Client;
-use Modules\Promotion\Traits\HasDiscounts;
+use Modules\Promotions\Concerns\HasPromotions;
 use Modules\Purchase\Contracts\Buyer;
 use Modules\Purchase\Traits\IsBuyer;
 use Modules\Services\Models\CenterPeriod;
@@ -35,8 +35,8 @@ class Center extends Model implements Buyer, HasMedia
     use Actionable;
     use Blocker;
     use HasCity;
-    use HasDiscounts;
     use HasFactory;
+    use HasPromotions;
     use HasSubscriptions;
     use InteractsWithMedia;
     use IsBuyer;
