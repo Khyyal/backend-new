@@ -85,7 +85,10 @@ class PurchaseController extends Controller
      * Show a purchase.
      *
      * With its line items and payments (amounts and payments omitted without
-     * `purchases.view_prices`). Purchases the user may not see return 404.
+     * `purchases.view_prices`). Each item carries `details` of what was booked:
+     * dates, times, service, trainer and price option for a reservation; service,
+     * price option and sessions for a client package; `null` otherwise.
+     * Purchases the user may not see return 404.
      */
     #[Response(status: 200, description: 'The `PurchaseDetailsResource`.')]
     #[Response(status: 401, description: 'Missing or invalid Bearer token.')]
@@ -95,9 +98,16 @@ class PurchaseController extends Controller
     {
         $this->authorize($request, $center);
 
-        return PurchaseDetailsResource::make(
-            $this->purchases($request, $center)->with(['buyer', 'items', 'payments', 'latestPayment'])->withCount('items')->findOrFail($purchase)
-        );
+        $purchase = $this->purchases($request, $center)->with(['buyer', 'items', 'payments', 'latestPayment'])->withCount('items')->findOrFail($purchase);
+
+        $purchase->items
+            ->whereIn('purchasable_type', [(new Reservation)->getMorphClass(), (new ClientPackage)->getMorphClass()])
+            ->loadMorph('purchasable', [
+                Reservation::class => ['service', 'trainer', 'priceOption'],
+                ClientPackage::class => ['service', 'priceOption'],
+            ]);
+
+        return PurchaseDetailsResource::make($purchase);
     }
 
     private function authorize(Request $request, Center $center): void

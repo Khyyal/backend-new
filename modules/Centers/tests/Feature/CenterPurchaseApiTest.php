@@ -10,7 +10,9 @@ use Modules\Purchase\Database\Factories\PurchaseItemFactory;
 use Modules\Purchase\Enums\PurchaseStatus;
 use Modules\Reservations\Database\Factories\ClientPackageFactory;
 use Modules\Reservations\Database\Factories\ReservationFactory;
+use Modules\Services\Database\Factories\PriceOptionFactory;
 use Modules\Services\Database\Factories\ServiceFactory;
+use Modules\Services\Database\Factories\TrainerFactory;
 use Modules\Support\Enums\ActivationStatus;
 use Tests\TestCase;
 
@@ -87,6 +89,42 @@ test('shows a purchase with its items and payments', function (): void {
         ->assertJsonPath('data.payments.0.method', 'online')
         ->assertJsonPath('data.payments.0.status', 'succeeded')
         ->assertJsonMissingPath('data.payments.0.provider_data');
+});
+
+test('shows the reservation and package details of each item', function (): void {
+    $service = ServiceFactory::new()->create(['center_id' => $this->center->id]);
+    $priceOption = PriceOptionFactory::new()->create(['service_id' => $service->id]);
+    $trainer = TrainerFactory::new()->create(['center_id' => $this->center->id]);
+    $reservation = ReservationFactory::new()->forService($service)->at('2026-11-10', '09:00:00', '10:00:00')->create([
+        'trainer_id' => $trainer->id,
+        'price_option_id' => $priceOption->id,
+    ]);
+    $package = ClientPackageFactory::new()->create(['service_id' => $service->id, 'price_option_id' => $priceOption->id]);
+
+    $purchase = ($this->purchase)();
+    foreach ([$reservation, $package] as $purchasable) {
+        PurchaseItemFactory::new()->create([
+            'purchase_id' => $purchase->id,
+            'purchasable_type' => $purchasable->getMorphClass(),
+            'purchasable_id' => $purchasable->id,
+        ]);
+    }
+    PurchaseItemFactory::new()->create(['purchase_id' => $purchase->id]);
+
+    $this->actingAs($this->user, 'center_user')
+        ->getJson("{$this->url}/{$purchase->id}")
+        ->assertOk()
+        ->assertJsonPath('data.items.0.details.service.id', $service->id)
+        ->assertJsonPath('data.items.0.details.trainer.id', $trainer->id)
+        ->assertJsonPath('data.items.0.details.price_option.id', $priceOption->id)
+        ->assertJsonPath('data.items.0.details.date', '2026-11-10')
+        ->assertJsonPath('data.items.0.details.start_time', '09:00')
+        ->assertJsonPath('data.items.0.details.end_time', '10:00')
+        ->assertJsonPath('data.items.1.details.service.id', $service->id)
+        ->assertJsonPath('data.items.1.details.price_option.id', $priceOption->id)
+        ->assertJsonPath('data.items.1.details.total_sessions', $package->total_sessions)
+        ->assertJsonPath('data.items.1.details.remaining_sessions', $package->remaining_sessions)
+        ->assertJsonPath('data.items.2.details', null);
 });
 
 test('a purchase of another center is not found', function (): void {
