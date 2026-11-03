@@ -10545,7 +10545,7 @@
         "/v1/centers/{center}/purchases": {
             "get": {
                 "operationId": "centers.purchases.index",
-                "description": "Paginated (25 per page), newest first. Non-primary users only see\npurchases for the service types they may view, narrowed by trainer\n(own trainer, other trainers, unassigned); amounts are omitted without\n`purchases.view_prices`. `payment_method` and `payment_status` are those\nof the latest payment, or `null` when there is none.\n\n**Query** (all optional):\n- `status`        `pending`, `confirmed`, `cancelled` or `completed`.\n- `service_id`    only purchases with a reservation or package of this service.\n- `from`, `to`    `Y-m-d`, inclusive range on the purchase creation date.",
+                "description": "Paginated (25 per page), newest first. Non-primary users only see\npurchases for the service types they may view, narrowed by trainer\n(own trainer, other trainers, unassigned); amounts are omitted without\n`purchases.view_prices`. `payment_method` and `payment_status` are those\nof the latest payment, or `null` when there is none.\n\n**Query** (all optional):\n- `status`        `pending`, `confirmed`, `cancelled` or `completed`.\n- `q`             part of the client's full name or phone number.\n- `service_id`    only purchases with a reservation or package of this service.\n- `from`, `to`    `Y-m-d`, inclusive range on the purchase creation date.",
                 "summary": "List the center's purchases",
                 "tags": [
                     "Center / Purchases"
@@ -10571,6 +10571,17 @@
                                 "cancelled",
                                 "completed"
                             ]
+                        }
+                    },
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "maxLength": 100
                         }
                     },
                     {
@@ -10945,7 +10956,7 @@
         "/v1/admin/centers/{center}/purchases": {
             "get": {
                 "operationId": "admin.centers.purchases.index",
-                "description": "Paginated (25 per page), newest first. Non-primary users only see\npurchases for the service types they may view, narrowed by trainer\n(own trainer, other trainers, unassigned); amounts are omitted without\n`purchases.view_prices`. `payment_method` and `payment_status` are those\nof the latest payment, or `null` when there is none.\n\n**Query** (all optional):\n- `status`        `pending`, `confirmed`, `cancelled` or `completed`.\n- `service_id`    only purchases with a reservation or package of this service.\n- `from`, `to`    `Y-m-d`, inclusive range on the purchase creation date.",
+                "description": "Paginated (25 per page), newest first. Non-primary users only see\npurchases for the service types they may view, narrowed by trainer\n(own trainer, other trainers, unassigned); amounts are omitted without\n`purchases.view_prices`. `payment_method` and `payment_status` are those\nof the latest payment, or `null` when there is none.\n\n**Query** (all optional):\n- `status`        `pending`, `confirmed`, `cancelled` or `completed`.\n- `q`             part of the client's full name or phone number.\n- `service_id`    only purchases with a reservation or package of this service.\n- `from`, `to`    `Y-m-d`, inclusive range on the purchase creation date.",
                 "summary": "List the center's purchases",
                 "tags": [
                     "Center / Purchases"
@@ -10971,6 +10982,17 @@
                                 "cancelled",
                                 "completed"
                             ]
+                        }
+                    },
+                    {
+                        "name": "q",
+                        "in": "query",
+                        "schema": {
+                            "type": [
+                                "string",
+                                "null"
+                            ],
+                            "maxLength": 100
                         }
                     },
                     {

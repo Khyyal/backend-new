@@ -13,6 +13,7 @@ use Modules\Centers\Http\Resources\Center\PurchaseDetailsResource;
 use Modules\Centers\Http\Resources\Center\PurchaseResource;
 use Modules\Centers\Models\Center;
 use Modules\Centers\Services\CenterPurchaseVisibility;
+use Modules\Clients\Models\Client;
 use Modules\Purchase\Enums\PurchaseStatus;
 use Modules\Purchase\Models\Purchase;
 use Modules\Reservations\Models\ClientPackage;
@@ -34,6 +35,7 @@ class PurchaseController extends Controller
      *
      * **Query** (all optional):
      * - `status`        `pending`, `confirmed`, `cancelled` or `completed`.
+     * - `q`             part of the client's full name or phone number.
      * - `service_id`    only purchases with a reservation or package of this service.
      * - `from`, `to`    `Y-m-d`, inclusive range on the purchase creation date.
      */
@@ -47,6 +49,7 @@ class PurchaseController extends Controller
 
         $validated = $request->validate([
             'status' => ['sometimes', 'string', 'in:'.implode(',', array_column(PurchaseStatus::cases(), 'value'))],
+            'q' => ['sometimes', 'nullable', 'string', 'max:100'],
             'service_id' => ['sometimes', 'integer'],
             'from' => ['sometimes', 'date_format:Y-m-d'],
             'to' => ['sometimes', 'date_format:Y-m-d', 'after_or_equal:from'],
@@ -54,6 +57,13 @@ class PurchaseController extends Controller
 
         $purchases = $this->purchases($request, $center)
             ->when(isset($validated['status']), fn (Builder $query) => $query->where('status', $validated['status']))
+            ->when(filled($validated['q'] ?? null), function (Builder $query) use ($validated): void {
+                $term = '%'.addcslashes(trim($validated['q']), '%_\\').'%';
+
+                $query->whereHasMorph('buyer', [Client::class], fn (Builder $client) => $client
+                    ->where('phone_number', 'like', $term)
+                    ->orWhereRaw("concat(first_name, ' ', last_name) like ?", [$term]));
+            })
             ->when(isset($validated['service_id']), fn (Builder $query) => $query->whereHas('items', fn (Builder $items) => $items->whereHasMorph(
                 'purchasable',
                 [Reservation::class, ClientPackage::class],

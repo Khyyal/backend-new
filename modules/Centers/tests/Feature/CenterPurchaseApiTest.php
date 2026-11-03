@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Centers\Database\Factories\CenterFactory;
 use Modules\Centers\Database\Factories\UserFactory;
+use Modules\Clients\Database\Factories\ClientFactory;
 use Modules\Purchase\Database\Factories\PaymentFactory;
 use Modules\Purchase\Database\Factories\PurchaseFactory;
 use Modules\Purchase\Database\Factories\PurchaseItemFactory;
@@ -144,4 +145,20 @@ test('filters by service and creation date range', function (): void {
         ->getJson("{$this->url}?from=2026-10-10&to=2026-10-01&service_id=abc")
         ->assertUnprocessable()
         ->assertJsonValidationErrors(['to', 'service_id']);
+});
+
+test('searches by client name or phone number', function (): void {
+    $sara = ClientFactory::new()->create(['first_name' => 'Sara', 'last_name' => 'Alharbi', 'phone_number' => '+966500000001']);
+    $omar = ClientFactory::new()->create(['first_name' => 'Omar', 'last_name' => 'Zahrani', 'phone_number' => '+966500000002']);
+    $saraPurchase = ($this->purchase)(['buyer_type' => $sara->getMorphClass(), 'buyer_id' => $sara->id]);
+    $omarPurchase = ($this->purchase)(['buyer_type' => $omar->getMorphClass(), 'buyer_id' => $omar->id]);
+
+    $ids = fn (string $q): array => collect($this->actingAs($this->user, 'center_user')
+        ->getJson($this->url.'?q='.urlencode($q))
+        ->assertOk()
+        ->json('data'))->pluck('id')->all();
+
+    expect($ids('sara alh'))->toBe([$saraPurchase->id])
+        ->and($ids('0000002'))->toBe([$omarPurchase->id])
+        ->and($ids('nobody'))->toBe([]);
 });
