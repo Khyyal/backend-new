@@ -120,34 +120,6 @@ class ReservationController extends Controller
     }
 
     /**
-     * List the reservations of a day.
-     *
-     * Not paginated; sorted by start time.
-     *
-     * **Query:** `date`, required (`Y-m-d`).
-     */
-    #[Response(status: 200, description: '`CenterReservationResource` collection.')]
-    #[Response(status: 401, description: 'Missing or invalid Bearer token.')]
-    #[Response(status: 403, description: 'No access to this center\'s reservations.')]
-    #[Response(status: 422, description: 'Missing or invalid date.')]
-    public function day(Request $request, Center $center): AnonymousResourceCollection
-    {
-        $this->authorize($request, $center);
-
-        $validated = $request->validate(['date' => ['required', 'date_format:Y-m-d']]);
-
-        return CenterReservationResource::collection(
-            Reservation::query()
-                ->where('center_id', $center->getKey())
-                ->whereDate('date', $validated['date'])
-                ->with(self::RELATIONS)
-                ->orderBy('start_time')
-                ->orderBy('id')
-                ->get()
-        );
-    }
-
-    /**
      * Show a reservation.
      */
     #[Response(status: 200, description: 'The `CenterReservationResource`.')]
