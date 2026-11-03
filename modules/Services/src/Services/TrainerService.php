@@ -2,6 +2,7 @@
 
 namespace Modules\Services\Services;
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
@@ -20,6 +21,17 @@ class TrainerService
             ->with(self::RELATIONS)
             ->latest('id')
             ->paginate(15);
+    }
+
+    /**
+     * @return Collection<int, Trainer>
+     */
+    public function simpleList(Center $center): Collection
+    {
+        return Trainer::query()
+            ->where('center_id', $center->getKey())
+            ->orderBy('name')
+            ->get(['id', 'name']);
     }
 
     /**

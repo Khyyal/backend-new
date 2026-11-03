@@ -155,3 +155,19 @@ test('per-day hourly limits must be positive and on the trainer days', function 
         ->assertUnprocessable()
         ->assertJsonValidationErrors(['max_tickets_per_hour_by_day.0', 'max_tickets_per_hour_by_day.3']);
 });
+
+test('trainer list returns every trainer of the center with only id and name', function (): void {
+    $mine = TrainerFactory::new()->create(['center_id' => $this->center->id, 'name' => 'Zed']);
+    TrainerFactory::new()->create(['center_id' => $this->center->id, 'name' => 'Amr']);
+    TrainerFactory::new()->create(['center_id' => CenterFactory::new()->create()->id]);
+
+    $this->getJson("{$this->url}/list")->assertUnauthorized();
+    $this->actingAs(UserFactory::new()->create(), 'center_user')->getJson("{$this->url}/list")->assertForbidden();
+
+    $this->actingAs($this->user, 'center_user')
+        ->getJson("{$this->url}/list")
+        ->assertOk()
+        ->assertJsonCount(2, 'data')
+        ->assertJsonPath('data.0.name', 'Amr')
+        ->assertJsonPath('data.1', ['id' => $mine->id, 'name' => 'Zed']);
+});

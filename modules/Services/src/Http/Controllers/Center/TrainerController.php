@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Gate;
 use Modules\Centers\Models\Center;
 use Modules\Services\Enums\ServiceType;
 use Modules\Services\Http\Requests\Center\TrainerRequest;
+use Modules\Services\Http\Resources\Center\TrainerOptionResource;
 use Modules\Services\Http\Resources\Center\TrainerResource;
 use Modules\Services\Services\TrainerService;
 use Symfony\Component\HttpFoundation\Response as ResponseAlias;
@@ -35,6 +36,21 @@ class TrainerController extends Controller
         Gate::forUser($request->user())->authorize('manageServices', [$center, ServiceType::Training]);
 
         return TrainerResource::collection($this->service->list($center));
+    }
+
+    /**
+     * List all the center's trainers (id and name only).
+     *
+     * Not paginated, ordered by name. Each item is a `TrainerOptionResource`: `id`, `name`.
+     */
+    #[Response(status: 200, description: '`TrainerOptionResource` collection.')]
+    #[Response(status: 401, description: 'Missing or invalid Bearer token for the `center_user` guard.')]
+    #[Response(status: 403, description: 'The token has no access to this center, or the user is not assigned to it.')]
+    public function list(Request $request, Center $center): AnonymousResourceCollection
+    {
+        Gate::forUser($request->user())->authorize('manageServices', [$center, ServiceType::Training]);
+
+        return TrainerOptionResource::collection($this->service->simpleList($center));
     }
 
     /**
