@@ -35,7 +35,7 @@ class TrainerRequest extends FormRequest
      */
     public function rules(): array
     {
-        /** @var Center $center */
+        /** @var Center|null $center */
         $center = $this->route('center');
 
         return [
@@ -53,7 +53,7 @@ class TrainerRequest extends FormRequest
                 'distinct',
                 Rule::exists('services', 'serviceable_id')
                     ->where('serviceable_type', (new TrainingService)->getMorphClass())
-                    ->where('center_id', $center->getKey())
+                    ->where('center_id', $center?->getKey())
                     ->whereNull('deleted_at'),
             ],
         ];

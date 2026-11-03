@@ -20,7 +20,7 @@ class AttachServicesRequest extends FormRequest
      */
     public function rules(): array
     {
-        /** @var Center $center */
+        /** @var Center|null $center */
         $center = $this->route('center');
 
         return [
@@ -30,7 +30,7 @@ class AttachServicesRequest extends FormRequest
                 'integer',
                 'distinct',
                 Rule::exists('services', 'id')
-                    ->where('center_id', $center->getKey())
+                    ->where('center_id', $center?->getKey())
                     ->whereNull('deleted_at'),
             ],
         ];

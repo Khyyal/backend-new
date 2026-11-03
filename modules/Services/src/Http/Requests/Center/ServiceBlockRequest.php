@@ -28,7 +28,7 @@ class ServiceBlockRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'service_id' => ['nullable', Rule::exists('services', 'id')->where('center_id', $this->route('center')->id)],
+            'service_id' => ['nullable', Rule::exists('services', 'id')->where('center_id', $this->route('center')?->id)],
             'reason' => ['required', 'string', 'max:500'],
             'start_date' => ['required', 'date'],
             'end_date' => ['required', 'date', 'after_or_equal:start_date'],

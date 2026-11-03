@@ -24,7 +24,7 @@ class StoreCenterUserRequest extends FormRequest
      */
     public function rules(): array
     {
-        /** @var Center $center */
+        /** @var Center|null $center */
         $center = $this->route('center');
 
         return [
@@ -34,10 +34,10 @@ class StoreCenterUserRequest extends FormRequest
                 'required',
                 'integer',
                 Rule::exists('trainers', 'id')
-                    ->where('center_id', $center->getKey())
+                    ->where('center_id', $center?->getKey())
                     ->whereNull('deleted_at'),
                 Rule::unique('center_user_assignment', 'trainer_id')
-                    ->where('center_id', $center->getKey()),
+                    ->where('center_id', $center?->getKey()),
             ],
             'status' => ['sometimes', Rule::enum(ActivationStatus::class)],
             'permissions' => ['present', 'array'],

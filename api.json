@@ -29699,7 +29699,7 @@
                 "properties": {
                     "service_id": {
                         "type": [
-                            "string",
+                            "integer",
                             "null"
                         ]
                     },
