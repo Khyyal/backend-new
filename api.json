@@ -151,6 +151,10 @@
             "description": "Manage the trainers of a center. Requires a center-scoped Bearer token (see `POST /centers/{center}/access`)."
         },
         {
+            "name": "Center / Service List",
+            "description": "Lightweight lists of a center's services. Requires a center-scoped Bearer token (see `POST /centers/{center}/access`)."
+        },
+        {
             "name": "Center / Service Type Terms",
             "description": "Manage each service type's terms and conditions for a center. Requires a center-scoped Bearer token (see `POST /centers/{center}/access`)."
         },
@@ -13342,143 +13346,6 @@
                 }
             }
         },
-        "/v1/centers/{center}/reservations/day": {
-            "get": {
-                "operationId": "centers.reservations.day",
-                "description": "Not paginated; sorted by start time.\n\n**Query:** `date`, required (`Y-m-d`).",
-                "summary": "List the reservations of a day",
-                "tags": [
-                    "Center / Reservations"
-                ],
-                "parameters": [
-                    {
-                        "name": "center",
-                        "in": "path",
-                        "required": true,
-                        "description": "The center ID",
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "name": "date",
-                        "in": "query",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "format": "date"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "`CenterReservationResource` collection.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "allOf": [
-                                                    {
-                                                        "$ref": "#/components/schemas/CenterReservationResource"
-                                                    },
-                                                    {
-                                                        "type": "object",
-                                                        "required": [
-                                                            "service",
-                                                            "trainer",
-                                                            "lines",
-                                                            "client"
-                                                        ]
-                                                    }
-                                                ]
-                                            }
-                                        }
-                                    },
-                                    "required": [
-                                        "data"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "403": {
-                        "description": "No access to this center's reservations.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "description": "Error overview."
-                                        }
-                                    },
-                                    "required": [
-                                        "message"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Missing or invalid date.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "description": "Errors overview."
-                                        },
-                                        "errors": {
-                                            "type": "object",
-                                            "description": "A detailed description of each field that failed validation.",
-                                            "additionalProperties": {
-                                                "type": "array",
-                                                "items": {
-                                                    "type": "string"
-                                                }
-                                            }
-                                        }
-                                    },
-                                    "required": [
-                                        "message",
-                                        "errors"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "$ref": "#/components/responses/ModelNotFoundException"
-                    },
-                    "401": {
-                        "description": "Missing or invalid Bearer token.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "description": "Error overview."
-                                        }
-                                    },
-                                    "required": [
-                                        "message"
-                                    ]
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
         "/v1/centers/{center}/reservations/{reservation}": {
             "get": {
                 "operationId": "centers.reservations.show",
@@ -14609,143 +14476,6 @@
                     },
                     "422": {
                         "description": "Invalid or too long date range.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "description": "Errors overview."
-                                        },
-                                        "errors": {
-                                            "type": "object",
-                                            "description": "A detailed description of each field that failed validation.",
-                                            "additionalProperties": {
-                                                "type": "array",
-                                                "items": {
-                                                    "type": "string"
-                                                }
-                                            }
-                                        }
-                                    },
-                                    "required": [
-                                        "message",
-                                        "errors"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "$ref": "#/components/responses/ModelNotFoundException"
-                    },
-                    "401": {
-                        "description": "Missing or invalid Bearer token.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "description": "Error overview."
-                                        }
-                                    },
-                                    "required": [
-                                        "message"
-                                    ]
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/admin/centers/{center}/reservations/day": {
-            "get": {
-                "operationId": "admin.centers.reservations.day",
-                "description": "Not paginated; sorted by start time.\n\n**Query:** `date`, required (`Y-m-d`).",
-                "summary": "List the reservations of a day",
-                "tags": [
-                    "Center / Reservations"
-                ],
-                "parameters": [
-                    {
-                        "name": "center",
-                        "in": "path",
-                        "required": true,
-                        "description": "The center ID",
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "name": "date",
-                        "in": "query",
-                        "required": true,
-                        "schema": {
-                            "type": "string",
-                            "format": "date"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "`CenterReservationResource` collection.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "allOf": [
-                                                    {
-                                                        "$ref": "#/components/schemas/CenterReservationResource"
-                                                    },
-                                                    {
-                                                        "type": "object",
-                                                        "required": [
-                                                            "service",
-                                                            "trainer",
-                                                            "lines",
-                                                            "client"
-                                                        ]
-                                                    }
-                                                ]
-                                            }
-                                        }
-                                    },
-                                    "required": [
-                                        "data"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "403": {
-                        "description": "No access to this center's reservations.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "type": "object",
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "description": "Error overview."
-                                        }
-                                    },
-                                    "required": [
-                                        "message"
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "422": {
-                        "description": "Missing or invalid date.",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -17844,6 +17574,82 @@
                 }
             }
         },
+        "/v1/centers/{center}/services/by-type": {
+            "get": {
+                "operationId": "centers.services.by-type",
+                "description": "Not paginated. Always returns one entry per service type (`recreation_riding`, `visit`,\n`event`, `resort`, `horse_care`, `horse_service`, `training`); `services` is empty for a\ntype the center has none of. Each service has only `id` and `name`.",
+                "summary": "List the center's services grouped by service type",
+                "tags": [
+                    "Center / Service List"
+                ],
+                "parameters": [
+                    {
+                        "name": "center",
+                        "in": "path",
+                        "required": true,
+                        "description": "The center ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`ServiceTypeGroupResource` collection, one per service type: `service_type`, `services` [{id,name}].",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/ServiceTypeGroupResource"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "description": "Missing or invalid Bearer token for the `center_user` guard.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview."
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "The token has no access to this center, or the user is not assigned to it.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/v1/centers/{center}/service-types/counts": {
             "get": {
                 "operationId": "centers.service-types.counts",
@@ -19128,6 +18934,82 @@
                                     "required": [
                                         "message"
                                     ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/centers/{center}/trainers/list": {
+            "get": {
+                "operationId": "centers.trainers.list",
+                "description": "Not paginated, ordered by name. Each item is a `TrainerOptionResource`: `id`, `name`.",
+                "summary": "List all the center's trainers (id and name only)",
+                "tags": [
+                    "Center / Trainers"
+                ],
+                "parameters": [
+                    {
+                        "name": "center",
+                        "in": "path",
+                        "required": true,
+                        "description": "The center ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`TrainerOptionResource` collection.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/TrainerOptionResource"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "description": "Missing or invalid Bearer token for the `center_user` guard.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Error overview."
+                                        }
+                                    },
+                                    "required": [
+                                        "message"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "The token has no access to this center, or the user is not assigned to it.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
                                 }
                             }
                         }
@@ -29920,6 +29802,22 @@
                 ],
                 "title": "ServiceTypeCountResource"
             },
+            "ServiceTypeGroupResource": {
+                "type": "object",
+                "properties": {
+                    "service_type": {
+                        "type": "string"
+                    },
+                    "services": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "service_type",
+                    "services"
+                ],
+                "title": "ServiceTypeGroupResource"
+            },
             "ServiceTypeTermRequest": {
                 "type": "object",
                 "properties": {
@@ -30602,6 +30500,22 @@
                     "permissions"
                 ],
                 "title": "SystemUserResource"
+            },
+            "TrainerOptionResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id",
+                    "name"
+                ],
+                "title": "TrainerOptionResource"
             },
             "TrainerRequest": {
                 "type": "object",
