@@ -11,6 +11,8 @@ use Modules\Centers\Http\Requests\Center\SendRegisterOtpRequest;
 use Modules\Centers\Http\Resources\Center\CenterResource;
 use Modules\Centers\Http\Resources\Center\UserResource;
 use Modules\Centers\Services\CenterRegisterService;
+use Modules\Support\Enums\DevicePlatform;
+use Modules\Support\Services\DeviceService;
 use Modules\Support\Services\OtpVerificationService;
 use Symfony\Component\HttpFoundation\Response as ResponseAlias;
 
@@ -72,8 +74,18 @@ class RegisterController extends Controller
     public function store(
         RegisterCenterFormRequest $request,
         CenterRegisterService $service,
+        DeviceService $deviceService,
     ): JsonResponse {
         $result = $service->register($request);
+
+        $deviceId = $deviceService->extractDeviceIdentifier($request);
+        if ($deviceId !== null) {
+            $deviceService->attachTo(
+                $result['user'],
+                $deviceId,
+                DevicePlatform::tryFrom((string) $request->validated('platform')),
+            );
+        }
 
         return response()->json([
             'user' => new UserResource($result['user']),

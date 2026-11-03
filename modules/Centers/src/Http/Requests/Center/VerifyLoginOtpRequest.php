@@ -3,6 +3,8 @@
 namespace Modules\Centers\Http\Requests\Center;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
+use Modules\Support\Enums\DevicePlatform;
 
 class VerifyLoginOtpRequest extends FormRequest
 {
@@ -16,6 +18,8 @@ class VerifyLoginOtpRequest extends FormRequest
         return [
             'phone' => ['required', 'string', 'max:32', 'exists:center_users,phone'],
             'code' => ['required', 'string', 'digits_between:4,6'],
+            'device_identifier' => ['nullable', 'string', 'max:255'],
+            'platform' => ['nullable', Rule::enum(DevicePlatform::class)],
         ];
     }
 

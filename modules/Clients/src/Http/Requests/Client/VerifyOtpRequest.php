@@ -3,6 +3,8 @@
 namespace Modules\Clients\Http\Requests\Client;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
+use Modules\Support\Enums\DevicePlatform;
 
 class VerifyOtpRequest extends FormRequest
 {
@@ -16,6 +18,8 @@ class VerifyOtpRequest extends FormRequest
         return [
             'phone_number' => ['required', 'string', 'max:30', 'regex:/^\+?[0-9]{6,20}$/'],
             'code' => ['required', 'digits:6'],
+            'device_identifier' => ['nullable', 'string', 'max:255'],
+            'platform' => ['nullable', Rule::enum(DevicePlatform::class)],
         ];
     }
 

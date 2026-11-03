@@ -5,6 +5,7 @@ use Modules\Centers\Http\Controllers\Center\AuthController;
 use Modules\Centers\Http\Controllers\Center\BlockedClientController;
 use Modules\Centers\Http\Controllers\Center\CenterController;
 use Modules\Centers\Http\Controllers\Center\CenterUserController;
+use Modules\Centers\Http\Controllers\Center\LaunchController;
 use Modules\Centers\Http\Controllers\Center\PurchaseController;
 use Modules\Centers\Http\Controllers\Center\RatingController;
 use Modules\Centers\Http\Controllers\Center\RegisterController;
@@ -13,6 +14,10 @@ Route::middleware(['api'])
     ->prefix('centers')
     ->name('centers.')
     ->group(function (): void {
+
+        Route::post('/launch', LaunchController::class)
+            ->middleware(['throttle:30,1'])
+            ->name('launch');
 
         Route::middleware(['throttle:10,1'])
             ->group(function (): void {

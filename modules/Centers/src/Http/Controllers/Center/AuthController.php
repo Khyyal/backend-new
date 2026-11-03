@@ -11,6 +11,8 @@ use Modules\Centers\Http\Requests\Center\SendLoginOtpRequest;
 use Modules\Centers\Http\Requests\Center\VerifyLoginOtpRequest;
 use Modules\Centers\Http\Resources\Center\UserResource;
 use Modules\Centers\Services\CenterAuthService;
+use Modules\Support\Enums\DevicePlatform;
+use Modules\Support\Services\DeviceService;
 use Modules\Support\Services\OtpVerificationService;
 use Symfony\Component\HttpFoundation\Response as ResponseAlias;
 
@@ -19,7 +21,8 @@ class AuthController extends Controller
 {
     public function __construct(
         private readonly OtpVerificationService $verification,
-        private readonly CenterAuthService      $authService,
+        private readonly CenterAuthService $authService,
+        private readonly DeviceService $deviceService,
     ) {}
 
     /**
@@ -40,7 +43,7 @@ class AuthController extends Controller
      * - `phone` — required; string, max 32 characters. Must match a phone
      *   already registered in `center_users.phone`.
      *
-     * @param SendLoginOtpRequest $request Validated via {@see SendLoginOtpRequest}.
+     * @param  SendLoginOtpRequest  $request  Validated via {@see SendLoginOtpRequest}.
      * @return JsonResponse 200 with `message` and `expires_in_seconds`.
      */
     #[Response(
@@ -86,13 +89,16 @@ class AuthController extends Controller
      * **Request body:**
      * - `phone` — required; same number used in the `/phone` call.
      * - `code`  — required; 4-digit OTP.
+     * - `device_identifier` — optional; links the device registered on
+     *   `/centers/launch`. May also be passed via the `X-Device-Identifier` header.
+     * - `platform` — optional; `ios` or `android`, same value sent to `/launch`.
      *
      * **Response body:**
      * - `user`       — Authenticated `UserResource`.
      * - `token`      — Sanctum plain-text Bearer token.
      * - `token_type` — Always `"Bearer"`.
      *
-     * @param VerifyLoginOtpRequest $request Validated via {@see VerifyLoginOtpRequest}.
+     * @param  VerifyLoginOtpRequest  $request  Validated via {@see VerifyLoginOtpRequest}.
      * @return JsonResponse 200 on success with token + user; 422 on bad input or
      *                      invalid code; 429 when the verify limiter is exhausted.
      *
@@ -131,6 +137,15 @@ class AuthController extends Controller
         }
 
         $this->authService->markPhoneVerifiedIfNeeded($user);
+
+        $deviceId = $this->deviceService->extractDeviceIdentifier($request);
+        if ($deviceId !== null) {
+            $this->deviceService->attachTo(
+                $user,
+                $deviceId,
+                DevicePlatform::tryFrom((string) $request->validated('platform')),
+            );
+        }
 
         $token = $this->authService->issueAppToken($user, $request);
 

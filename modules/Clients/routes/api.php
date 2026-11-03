@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Modules\Clients\Http\Controllers\Client\AuthController;
+use Modules\Clients\Http\Controllers\Client\LaunchController;
 use Modules\Clients\Http\Controllers\Client\ProfileController;
 
 Route::middleware(['api', 'set.locale.from.accept.language'])
@@ -18,6 +19,10 @@ Route::middleware(['api', 'set.locale.from.accept.language'])
                         ->name('profile.me');
                 });
             });
+
+        Route::post('/launch', LaunchController::class)
+            ->middleware(['throttle:30,1'])
+            ->name('launch');
 
         Route::post('/auth/login', [AuthController::class, 'login'])
             ->name('auth.login');
