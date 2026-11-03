@@ -7,6 +7,9 @@ use Modules\Purchase\Database\Factories\PaymentFactory;
 use Modules\Purchase\Database\Factories\PurchaseFactory;
 use Modules\Purchase\Database\Factories\PurchaseItemFactory;
 use Modules\Purchase\Enums\PurchaseStatus;
+use Modules\Reservations\Database\Factories\ClientPackageFactory;
+use Modules\Reservations\Database\Factories\ReservationFactory;
+use Modules\Services\Database\Factories\ServiceFactory;
 use Modules\Support\Enums\ActivationStatus;
 use Tests\TestCase;
 
@@ -106,4 +109,39 @@ test('lists the method and status of the latest payment', function (): void {
         ->assertJsonPath('data.0.payment_status', 'succeeded')
         ->assertJsonPath('data.1.payment_method', null)
         ->assertJsonPath('data.1.payment_status', null);
+});
+
+test('filters by service and creation date range', function (): void {
+    $service = ServiceFactory::new()->create(['center_id' => $this->center->id]);
+    $otherService = ServiceFactory::new()->create(['center_id' => $this->center->id]);
+    $withItem = function ($purchasable, string $createdAt) {
+        $purchase = ($this->purchase)(['created_at' => $createdAt]);
+        PurchaseItemFactory::new()->create([
+            'purchase_id' => $purchase->id,
+            'purchasable_type' => $purchasable->getMorphClass(),
+            'purchasable_id' => $purchasable->id,
+        ]);
+
+        return $purchase;
+    };
+
+    $reservation = $withItem(ReservationFactory::new()->create(['service_id' => $service->id]), '2026-10-05 10:00:00');
+    $package = ClientPackageFactory::new()->create();
+    $package->update(['service_id' => $service->id]);
+    $packagePurchase = $withItem($package, '2026-10-20 10:00:00');
+    $other = $withItem(ReservationFactory::new()->create(['service_id' => $otherService->id]), '2026-10-10 10:00:00');
+
+    $ids = fn (string $query): array => collect($this->actingAs($this->user, 'center_user')
+        ->getJson("{$this->url}?{$query}")
+        ->assertOk()
+        ->json('data'))->pluck('id')->sort()->values()->all();
+
+    expect($ids("service_id={$service->id}"))->toBe([$reservation->id, $packagePurchase->id])
+        ->and($ids('from=2026-10-05&to=2026-10-10'))->toBe([$reservation->id, $other->id])
+        ->and($ids("service_id={$service->id}&from=2026-10-06"))->toBe([$packagePurchase->id]);
+
+    $this->actingAs($this->user, 'center_user')
+        ->getJson("{$this->url}?from=2026-10-10&to=2026-10-01&service_id=abc")
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['to', 'service_id']);
 });

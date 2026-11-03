@@ -15,6 +15,8 @@ use Modules\Centers\Models\Center;
 use Modules\Centers\Services\CenterPurchaseVisibility;
 use Modules\Purchase\Enums\PurchaseStatus;
 use Modules\Purchase\Models\Purchase;
+use Modules\Reservations\Models\ClientPackage;
+use Modules\Reservations\Models\Reservation;
 
 #[Group(name: 'Center / Purchases', description: 'What clients bought from the center. Requires a center-scoped Bearer token (see `POST /centers/{center}/access`).')]
 class PurchaseController extends Controller
@@ -30,20 +32,35 @@ class PurchaseController extends Controller
      * `purchases.view_prices`. `payment_method` and `payment_status` are those
      * of the latest payment, or `null` when there is none.
      *
-     * **Query:** `status`, optional: `pending`, `confirmed`, `cancelled` or `completed`.
+     * **Query** (all optional):
+     * - `status`        `pending`, `confirmed`, `cancelled` or `completed`.
+     * - `service_id`    only purchases with a reservation or package of this service.
+     * - `from`, `to`    `Y-m-d`, inclusive range on the purchase creation date.
      */
     #[Response(status: 200, description: 'Paginated `PurchaseResource` collection.')]
     #[Response(status: 401, description: 'Missing or invalid Bearer token.')]
     #[Response(status: 403, description: 'No access to this center\'s purchases.')]
-    #[Response(status: 422, description: 'Unknown status.')]
+    #[Response(status: 422, description: 'Invalid filters.')]
     public function index(Request $request, Center $center): AnonymousResourceCollection
     {
         $this->authorize($request, $center);
 
-        $validated = $request->validate(['status' => ['sometimes', 'string', 'in:'.implode(',', array_column(PurchaseStatus::cases(), 'value'))]]);
+        $validated = $request->validate([
+            'status' => ['sometimes', 'string', 'in:'.implode(',', array_column(PurchaseStatus::cases(), 'value'))],
+            'service_id' => ['sometimes', 'integer'],
+            'from' => ['sometimes', 'date_format:Y-m-d'],
+            'to' => ['sometimes', 'date_format:Y-m-d', 'after_or_equal:from'],
+        ]);
 
         $purchases = $this->purchases($request, $center)
             ->when(isset($validated['status']), fn (Builder $query) => $query->where('status', $validated['status']))
+            ->when(isset($validated['service_id']), fn (Builder $query) => $query->whereHas('items', fn (Builder $items) => $items->whereHasMorph(
+                'purchasable',
+                [Reservation::class, ClientPackage::class],
+                fn (Builder $purchasable) => $purchasable->where('service_id', $validated['service_id']),
+            )))
+            ->when(isset($validated['from']), fn (Builder $query) => $query->whereDate('created_at', '>=', $validated['from']))
+            ->when(isset($validated['to']), fn (Builder $query) => $query->whereDate('created_at', '<=', $validated['to']))
             ->with(['buyer', 'latestPayment'])
             ->withCount('items')
             ->latest()
