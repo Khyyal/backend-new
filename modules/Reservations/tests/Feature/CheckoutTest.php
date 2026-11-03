@@ -46,7 +46,7 @@ describe('reservations', function (): void {
         $result = ($this->checkout)([$first, $second], PaymentMethod::Online);
 
         expect($result->purchase->status)->toBe(PurchaseStatus::Pending)
-            ->and((float) $result->purchase->total_amount)->toBe(200.0)
+            ->and((int) $result->purchase->total_amount)->toBe(200)
             ->and($result->purchase->items)->toHaveCount(2)
             ->and($result->purchase->merchant_id)->toBe($this->center->id)
             ->and($result->payment->status)->toBe(PaymentStatus::Pending)
@@ -142,7 +142,7 @@ describe('packages', function (): void {
         expect($package->status)->toBe(ClientPackageStatus::Pending)
             ->and($package->remaining_sessions)->toBe(8)
             ->and($package->expires_at)->toBeNull()
-            ->and((float) $result->purchase->total_amount)->toBe(700.0);
+            ->and((int) $result->purchase->total_amount)->toBe(700);
 
         $this->travelTo('2026-10-22 08:00:00');
         app(PurchaseStateService::class)->confirm($result->purchase);

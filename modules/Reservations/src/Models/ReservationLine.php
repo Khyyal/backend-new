@@ -38,8 +38,8 @@ class ReservationLine extends Model
         return [
             'kind' => ReservationLineKind::class,
             'quantity' => 'integer',
-            'unit_price' => 'decimal:2',
-            'subtotal' => 'decimal:2',
+            'unit_price' => 'integer',
+            'subtotal' => 'integer',
         ];
     }
 

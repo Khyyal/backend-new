@@ -16,7 +16,7 @@ class ReservationLineFactory extends Factory
      */
     public function definition(): array
     {
-        $price = fake()->numberBetween(10, 200);
+        $price = fake()->numberBetween(1000, 20000);
 
         return [
             'reservation_id' => ReservationFactory::new(),

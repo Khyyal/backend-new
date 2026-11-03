@@ -11,13 +11,13 @@ use Modules\Reservations\Enums\ReservationLineKind;
 final readonly class BookingQuote
 {
     /**
-     * @param  array<int, array{price_option_id: int, kind: ReservationLineKind, quantity: int, unit_price: float, subtotal: float}>  $lines
+     * @param  array<int, array{price_option_id: int, kind: ReservationLineKind, quantity: int, unit_price: int, subtotal: int}>  $lines
      */
     public function __construct(
         public CarbonImmutable $date,
         public int $quantity,
-        public float $unitPrice,
-        public float $subtotal,
+        public int $unitPrice,
+        public int $subtotal,
         public ?CarbonImmutable $endDate = null,
         public ?string $startTime = null,
         public ?string $endTime = null,

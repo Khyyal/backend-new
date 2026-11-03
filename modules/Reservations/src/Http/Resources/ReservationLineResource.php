@@ -19,8 +19,8 @@ class ReservationLineResource extends JsonResource
             'price_option_id' => $this->resource->price_option_id,
             'name' => $this->resource->priceOption?->name,
             'quantity' => $this->resource->quantity,
-            'unit_price' => (float) $this->resource->unit_price,
-            'subtotal' => (float) $this->resource->subtotal,
+            'unit_price' => $this->resource->unit_price,
+            'subtotal' => $this->resource->subtotal,
         ];
     }
 }

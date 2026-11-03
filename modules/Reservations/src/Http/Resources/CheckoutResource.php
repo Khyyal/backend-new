@@ -23,14 +23,14 @@ class CheckoutResource extends JsonResource
             'purchase' => [
                 'id' => $purchase->id,
                 'status' => $purchase->status->value,
-                'total_amount' => (float) $purchase->total_amount,
+                'total_amount' => $purchase->total_amount,
             ],
             'payment' => [
                 'id' => $payment->id,
                 'status' => $payment->status->value,
                 'method' => $payment->method->value,
                 'payment_company' => $payment->payment_company,
-                'amount' => (float) $payment->amount,
+                'amount' => $payment->amount,
             ],
             'gateway' => $this->resource->gateway,
         ];

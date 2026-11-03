@@ -30,7 +30,7 @@ class ServicePackage extends Model
     {
         return [
             'count' => 'integer',
-            'price' => 'float',
+            'price' => 'integer',
             'duration' => 'integer',
         ];
     }

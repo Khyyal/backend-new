@@ -20,5 +20,5 @@ interface PaymentGateway
 
     public function cancel(Payment $payment): PaymentStatus;
 
-    public function refund(Payment $payment, $amount): bool;
+    public function refund(Payment $payment, int $amount): bool;
 }

@@ -5,7 +5,6 @@ use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
 use Modules\Purchase\Database\Factories\PaymentFactory;
 use Modules\Purchase\Database\Factories\PurchaseFactory;
-use Modules\Purchase\Enums\PaymentMethod;
 use Modules\Purchase\Enums\PaymentStatus;
 use Modules\Purchase\Exceptions\PaymentVerificationException;
 use Modules\Purchase\Gateways\Moyasar\MoyasarClient;
@@ -13,6 +12,7 @@ use Modules\Purchase\Gateways\Moyasar\MoyasarGateway;
 use Modules\Purchase\Gateways\Moyasar\MoyasarWebhookEventHandler;
 use Modules\Purchase\Managers\PaymentGatewayManager;
 use Modules\Purchase\Models\WebhookEvent;
+use PHPUnit\Framework\ExpectationFailedException;
 use Tests\TestCase;
 
 uses(TestCase::class, RefreshDatabase::class);
@@ -39,7 +39,7 @@ test('T12: MoyasarManager driver() resolves MoyasarGateway', function (): void {
 test('T12: Moyasar initialize returns frontend config; NO backend HTTP call; never leaks secret key', function (): void {
     $purchase = PurchaseFactory::new()->create();
     $payment = PaymentFactory::new()->for($purchase, 'purchase')->create([
-        'amount' => 149.99,
+        'amount' => 14999,
     ]);
 
     $client = new MoyasarClient(moyasarConfig());
@@ -77,7 +77,7 @@ test('T12: Moyasar given_id is stable across repeated initialize calls', functio
 
 test('T12: Moyasar sync status=paid returns Succeeded; source.type creditcard→card normalized with company', function (): void {
     $payment = PaymentFactory::new()->create([
-        'amount' => 100.00,
+        'amount' => 10000,
         'payment_order_id' => 'pay-moy-1',
         'payment_company' => 'moyasar',
         'payment_type' => 'online',
@@ -124,7 +124,7 @@ test('T12: Moyasar sync source normalization - Apple Pay / Samsung Pay / STC Pay
 
     foreach ($cases as [$rawType, $expectedNorm, $company]) {
         $payment = PaymentFactory::new()->create([
-            'amount' => 50.00,
+            'amount' => 5000,
             'payment_order_id' => 'pay-moy-src-'.md5($rawType),
             'payment_company' => 'moyasar',
             'payment_type' => 'online',
@@ -155,7 +155,7 @@ test('T12: Moyasar verify with halalas match → Succeeded; mismatch → throws 
 
     // --- Match case ---
     $paymentOk = PaymentFactory::new()->create([
-        'amount' => 75.50,
+        'amount' => 7550,
         'payment_order_id' => 'pay-match',
         'payment_company' => 'moyasar',
     ]);
@@ -164,7 +164,7 @@ test('T12: Moyasar verify with halalas match → Succeeded; mismatch → throws 
         '*/v1/payments/pay-match' => Http::response([
             'id' => 'pay-match',
             'status' => 'paid',
-            'amount' => 7550, // 75.50 * 100 → matches
+            'amount' => 7550, // matches
         ], 200),
     ]);
 
@@ -173,7 +173,7 @@ test('T12: Moyasar verify with halalas match → Succeeded; mismatch → throws 
 
     // --- Mismatch case ---
     $paymentBad = PaymentFactory::new()->create([
-        'amount' => 75.50,
+        'amount' => 7550,
         'payment_order_id' => 'pay-mismatch',
         'payment_company' => 'moyasar',
     ]);
@@ -188,7 +188,7 @@ test('T12: Moyasar verify with halalas match → Succeeded; mismatch → throws 
 
     try {
         $gw->verify($paymentBad);
-        throw new \PHPUnit\Framework\ExpectationFailedException('Should have thrown VerificationException');
+        throw new ExpectationFailedException('Should have thrown VerificationException');
     } catch (PaymentVerificationException $e) {
         expect($e->getMessage())->toContain('Amount mismatch');
     }
@@ -196,7 +196,7 @@ test('T12: Moyasar verify with halalas match → Succeeded; mismatch → throws 
 
 test('T12: Moyasar authorize calls backend createPayment with manual=true; HTTP Basic auth sent', function (): void {
     $payment = PaymentFactory::new()->create([
-        'amount' => 200.00,
+        'amount' => 20000,
         'payment_type' => 'card',
         'payment_order_id' => null, // Force empty so gateway assigns from backend response
     ]);
@@ -205,7 +205,7 @@ test('T12: Moyasar authorize calls backend createPayment with manual=true; HTTP 
     $captured = [];
 
     Http::fake([
-        '*/v1/payments' => function (Request $req) use ($pid, &$captured) {
+        '*/v1/payments' => function (Request $req) use (&$captured) {
             $captured['body'] = (array) $req->data();
             $captured['auth'] = $req->header('Authorization');
 
@@ -247,7 +247,7 @@ test('T12: Moyasar authorize calls backend createPayment with manual=true; HTTP 
 
 test('T12: Moyasar capture captures payment with halalas → Succeeded', function (): void {
     $payment = PaymentFactory::new()->create([
-        'amount' => 300.00,
+        'amount' => 30000,
         'payment_order_id' => 'pay-cap-1',
         'payment_company' => 'moyasar',
     ]);
@@ -296,7 +296,7 @@ test('T12: Moyasar cancel = void; voided → Cancelled', function (): void {
 
 test('T12: Moyasar refund = true; sets moyasar_refunded, refund_amount_halalas; status refunded', function (): void {
     $payment = PaymentFactory::new()->create([
-        'amount' => 400.00,
+        'amount' => 40000,
         'status' => PaymentStatus::Succeeded,
         'payment_order_id' => 'pay-ref-1',
         'payment_company' => 'moyasar',
@@ -311,22 +311,21 @@ test('T12: Moyasar refund = true; sets moyasar_refunded, refund_amount_halalas; 
     ]);
 
     $gw = new MoyasarGateway(new MoyasarClient(moyasarConfig()));
-    $ret = $gw->refund($payment, 150.25);
+    $ret = $gw->refund($payment, 15025);
     expect($ret)->toBeTrue();
 
     $payment->refresh();
     expect($payment->provider_data['moyasar_refunded'])->toBeTrue();
     expect((int) $payment->provider_data['moyasar_refund_amount_halalas'])->toBe(15025);
-    expect((float) $payment->provider_data['moyasar_refund_amount'])->toEqualWithDelta(150.25, 0.001);
     expect($payment->provider_data['moyasar_status'])->toBe('refunded');
 });
 
 // ----- Webhook event handler matrix -----------------------------------------
 
 test('T12: MoyasarWebhookEventHandler payment_paid→Succeeded; payment_faild→Failed (typo matched exactly)', function (): void {
-    $handler = new MoyasarWebhookEventHandler();
+    $handler = new MoyasarWebhookEventHandler;
 
-    $evPaid = new WebhookEvent();
+    $evPaid = new WebhookEvent;
     $evPaid->event_type = 'payment_paid';
     $evPaid->payload = ['id' => 'pay-wh-paid'];
     $a = $handler->handle($evPaid);
@@ -335,7 +334,7 @@ test('T12: MoyasarWebhookEventHandler payment_paid→Succeeded; payment_faild→
     expect($a['payment_status'])->toBe(PaymentStatus::Succeeded);
 
     // IMPORTANT: Moyasar emits the typo "payment_faild" (without an 'e'). We MUST match this exactly.
-    $evFail = new WebhookEvent();
+    $evFail = new WebhookEvent;
     $evFail->event_type = 'payment_faild';
     $evFail->payload = ['id' => 'pay-wh-fail'];
     $b = $handler->handle($evFail);
@@ -343,14 +342,14 @@ test('T12: MoyasarWebhookEventHandler payment_paid→Succeeded; payment_faild→
     expect($b['payment_status'])->toBe(PaymentStatus::Failed);
 
     // And the CORRECT spelling "payment_failed" is NOT matched → no action
-    $evWrongSpelling = new WebhookEvent();
+    $evWrongSpelling = new WebhookEvent;
     $evWrongSpelling->event_type = 'payment_failed';
     $evWrongSpelling->payload = ['id' => 'pay-wh-wrong'];
     expect($handler->handle($evWrongSpelling))->toBeNull();
 });
 
 test('T12: MoyasarWebhookEventHandler payment_authorized→Processing; payment_captured→Succeeded; payment_voided→Cancelled', function (): void {
-    $handler = new MoyasarWebhookEventHandler();
+    $handler = new MoyasarWebhookEventHandler;
     $cases = [
         ['payment_authorized', PaymentStatus::Processing],
         ['payment_captured', PaymentStatus::Succeeded],
@@ -358,7 +357,7 @@ test('T12: MoyasarWebhookEventHandler payment_authorized→Processing; payment_c
     ];
 
     foreach ($cases as [$type, $expected]) {
-        $ev = new WebhookEvent();
+        $ev = new WebhookEvent;
         $ev->event_type = $type;
         $ev->payload = ['id' => 'pay-'.$type];
         $a = $handler->handle($ev);
@@ -369,14 +368,14 @@ test('T12: MoyasarWebhookEventHandler payment_authorized→Processing; payment_c
 });
 
 test('T12: MoyasarWebhookEventHandler payment_refunded & payment_verified return null (no state change)', function (): void {
-    $handler = new MoyasarWebhookEventHandler();
+    $handler = new MoyasarWebhookEventHandler;
 
-    $evR = new WebhookEvent();
+    $evR = new WebhookEvent;
     $evR->event_type = 'payment_refunded';
     $evR->payload = ['id' => 'pay-wh-r'];
     expect($handler->handle($evR))->toBeNull();
 
-    $evV = new WebhookEvent();
+    $evV = new WebhookEvent;
     $evV->event_type = 'payment_verified';
     $evV->payload = ['id' => 'pay-wh-v'];
     expect($handler->handle($evV))->toBeNull();
@@ -384,7 +383,7 @@ test('T12: MoyasarWebhookEventHandler payment_refunded & payment_verified return
 
 test('T12: Moyasar sync verified status returns Pending (no auto-state-change for verified)', function (): void {
     $payment = PaymentFactory::new()->create([
-        'amount' => 55.00,
+        'amount' => 5500,
         'payment_order_id' => 'pay-ver-1',
         'payment_company' => 'moyasar',
     ]);

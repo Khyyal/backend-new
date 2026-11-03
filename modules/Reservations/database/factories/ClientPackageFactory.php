@@ -27,7 +27,7 @@ class ClientPackageFactory extends Factory
             'price_option_id' => fn (array $attributes) => ServicePackage::query()->findOrFail($attributes['service_package_id'])->price_option_id,
             'total_sessions' => $sessions,
             'remaining_sessions' => $sessions,
-            'price' => fake()->numberBetween(200, 2000),
+            'price' => fake()->numberBetween(20000, 200000),
             'status' => ClientPackageStatus::Active,
             'expires_at' => now()->addMonths(3),
         ];

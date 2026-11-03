@@ -121,11 +121,11 @@ test('create: PriceOptions correct column mapping (name+price, no quantity) + co
     $options = $horseCare->service->priceOptions()->orderBy('price')->get();
     expect($options)->toHaveCount(2);
     expect($options[0]->name)->toBe('Basic');
-    expect($options[0]->price)->toBe(100.0);
+    expect($options[0]->price)->toBe(100);
     expect($options[0]->quantity)->toBeNull();
     expect($options[0]->unit)->toBe(PriceOptionUnit::OPTION);
     expect($options[1]->name)->toBe('Premium');
-    expect($options[1]->price)->toBe(200.0);
+    expect($options[1]->price)->toBe(200);
 });
 
 test('create: single price option is allowed', function () use ($validData) {

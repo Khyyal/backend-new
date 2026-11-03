@@ -141,11 +141,11 @@ test('create: PriceOptions correct column mapping (name+price, no quantity) + co
     $options = $event->service->priceOptions()->orderBy('price')->get();
     expect($options)->toHaveCount(2);
     expect($options[0]->name)->toBe('Child');
-    expect($options[0]->price)->toBe(25.0);
+    expect($options[0]->price)->toBe(25);
     expect($options[0]->quantity)->toBeNull();
     expect($options[0]->unit)->toBe(PriceOptionUnit::OPTION);
     expect($options[1]->name)->toBe('Adult');
-    expect($options[1]->price)->toBe(50.0);
+    expect($options[1]->price)->toBe(50);
 });
 
 test('create: returned model eager-loads service and service.priceOptions relations', function () use ($validData) {

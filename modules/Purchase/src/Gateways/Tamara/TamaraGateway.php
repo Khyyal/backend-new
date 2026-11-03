@@ -11,9 +11,8 @@ class TamaraGateway implements PaymentGateway
 {
     public function __construct(
         private readonly TamaraClient $client,
-        private readonly TamaraStatusMapper $mapper = new TamaraStatusMapper(),
-    ) {
-    }
+        private readonly TamaraStatusMapper $mapper = new TamaraStatusMapper,
+    ) {}
 
     /**
      * Create a Tamara checkout. Idempotency: order_reference_id = stable Payment->id
@@ -32,11 +31,11 @@ class TamaraGateway implements PaymentGateway
             'order_reference_id' => (string) $payment->getKey(),
             'order_number' => (string) $purchase->getKey(),
             'total_amount' => [
-                'amount' => (float) $payment->amount,
+                'amount' => $this->toMajor($payment->amount),
                 'currency' => $currency,
             ],
             'tax_amount' => [
-                'amount' => (float) ($purchase->tax_amount ?? 0),
+                'amount' => $this->toMajor($purchase->tax_amount),
                 'currency' => $currency,
             ],
             'shipping_amount' => [
@@ -44,7 +43,7 @@ class TamaraGateway implements PaymentGateway
                 'currency' => $currency,
             ],
             'discount_amount' => [
-                'amount' => (float) ($purchase->discount_amount ?? 0),
+                'amount' => $this->toMajor($purchase->discount_amount),
                 'currency' => $currency,
             ],
             'items' => $items,
@@ -146,7 +145,7 @@ class TamaraGateway implements PaymentGateway
         $payload = [
             'order_id' => $orderId,
             'total_amount' => [
-                'amount' => (float) $payment->amount,
+                'amount' => $this->toMajor($payment->amount),
                 'currency' => $this->client->currency(),
             ],
         ];
@@ -182,7 +181,7 @@ class TamaraGateway implements PaymentGateway
         return $this->mapper->mapOrFallback($rawStatus, PaymentStatus::Cancelled);
     }
 
-    public function refund(Payment $payment, $amount): bool
+    public function refund(Payment $payment, int $amount): bool
     {
         $orderId = (string) ($payment->payment_order_id ?? '');
         if ($orderId === '') {
@@ -192,7 +191,7 @@ class TamaraGateway implements PaymentGateway
         $payload = [
             'order_id' => $orderId,
             'total_amount' => [
-                'amount' => (float) $amount,
+                'amount' => $this->toMajor($amount),
                 'currency' => $this->client->currency(),
             ],
         ];
@@ -201,7 +200,7 @@ class TamaraGateway implements PaymentGateway
 
         $providerData = (array) ($payment->provider_data ?? []);
         $providerData['tamara_refunded'] = true;
-        $providerData['tamara_refund_amount'] = (float) $amount;
+        $providerData['tamara_refund_amount'] = $amount;
         $providerData['tamara_refund_response'] = $response;
         $providerData['tamara_status'] = $this->mapper::REFUNDED;
         $payment->provider_data = $providerData;
@@ -230,19 +229,19 @@ class TamaraGateway implements PaymentGateway
                 'name' => (string) ($item->name ?? 'Item'),
                 'quantity' => $qty,
                 'unit_price' => [
-                    'amount' => (float) ($item->unit_price ?? 0),
+                    'amount' => $this->toMajor($item->unit_price),
                     'currency' => $currency,
                 ],
                 'tax_amount' => [
-                    'amount' => (float) ($item->tax_amount ?? 0),
+                    'amount' => $this->toMajor($item->tax_amount),
                     'currency' => $currency,
                 ],
                 'discount_amount' => [
-                    'amount' => (float) ($item->discount_amount ?? 0),
+                    'amount' => $this->toMajor($item->discount_amount),
                     'currency' => $currency,
                 ],
                 'total_amount' => [
-                    'amount' => (float) ($item->total_amount ?? 0),
+                    'amount' => $this->toMajor($item->total_amount),
                     'currency' => $currency,
                 ],
             ];
@@ -254,18 +253,26 @@ class TamaraGateway implements PaymentGateway
                 'name' => 'Purchase #'.$purchase->getKey(),
                 'quantity' => 1,
                 'unit_price' => [
-                    'amount' => (float) ($purchase->total_amount ?? 0),
+                    'amount' => $this->toMajor($purchase->total_amount),
                     'currency' => $currency,
                 ],
                 'tax_amount' => ['amount' => 0, 'currency' => $currency],
                 'discount_amount' => ['amount' => 0, 'currency' => $currency],
                 'total_amount' => [
-                    'amount' => (float) ($purchase->total_amount ?? 0),
+                    'amount' => $this->toMajor($purchase->total_amount),
                     'currency' => $currency,
                 ],
             ];
         }
 
         return $items;
+    }
+
+    /**
+     * Tamara takes SAR amounts; amounts are kept in halalas internally.
+     */
+    private function toMajor(?int $halalas): float
+    {
+        return ($halalas ?? 0) / 100;
     }
 }

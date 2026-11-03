@@ -42,5 +42,6 @@ class PriceOption extends Model
 
     protected $casts = [
         'unit' => PriceOptionUnit::class,
+        'price' => 'integer',
     ];
 }

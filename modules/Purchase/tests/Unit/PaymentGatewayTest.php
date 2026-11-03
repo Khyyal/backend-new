@@ -2,17 +2,18 @@
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Purchase\Contracts\PaymentGateway;
+use Modules\Purchase\Database\Factories\PaymentFactory;
+use Modules\Purchase\Database\Factories\PurchaseFactory;
 use Modules\Purchase\Enums\PaymentStatus;
 use Modules\Purchase\Gateways\FakeGateway;
 use Modules\Purchase\Managers\PaymentGatewayManager;
-use Modules\Purchase\Database\Factories\PaymentFactory;
-use Modules\Purchase\Database\Factories\PurchaseFactory;
+use Modules\Support\Database\Factories\CityFactory;
 use Tests\TestCase;
 
 uses(TestCase::class, RefreshDatabase::class);
 
 beforeEach(function (): void {
-    $this->city = \Modules\Support\Database\Factories\CityFactory::new()->create([
+    $this->city = CityFactory::new()->create([
         'name' => ['en' => 'G', 'ar' => 'ج'],
     ]);
 });
@@ -29,7 +30,7 @@ test('FakeGateway::initialize returns non-empty array with checkout_url (AC-37)'
     $purchase = PurchaseFactory::new()->create();
     $payment = PaymentFactory::new()->for($purchase, 'purchase')->online()->create();
 
-    $gateway = new FakeGateway();
+    $gateway = new FakeGateway;
     $res = $gateway->initialize($purchase, $payment);
 
     expect($res)->toBeArray();
@@ -50,7 +51,7 @@ test('FakeGateway setNextStatus then verify returns the status', function (): vo
     FakeGateway::clearNextStatus();
     FakeGateway::setNextStatus($pid, PaymentStatus::Succeeded);
 
-    $gw = new FakeGateway();
+    $gw = new FakeGateway;
     $got = $gw->verify($payment);
     expect($got)->toBe(PaymentStatus::Succeeded);
 
@@ -61,9 +62,9 @@ test('FakeGateway setNextStatus then verify returns the status', function (): vo
 
 test('FakeGateway cancel returns Cancelled, refund returns true, capture defaults to Succeeded', function (): void {
     $payment = PaymentFactory::new()->create();
-    $gw = new FakeGateway();
+    $gw = new FakeGateway;
 
     expect($gw->cancel($payment))->toBe(PaymentStatus::Cancelled);
     expect($gw->capture($payment))->toBe(PaymentStatus::Succeeded);
-    expect($gw->refund($payment, 100.0))->toBeTrue();
+    expect($gw->refund($payment, 100))->toBeTrue();
 });

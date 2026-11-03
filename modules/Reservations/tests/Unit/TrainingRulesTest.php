@@ -41,7 +41,7 @@ test('books a slot on the trainer schedule', function (): void {
 
     expect($quote->trainerId)->toBe($this->trainer->id)
         ->and($quote->endTime)->toBe('17:45:00')
-        ->and($quote->subtotal)->toBe(400.0);
+        ->and($quote->subtotal)->toBe(400);
 });
 
 test('a trainer is required', function (): void {

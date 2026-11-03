@@ -33,11 +33,11 @@ class PurchaseItem extends Model
         return [
             'metadata' => 'array',
             'quantity' => 'integer',
-            'unit_price' => 'decimal:2',
-            'subtotal' => 'decimal:2',
-            'discount_amount' => 'decimal:2',
-            'tax_amount' => 'decimal:2',
-            'total_amount' => 'decimal:2',
+            'unit_price' => 'integer',
+            'subtotal' => 'integer',
+            'discount_amount' => 'integer',
+            'tax_amount' => 'integer',
+            'total_amount' => 'integer',
         ];
     }
 

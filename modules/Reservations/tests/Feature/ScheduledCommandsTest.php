@@ -117,7 +117,7 @@ describe('reservations:release-unpaid', function (): void {
         $payment = Payment::query()->find($checkout->payment->id);
 
         expect($payment->status)->toBe(PaymentStatus::Refunded)
-            ->and((float) $payment->refunded_amount)->toBe(100.0)
+            ->and((int) $payment->refunded_amount)->toBe(100)
             ->and($checkout->purchase->fresh()->status)->toBe(PurchaseStatus::Cancelled)
             ->and($reservation->fresh()->status)->toBe(ReservationStatus::Cancelled);
     });
@@ -125,7 +125,7 @@ describe('reservations:release-unpaid', function (): void {
     test('a declined late refund is logged and leaves the payment succeeded', function (): void {
         app(PaymentGatewayManager::class)->extend('declining', fn () => new class extends FakeGateway
         {
-            public function refund(Payment $payment, $amount): bool
+            public function refund(Payment $payment, int $amount): bool
             {
                 return false;
             }

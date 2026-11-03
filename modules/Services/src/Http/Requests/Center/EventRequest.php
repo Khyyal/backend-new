@@ -49,7 +49,7 @@ class EventRequest extends FormRequest
             'max_tickets_per_day' => ['required', 'integer', 'min:1'],
             'price_options' => ['required', 'array', 'min:1', 'max:20'],
             'price_options.*.name' => ['required', 'string', 'max:255'],
-            'price_options.*.price' => ['required', 'numeric', 'min:0'],
+            'price_options.*.price' => ['required', 'integer', 'min:0'],
             'cover' => ['sometimes', 'nullable', 'uuid'],
             'images' => ['sometimes', 'array', 'max:10'],
             'images.*' => ['uuid', 'distinct'],

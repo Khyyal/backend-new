@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('price_option_id')->nullable()->constrained('price_options')->nullOnDelete();
             $table->unsignedInteger('total_sessions');
             $table->unsignedInteger('remaining_sessions');
-            $table->decimal('price', 14, 2);
+            $table->unsignedBigInteger('price');
             $table->string('status')->default('pending');
             $table->timestamp('expires_at')->nullable();
             $table->timestamps();

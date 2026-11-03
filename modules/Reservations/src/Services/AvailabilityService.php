@@ -173,7 +173,7 @@ class AvailabilityService
 
         return [
             'open' => $price !== null,
-            'price' => $price !== null ? (float) $price : null,
+            'price' => $price,
             'reserved' => $isReserved,
         ];
     }

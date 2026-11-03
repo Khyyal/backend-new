@@ -38,7 +38,7 @@ test('books tickets of one price option', function (): void {
     $quote = ($this->book)([['price_option_id' => $this->child->id, 'quantity' => 3]]);
 
     expect($quote->quantity)->toBe(3)
-        ->and($quote->subtotal)->toBe(90.0)
+        ->and($quote->subtotal)->toBe(90)
         ->and($quote->priceOptionId)->toBe($this->child->id)
         ->and($quote->lines)->toHaveCount(1)
         ->and($quote->lines[0]['kind'])->toBe(ReservationLineKind::Ticket);

@@ -41,7 +41,7 @@ class RecreationRidingRequest extends FormRequest
             'max_tickets_per_hour' => ['nullable', 'integer', 'min:1'],
             'price_options' => ['required', 'array', 'min:1', 'max:20'],
             'price_options.*.duration' => ['required', 'integer', 'min:1'],
-            'price_options.*.price' => ['required', 'numeric', 'min:0'],
+            'price_options.*.price' => ['required', 'integer', 'min:0'],
             'days' => ['required', 'array', 'min:1', 'max:7'],
             'days.*' => ['integer', 'between:0,6', 'distinct'],
             'hours' => ['required', 'array', 'min:2', 'max:48'],

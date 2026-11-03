@@ -16,7 +16,7 @@ class ServicePackageFactory extends Factory
             'price_option_id' => PriceOption::factory(),
             'service_id' => fn (array $attributes) => PriceOption::query()->findOrFail($attributes['price_option_id'])->service_id,
             'count' => fake()->numberBetween(4, 20),
-            'price' => fake()->numberBetween(100, 1000),
+            'price' => fake()->numberBetween(10000, 100000),
             'duration' => fake()->numberBetween(1, 6),
         ];
     }

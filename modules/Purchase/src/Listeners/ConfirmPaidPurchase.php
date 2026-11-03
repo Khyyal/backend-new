@@ -30,11 +30,11 @@ class ConfirmPaidPurchase
                 return;
             }
 
-            $paid = (float) $purchase->payments()
+            $paid = (int) $purchase->payments()
                 ->where('status', PaymentStatus::Succeeded)
                 ->sum('amount');
 
-            if (round($paid, 2) < round((float) $purchase->total_amount, 2)) {
+            if ($paid < $purchase->total_amount) {
                 return;
             }
 

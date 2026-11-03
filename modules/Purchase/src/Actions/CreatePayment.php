@@ -15,7 +15,7 @@ class CreatePayment
     /**
      * @param  Purchase  $purchase  Target purchase (freshly reloaded internally to avoid stale state)
      * @param  PaymentMethod  $method  online / cash_on_arrival / manual
-     * @param  float|int  $amount  Positive amount (matches single-currency application convention)
+     * @param  int  $amount  Positive amount in minor units (halalas)
      * @param  string|null  $paymentCompany  Provider company when method=Online (e.g. "moyasar", "stripe")
      * @param  string|null  $paymentType  Provider/payment instrument type (e.g. "card", "apple_pay")
      * @param  array<string, mixed>  $metadata  Optional payment-level metadata
@@ -23,13 +23,12 @@ class CreatePayment
     public function execute(
         Purchase $purchase,
         PaymentMethod $method,
-        float|int $amount,
+        int $amount,
         ?string $paymentCompany = null,
         ?string $paymentType = null,
         array $metadata = [],
     ): Payment {
-        $numericAmount = (float) $amount;
-        if ($numericAmount <= 0) {
+        if ($amount <= 0) {
             throw new InvalidArgumentException('Payment amount must be greater than 0.');
         }
 
@@ -44,14 +43,14 @@ class CreatePayment
         $payment = DB::transaction(function () use (
             $purchaseFresh,
             $method,
-            $numericAmount,
+            $amount,
             $paymentCompany,
             $paymentType,
             $metadata,
         ): Payment {
             $payment = Payment::create([
                 'purchase_id' => $purchaseFresh->getKey(),
-                'amount' => $this->roundMoney($numericAmount),
+                'amount' => $amount,
                 'method' => $method,
                 'status' => PaymentStatus::Pending,
                 'payment_company' => $paymentCompany,
@@ -72,10 +71,5 @@ class CreatePayment
         $payment->load('purchase');
 
         return $payment;
-    }
-
-    private function roundMoney(float $value): float
-    {
-        return round($value, 2);
     }
 }

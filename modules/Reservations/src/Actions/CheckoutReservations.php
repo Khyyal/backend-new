@@ -58,7 +58,7 @@ class CheckoutReservations
                 items: array_map(fn (Reservation $reservation): array => [
                     'purchasable' => $reservation,
                     'name' => $reservation->service->name,
-                    'unit_price' => (float) $reservation->total_amount,
+                    'unit_price' => $reservation->total_amount,
                     'metadata' => ['quantity' => $reservation->quantity],
                 ], $reservations),
                 paymentCompany: $paymentCompany,
@@ -90,7 +90,7 @@ class CheckoutReservations
         foreach ($reservations as $reservation) {
             $isCheckoutable = $reservation->status === ReservationStatus::Pending
                 && $reservation->client_package_id === null
-                && (float) $reservation->total_amount > 0
+                && $reservation->total_amount > 0
                 && (int) $reservation->client_id === (int) $client->getKey()
                 && (int) $reservation->center_id === (int) $centerId
                 && ! $reservation->purchaseItems()->exists();

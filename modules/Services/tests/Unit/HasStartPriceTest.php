@@ -74,7 +74,7 @@ test('scopeWithStartPrice sets start_price to the min price across priceOptions'
 
     $loaded = Event::withStartPrice()->find($event->id);
 
-    expect($loaded->start_price)->toBe(25.0);
+    expect($loaded->start_price)->toBe(25);
 });
 
 test('accessor falls back to the loaded priceOptions relation without extra queries', function () {
@@ -91,7 +91,7 @@ test('accessor falls back to the loaded priceOptions relation without extra quer
     $startPrice = $loaded->start_price;
     expect(DB::getQueryLog())->toHaveCount(0);
 
-    expect($startPrice)->toBe(25.0);
+    expect($startPrice)->toBe(25);
 });
 
 test('accessor falls back to a fresh query when nothing is loaded', function () {
@@ -104,7 +104,7 @@ test('accessor falls back to a fresh query when nothing is loaded', function () 
     $fresh = Event::query()->find($event->id);
     expect($fresh->relationLoaded('priceOptions'))->toBeFalse();
 
-    expect($fresh->start_price)->toBe(25.0);
+    expect($fresh->start_price)->toBe(25);
 });
 
 test('start_price is null when there are no price options', function () {
@@ -133,9 +133,9 @@ test('resort start_price uses dayPrices, ignoring cheaper addon price options', 
     ]);
 
     $loaded = Resort::withStartPrice()->find($resort->id);
-    expect($loaded->start_price)->toBe(150.0);
+    expect($loaded->start_price)->toBe(150);
 
     $fresh = Resort::query()->find($resort->id);
     expect($fresh->relationLoaded('dayPrices'))->toBeFalse();
-    expect($fresh->start_price)->toBe(150.0);
+    expect($fresh->start_price)->toBe(150);
 });

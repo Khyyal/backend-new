@@ -23,9 +23,9 @@ return new class extends Migration
             $table->time('start_time')->nullable();
             $table->time('end_time')->nullable();
             $table->unsignedInteger('quantity')->default(1);
-            $table->decimal('unit_price', 14, 2)->default(0);
-            $table->decimal('subtotal', 14, 2)->default(0);
-            $table->decimal('total_amount', 14, 2)->default(0);
+            $table->unsignedBigInteger('unit_price')->default(0);
+            $table->unsignedBigInteger('subtotal')->default(0);
+            $table->unsignedBigInteger('total_amount')->default(0);
             $table->timestamp('cancelled_at')->nullable();
             $table->nullableMorphs('cancelled_by');
             $table->string('cancellation_reason')->nullable();

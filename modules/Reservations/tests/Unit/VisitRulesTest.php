@@ -40,7 +40,7 @@ describe('all day', function (): void {
 
         expect($quote->startTime)->toBeNull()
             ->and($quote->endTime)->toBeNull()
-            ->and($quote->subtotal)->toBe(100.0);
+            ->and($quote->subtotal)->toBe(100);
     });
 
     test('a day without a schedule is closed', function (): void {

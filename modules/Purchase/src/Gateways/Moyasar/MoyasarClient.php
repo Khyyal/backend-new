@@ -20,8 +20,7 @@ class MoyasarClient
      */
     public function __construct(
         private readonly array $config = [],
-    ) {
-    }
+    ) {}
 
     public function baseUrl(): string
     {
@@ -41,15 +40,6 @@ class MoyasarClient
     public function webhookSecret(): string
     {
         return (string) ($this->config['webhook_secret'] ?? '');
-    }
-
-    /**
-     * Convert flat SAR decimal amount to integer halalas (multiply by 100, round).
-     * This is the ONLY place internal flat-amount touches provider integer halalas.
-     */
-    public function toHalalas(float|int|string $amount): int
-    {
-        return (int) round(((float) $amount) * 100);
     }
 
     /**

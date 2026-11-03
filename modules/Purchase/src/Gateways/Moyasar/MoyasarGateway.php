@@ -12,10 +12,9 @@ class MoyasarGateway implements PaymentGateway
 {
     public function __construct(
         private readonly MoyasarClient $client,
-        private readonly MoyasarStatusMapper $mapper = new MoyasarStatusMapper(),
-        private readonly MoyasarSourceNormalizer $normalizer = new MoyasarSourceNormalizer(),
-    ) {
-    }
+        private readonly MoyasarStatusMapper $mapper = new MoyasarStatusMapper,
+        private readonly MoyasarSourceNormalizer $normalizer = new MoyasarSourceNormalizer,
+    ) {}
 
     /**
      * Moyasar initialize does NOT call the backend createPayment endpoint
@@ -36,7 +35,7 @@ class MoyasarGateway implements PaymentGateway
         return [
             'type' => 'moyasar',
             'publishable_key' => $this->client->publishableKey(),
-            'amount_halalas' => $this->client->toHalalas((float) $payment->amount),
+            'amount_halalas' => $payment->amount,
             'currency' => $this->client->currency(),
             'given_id' => (string) $payment->getKey(),
             'description' => 'Purchase #'.$purchase->getKey(),
@@ -105,7 +104,7 @@ class MoyasarGateway implements PaymentGateway
 
         $providerData = (array) ($payment->provider_data ?? []);
         $providerHalalas = (int) ($providerData['provider_amount_halalas'] ?? -1);
-        $expectedHalalas = $this->client->toHalalas((float) $payment->amount);
+        $expectedHalalas = $payment->amount;
 
         if ($providerHalalas !== -1 && $providerHalalas !== $expectedHalalas) {
             throw new PaymentVerificationException(sprintf(
@@ -126,7 +125,7 @@ class MoyasarGateway implements PaymentGateway
     {
         $currency = $this->client->currency();
         $payload = [
-            'amount' => $this->client->toHalalas((float) $payment->amount),
+            'amount' => $payment->amount,
             'currency' => $currency,
             'given_id' => (string) $payment->getKey(),
             'description' => 'Authorize Payment #'.$payment->getKey(),
@@ -165,7 +164,7 @@ class MoyasarGateway implements PaymentGateway
             return PaymentStatus::Pending;
         }
 
-        $halalas = $this->client->toHalalas((float) $payment->amount);
+        $halalas = $payment->amount;
         $currency = $this->client->currency();
 
         $response = $this->client->capturePayment($paymentId, $halalas, $currency);
@@ -199,21 +198,20 @@ class MoyasarGateway implements PaymentGateway
         return $this->mapper->mapOrFallback($rawStatus, PaymentStatus::Cancelled);
     }
 
-    public function refund(Payment $payment, $amount): bool
+    public function refund(Payment $payment, int $amount): bool
     {
         $paymentId = (string) ($payment->payment_order_id ?? '');
         if ($paymentId === '') {
             return false;
         }
 
-        $halalas = $this->client->toHalalas((float) $amount);
+        $halalas = $amount;
 
         $response = $this->client->refundPayment($paymentId, $halalas);
 
         $providerData = (array) ($payment->provider_data ?? []);
         $providerData['moyasar_refunded'] = true;
         $providerData['moyasar_refund_amount_halalas'] = $halalas;
-        $providerData['moyasar_refund_amount'] = (float) $amount;
         $providerData['moyasar_refund_response'] = $response;
         $providerData['moyasar_status'] = 'refunded';
         $payment->provider_data = $providerData;

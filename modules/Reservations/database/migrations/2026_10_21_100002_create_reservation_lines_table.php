@@ -14,8 +14,8 @@ return new class extends Migration
             $table->foreignId('price_option_id')->nullable()->constrained('price_options')->nullOnDelete();
             $table->string('kind');
             $table->unsignedInteger('quantity');
-            $table->decimal('unit_price', 14, 2);
-            $table->decimal('subtotal', 14, 2);
+            $table->unsignedBigInteger('unit_price');
+            $table->unsignedBigInteger('subtotal');
         });
     }
 

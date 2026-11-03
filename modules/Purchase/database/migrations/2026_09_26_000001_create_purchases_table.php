@@ -6,7 +6,8 @@ use Illuminate\Support\Facades\Schema;
 use Modules\Purchase\Enums\PurchaseSource;
 use Modules\Purchase\Enums\PurchaseStatus;
 
-return new class extends Migration {
+return new class extends Migration
+{
     public function up(): void
     {
         Schema::create('purchases', function (Blueprint $table) {
@@ -31,10 +32,10 @@ return new class extends Migration {
                 PurchaseStatus::Completed->value,
             ])->default(PurchaseStatus::Pending->value);
 
-            $table->decimal('subtotal', 14, 2);
-            $table->decimal('discount_amount', 14, 2)->default(0);
-            $table->decimal('tax_amount', 14, 2)->default(0);
-            $table->decimal('total_amount', 14, 2);
+            $table->unsignedBigInteger('subtotal');
+            $table->unsignedBigInteger('discount_amount')->default(0);
+            $table->unsignedBigInteger('tax_amount')->default(0);
+            $table->unsignedBigInteger('total_amount');
 
             $table->json('metadata')->nullable();
 

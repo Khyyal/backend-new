@@ -12,8 +12,9 @@ use Modules\Services\Models\Schedule;
 use Modules\Services\Models\Service;
 use Modules\Services\Services\RecreationRidingService;
 use Modules\Support\Enums\ActivationStatus;
+use Tests\TestCase;
 
-uses(\Tests\TestCase::class, RefreshDatabase::class);
+uses(TestCase::class, RefreshDatabase::class);
 
 beforeEach(function () {
     $paths = [
@@ -22,7 +23,7 @@ beforeEach(function () {
         base_path('modules/Services/database/migrations'),
     ];
     foreach ($paths as $path) {
-        foreach (glob($path . '/*.php') as $file) {
+        foreach (glob($path.'/*.php') as $file) {
             require_once $file;
         }
     }
@@ -38,8 +39,8 @@ $validCreateData = function (int $centerId): array {
         'name' => ['ar' => 'ركوب ترفيهي', 'en' => 'Recreational Riding'],
         'description' => ['ar' => 'وصف الخدمة بالعربية', 'en' => 'English service description'],
         'price_options' => [
-            ['duration' => 30, 'price' => 100.50],
-            ['duration' => 60, 'price' => 180.75],
+            ['duration' => 30, 'price' => 10050],
+            ['duration' => 60, 'price' => 18075],
         ],
         'days' => [0, 2, 4],
         'hours' => ['09:00', '12:00', '14:00', '17:00'],
@@ -131,11 +132,11 @@ test('create: PriceOptions correct column mapping + count', function () use ($va
     $options = $riding->service->priceOptions()->orderBy('quantity')->get();
     expect($options)->toHaveCount(2);
     expect($options[0]->quantity)->toBe(30);
-    expect($options[0]->price)->toBe(100.50);
+    expect($options[0]->price)->toBe(10050);
     expect($options[0]->unit)->toBe(PriceOptionUnit::MINUTE);
     expect($options[0]->name)->toBeNull();
     expect($options[1]->quantity)->toBe(60);
-    expect($options[1]->price)->toBe(180.75);
+    expect($options[1]->price)->toBe(18075);
     expect($options[1]->unit)->toBe(PriceOptionUnit::MINUTE);
 });
 
@@ -226,7 +227,7 @@ test('update: PriceOptions full sync delete-then-recreate no stale IDs', functio
     $opts = $updated->service->priceOptions()->orderBy('quantity')->get();
     expect($opts)->toHaveCount(3);
     expect($opts->pluck('quantity')->all())->toBe([10, 25, 90]);
-    expect($opts->pluck('price')->all())->toBe([25.0, 55.0, 250.0]);
+    expect($opts->pluck('price')->all())->toBe([25, 55, 250]);
     foreach ($opts as $o) {
         expect($o->unit)->toBe(PriceOptionUnit::MINUTE);
         expect($o->name)->toBeNull();
@@ -327,8 +328,10 @@ test('create mid-flow failure rolls back all 4 tables', function () use ($validC
         'schedule' => Schedule::count(),
     ];
 
-    $failingSvc = new class() extends RecreationRidingService {
-        public function create(array $data): RecreationalRiding {
+    $failingSvc = new class extends RecreationRidingService
+    {
+        public function create(array $data): RecreationalRiding
+        {
             return DB::transaction(function () use ($data) {
                 $riding = RecreationalRiding::query()->create();
                 $riding->service()->create([
@@ -338,7 +341,7 @@ test('create mid-flow failure rolls back all 4 tables', function () use ($validC
                     'status' => ActivationStatus::ACTIVE,
                     'type' => ServiceType::RecreationRiding,
                 ]);
-                throw new \RuntimeException('intentional mid-create fail');
+                throw new RuntimeException('intentional mid-create fail');
             });
         }
     };
@@ -346,7 +349,7 @@ test('create mid-flow failure rolls back all 4 tables', function () use ($validC
     try {
         $failingSvc->create($validCreateData($center->id));
         $this->fail('expected exception not thrown');
-    } catch (\RuntimeException $e) {
+    } catch (RuntimeException $e) {
     }
 
     expect(RecreationalRiding::withTrashed()->count())->toBe($before['riding']);
@@ -363,14 +366,16 @@ test('update mid-flow failure rolls back translation, option sync, schedule sync
     $oldOptionIds = $riding->service->priceOptions()->pluck('id')->all();
     $oldScheduleIds = $riding->schedules()->pluck('id')->all();
 
-    $failingUpdater = new class() extends RecreationRidingService {
-        public function update(RecreationalRiding $riding, array $data): RecreationalRiding {
-            return DB::transaction(function () use ($riding, $data) {
+    $failingUpdater = new class extends RecreationRidingService
+    {
+        public function update(RecreationalRiding $riding, array $data): RecreationalRiding
+        {
+            return DB::transaction(function () use ($riding) {
                 $service = $riding->service()->lockForUpdate()->firstOrFail();
                 $service->update(['name' => ['ar' => 'TEMP']]);
                 $service->priceOptions()->delete();
                 $riding->schedules()->delete();
-                throw new \RuntimeException('intentional mid-update fail');
+                throw new RuntimeException('intentional mid-update fail');
             });
         }
     };
@@ -378,7 +383,7 @@ test('update mid-flow failure rolls back translation, option sync, schedule sync
     try {
         $failingUpdater->update($riding, $validCreateData($center->id));
         $this->fail('expected exception not thrown');
-    } catch (\RuntimeException $e) {
+    } catch (RuntimeException $e) {
     }
 
     $riding->refresh();
@@ -396,13 +401,15 @@ test('delete mid-flow failure rolls back all deletions', function () use ($valid
     $oldOptionIds = $riding->service->priceOptions()->pluck('id')->all();
     $oldScheduleIds = $riding->schedules()->pluck('id')->all();
 
-    $failingDeleter = new class() extends RecreationRidingService {
-        public function delete(RecreationalRiding $riding): void {
+    $failingDeleter = new class extends RecreationRidingService
+    {
+        public function delete(RecreationalRiding $riding): void
+        {
             DB::transaction(function () use ($riding) {
                 $service = $riding->service()->lockForUpdate()->firstOrFail();
                 $riding->schedules()->delete();
                 $service->priceOptions()->delete();
-                throw new \RuntimeException('intentional mid-delete fail');
+                throw new RuntimeException('intentional mid-delete fail');
             });
         }
     };
@@ -410,7 +417,7 @@ test('delete mid-flow failure rolls back all deletions', function () use ($valid
     try {
         $failingDeleter->delete($riding);
         $this->fail('expected exception not thrown');
-    } catch (\RuntimeException $e) {
+    } catch (RuntimeException $e) {
     }
 
     expect(Service::query()->find($serviceId))->not->toBeNull();
@@ -424,7 +431,7 @@ test('delete mid-flow failure rolls back all deletions', function () use ($valid
 // ────────────────────────────────────────────────────────────────────
 
 test('source contains two transaction wrappers + lockForUpdate in update + delete', function () {
-    $src = file_get_contents(__DIR__ . '/../../src/Services/RecreationRidingService.php');
+    $src = file_get_contents(__DIR__.'/../../src/Services/RecreationRidingService.php');
 
     $createPos = strpos($src, 'public function create');
     $updatePos = strpos($src, 'public function update');
@@ -442,5 +449,5 @@ test('source contains two transaction wrappers + lockForUpdate in update + delet
     expect(str_contains($deleteBody, 'lockForUpdate'))->toBeTrue();
 
     // morphOne usage: service()->create (in create) and service()->lockForUpdate (in update/delete)
-    expect(str_contains($createBody, "service()->create"))->toBeTrue();
+    expect(str_contains($createBody, 'service()->create'))->toBeTrue();
 });

@@ -64,7 +64,7 @@ test('a resort closing setting of another center has no effect', function (): vo
     $resortService = BookingFixtures::service(CenterFactory::new()->create(), Resort::query()->create(), ServiceType::Resort);
     BookingFixtures::enableSettings($resortService, ['close_all_recreational_ride_bookings']);
 
-    expect(($this->book)()->subtotal)->toBe(100.0);
+    expect(($this->book)()->subtotal)->toBe(100);
 });
 
 test('an all-day block on the date prevents booking', function (): void {
