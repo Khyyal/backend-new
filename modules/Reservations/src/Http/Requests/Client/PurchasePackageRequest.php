@@ -23,6 +23,7 @@ class PurchasePackageRequest extends FormRequest
         return [
             'service_package_id' => ['required', 'integer', Rule::exists('service_packages', 'id')->whereNull('deleted_at')],
             ...$this->paymentCompanyRules(),
+            ...$this->discountRules(),
         ];
     }
 }

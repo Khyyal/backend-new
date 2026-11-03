@@ -14,9 +14,12 @@ use Modules\Purchase\Enums\PaymentMethod;
 use Modules\Purchase\Enums\PurchaseSource;
 use Modules\Reservations\Actions\BookFromPackage;
 use Modules\Reservations\Actions\PurchasePackage;
+use Modules\Reservations\Actions\QuoteCheckout;
 use Modules\Reservations\Enums\ReservationSource;
 use Modules\Reservations\Http\Requests\Client\BookFromPackageRequest;
 use Modules\Reservations\Http\Requests\Client\PurchasePackageRequest;
+use Modules\Reservations\Http\Requests\Client\QuotePackageRequest;
+use Modules\Reservations\Http\Resources\CheckoutQuoteResource;
 use Modules\Reservations\Http\Resources\CheckoutResource;
 use Modules\Reservations\Http\Resources\ClientPackageResource;
 use Modules\Reservations\Http\Resources\ReservationResource;
@@ -29,6 +32,7 @@ class PackageController extends Controller
     public function __construct(
         private readonly PurchasePackage $purchasePackage,
         private readonly BookFromPackage $bookFromPackage,
+        private readonly QuoteCheckout $quoteCheckout,
     ) {}
 
     /**
@@ -56,6 +60,7 @@ class PackageController extends Controller
      * **Request body:**
      * - `service_package_id`: required.
      * - `payment_company`: optional.
+     * - `coupon_code`, `expected_total_amount`: optional, as when booking a reservation.
      */
     #[Response(status: 201, description: '`{data: ClientPackageResource, checkout: CheckoutResource}`.')]
     #[Response(status: 401, description: 'Missing or invalid Bearer token.')]
@@ -71,6 +76,7 @@ class PackageController extends Controller
             PurchaseSource::Client,
             PaymentMethod::Online,
             $request->validated('payment_company'),
+            $request->toDiscountInput(),
         );
 
         /** @var ClientPackage $package */
@@ -80,6 +86,26 @@ class PackageController extends Controller
             ->additional(['checkout' => CheckoutResource::make($checkout)])
             ->response()
             ->setStatusCode(201);
+    }
+
+    /**
+     * Price a package.
+     *
+     * **Request body:** `service_package_id` (required), `coupon_code` (optional).
+     * Returns the total after the running offers, without buying anything.
+     */
+    #[Response(status: 200, description: '`{data: CheckoutQuoteResource}`.')]
+    #[Response(status: 401, description: 'Missing or invalid Bearer token.')]
+    #[Response(status: 422, description: 'Validation failed.')]
+    public function quote(QuotePackageRequest $request): CheckoutQuoteResource
+    {
+        $servicePackage = ServicePackage::query()->with('service.center')->findOrFail($request->validated('service_package_id'));
+
+        return CheckoutQuoteResource::make($this->quoteCheckout->forPackage(
+            $this->client($request),
+            $servicePackage,
+            $request->validated('coupon_code'),
+        ));
     }
 
     /**

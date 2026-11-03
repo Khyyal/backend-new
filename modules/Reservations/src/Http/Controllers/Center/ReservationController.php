@@ -17,11 +17,14 @@ use Modules\Centers\Models\Center;
 use Modules\Clients\Models\Client;
 use Modules\Purchase\Enums\PaymentMethod;
 use Modules\Reservations\Actions\BookAndCheckout;
+use Modules\Reservations\Actions\QuoteCheckout;
 use Modules\Reservations\Enums\ReservationSource;
 use Modules\Reservations\Http\Requests\CancelReservationRequest;
+use Modules\Reservations\Http\Requests\Center\QuoteReservationRequest;
 use Modules\Reservations\Http\Requests\Center\RescheduleReservationRequest;
 use Modules\Reservations\Http\Requests\Center\StoreReservationRequest;
 use Modules\Reservations\Http\Resources\CenterReservationResource;
+use Modules\Reservations\Http\Resources\CheckoutQuoteResource;
 use Modules\Reservations\Http\Resources\CheckoutResource;
 use Modules\Reservations\Models\Reservation;
 use Modules\Reservations\Services\ReservationStateService;
@@ -37,6 +40,7 @@ class ReservationController extends Controller
     public function __construct(
         private readonly BookAndCheckout $bookAndCheckout,
         private readonly ReservationStateService $reservationState,
+        private readonly QuoteCheckout $quoteCheckout,
     ) {}
 
     /**
@@ -140,6 +144,7 @@ class ReservationController extends Controller
      * - `client_id`: required.
      * - `payment_method`: `manual` (paid at the desk, confirmed at once), `cash_on_arrival` or `online`.
      * - `notes`: optional staff notes.
+     * - `coupon_code`, `expected_total_amount`: as on the client endpoint.
      */
     #[Response(status: 201, description: '`{data: CenterReservationResource, checkout: CheckoutResource|null}`.')]
     #[Response(status: 401, description: 'Missing or invalid Bearer token.')]
@@ -157,12 +162,35 @@ class ReservationController extends Controller
             PaymentMethod::from($request->validated('payment_method')),
             $request->validated('payment_company'),
             $request->validated('notes'),
+            $request->toDiscountInput(),
         );
 
         return CenterReservationResource::make($reservation->load(self::RELATIONS))
             ->additional(['checkout' => $checkout !== null ? CheckoutResource::make($checkout) : null])
             ->response()
             ->setStatusCode(201);
+    }
+
+    /**
+     * Price a walk-in reservation.
+     *
+     * Takes the booking fields of `store` (with `client_id`) plus an optional
+     * `coupon_code`, and returns the total after the running offers, without
+     * booking anything.
+     */
+    #[Response(status: 200, description: '`{data: CheckoutQuoteResource}`.')]
+    #[Response(status: 401, description: 'Missing or invalid Bearer token.')]
+    #[Response(status: 403, description: 'No access to this center\'s reservations.')]
+    #[Response(status: 422, description: 'Validation failed, or the slot cannot be booked (see `reason`).')]
+    public function quote(QuoteReservationRequest $request, Center $center): CheckoutQuoteResource
+    {
+        $service = $center->services()->with(['serviceable', 'center'])->findOrFail($request->validated('service_id'));
+        $client = Client::query()->findOrFail($request->validated('client_id'));
+
+        return CheckoutQuoteResource::make($this->quoteCheckout->forBooking(
+            $request->toBookingRequest($service, $client),
+            $request->validated('coupon_code'),
+        ));
     }
 
     /**

@@ -8,14 +8,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Modules\Promotion\Traits\HasDiscountRedemptions;
 use Modules\Purchase\Database\Factories\PurchaseFactory;
 use Modules\Purchase\Enums\PurchaseSource;
 use Modules\Purchase\Enums\PurchaseStatus;
 
 class Purchase extends Model
 {
-    use HasDiscountRedemptions;
     use HasFactory;
     use SoftDeletes;
 
@@ -30,6 +28,7 @@ class Purchase extends Model
         'discount_amount',
         'tax_amount',
         'total_amount',
+        'coupon_code',
         'metadata',
     ];
 
@@ -59,6 +58,14 @@ class Purchase extends Model
     public function items(): HasMany
     {
         return $this->hasMany(PurchaseItem::class);
+    }
+
+    /**
+     * Discounts snapshotted when the purchase was priced.
+     */
+    public function adjustments(): HasMany
+    {
+        return $this->hasMany(PurchaseAdjustment::class);
     }
 
     public function payments(): HasMany

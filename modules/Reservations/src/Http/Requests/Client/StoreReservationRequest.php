@@ -25,6 +25,7 @@ class StoreReservationRequest extends FormRequest
             ...$this->bookingRules(),
             'payment_method' => ['required', Rule::in([PaymentMethod::Online->value, PaymentMethod::CashOnArrival->value])],
             ...$this->paymentCompanyRules(),
+            ...$this->discountRules(),
         ];
     }
 }

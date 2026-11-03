@@ -6,6 +6,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Validation\Rule;
 use Modules\Clients\Models\Client;
 use Modules\Reservations\Booking\BookingRequest;
+use Modules\Reservations\Booking\DiscountInput;
 use Modules\Services\Models\Service;
 
 /**
@@ -52,6 +53,28 @@ trait HasBookingRules
         return [
             'payment_company' => ['nullable', 'string', Rule::in(self::availablePaymentCompanies())],
         ];
+    }
+
+    /**
+     * `coupon_code` is checked by the promotions; `expected_total_amount` is
+     * the quoted total (halalas), to refuse a checkout whose price changed.
+     *
+     * @return array<string, array<int, mixed>>
+     */
+    protected function discountRules(): array
+    {
+        return [
+            'coupon_code' => ['nullable', 'string', 'max:32'],
+            'expected_total_amount' => ['nullable', 'integer', 'min:0'],
+        ];
+    }
+
+    public function toDiscountInput(): DiscountInput
+    {
+        return new DiscountInput(
+            couponCode: $this->validated('coupon_code'),
+            expectedTotalAmount: $this->filled('expected_total_amount') ? (int) $this->validated('expected_total_amount') : null,
+        );
     }
 
     /**

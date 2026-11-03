@@ -28,6 +28,7 @@ class StoreReservationRequest extends FormRequest
             ...$this->bookingRules(),
             'payment_method' => ['required', Rule::enum(PaymentMethod::class)],
             ...$this->paymentCompanyRules(),
+            ...$this->discountRules(),
             'notes' => ['nullable', 'string', 'max:1000'],
         ];
     }

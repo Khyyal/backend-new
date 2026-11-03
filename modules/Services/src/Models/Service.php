@@ -10,7 +10,6 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 use Modules\Centers\Models\Center;
-use Modules\Promotion\Traits\HasDiscountable;
 use Modules\Services\Database\Factories\ServiceFactory;
 use Modules\Services\Enums\ServiceType;
 use Modules\Support\Enums\ActivationStatus;
@@ -24,7 +23,7 @@ use Spatie\Translatable\HasTranslations;
 #[Translatable('name', 'description')]
 class Service extends Model implements HasMedia
 {
-    use HasDiscountable, HasFactory, HasTranslations, InteractsWithMedia, SoftDeletes;
+    use HasFactory, HasTranslations, InteractsWithMedia, SoftDeletes;
 
     protected $fillable = [
         'name',

@@ -4,6 +4,7 @@ namespace Modules\Centers\Http\Resources\Center;
 
 use Illuminate\Http\Request;
 use Modules\Purchase\Models\Payment;
+use Modules\Purchase\Models\PurchaseAdjustment;
 use Modules\Purchase\Models\PurchaseItem;
 use Modules\Reservations\Models\ClientPackage;
 use Modules\Reservations\Models\Reservation;
@@ -42,6 +43,17 @@ class PurchaseDetailsResource extends PurchaseResource
                 ] : []),
                 'details' => $this->details($item),
             ])->all()),
+            'coupon_code' => $this->resource->coupon_code,
+            'adjustments' => $this->when($canViewPrices, fn () => $this->whenLoaded('adjustments', fn (): array => $this->resource->adjustments->map(fn (PurchaseAdjustment $adjustment): array => [
+                'type' => $adjustment->type,
+                'purchase_item_id' => $adjustment->purchase_item_id,
+                'promotion_id' => $adjustment->promotion_id,
+                'code' => $adjustment->code,
+                'label' => $adjustment->label,
+                'amount' => $adjustment->amount,
+                'funded_by' => $adjustment->funded_by,
+                'center_share_amount' => $adjustment->center_share_amount,
+            ])->all())),
             'payments' => $this->when($canViewPrices, fn () => $this->whenLoaded('payments', fn (): array => $this->resource->payments->map(fn (Payment $payment): array => [
                 'id' => $payment->id,
                 'method' => $payment->method->value,

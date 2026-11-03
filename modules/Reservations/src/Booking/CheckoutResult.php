@@ -6,7 +6,8 @@ use Modules\Purchase\Models\Payment;
 use Modules\Purchase\Models\Purchase;
 
 /**
- * The purchase and payment opened for reservations or a package.
+ * The purchase and payment opened for reservations or a package. There is no
+ * payment when promotions brought the total to zero.
  */
 final readonly class CheckoutResult
 {
@@ -15,7 +16,7 @@ final readonly class CheckoutResult
      */
     public function __construct(
         public Purchase $purchase,
-        public Payment $payment,
+        public ?Payment $payment,
         public ?array $gateway = null,
     ) {}
 }

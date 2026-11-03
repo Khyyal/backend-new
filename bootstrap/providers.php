@@ -5,7 +5,7 @@ use Modules\Billing\BillingServiceProvider;
 use Modules\Centers\CentersServiceProvider;
 use Modules\Clients\ClientsServiceProvider;
 use Modules\Notifications\NotificationsServiceProvider;
-use Modules\Promotion\PromotionServiceProvider;
+use Modules\Promotions\PromotionsServiceProvider;
 use Modules\Purchase\PurchaseServiceProvider;
 use Modules\Reservations\ReservationsServiceProvider;
 use Modules\Services\ServicesServiceProvider;
@@ -17,7 +17,7 @@ return [
     CentersServiceProvider::class,
     ClientsServiceProvider::class,
     PurchaseServiceProvider::class,
-    PromotionServiceProvider::class,
+    PromotionsServiceProvider::class,
     BillingServiceProvider::class,
     ServicesServiceProvider::class,
     ReservationsServiceProvider::class,
