@@ -8,8 +8,9 @@ use Illuminate\Support\Facades\Gate;
 use Modules\Purchase\Models\Purchase;
 
 /**
- * A purchase as it appears in the center's list. Amounts are only included
- * when the user may view purchase prices (`purchases.view_prices`).
+ * A purchase as it appears in the center's list. `payment_method` and
+ * `payment_status` come from the latest payment (`null` without one). Amounts
+ * are only included when the user may view purchase prices (`purchases.view_prices`).
  *
  * @property Purchase $resource
  */
@@ -26,6 +27,8 @@ class PurchaseResource extends JsonResource
             'id' => $purchase->id,
             'status' => $purchase->status->value,
             'source' => $purchase->source->value,
+            'payment_method' => $this->whenLoaded('latestPayment', fn (): ?string => $purchase->latestPayment?->method->value),
+            'payment_status' => $this->whenLoaded('latestPayment', fn (): ?string => $purchase->latestPayment?->status->value),
             'client' => $this->whenLoaded('buyer', fn (): ?array => $purchase->buyer === null ? null : [
                 'id' => $purchase->buyer->id,
                 'full_name' => $purchase->buyer->full_name,

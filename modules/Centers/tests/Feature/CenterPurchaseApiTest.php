@@ -92,3 +92,18 @@ test('a purchase of another center is not found', function (): void {
         ->getJson("{$this->url}/{$other->id}")
         ->assertNotFound();
 });
+
+test('lists the method and status of the latest payment', function (): void {
+    $paid = ($this->purchase)(['created_at' => '2026-10-01 10:00:00']);
+    PaymentFactory::new()->online()->failed()->create(['purchase_id' => $paid->id]);
+    PaymentFactory::new()->online()->succeeded()->create(['purchase_id' => $paid->id]);
+    ($this->purchase)(['created_at' => '2026-09-01 10:00:00']);
+
+    $this->actingAs($this->user, 'center_user')
+        ->getJson($this->url)
+        ->assertOk()
+        ->assertJsonPath('data.0.payment_method', 'online')
+        ->assertJsonPath('data.0.payment_status', 'succeeded')
+        ->assertJsonPath('data.1.payment_method', null)
+        ->assertJsonPath('data.1.payment_status', null);
+});

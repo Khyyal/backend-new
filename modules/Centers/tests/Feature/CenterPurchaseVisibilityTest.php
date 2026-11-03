@@ -4,6 +4,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Centers\Database\Factories\CenterFactory;
 use Modules\Centers\Database\Factories\UserFactory;
 use Modules\Centers\Enums\CenterUserPermission;
+use Modules\Purchase\Database\Factories\PaymentFactory;
 use Modules\Purchase\Database\Factories\PurchaseFactory;
 use Modules\Purchase\Database\Factories\PurchaseItemFactory;
 use Modules\Purchase\Models\Purchase;
@@ -86,6 +87,7 @@ test('trainer rules narrow the listed purchases', function (): void {
 
 test('prices are hidden without the view prices permission', function (): void {
     $purchase = ($this->purchaseFor)($this->training, $this->ownTrainer->id);
+    PaymentFactory::new()->cashOnArrival()->create(['purchase_id' => $purchase->id]);
     $this->user->syncCenterPermissions($this->center, [CenterUserPermission::ViewTrainingPurchases]);
 
     $this->actingAs($this->user, 'center_user')
@@ -93,7 +95,9 @@ test('prices are hidden without the view prices permission', function (): void {
         ->assertOk()
         ->assertJsonMissingPath('data.total_amount')
         ->assertJsonMissingPath('data.items.0.unit_price')
-        ->assertJsonMissingPath('data.payments');
+        ->assertJsonMissingPath('data.payments')
+        ->assertJsonPath('data.payment_method', 'cash_on_arrival')
+        ->assertJsonPath('data.payment_status', 'pending');
 
     $this->user->syncCenterPermissions($this->center, [CenterUserPermission::ViewTrainingPurchases, CenterUserPermission::ViewPurchasePrices]);
 

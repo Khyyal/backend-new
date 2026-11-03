@@ -5,6 +5,7 @@ namespace Modules\Purchase\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Modules\Promotion\Traits\HasDiscountRedemptions;
@@ -63,6 +64,14 @@ class Purchase extends Model
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
+    }
+
+    /**
+     * The most recent payment attempt, which reflects where the purchase's payment stands.
+     */
+    public function latestPayment(): HasOne
+    {
+        return $this->hasOne(Payment::class)->latestOfMany();
     }
 
     protected static function newFactory(): PurchaseFactory

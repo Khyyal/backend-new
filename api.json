@@ -10545,7 +10545,7 @@
         "/v1/centers/{center}/purchases": {
             "get": {
                 "operationId": "centers.purchases.index",
-                "description": "Paginated (25 per page), newest first. Non-primary users only see\npurchases for the service types they may view, narrowed by trainer\n(own trainer, other trainers, unassigned); amounts are omitted without\n`purchases.view_prices`.\n\n**Query:** `status`, optional: `pending`, `confirmed`, `cancelled` or `completed`.",
+                "description": "Paginated (25 per page), newest first. Non-primary users only see\npurchases for the service types they may view, narrowed by trainer\n(own trainer, other trainers, unassigned); amounts are omitted without\n`purchases.view_prices`. `payment_method` and `payment_status` are those\nof the latest payment, or `null` when there is none.\n\n**Query:** `status`, optional: `pending`, `confirmed`, `cancelled` or `completed`.",
                 "summary": "List the center's purchases",
                 "tags": [
                     "Center / Purchases"
@@ -10592,6 +10592,8 @@
                                                     {
                                                         "type": "object",
                                                         "required": [
+                                                            "payment_method",
+                                                            "payment_status",
                                                             "client"
                                                         ]
                                                     }
@@ -10841,6 +10843,8 @@
                                                 {
                                                     "type": "object",
                                                     "required": [
+                                                        "payment_method",
+                                                        "payment_status",
                                                         "client",
                                                         "items"
                                                     ]
@@ -10918,7 +10922,7 @@
         "/v1/admin/centers/{center}/purchases": {
             "get": {
                 "operationId": "admin.centers.purchases.index",
-                "description": "Paginated (25 per page), newest first. Non-primary users only see\npurchases for the service types they may view, narrowed by trainer\n(own trainer, other trainers, unassigned); amounts are omitted without\n`purchases.view_prices`.\n\n**Query:** `status`, optional: `pending`, `confirmed`, `cancelled` or `completed`.",
+                "description": "Paginated (25 per page), newest first. Non-primary users only see\npurchases for the service types they may view, narrowed by trainer\n(own trainer, other trainers, unassigned); amounts are omitted without\n`purchases.view_prices`. `payment_method` and `payment_status` are those\nof the latest payment, or `null` when there is none.\n\n**Query:** `status`, optional: `pending`, `confirmed`, `cancelled` or `completed`.",
                 "summary": "List the center's purchases",
                 "tags": [
                     "Center / Purchases"
@@ -10965,6 +10969,8 @@
                                                     {
                                                         "type": "object",
                                                         "required": [
+                                                            "payment_method",
+                                                            "payment_status",
                                                             "client"
                                                         ]
                                                     }
@@ -11214,6 +11220,8 @@
                                                 {
                                                     "type": "object",
                                                     "required": [
+                                                        "payment_method",
+                                                        "payment_status",
                                                         "client",
                                                         "items"
                                                     ]
@@ -28544,6 +28552,12 @@
                     "source": {
                         "type": "string"
                     },
+                    "payment_method": {
+                        "type": "string"
+                    },
+                    "payment_status": {
+                        "type": "string"
+                    },
                     "client": {
                         "type": [
                             "object",
@@ -28635,6 +28649,12 @@
                         "type": "string"
                     },
                     "source": {
+                        "type": "string"
+                    },
+                    "payment_method": {
+                        "type": "string"
+                    },
+                    "payment_status": {
                         "type": "string"
                     },
                     "client": {

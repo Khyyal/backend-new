@@ -27,7 +27,8 @@ class PurchaseController extends Controller
      * Paginated (25 per page), newest first. Non-primary users only see
      * purchases for the service types they may view, narrowed by trainer
      * (own trainer, other trainers, unassigned); amounts are omitted without
-     * `purchases.view_prices`.
+     * `purchases.view_prices`. `payment_method` and `payment_status` are those
+     * of the latest payment, or `null` when there is none.
      *
      * **Query:** `status`, optional: `pending`, `confirmed`, `cancelled` or `completed`.
      */
@@ -43,7 +44,7 @@ class PurchaseController extends Controller
 
         $purchases = $this->purchases($request, $center)
             ->when(isset($validated['status']), fn (Builder $query) => $query->where('status', $validated['status']))
-            ->with('buyer')
+            ->with(['buyer', 'latestPayment'])
             ->withCount('items')
             ->latest()
             ->latest('id')
@@ -68,7 +69,7 @@ class PurchaseController extends Controller
         $this->authorize($request, $center);
 
         return PurchaseDetailsResource::make(
-            $this->purchases($request, $center)->with(['buyer', 'items', 'payments'])->withCount('items')->findOrFail($purchase)
+            $this->purchases($request, $center)->with(['buyer', 'items', 'payments', 'latestPayment'])->withCount('items')->findOrFail($purchase)
         );
     }
 
