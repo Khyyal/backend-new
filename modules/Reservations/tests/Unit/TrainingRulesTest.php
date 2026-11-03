@@ -69,3 +69,17 @@ test('trainer capacity is shared across the trainer\'s services', function (): v
 
     ($this->book)();
 })->throws(ReservationNotAllowedException::class, 'Not enough places left: 0 available.');
+
+test('the trainer day override sets the hourly capacity of that day', function (): void {
+    $this->trainer->update(['max_tickets_per_hour_by_day' => [1 => 3]]);
+    BookingFixtures::schedule($this->trainer, 2, '16:00', '20:00');
+
+    expect(($this->book)(['quantity' => 3])->quantity)->toBe(3);
+
+    BookingFixtures::quote($this->service, $this->client, '2026-10-27', [
+        'startTime' => '17:00',
+        'priceOptionId' => $this->option->id,
+        'trainerId' => $this->trainer->id,
+        'quantity' => 3,
+    ]);
+})->throws(ReservationNotAllowedException::class, 'Not enough places left: 2 available.');

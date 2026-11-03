@@ -133,3 +133,41 @@ test('cannot access a trainer of another center', function (): void {
     $this->deleteJson("{$this->url}/{$trainer->id}")->assertNotFound();
     $this->getJson($this->url)->assertOk()->assertJsonCount(0, 'data');
 });
+
+test('stores per-day hourly limits and clears them when omitted on update', function (): void {
+    $this->actingAs($this->user, 'center_user');
+
+    $id = $this->postJson($this->url, ($this->body)(['max_tickets_per_hour_by_day' => ['2' => 10]]))
+        ->assertCreated()
+        ->assertJsonPath('data.max_tickets_per_hour_by_day', ['2' => 10])
+        ->json('data.id');
+
+    expect(Trainer::query()->findOrFail($id)->maxTicketsPerHourOn(2))->toBe(10);
+
+    $this->putJson("{$this->url}/{$id}", ($this->body)())
+        ->assertOk()
+        ->assertJsonPath('data.max_tickets_per_hour_by_day', null);
+});
+
+test('per-day hourly limits must be positive and on the trainer days', function (): void {
+    $this->actingAs($this->user, 'center_user')
+        ->postJson($this->url, ($this->body)(['max_tickets_per_hour_by_day' => ['0' => 0, '3' => 5]]))
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['max_tickets_per_hour_by_day.0', 'max_tickets_per_hour_by_day.3']);
+});
+
+test('trainer list returns every trainer of the center with only id and name', function (): void {
+    $mine = TrainerFactory::new()->create(['center_id' => $this->center->id, 'name' => 'Zed']);
+    TrainerFactory::new()->create(['center_id' => $this->center->id, 'name' => 'Amr']);
+    TrainerFactory::new()->create(['center_id' => CenterFactory::new()->create()->id]);
+
+    $this->getJson("{$this->url}/list")->assertUnauthorized();
+    $this->actingAs(UserFactory::new()->create(), 'center_user')->getJson("{$this->url}/list")->assertForbidden();
+
+    $this->actingAs($this->user, 'center_user')
+        ->getJson("{$this->url}/list")
+        ->assertOk()
+        ->assertJsonCount(2, 'data')
+        ->assertJsonPath('data.0.name', 'Amr')
+        ->assertJsonPath('data.1', ['id' => $mine->id, 'name' => 'Zed']);
+});

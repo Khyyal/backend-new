@@ -11,7 +11,7 @@ use Modules\Services\Models\TrainingService;
 
 /**
  * Hourly slots per trainer of a training service: each trainer's schedule
- * windows under its `max_tickets_per_hour`. A trainer's places are shared by
+ * windows under its hourly ticket limit of each weekday. A trainer's places are shared by
  * every service they teach, so all of their reservations count.
  */
 class TrainingServiceAvailability implements ServiceAvailability
@@ -58,7 +58,7 @@ class TrainingServiceAvailability implements ServiceAvailability
             ->mapWithKeys(fn (Trainer $trainer): array => [
                 $trainer->getKey() => $this->slots->days(
                     $trainer->schedules,
-                    $trainer->max_tickets_per_hour,
+                    fn (CarbonImmutable $date): ?int => $trainer->maxTicketsPerHourOn($date->dayOfWeek),
                     $trainer->reservations,
                     $blocks,
                     $acceptsBookings,

@@ -48,7 +48,7 @@ class RecreationRidingAvailability implements ServiceAvailability
 
         return $this->slots->days(
             $riding->schedules,
-            $riding->max_tickets_per_hour,
+            fn (): ?int => $riding->max_tickets_per_hour,
             $service->loadMissing($this->relations($from, $to))->reservations,
             $this->slots->blocks($service, $from, $to),
             $this->guard->acceptsBookings($service),

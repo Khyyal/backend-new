@@ -60,3 +60,12 @@ test('training service is a serviceable of type training', function (): void {
     expect($trainingService->service->type)->toBe(ServiceType::Training)
         ->and($trainingService->service->serviceable->is($trainingService))->toBeTrue();
 });
+
+test('hourly ticket limit uses the day override, else the default', function (): void {
+    $trainer = TrainerFactory::new()->make(['max_tickets_per_hour' => 4, 'max_tickets_per_hour_by_day' => [5 => 10]]);
+    $unlimited = TrainerFactory::new()->make(['max_tickets_per_hour' => null]);
+
+    expect($trainer->maxTicketsPerHourOn(5))->toBe(10)
+        ->and($trainer->maxTicketsPerHourOn(1))->toBe(4)
+        ->and($unlimited->maxTicketsPerHourOn(5))->toBeNull();
+});

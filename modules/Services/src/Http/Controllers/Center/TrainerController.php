@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Gate;
 use Modules\Centers\Models\Center;
 use Modules\Services\Enums\ServiceType;
 use Modules\Services\Http\Requests\Center\TrainerRequest;
+use Modules\Services\Http\Resources\Center\TrainerOptionResource;
 use Modules\Services\Http\Resources\Center\TrainerResource;
 use Modules\Services\Services\TrainerService;
 use Symfony\Component\HttpFoundation\Response as ResponseAlias;
@@ -38,16 +39,32 @@ class TrainerController extends Controller
     }
 
     /**
+     * List all the center's trainers (id and name only).
+     *
+     * Not paginated, ordered by name. Each item is a `TrainerOptionResource`: `id`, `name`.
+     */
+    #[Response(status: 200, description: '`TrainerOptionResource` collection.')]
+    #[Response(status: 401, description: 'Missing or invalid Bearer token for the `center_user` guard.')]
+    #[Response(status: 403, description: 'The token has no access to this center, or the user is not assigned to it.')]
+    public function list(Request $request, Center $center): AnonymousResourceCollection
+    {
+        Gate::forUser($request->user())->authorize('manageServices', [$center, ServiceType::Training]);
+
+        return TrainerOptionResource::collection($this->service->simpleList($center));
+    }
+
+    /**
      * Create a trainer.
      *
      * **Request body:**
      * - `name`                    required string.
      * - `max_tickets_per_hour`    optional integer >= 1, or `null`/omitted for no hourly limit.
+     * - `max_tickets_per_hour_by_day` optional map of weekday (one of `days`) to an integer >= 1 overriding `max_tickets_per_hour` on that day, e.g. `{"5": 10, "6": 6}`; `null`/omitted means every day uses `max_tickets_per_hour`.
      * - `days`                    required array of distinct weekday numbers `0`-`6`.
      * - `hours`                   required flat list of `HH:mm` start/end pairs, e.g. `["09:00","12:00","14:00","17:00"]` (two slots); applied to every day in `days`. Each end must be after its start.
      * - `training_service_ids`    optional array of training service ids of this center the trainer works in.
      */
-    #[Response(status: 201, description: 'The created trainer as a `TrainerResource`: `id`, `center_id`, `name`, `max_tickets_per_hour`, `days`, `hours`, `training_services` [{id,name}].')]
+    #[Response(status: 201, description: 'The created trainer as a `TrainerResource`: `id`, `center_id`, `name`, `max_tickets_per_hour`, `max_tickets_per_hour_by_day` ({day: max} or null), `days`, `hours`, `training_services` [{id,name}].')]
     #[Response(status: 401, description: 'Missing or invalid Bearer token.')]
     #[Response(status: 403, description: 'The token has no access to this center, or the user is not assigned to it.')]
     #[Response(status: 422, description: 'Validation failed.')]
@@ -75,7 +92,7 @@ class TrainerController extends Controller
      * Update a trainer.
      *
      * Replaces the definition: `name`, `days` and `hours` are required
-     * (`max_tickets_per_hour` is optional and resets to `null` when omitted)
+     * (`max_tickets_per_hour` and `max_tickets_per_hour_by_day` are optional and reset to `null` when omitted)
      * and take the same shape as on create (old schedules are replaced).
      * `training_service_ids` is optional and untouched when omitted; when
      * sent it is the full list of training services.

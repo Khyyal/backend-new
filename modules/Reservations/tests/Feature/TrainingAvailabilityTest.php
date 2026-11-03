@@ -107,3 +107,13 @@ test('a trainer without schedules has no hours', function (): void {
 test('a training service without trainers has empty availability', function (): void {
     expect(($this->availability)(($this->training)()))->toBe([]);
 });
+
+test('a trainer day override sets the hourly limit of that weekday', function (): void {
+    $this->sara->update(['max_tickets_per_hour_by_day' => [1 => 5]]);
+    BookingFixtures::schedule($this->sara, 2, '09:00', '10:00');
+
+    $availability = ($this->availability)();
+
+    expect($availability[$this->sara->id]['2026-10-19']['hours'][0])->toMatchArray(['available_tickets' => 5, 'max_tickets' => 5])
+        ->and($availability[$this->sara->id]['2026-10-20']['hours'][0])->toMatchArray(['available_tickets' => 3, 'max_tickets' => 3]);
+});

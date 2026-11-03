@@ -8,6 +8,7 @@ use Modules\Services\Http\Controllers\Center\HorseServiceController;
 use Modules\Services\Http\Controllers\Center\RecreationRidingController;
 use Modules\Services\Http\Controllers\Center\ResortController;
 use Modules\Services\Http\Controllers\Center\ServiceBlockController;
+use Modules\Services\Http\Controllers\Center\ServiceListController;
 use Modules\Services\Http\Controllers\Center\ServiceTypeCountController;
 use Modules\Services\Http\Controllers\Center\ServiceTypeTermController;
 use Modules\Services\Http\Controllers\Center\TrainerController;
@@ -96,10 +97,18 @@ Route::prefix('centers/{center}/trainers')
     ->middleware(['auth:center_user', 'center.scope'])
     ->group(function (): void {
         Route::get('/', [TrainerController::class, 'index'])->name('index');
+        Route::get('/list', [TrainerController::class, 'list'])->name('list');
         Route::post('/', [TrainerController::class, 'store'])->name('store');
         Route::get('/{trainer}', [TrainerController::class, 'show'])->name('show');
         Route::match(['put', 'patch'], '/{trainer}', [TrainerController::class, 'update'])->name('update');
         Route::delete('/{trainer}', [TrainerController::class, 'destroy'])->name('destroy');
+    });
+
+Route::prefix('centers/{center}/services')
+    ->name('centers.services.')
+    ->middleware(['auth:center_user', 'center.scope'])
+    ->group(function (): void {
+        Route::get('/by-type', [ServiceListController::class, 'byType'])->name('by-type');
     });
 
 Route::prefix('centers/{center}/service-types')

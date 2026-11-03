@@ -16,6 +16,7 @@ class TrainerFactory extends Factory
             'center_id' => CenterFactory::new(),
             'name' => $this->faker->name(),
             'max_tickets_per_hour' => $this->faker->numberBetween(1, 10),
+            'max_tickets_per_hour_by_day' => null,
         ];
     }
 }

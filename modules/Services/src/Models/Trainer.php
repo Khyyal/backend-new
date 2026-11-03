@@ -18,13 +18,26 @@ class Trainer extends Model
         'center_id',
         'name',
         'max_tickets_per_hour',
+        'max_tickets_per_hour_by_day',
     ];
 
     protected function casts(): array
     {
         return [
             'max_tickets_per_hour' => 'integer',
+            'max_tickets_per_hour_by_day' => 'array',
         ];
+    }
+
+    /**
+     * Hourly ticket limit on a weekday (0-6): the day's override when set, else
+     * the default `max_tickets_per_hour`; `null` means no limit.
+     */
+    public function maxTicketsPerHourOn(int $dayOfWeek): ?int
+    {
+        $override = $this->max_tickets_per_hour_by_day[$dayOfWeek] ?? null;
+
+        return $override === null ? $this->max_tickets_per_hour : (int) $override;
     }
 
     public function center(): BelongsTo

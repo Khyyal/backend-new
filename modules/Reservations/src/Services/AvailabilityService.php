@@ -96,7 +96,7 @@ class AvailabilityService
         return match ($service->type) {
             ServiceType::RecreationRiding, ServiceType::Training => $this->hourly(
                 ($trainer ?? $serviceable)->schedules,
-                ($trainer ?? $serviceable)->max_tickets_per_hour,
+                $trainer !== null ? $trainer->maxTicketsPerHourOn($date->dayOfWeek) : $serviceable->max_tickets_per_hour,
                 $date,
                 $dayReservations,
             ),
