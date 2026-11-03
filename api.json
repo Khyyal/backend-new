@@ -23,8 +23,16 @@
             "description": "Center protal city endpoints."
         },
         {
+            "name": "Notifications",
+            "description": "In-app notification inbox for the authenticated user."
+        },
+        {
             "name": "Media",
             "description": "Generic temporary media upload."
+        },
+        {
+            "name": "Center / Device",
+            "description": "Device registration for push notifications."
         },
         {
             "name": "Center / Register",
@@ -73,6 +81,10 @@
         {
             "name": "Client / Profile",
             "description": "Authenticated client profile management."
+        },
+        {
+            "name": "Client / Device",
+            "description": "Device registration for push notifications."
         },
         {
             "name": "Client / Auth",
@@ -185,6 +197,14 @@
         {
             "name": "Client / Reservations",
             "description": "Book, list and cancel reservations, and buy and spend service packages. Requires a client Bearer token."
+        },
+        {
+            "name": "Admin / WhatsApp templates",
+            "description": "Templates approved in Voxa / Meta, registered so WhatsApp campaigns can fill their variables. Requires `whatsapp_templates.manage` (listing also allowed with `notification_campaigns.manage`)."
+        },
+        {
+            "name": "Admin / Notification campaigns",
+            "description": "Bulk push or WhatsApp campaigns to clients or center staff, sent now or scheduled. Requires `notification_campaigns.manage`."
         }
     ],
     "paths": {
@@ -1763,6 +1783,918 @@
                 }
             }
         },
+        "/v1/admin/notification-campaigns": {
+            "get": {
+                "operationId": "admin.notification-campaigns.index",
+                "summary": "List campaigns",
+                "tags": [
+                    "Admin / Notification campaigns"
+                ],
+                "parameters": [
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    },
+                    {
+                        "name": "channel",
+                        "in": "query",
+                        "description": "`push` or `whatsapp`.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Filter by status.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated set of `NotificationCampaignResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "allOf": [
+                                                    {
+                                                        "$ref": "#/components/schemas/NotificationCampaignResource"
+                                                    },
+                                                    {
+                                                        "type": "object",
+                                                        "required": [
+                                                            "template"
+                                                        ]
+                                                    }
+                                                ]
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "properties": {
+                                                "first": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "last": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "next": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "first",
+                                                "last",
+                                                "prev",
+                                                "next"
+                                            ]
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "minimum": 1
+                                                },
+                                                "from": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ],
+                                                    "minimum": 1
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "minimum": 1
+                                                },
+                                                "links": {
+                                                    "type": "array",
+                                                    "description": "Generated paginator links.",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "url": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            },
+                                                            "label": {
+                                                                "type": "string"
+                                                            },
+                                                            "active": {
+                                                                "type": "boolean"
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "url",
+                                                            "label",
+                                                            "active"
+                                                        ]
+                                                    }
+                                                },
+                                                "path": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "Base path for paginator generated URLs."
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items shown per page.",
+                                                    "minimum": 0
+                                                },
+                                                "to": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ],
+                                                    "description": "Number of the last item in the slice.",
+                                                    "minimum": 1
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "description": "Total number of items being paginated.",
+                                                    "minimum": 0
+                                                }
+                                            },
+                                            "required": [
+                                                "current_page",
+                                                "from",
+                                                "last_page",
+                                                "links",
+                                                "path",
+                                                "per_page",
+                                                "to",
+                                                "total"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "post": {
+                "operationId": "admin.notification-campaigns.store",
+                "description": "**Push:** `title` and `body` with `en` and `ar`, plus an optional tap `action_*`.\n\n**WhatsApp:** `whatsapp_template_id` and `template_parameters`, one binding\nper template variable in order: `{source: \"fixed\", value}` or\n`{source: \"recipient\", field}`. Client fields: `first_name`, `last_name`,\n`full_name`, `phone`; center staff fields: `staff_name`, `center_name`, `phone`.\n\nSaved as a draft, as scheduled when `scheduled_at` is set, or sent at once with `send_now`.",
+                "summary": "Create a campaign",
+                "tags": [
+                    "Admin / Notification campaigns"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/NotificationCampaignRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "The created campaign.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/NotificationCampaignResource"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "template",
+                                                        "target_ids"
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "description": "Validation failed.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Errors overview."
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "description": "A detailed description of each field that failed validation.",
+                                            "additionalProperties": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "message",
+                                        "errors"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/v1/admin/notification-campaigns/{notificationCampaign}": {
+            "get": {
+                "operationId": "admin.notification-campaigns.show",
+                "summary": "Show a campaign",
+                "tags": [
+                    "Admin / Notification campaigns"
+                ],
+                "parameters": [
+                    {
+                        "name": "notificationCampaign",
+                        "in": "path",
+                        "required": true,
+                        "description": "The notification campaign ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`NotificationCampaignResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/NotificationCampaignResource"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "template",
+                                                        "target_ids"
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "admin.notification-campaigns.update",
+                "summary": "Update a draft or scheduled campaign",
+                "tags": [
+                    "Admin / Notification campaigns"
+                ],
+                "parameters": [
+                    {
+                        "name": "notificationCampaign",
+                        "in": "path",
+                        "required": true,
+                        "description": "The notification campaign ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/NotificationCampaignRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`NotificationCampaignResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/NotificationCampaignResource"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "template",
+                                                        "target_ids"
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "description": "Validation failed, or the campaign is no longer editable.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Errors overview."
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "description": "A detailed description of each field that failed validation.",
+                                            "additionalProperties": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "message",
+                                        "errors"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "admin.notification-campaigns.destroy",
+                "summary": "Delete a draft, scheduled or finished campaign",
+                "tags": [
+                    "Admin / Notification campaigns"
+                ],
+                "parameters": [
+                    {
+                        "name": "notificationCampaign",
+                        "in": "path",
+                        "required": true,
+                        "description": "The notification campaign ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Deleted.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "description": "The campaign is being sent.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/admin/notification-campaigns/{notificationCampaign}/send": {
+            "post": {
+                "operationId": "admin.notification-campaigns.send",
+                "summary": "Send a draft or scheduled campaign now",
+                "tags": [
+                    "Admin / Notification campaigns"
+                ],
+                "parameters": [
+                    {
+                        "name": "notificationCampaign",
+                        "in": "path",
+                        "required": true,
+                        "description": "The notification campaign ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "description": "Queued for sending; status is `sending`.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/NotificationCampaignResource"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "template",
+                                                        "target_ids"
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "description": "Already sending, sent or cancelled.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/admin/notification-campaigns/{notificationCampaign}/schedule": {
+            "post": {
+                "operationId": "admin.notification-campaigns.schedule",
+                "summary": "Schedule a campaign",
+                "tags": [
+                    "Admin / Notification campaigns"
+                ],
+                "parameters": [
+                    {
+                        "name": "notificationCampaign",
+                        "in": "path",
+                        "required": true,
+                        "description": "The notification campaign ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/ScheduleNotificationCampaignRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`NotificationCampaignResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/NotificationCampaignResource"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "template",
+                                                        "target_ids"
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/v1/admin/notification-campaigns/{notificationCampaign}/duplicate": {
+            "post": {
+                "operationId": "admin.notification-campaigns.duplicate",
+                "summary": "Duplicate a campaign as a new draft",
+                "tags": [
+                    "Admin / Notification campaigns"
+                ],
+                "parameters": [
+                    {
+                        "name": "notificationCampaign",
+                        "in": "path",
+                        "required": true,
+                        "description": "The notification campaign ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "The new draft.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/NotificationCampaignResource"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "template",
+                                                        "target_ids"
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/admin/notification-campaigns/{notificationCampaign}/cancel": {
+            "post": {
+                "operationId": "admin.notification-campaigns.cancel",
+                "summary": "Cancel a draft or scheduled campaign",
+                "tags": [
+                    "Admin / Notification campaigns"
+                ],
+                "parameters": [
+                    {
+                        "name": "notificationCampaign",
+                        "in": "path",
+                        "required": true,
+                        "description": "The notification campaign ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`NotificationCampaignResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "allOf": [
+                                                {
+                                                    "$ref": "#/components/schemas/NotificationCampaignResource"
+                                                },
+                                                {
+                                                    "type": "object",
+                                                    "required": [
+                                                        "template",
+                                                        "target_ids"
+                                                    ]
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/admin/notification-campaigns/{notificationCampaign}/deliveries": {
+            "get": {
+                "operationId": "admin.notification-campaigns.deliveries",
+                "summary": "List WhatsApp deliveries of a campaign",
+                "tags": [
+                    "Admin / Notification campaigns"
+                ],
+                "parameters": [
+                    {
+                        "name": "notificationCampaign",
+                        "in": "path",
+                        "required": true,
+                        "description": "The notification campaign ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 25
+                        }
+                    },
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "`sent` or `failed`.",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated set of `NotificationCampaignDeliveryResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/NotificationCampaignDeliveryResource"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "properties": {
+                                                "first": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "last": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "next": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "first",
+                                                "last",
+                                                "prev",
+                                                "next"
+                                            ]
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "minimum": 1
+                                                },
+                                                "from": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ],
+                                                    "minimum": 1
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "minimum": 1
+                                                },
+                                                "links": {
+                                                    "type": "array",
+                                                    "description": "Generated paginator links.",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "url": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            },
+                                                            "label": {
+                                                                "type": "string"
+                                                            },
+                                                            "active": {
+                                                                "type": "boolean"
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "url",
+                                                            "label",
+                                                            "active"
+                                                        ]
+                                                    }
+                                                },
+                                                "path": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "Base path for paginator generated URLs."
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items shown per page.",
+                                                    "minimum": 0
+                                                },
+                                                "to": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ],
+                                                    "description": "Number of the last item in the slice.",
+                                                    "minimum": 1
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "description": "Total number of items being paginated.",
+                                                    "minimum": 0
+                                                }
+                                            },
+                                            "required": [
+                                                "current_page",
+                                                "from",
+                                                "last_page",
+                                                "links",
+                                                "path",
+                                                "per_page",
+                                                "to",
+                                                "total"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
         "/admin/plans/{plan}/features": {
             "post": {
                 "operationId": "admin.plans.features.attach",
@@ -2582,6 +3514,414 @@
                 }
             }
         },
+        "/v1/admin/whatsapp-templates": {
+            "get": {
+                "operationId": "admin.whatsapp-templates.index",
+                "summary": "List templates",
+                "tags": [
+                    "Admin / WhatsApp templates"
+                ],
+                "parameters": [
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    },
+                    {
+                        "name": "active",
+                        "in": "query",
+                        "description": "Only active templates when `true`.",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Paginated set of `WhatsAppTemplateResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/WhatsAppTemplateResource"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object",
+                                            "properties": {
+                                                "first": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "last": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "prev": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                },
+                                                "next": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ]
+                                                }
+                                            },
+                                            "required": [
+                                                "first",
+                                                "last",
+                                                "prev",
+                                                "next"
+                                            ]
+                                        },
+                                        "meta": {
+                                            "type": "object",
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "minimum": 1
+                                                },
+                                                "from": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ],
+                                                    "minimum": 1
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "minimum": 1
+                                                },
+                                                "links": {
+                                                    "type": "array",
+                                                    "description": "Generated paginator links.",
+                                                    "items": {
+                                                        "type": "object",
+                                                        "properties": {
+                                                            "url": {
+                                                                "type": [
+                                                                    "string",
+                                                                    "null"
+                                                                ]
+                                                            },
+                                                            "label": {
+                                                                "type": "string"
+                                                            },
+                                                            "active": {
+                                                                "type": "boolean"
+                                                            }
+                                                        },
+                                                        "required": [
+                                                            "url",
+                                                            "label",
+                                                            "active"
+                                                        ]
+                                                    }
+                                                },
+                                                "path": {
+                                                    "type": [
+                                                        "string",
+                                                        "null"
+                                                    ],
+                                                    "description": "Base path for paginator generated URLs."
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "description": "Number of items shown per page.",
+                                                    "minimum": 0
+                                                },
+                                                "to": {
+                                                    "type": [
+                                                        "integer",
+                                                        "null"
+                                                    ],
+                                                    "description": "Number of the last item in the slice.",
+                                                    "minimum": 1
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "description": "Total number of items being paginated.",
+                                                    "minimum": 0
+                                                }
+                                            },
+                                            "required": [
+                                                "current_page",
+                                                "from",
+                                                "last_page",
+                                                "links",
+                                                "path",
+                                                "per_page",
+                                                "to",
+                                                "total"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "data",
+                                        "links",
+                                        "meta"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "403": {
+                        "description": "Missing permission.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "operationId": "admin.whatsapp-templates.store",
+                "description": "`provider_name` and `language` must match the template approved in Voxa.\n`variables` lists the placeholders in order (`{{1}}`, `{{2}}` \u2026), each\nwith a `label` and an optional default binding used to prefill campaigns.",
+                "summary": "Register a template",
+                "tags": [
+                    "Admin / WhatsApp templates"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/WhatsAppTemplateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "The created template.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/WhatsAppTemplateResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "description": "Validation failed.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Errors overview."
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "description": "A detailed description of each field that failed validation.",
+                                            "additionalProperties": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "message",
+                                        "errors"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            }
+        },
+        "/v1/admin/whatsapp-templates/{whatsappTemplate}": {
+            "get": {
+                "operationId": "admin.whatsapp-templates.show",
+                "summary": "Show a template",
+                "tags": [
+                    "Admin / WhatsApp templates"
+                ],
+                "parameters": [
+                    {
+                        "name": "whatsappTemplate",
+                        "in": "path",
+                        "required": true,
+                        "description": "The whatsapp template ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "`WhatsAppTemplateResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/WhatsAppTemplateResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            },
+            "put": {
+                "operationId": "admin.whatsapp-templates.update",
+                "summary": "Update a template",
+                "tags": [
+                    "Admin / WhatsApp templates"
+                ],
+                "parameters": [
+                    {
+                        "name": "whatsappTemplate",
+                        "in": "path",
+                        "required": true,
+                        "description": "The whatsapp template ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/WhatsAppTemplateRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "`WhatsAppTemplateResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/WhatsAppTemplateResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "$ref": "#/components/responses/ValidationException"
+                    },
+                    "403": {
+                        "$ref": "#/components/responses/AuthorizationException"
+                    }
+                }
+            },
+            "delete": {
+                "operationId": "admin.whatsapp-templates.destroy",
+                "description": "Refused while a draft, scheduled or sending campaign uses it.",
+                "summary": "Delete a template",
+                "tags": [
+                    "Admin / WhatsApp templates"
+                ],
+                "parameters": [
+                    {
+                        "name": "whatsappTemplate",
+                        "in": "path",
+                        "required": true,
+                        "description": "The whatsapp template ID",
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "Deleted.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "$ref": "#/components/responses/ModelNotFoundException"
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "422": {
+                        "description": "The template is used by an unfinished campaign.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/v1/centers/auth/phone": {
             "post": {
                 "operationId": "centers.auth.phone.send",
@@ -2671,7 +4011,7 @@
         "/v1/centers/auth/phone/verify": {
             "post": {
                 "operationId": "centers.auth.phone.verify",
-                "description": "Validates the 4-digit OTP previously sent to the phone number. When the\nOTP is correct, the center user record is loaded by phone,\n`phone_verified_at` is timestamped if not already set, and a Sanctum\nBearer token is minted. The response shape matches\n`RegisterController::store()` but omits the `center` key (use\n`GET /centers` followed by `POST /centers/{center}/access` for\ncenter-scoped credentials).\n\nToo many wrong verification attempts for the same phone number surface\nas a 429 with `Retry-After` (distinct from a 422 wrong-code response).\n\n**Request body:**\n- `phone` \u2014 required; same number used in the `/phone` call.\n- `code`  \u2014 required; 4-digit OTP.\n\n**Response body:**\n- `user`       \u2014 Authenticated `UserResource`.\n- `token`      \u2014 Sanctum plain-text Bearer token.\n- `token_type` \u2014 Always `\"Bearer\"`.",
+                "description": "Validates the 4-digit OTP previously sent to the phone number. When the\nOTP is correct, the center user record is loaded by phone,\n`phone_verified_at` is timestamped if not already set, and a Sanctum\nBearer token is minted. The response shape matches\n`RegisterController::store()` but omits the `center` key (use\n`GET /centers` followed by `POST /centers/{center}/access` for\ncenter-scoped credentials).\n\nToo many wrong verification attempts for the same phone number surface\nas a 429 with `Retry-After` (distinct from a 422 wrong-code response).\n\n**Request body:**\n- `phone` \u2014 required; same number used in the `/phone` call.\n- `code`  \u2014 required; 4-digit OTP.\n- `device_identifier` \u2014 optional; links the device registered on\n  `/centers/launch`. May also be passed via the `X-Device-Identifier` header.\n- `platform` \u2014 optional; `ios` or `android`, same value sent to `/launch`.\n\n**Response body:**\n- `user`       \u2014 Authenticated `UserResource`.\n- `token`      \u2014 Sanctum plain-text Bearer token.\n- `token_type` \u2014 Always `\"Bearer\"`.",
                 "summary": "Verify OTP and issue a Bearer token for a center user",
                 "tags": [
                     "Center / Auth"
@@ -4792,7 +6132,7 @@
         "/v1/centers/{center}/clients": {
             "get": {
                 "operationId": "centers.clients.index",
-                "description": "Clients with at least one confirmed or completed purchase in this center. Paginated (25 per page),\nmost recent buyer first. Pending and cancelled purchases are ignored.",
+                "description": "Clients that belong to this center (registered from its page or created by it) or have at least one\nconfirmed or completed purchase in it. Paginated (25 per page), most recent buyer first, then clients\nwithout purchases (newest first). Pending and cancelled purchases are ignored.",
                 "summary": "List the center's clients",
                 "tags": [
                     "Center / Clients"
@@ -4810,7 +6150,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Paginated collection of `{id, full_name, phone_number, first_purchase_at, last_purchase_at, purchases_count}`.",
+                        "description": "Paginated collection of `{id, full_name, phone_number, first_purchase_at, last_purchase_at, purchases_count}`. Purchase dates are `null` for clients without purchases.",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -4986,7 +6326,7 @@
         "/v1/admin/centers/{center}/clients": {
             "get": {
                 "operationId": "admin.centers.clients.index",
-                "description": "Clients with at least one confirmed or completed purchase in this center. Paginated (25 per page),\nmost recent buyer first. Pending and cancelled purchases are ignored.",
+                "description": "Clients that belong to this center (registered from its page or created by it) or have at least one\nconfirmed or completed purchase in it. Paginated (25 per page), most recent buyer first, then clients\nwithout purchases (newest first). Pending and cancelled purchases are ignored.",
                 "summary": "List the center's clients",
                 "tags": [
                     "Center / Clients"
@@ -5004,7 +6344,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Paginated collection of `{id, full_name, phone_number, first_purchase_at, last_purchase_at, purchases_count}`.",
+                        "description": "Paginated collection of `{id, full_name, phone_number, first_purchase_at, last_purchase_at, purchases_count}`. Purchase dates are `null` for clients without purchases.",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -5170,6 +6510,96 @@
                             "application/json": {
                                 "schema": {
                                     "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/centers/launch": {
+            "post": {
+                "operationId": "centers.launch",
+                "description": "Called every time the center app starts. Registers or refreshes the\ndevice with its FCM token, platform and locale. Unauthenticated launches\nstore the device unlinked; it is linked to the center user on `/auth/phone/verify`\nor `/register` when the same `device_identifier` is sent. When a Bearer\ntoken is sent, the authenticated center user's device is updated directly.\n\n**Request body:**\n- `device_identifier` \u2014 required; unique ID of the app install.\n- `platform`          \u2014 required; `ios` or `android`.\n- `fcm_token`         \u2014 optional; Firebase Cloud Messaging token.\n- `locale`            \u2014 optional; device locale (e.g. `ar`, `en`).",
+                "summary": "Register the device on app launch",
+                "tags": [
+                    "Center / Device"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LaunchDeviceRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Device registered or refreshed.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "device": {
+                                            "type": "object",
+                                            "properties": {
+                                                "device_identifier": {
+                                                    "type": "string"
+                                                },
+                                                "platform": {
+                                                    "type": "string"
+                                                },
+                                                "locale": {
+                                                    "type": "string"
+                                                },
+                                                "linked": {
+                                                    "type": "boolean"
+                                                }
+                                            },
+                                            "required": [
+                                                "device_identifier",
+                                                "platform",
+                                                "locale",
+                                                "linked"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "device"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation failure on `device_identifier`, `platform`, `fcm_token` or `locale`.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Errors overview."
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "description": "A detailed description of each field that failed validation.",
+                                            "additionalProperties": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "message",
+                                        "errors"
+                                    ]
                                 }
                             }
                         }
@@ -10837,7 +12267,7 @@
         "/v1/centers/{center}/purchases/{purchase}": {
             "get": {
                 "operationId": "centers.purchases.show",
-                "description": "With its line items and payments (amounts and payments omitted without\n`purchases.view_prices`). Purchases the user may not see return 404.",
+                "description": "With its line items and payments (amounts and payments omitted without\n`purchases.view_prices`). Each item carries `details` of what was booked:\ndates, times, service, trainer and price option for a reservation; service,\nprice option and sessions for a client package; `null` otherwise.\nPurchases the user may not see return 404.",
                 "summary": "Show a purchase",
                 "tags": [
                     "Center / Purchases"
@@ -11248,7 +12678,7 @@
         "/v1/admin/centers/{center}/purchases/{purchase}": {
             "get": {
                 "operationId": "admin.centers.purchases.show",
-                "description": "With its line items and payments (amounts and payments omitted without\n`purchases.view_prices`). Purchases the user may not see return 404.",
+                "description": "With its line items and payments (amounts and payments omitted without\n`purchases.view_prices`). Each item carries `details` of what was booked:\ndates, times, service, trainer and price option for a reservation; service,\nprice option and sessions for a client package; `null` otherwise.\nPurchases the user may not see return 404.",
                 "summary": "Show a purchase",
                 "tags": [
                     "Center / Purchases"
@@ -22972,7 +24402,7 @@
         "/v1/clients/auth/verify": {
             "post": {
                 "operationId": "client.auth.verify",
-                "description": "Validates the 6-digit OTP sent to the phone number. When the OTP is\ncorrect, a client record is looked up (or created on the fly for new\nphone numbers), a device record is registered/updated when a\n`X-Device-Identifier` header or `device_identifier` field is provided,\nand a Sanctum Bearer token is minted for subsequent requests.\n\n**Request body:**\n- `phone_number` \u2014 required; same number used in the `/login` call.\n- `code`           \u2014 required; 6-digit OTP.\n- `device_identifier` \u2014 optional; unique device ID for push-token\n  registration. May also be passed via the `X-Device-Identifier` header.\n\n**Response body:**\n- `token`              \u2014 Sanctum plain-text Bearer token.\n- `token_type`         \u2014 Always `\"Bearer\"`.\n- `needs_onboarding`   \u2014 `true` when `first_name` / `last_name` are not\n  yet set on the client profile.\n- `client`             \u2014 Client record as a `ClientResource`.",
+                "description": "Validates the 6-digit OTP sent to the phone number. When the OTP is\ncorrect, a client record is looked up (or created on the fly for new\nphone numbers), the device registered on `/launch` is linked when a\n`X-Device-Identifier` header or `device_identifier` field is provided,\nand a Sanctum Bearer token is minted for subsequent requests.\n\n**Request body:**\n- `phone_number` \u2014 required; same number used in the `/login` call.\n- `code`           \u2014 required; 6-digit OTP.\n- `device_identifier` \u2014 optional; unique device ID for push-token\n  registration. May also be passed via the `X-Device-Identifier` header.\n- `platform` \u2014 optional; `ios` or `android`, same value sent to `/launch`.\n\n**Response body:**\n- `token`              \u2014 Sanctum plain-text Bearer token.\n- `token_type`         \u2014 Always `\"Bearer\"`.\n- `needs_onboarding`   \u2014 `true` when `first_name` / `last_name` are not\n  yet set on the client profile.\n- `client`             \u2014 Client record as a `ClientResource`.",
                 "summary": "Verify OTP and issue a Bearer token",
                 "tags": [
                     "Client / Auth"
@@ -23409,6 +24839,96 @@
                                     },
                                     "required": [
                                         "data"
+                                    ]
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/clients/launch": {
+            "post": {
+                "operationId": "client.launch",
+                "description": "Called every time the client app starts. Registers or refreshes the\ndevice with its FCM token, platform and locale. Unauthenticated launches\nstore the device unlinked; it is linked to the client on `/auth/verify`\nwhen the same `device_identifier` is sent. When a Bearer token is sent,\nthe authenticated client's device is updated directly.\n\n**Request body:**\n- `device_identifier` \u2014 required; unique ID of the app install.\n- `platform`          \u2014 required; `ios` or `android`.\n- `fcm_token`         \u2014 optional; Firebase Cloud Messaging token.\n- `locale`            \u2014 optional; device locale (e.g. `ar`, `en`).",
+                "summary": "Register the device on app launch",
+                "tags": [
+                    "Client / Device"
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/LaunchDeviceRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Device registered or refreshed.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "device": {
+                                            "type": "object",
+                                            "properties": {
+                                                "device_identifier": {
+                                                    "type": "string"
+                                                },
+                                                "platform": {
+                                                    "type": "string"
+                                                },
+                                                "locale": {
+                                                    "type": "string"
+                                                },
+                                                "linked": {
+                                                    "type": "boolean"
+                                                }
+                                            },
+                                            "required": [
+                                                "device_identifier",
+                                                "platform",
+                                                "locale",
+                                                "linked"
+                                            ]
+                                        }
+                                    },
+                                    "required": [
+                                        "device"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation failure on `device_identifier`, `platform`, `fcm_token` or `locale`.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "description": "Errors overview."
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "description": "A detailed description of each field that failed validation.",
+                                            "additionalProperties": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "message",
+                                        "errors"
                                     ]
                                 }
                             }
@@ -25328,6 +26848,492 @@
                     }
                 }
             }
+        },
+        "/v1/clients/notifications": {
+            "get": {
+                "operationId": "client.notifications.index",
+                "description": "Newest first, 15 per page. `title` and `body` are returned in the\n`Accept-Language` locale; `payload` keeps every locale plus deep-link ids.",
+                "summary": "List notifications",
+                "tags": [
+                    "Notifications"
+                ],
+                "parameters": [
+                    {
+                        "name": "read",
+                        "in": "query",
+                        "description": "Filter by read state: `true` for read only, `false` for unread only.",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `NotificationResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/NotificationResource"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/clients/notifications/unread-count": {
+            "get": {
+                "operationId": "client.notifications.unread-count",
+                "summary": "Unread notifications count",
+                "tags": [
+                    "Notifications"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Returns `unread_count`.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "unread_count": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "unread_count"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/clients/notifications/mark-all-as-read": {
+            "post": {
+                "operationId": "client.notifications.mark-all-as-read",
+                "summary": "Mark all notifications as read",
+                "tags": [
+                    "Notifications"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Returns how many notifications were marked as `updated`.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "updated": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "updated"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/clients/notifications/{notification}/mark-as-read": {
+            "post": {
+                "operationId": "client.notifications.mark-as-read",
+                "summary": "Mark one notification as read",
+                "tags": [
+                    "Notifications"
+                ],
+                "parameters": [
+                    {
+                        "name": "notification",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The updated notification.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/NotificationResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "404": {
+                        "description": "The notification does not belong to the authenticated user.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/admin/notifications": {
+            "get": {
+                "operationId": "admin.notifications.index",
+                "description": "Newest first, 15 per page. `title` and `body` are returned in the\n`Accept-Language` locale; `payload` keeps every locale plus deep-link ids.",
+                "summary": "List notifications",
+                "tags": [
+                    "Notifications"
+                ],
+                "parameters": [
+                    {
+                        "name": "read",
+                        "in": "query",
+                        "description": "Filter by read state: `true` for read only, `false` for unread only.",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `NotificationResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/NotificationResource"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/admin/notifications/unread-count": {
+            "get": {
+                "operationId": "admin.notifications.unread-count",
+                "summary": "Unread notifications count",
+                "tags": [
+                    "Notifications"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Returns `unread_count`.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "unread_count": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "unread_count"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/admin/notifications/mark-all-as-read": {
+            "post": {
+                "operationId": "admin.notifications.mark-all-as-read",
+                "summary": "Mark all notifications as read",
+                "tags": [
+                    "Notifications"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Returns how many notifications were marked as `updated`.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "updated": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "updated"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/admin/notifications/{notification}/mark-as-read": {
+            "post": {
+                "operationId": "admin.notifications.mark-as-read",
+                "summary": "Mark one notification as read",
+                "tags": [
+                    "Notifications"
+                ],
+                "parameters": [
+                    {
+                        "name": "notification",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The updated notification.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/NotificationResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "404": {
+                        "description": "The notification does not belong to the authenticated user.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/centers/notifications": {
+            "get": {
+                "operationId": "centers.notifications.index",
+                "description": "Newest first, 15 per page. `title` and `body` are returned in the\n`Accept-Language` locale; `payload` keeps every locale plus deep-link ids.",
+                "summary": "List notifications",
+                "tags": [
+                    "Notifications"
+                ],
+                "parameters": [
+                    {
+                        "name": "read",
+                        "in": "query",
+                        "description": "Filter by read state: `true` for read only, `false` for unread only.",
+                        "schema": {
+                            "type": "boolean"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Array of `NotificationResource`",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/NotificationResource"
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/centers/notifications/unread-count": {
+            "get": {
+                "operationId": "centers.notifications.unread-count",
+                "summary": "Unread notifications count",
+                "tags": [
+                    "Notifications"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Returns `unread_count`.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "unread_count": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "unread_count"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/centers/notifications/mark-all-as-read": {
+            "post": {
+                "operationId": "centers.notifications.mark-all-as-read",
+                "summary": "Mark all notifications as read",
+                "tags": [
+                    "Notifications"
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Returns how many notifications were marked as `updated`.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "updated": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "required": [
+                                        "updated"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    }
+                }
+            }
+        },
+        "/v1/centers/notifications/{notification}/mark-as-read": {
+            "post": {
+                "operationId": "centers.notifications.mark-as-read",
+                "summary": "Mark one notification as read",
+                "tags": [
+                    "Notifications"
+                ],
+                "parameters": [
+                    {
+                        "name": "notification",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "The updated notification.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/NotificationResource"
+                                        }
+                                    },
+                                    "required": [
+                                        "data"
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "$ref": "#/components/responses/AuthenticationException"
+                    },
+                    "404": {
+                        "description": "The notification does not belong to the authenticated user.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "components": {
@@ -25525,6 +27531,54 @@
                     "start_time"
                 ],
                 "title": "BookFromPackageRequest"
+            },
+            "CampaignActionType": {
+                "type": "string",
+                "description": "What the app opens when a push campaign is tapped.\n",
+                "enum": [
+                    "none",
+                    "center",
+                    "service",
+                    "url"
+                ],
+                "title": "CampaignActionType"
+            },
+            "CampaignAudience": {
+                "type": "string",
+                "description": "Who a campaign reaches. Center targets are centers; every active staff user of a targeted center receives it.\n",
+                "enum": [
+                    "clients",
+                    "centers"
+                ],
+                "title": "CampaignAudience"
+            },
+            "CampaignChannel": {
+                "type": "string",
+                "enum": [
+                    "push",
+                    "whatsapp"
+                ],
+                "title": "CampaignChannel"
+            },
+            "CampaignStatus": {
+                "type": "string",
+                "enum": [
+                    "draft",
+                    "scheduled",
+                    "sending",
+                    "sent",
+                    "failed",
+                    "cancelled"
+                ],
+                "title": "CampaignStatus"
+            },
+            "CampaignTargetMode": {
+                "type": "string",
+                "enum": [
+                    "all",
+                    "selected"
+                ],
+                "title": "CampaignTargetMode"
             },
             "CancelReservationRequest": {
                 "type": "object",
@@ -25764,10 +27818,16 @@
                         "type": "string"
                     },
                     "first_purchase_at": {
-                        "type": "string"
+                        "type": [
+                            "string",
+                            "null"
+                        ]
                     },
                     "last_purchase_at": {
-                        "type": "string"
+                        "type": [
+                            "string",
+                            "null"
+                        ]
                     },
                     "purchases_count": {
                         "type": "integer"
@@ -26568,6 +28628,22 @@
                 ],
                 "title": "CreateSubscriptionRequest"
             },
+            "DeliveryStatus": {
+                "type": "string",
+                "enum": [
+                    "sent",
+                    "failed"
+                ],
+                "title": "DeliveryStatus"
+            },
+            "DevicePlatform": {
+                "type": "string",
+                "enum": [
+                    "ios",
+                    "android"
+                ],
+                "title": "DevicePlatform"
+            },
             "DiscountCollection": {
                 "type": "array",
                 "items": {
@@ -27362,6 +29438,37 @@
                     "images"
                 ],
                 "title": "HorseServiceResource"
+            },
+            "LaunchDeviceRequest": {
+                "type": "object",
+                "properties": {
+                    "device_identifier": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "platform": {
+                        "$ref": "#/components/schemas/DevicePlatform"
+                    },
+                    "fcm_token": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 1024
+                    },
+                    "locale": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 10
+                    }
+                },
+                "required": [
+                    "device_identifier",
+                    "platform"
+                ],
+                "title": "LaunchDeviceRequest"
             },
             "LimitResource": {
                 "type": "object",
@@ -28495,6 +30602,402 @@
                 ],
                 "title": "Modules.Services.Http.Resources.Client.VisitResource"
             },
+            "NotificationCampaignDeliveryResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "recipient_type": {
+                        "type": "string"
+                    },
+                    "recipient_id": {
+                        "type": "integer"
+                    },
+                    "phone": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "status": {
+                        "$ref": "#/components/schemas/DeliveryStatus"
+                    },
+                    "provider_message_id": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "error": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "created_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "id",
+                    "recipient_type",
+                    "recipient_id",
+                    "phone",
+                    "status",
+                    "provider_message_id",
+                    "error",
+                    "created_at"
+                ],
+                "title": "NotificationCampaignDeliveryResource"
+            },
+            "NotificationCampaignRequest": {
+                "type": "object",
+                "description": "Create (POST) or update (PUT/PATCH) a campaign. On update, missing fields keep their current value.",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "channel": {
+                        "$ref": "#/components/schemas/CampaignChannel"
+                    },
+                    "audience": {
+                        "$ref": "#/components/schemas/CampaignAudience"
+                    },
+                    "target_mode": {
+                        "$ref": "#/components/schemas/CampaignTargetMode"
+                    },
+                    "target_ids": {
+                        "type": "array",
+                        "description": "Client ids or center ids depending on `audience`; required when `target_mode` is `selected`.",
+                        "items": {
+                            "type": "integer",
+                            "minimum": 1
+                        },
+                        "maxItems": 5000,
+                        "uniqueItems": true
+                    },
+                    "title": {
+                        "type": "object",
+                        "properties": {
+                            "en": {
+                                "type": "string"
+                            },
+                            "ar": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "body": {
+                        "type": "object",
+                        "properties": {
+                            "en": {
+                                "type": "string"
+                            },
+                            "ar": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "action_type": {
+                        "type": "string"
+                    },
+                    "action_target_id": {
+                        "type": "string"
+                    },
+                    "action_url": {
+                        "type": "string"
+                    },
+                    "whatsapp_template_id": {
+                        "type": "integer"
+                    },
+                    "template_parameters": {
+                        "type": "array",
+                        "description": "One binding per template variable, in order: `{source: fixed, value}` or `{source: recipient, field}`.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "source": {
+                                    "$ref": "#/components/schemas/TemplateVariableSource"
+                                },
+                                "value": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ],
+                                    "maxLength": 1000
+                                },
+                                "field": {
+                                    "anyOf": [
+                                        {
+                                            "$ref": "#/components/schemas/RecipientField"
+                                        },
+                                        {
+                                            "type": "null"
+                                        }
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "source"
+                            ]
+                        },
+                        "minItems": 1
+                    },
+                    "scheduled_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "send_now": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "name",
+                    "channel",
+                    "audience",
+                    "target_mode",
+                    "whatsapp_template_id",
+                    "template_parameters"
+                ],
+                "title": "NotificationCampaignRequest"
+            },
+            "NotificationCampaignResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "channel": {
+                        "$ref": "#/components/schemas/CampaignChannel"
+                    },
+                    "audience": {
+                        "$ref": "#/components/schemas/CampaignAudience"
+                    },
+                    "target_mode": {
+                        "$ref": "#/components/schemas/CampaignTargetMode"
+                    },
+                    "status": {
+                        "$ref": "#/components/schemas/CampaignStatus"
+                    },
+                    "title": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "additionalProperties": {
+                            "type": "string"
+                        }
+                    },
+                    "body": {
+                        "type": [
+                            "object",
+                            "null"
+                        ],
+                        "additionalProperties": {
+                            "type": "string"
+                        }
+                    },
+                    "action_type": {
+                        "$ref": "#/components/schemas/CampaignActionType"
+                    },
+                    "action_target_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "action_url": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "whatsapp_template_id": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "template": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/WhatsAppTemplateResource"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    },
+                    "template_parameters": {
+                        "type": [
+                            "array",
+                            "null"
+                        ],
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "source": {
+                                    "type": "string"
+                                },
+                                "value": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "field": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "source"
+                            ]
+                        }
+                    },
+                    "target_ids": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        }
+                    },
+                    "scheduled_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "sent_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "recipients_count": {
+                        "type": "integer"
+                    },
+                    "sent_count": {
+                        "type": "integer"
+                    },
+                    "failed_count": {
+                        "type": "integer"
+                    },
+                    "created_by": {
+                        "type": [
+                            "integer",
+                            "null"
+                        ]
+                    },
+                    "created_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "channel",
+                    "audience",
+                    "target_mode",
+                    "status",
+                    "title",
+                    "body",
+                    "action_type",
+                    "action_target_id",
+                    "action_url",
+                    "whatsapp_template_id",
+                    "template_parameters",
+                    "scheduled_at",
+                    "sent_at",
+                    "recipients_count",
+                    "sent_count",
+                    "failed_count",
+                    "created_by",
+                    "created_at",
+                    "updated_at"
+                ],
+                "title": "NotificationCampaignResource"
+            },
+            "NotificationResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string"
+                    },
+                    "title": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Title in the request locale."
+                    },
+                    "body": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Body in the request locale."
+                    },
+                    "payload": {
+                        "type": "object",
+                        "description": "Raw payload: every locale plus deep-link ids.",
+                        "additionalProperties": {}
+                    },
+                    "read_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "created_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "id",
+                    "type",
+                    "title",
+                    "body",
+                    "payload",
+                    "read_at",
+                    "created_at"
+                ],
+                "title": "NotificationResource"
+            },
             "PaymentMethod": {
                 "type": "string",
                 "enum": [
@@ -28836,6 +31339,19 @@
                     "rated_at"
                 ],
                 "title": "RatingResource"
+            },
+            "RecipientField": {
+                "type": "string",
+                "description": "Recipient data a WhatsApp template variable can be bound to.\n",
+                "enum": [
+                    "first_name",
+                    "last_name",
+                    "full_name",
+                    "phone",
+                    "staff_name",
+                    "center_name"
+                ],
+                "title": "RecipientField"
             },
             "RecreationRidingRequest": {
                 "type": "object",
@@ -29187,6 +31703,23 @@
                             "phone",
                             "code",
                             "password"
+                        ]
+                    },
+                    "device_identifier": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 255
+                    },
+                    "platform": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/DevicePlatform"
+                            },
+                            {
+                                "type": "null"
+                            }
                         ]
                     }
                 },
@@ -29688,6 +32221,19 @@
                     "images"
                 ],
                 "title": "ResortResource"
+            },
+            "ScheduleNotificationCampaignRequest": {
+                "type": "object",
+                "properties": {
+                    "scheduled_at": {
+                        "type": "string",
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "scheduled_at"
+                ],
+                "title": "ScheduleNotificationCampaignRequest"
             },
             "SendLoginOtpRequest": {
                 "type": "object",
@@ -30589,6 +33135,15 @@
                 ],
                 "title": "SystemUserResource"
             },
+            "TemplateVariableSource": {
+                "type": "string",
+                "description": "| |\n|---|\n| `fixed` <br/> The admin types one value for the whole campaign. |\n| `recipient` <br/> The value is read from each recipient. |",
+                "enum": [
+                    "fixed",
+                    "recipient"
+                ],
+                "title": "TemplateVariableSource"
+            },
             "TrainerOptionResource": {
                 "type": "object",
                 "properties": {
@@ -31438,6 +33993,23 @@
                     },
                     "code": {
                         "type": "string"
+                    },
+                    "device_identifier": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 255
+                    },
+                    "platform": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/DevicePlatform"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
                     }
                 },
                 "required": [
@@ -31456,6 +34028,23 @@
                     },
                     "code": {
                         "type": "string"
+                    },
+                    "device_identifier": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "maxLength": 255
+                    },
+                    "platform": {
+                        "anyOf": [
+                            {
+                                "$ref": "#/components/schemas/DevicePlatform"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
                     }
                 },
                 "required": [
@@ -31686,6 +34275,165 @@
                     "images"
                 ],
                 "title": "VisitResource"
+            },
+            "WhatsAppTemplateRequest": {
+                "type": "object",
+                "description": "Create (POST) or update (PUT/PATCH) a WhatsApp template.",
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 255
+                    },
+                    "provider_name": {
+                        "type": "string",
+                        "description": "The template name exactly as approved in Voxa / Meta.",
+                        "pattern": "^[a-z0-9_]+$",
+                        "maxLength": 255
+                    },
+                    "language": {
+                        "type": "string",
+                        "enum": [
+                            "ar",
+                            "en"
+                        ]
+                    },
+                    "body": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "description": "Preview of the approved text with `{{1}}`, `{{2}}` \u2026 placeholders.",
+                        "maxLength": 4096
+                    },
+                    "variables": {
+                        "type": "array",
+                        "description": "Ordered variables, one per placeholder.",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "label": {
+                                    "type": "string",
+                                    "maxLength": 100
+                                },
+                                "default_source": {
+                                    "anyOf": [
+                                        {
+                                            "$ref": "#/components/schemas/TemplateVariableSource"
+                                        },
+                                        {
+                                            "type": "null"
+                                        }
+                                    ]
+                                },
+                                "default_field": {
+                                    "anyOf": [
+                                        {
+                                            "$ref": "#/components/schemas/RecipientField"
+                                        },
+                                        {
+                                            "type": "null"
+                                        }
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "label"
+                            ]
+                        },
+                        "minItems": 1,
+                        "maxItems": 20
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "name",
+                    "provider_name",
+                    "language",
+                    "variables"
+                ],
+                "title": "WhatsAppTemplateRequest"
+            },
+            "WhatsAppTemplateResource": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "integer"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "provider_name": {
+                        "type": "string"
+                    },
+                    "language": {
+                        "type": "string"
+                    },
+                    "body": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
+                    "variables": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "label": {
+                                    "type": "string"
+                                },
+                                "default_source": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                },
+                                "default_field": {
+                                    "type": [
+                                        "string",
+                                        "null"
+                                    ]
+                                }
+                            },
+                            "required": [
+                                "label",
+                                "default_source",
+                                "default_field"
+                            ]
+                        }
+                    },
+                    "is_active": {
+                        "type": "boolean"
+                    },
+                    "created_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    },
+                    "updated_at": {
+                        "type": [
+                            "string",
+                            "null"
+                        ],
+                        "format": "date-time"
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "provider_name",
+                    "language",
+                    "body",
+                    "variables",
+                    "is_active",
+                    "created_at",
+                    "updated_at"
+                ],
+                "title": "WhatsAppTemplateResource"
             }
         },
         "responses": {
