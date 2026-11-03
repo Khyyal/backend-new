@@ -15,7 +15,7 @@ return new class extends Migration {
             $table->string('locale')->nullable();
             $table->timestamp('last_seen_at')->nullable();
             $table->nullableMorphs('deviceable');
-            $table->unique(['deviceable_id', 'deviceable_type', 'device_identifier'], 'devices_deviceable_identifier_unique');
+            $table->unique(['deviceable_id', 'deviceable_type', 'device_identifier','platform'], 'devices_deviceable_identifier_unique');
             $table->timestamps();
         });
     }
