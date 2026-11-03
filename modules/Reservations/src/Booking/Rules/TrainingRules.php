@@ -2,6 +2,7 @@
 
 namespace Modules\Reservations\Booking\Rules;
 
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Modules\Reservations\Booking\BookingRequest;
@@ -10,7 +11,7 @@ use Modules\Services\Models\Trainer;
 
 /**
  * Training slots follow the chosen trainer's schedules and hourly ticket
- * limit; capacity is shared across every service the trainer teaches.
+ * limit of the booked weekday; capacity is shared across every service the trainer teaches.
  */
 class TrainingRules extends HourlySlotRules
 {
@@ -33,5 +34,13 @@ class TrainingRules extends HourlySlotRules
     protected function trainerId(Model $scheduleOwner): ?int
     {
         return $scheduleOwner->getKey();
+    }
+
+    /**
+     * @param  Trainer  $scheduleOwner
+     */
+    protected function hourlyCapacity(Model $scheduleOwner, CarbonImmutable $date): ?int
+    {
+        return $scheduleOwner->maxTicketsPerHourOn($date->dayOfWeek);
     }
 }

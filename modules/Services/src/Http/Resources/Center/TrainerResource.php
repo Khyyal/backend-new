@@ -22,6 +22,9 @@ class TrainerResource extends JsonResource
             'center_id' => $this->resource->center_id,
             'name' => $this->resource->name,
             'max_tickets_per_hour' => $this->resource->max_tickets_per_hour,
+            'max_tickets_per_hour_by_day' => $this->resource->max_tickets_per_hour_by_day === null
+                ? null
+                : (object) $this->resource->max_tickets_per_hour_by_day,
             'days' => $schedules->pluck('day_of_week')->unique()->values(),
             'hours' => $schedules->where('day_of_week', $firstDay)
                 ->flatMap(fn ($slot) => [Schedule::clockTime($slot->start_time), Schedule::clockTime($slot->end_time)])

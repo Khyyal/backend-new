@@ -25,7 +25,9 @@ class TrainerRequest extends FormRequest
 
     /**
      * `max_tickets_per_hour` is an optional integer >= 1; `null` or omitted means
-     * no hourly limit. `hours` is a flat list of `start, end` pairs (`["09:00","12:00","14:00","17:00"]`)
+     * no hourly limit. `max_tickets_per_hour_by_day` optionally overrides it on
+     * some days: a map of weekday (one of `days`) to an integer >= 1, e.g. `{"5": 10}`.
+     * `hours` is a flat list of `start, end` pairs (`["09:00","12:00","14:00","17:00"]`)
      * applied to every day in `days` (0-6). `training_service_ids` must be
      * training services of the same center.
      *
@@ -39,6 +41,8 @@ class TrainerRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'max_tickets_per_hour' => ['nullable', 'integer', 'min:1'],
+            'max_tickets_per_hour_by_day' => ['nullable', 'array', 'max:7'],
+            'max_tickets_per_hour_by_day.*' => ['integer', 'min:1'],
             'days' => ['required', 'array', 'min:1', 'max:7'],
             'days.*' => ['integer', 'between:0,6', 'distinct'],
             'hours' => ['required', 'array', 'min:2', 'max:48'],
@@ -60,6 +64,20 @@ class TrainerRequest extends FormRequest
         return [
             function (Validator $validator): void {
                 Schedule::validateHourPairs($validator, $this->input('hours'), 'hours');
+            },
+            function (Validator $validator): void {
+                $overrides = $this->input('max_tickets_per_hour_by_day');
+                $days = $this->input('days');
+
+                if (! is_array($overrides) || ! is_array($days) || $validator->errors()->has('days.*')) {
+                    return;
+                }
+
+                foreach (array_keys($overrides) as $day) {
+                    if (! in_array((string) $day, array_map('strval', $days), true)) {
+                        $validator->errors()->add("max_tickets_per_hour_by_day.$day", 'Each overridden day must be one of the trainer days.');
+                    }
+                }
             },
         ];
     }

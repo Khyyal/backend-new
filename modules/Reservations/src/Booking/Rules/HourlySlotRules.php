@@ -2,6 +2,7 @@
 
 namespace Modules\Reservations\Booking\Rules;
 
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Modules\Reservations\Booking\BookingGuard;
 use Modules\Reservations\Booking\BookingQuote;
@@ -29,6 +30,14 @@ abstract class HourlySlotRules implements ReservationRules
     abstract protected function scheduleOwner(BookingRequest $request): Model;
 
     abstract protected function trainerId(Model $scheduleOwner): ?int;
+
+    /**
+     * Tickets the schedule owner sells per hour on the booked day; `null` means no limit.
+     */
+    protected function hourlyCapacity(Model $scheduleOwner, CarbonImmutable $date): ?int
+    {
+        return $scheduleOwner->max_tickets_per_hour;
+    }
 
     public function quote(BookingRequest $request): BookingQuote
     {
@@ -73,7 +82,7 @@ abstract class HourlySlotRules implements ReservationRules
             $request->ignoreReservationId,
         );
 
-        $this->guard->ensureCapacity($owner->max_tickets_per_hour, $reserved, $request->quantity);
+        $this->guard->ensureCapacity($this->hourlyCapacity($owner, $request->date), $reserved, $request->quantity);
 
         $unitPrice = $request->usesPackage() ? 0.0 : (float) $option->price;
 

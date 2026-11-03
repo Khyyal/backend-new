@@ -32,6 +32,7 @@ class TrainerService
                 'center_id' => $center->getKey(),
                 'name' => $data['name'],
                 'max_tickets_per_hour' => $data['max_tickets_per_hour'] ?? null,
+                'max_tickets_per_hour_by_day' => $this->overridesByDay($data),
             ]);
 
             $this->syncSchedules($trainer, $data);
@@ -53,6 +54,7 @@ class TrainerService
             $trainer->update([
                 'name' => $data['name'],
                 'max_tickets_per_hour' => $data['max_tickets_per_hour'] ?? null,
+                'max_tickets_per_hour_by_day' => $this->overridesByDay($data),
             ]);
 
             $trainer->schedules()->forceDelete();
@@ -85,6 +87,31 @@ class TrainerService
             ->where('center_id', $center->getKey())
             ->with(self::RELATIONS)
             ->firstOrFail();
+    }
+
+    /**
+     * Per-day hourly limits keyed by weekday, or `null` when none are sent.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<int, int>|null
+     */
+    private function overridesByDay(array $data): ?array
+    {
+        $overrides = $data['max_tickets_per_hour_by_day'] ?? [];
+
+        if ($overrides === []) {
+            return null;
+        }
+
+        $byDay = [];
+
+        foreach ($overrides as $day => $max) {
+            $byDay[(int) $day] = (int) $max;
+        }
+
+        ksort($byDay);
+
+        return $byDay;
     }
 
     /**

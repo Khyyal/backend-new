@@ -3,6 +3,7 @@
 namespace Modules\Reservations\Services\Availability;
 
 use Carbon\CarbonImmutable;
+use Closure;
 use Illuminate\Support\Collection;
 use Modules\Reservations\Booking\BookingGuard;
 use Modules\Reservations\Models\Reservation;
@@ -44,13 +45,14 @@ final class HourlySlots
 
     /**
      * @param  Collection<int, Schedule>  $schedules
+     * @param  Closure(CarbonImmutable): ?int  $maxTicketsOn  hourly ticket limit on a date; `null` means no limit
      * @param  Collection<int, Reservation>  $reservations  taking places in the range
      * @param  Collection<int, ServiceBlock>  $blocks
      * @return array<int, array{date: string, available: bool, hours: array<int, array{hour: string, available: bool, available_tickets: int|null, max_tickets: int|null}>}>
      */
     public function days(
         Collection $schedules,
-        ?int $maxTickets,
+        Closure $maxTicketsOn,
         Collection $reservations,
         Collection $blocks,
         bool $acceptsBookings,
@@ -63,7 +65,7 @@ final class HourlySlots
         for ($date = $from->startOfDay(); $date->lte($to); $date = $date->addDay()) {
             $hours = $this->hours(
                 $schedules,
-                $maxTickets,
+                $maxTicketsOn($date),
                 $date,
                 $reservationsByDate->get($date->toDateString(), collect()),
                 $blocks->filter(fn (ServiceBlock $block): bool => $block->start_date->lte($date) && $block->end_date->gte($date)),

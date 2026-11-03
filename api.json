@@ -19016,7 +19016,7 @@
             },
             "post": {
                 "operationId": "centers.trainers.store",
-                "description": "**Request body:**\n- `name`                    required string.\n- `max_tickets_per_hour`    optional integer >= 1, or `null`/omitted for no hourly limit.\n- `days`                    required array of distinct weekday numbers `0`-`6`.\n- `hours`                   required flat list of `HH:mm` start/end pairs, e.g. `[\"09:00\",\"12:00\",\"14:00\",\"17:00\"]` (two slots); applied to every day in `days`. Each end must be after its start.\n- `training_service_ids`    optional array of training service ids of this center the trainer works in.",
+                "description": "**Request body:**\n- `name`                    required string.\n- `max_tickets_per_hour`    optional integer >= 1, or `null`/omitted for no hourly limit.\n- `max_tickets_per_hour_by_day` optional map of weekday (one of `days`) to an integer >= 1 overriding `max_tickets_per_hour` on that day, e.g. `{\"5\": 10, \"6\": 6}`; `null`/omitted means every day uses `max_tickets_per_hour`.\n- `days`                    required array of distinct weekday numbers `0`-`6`.\n- `hours`                   required flat list of `HH:mm` start/end pairs, e.g. `[\"09:00\",\"12:00\",\"14:00\",\"17:00\"]` (two slots); applied to every day in `days`. Each end must be after its start.\n- `training_service_ids`    optional array of training service ids of this center the trainer works in.",
                 "summary": "Create a trainer",
                 "tags": [
                     "Center / Trainers"
@@ -19044,7 +19044,7 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "The created trainer as a `TrainerResource`: `id`, `center_id`, `name`, `max_tickets_per_hour`, `days`, `hours`, `training_services` [{id,name}].",
+                        "description": "The created trainer as a `TrainerResource`: `id`, `center_id`, `name`, `max_tickets_per_hour`, `max_tickets_per_hour_by_day` ({day: max} or null), `days`, `hours`, `training_services` [{id,name}].",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -19216,7 +19216,7 @@
             },
             "put": {
                 "operationId": "centers.trainers.update",
-                "description": "Replaces the definition: `name`, `days` and `hours` are required\n(`max_tickets_per_hour` is optional and resets to `null` when omitted)\nand take the same shape as on create (old schedules are replaced).\n`training_service_ids` is optional and untouched when omitted; when\nsent it is the full list of training services.",
+                "description": "Replaces the definition: `name`, `days` and `hours` are required\n(`max_tickets_per_hour` and `max_tickets_per_hour_by_day` are optional and reset to `null` when omitted)\nand take the same shape as on create (old schedules are replaced).\n`training_service_ids` is optional and untouched when omitted; when\nsent it is the full list of training services.",
                 "summary": "Update a trainer",
                 "tags": [
                     "Center / Trainers"
@@ -19609,7 +19609,7 @@
             },
             "post": {
                 "operationId": "admin.centers.trainers.store",
-                "description": "**Request body:**\n- `name`                    required string.\n- `max_tickets_per_hour`    optional integer >= 1, or `null`/omitted for no hourly limit.\n- `days`                    required array of distinct weekday numbers `0`-`6`.\n- `hours`                   required flat list of `HH:mm` start/end pairs, e.g. `[\"09:00\",\"12:00\",\"14:00\",\"17:00\"]` (two slots); applied to every day in `days`. Each end must be after its start.\n- `training_service_ids`    optional array of training service ids of this center the trainer works in.",
+                "description": "**Request body:**\n- `name`                    required string.\n- `max_tickets_per_hour`    optional integer >= 1, or `null`/omitted for no hourly limit.\n- `max_tickets_per_hour_by_day` optional map of weekday (one of `days`) to an integer >= 1 overriding `max_tickets_per_hour` on that day, e.g. `{\"5\": 10, \"6\": 6}`; `null`/omitted means every day uses `max_tickets_per_hour`.\n- `days`                    required array of distinct weekday numbers `0`-`6`.\n- `hours`                   required flat list of `HH:mm` start/end pairs, e.g. `[\"09:00\",\"12:00\",\"14:00\",\"17:00\"]` (two slots); applied to every day in `days`. Each end must be after its start.\n- `training_service_ids`    optional array of training service ids of this center the trainer works in.",
                 "summary": "Create a trainer",
                 "tags": [
                     "Center / Trainers"
@@ -19637,7 +19637,7 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "The created trainer as a `TrainerResource`: `id`, `center_id`, `name`, `max_tickets_per_hour`, `days`, `hours`, `training_services` [{id,name}].",
+                        "description": "The created trainer as a `TrainerResource`: `id`, `center_id`, `name`, `max_tickets_per_hour`, `max_tickets_per_hour_by_day` ({day: max} or null), `days`, `hours`, `training_services` [{id,name}].",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -19809,7 +19809,7 @@
             },
             "put": {
                 "operationId": "admin.centers.trainers.update",
-                "description": "Replaces the definition: `name`, `days` and `hours` are required\n(`max_tickets_per_hour` is optional and resets to `null` when omitted)\nand take the same shape as on create (old schedules are replaced).\n`training_service_ids` is optional and untouched when omitted; when\nsent it is the full list of training services.",
+                "description": "Replaces the definition: `name`, `days` and `hours` are required\n(`max_tickets_per_hour` and `max_tickets_per_hour_by_day` are optional and reset to `null` when omitted)\nand take the same shape as on create (old schedules are replaced).\n`training_service_ids` is optional and untouched when omitted; when\nsent it is the full list of training services.",
                 "summary": "Update a trainer",
                 "tags": [
                     "Center / Trainers"
@@ -30618,6 +30618,17 @@
                         ],
                         "minimum": 1
                     },
+                    "max_tickets_per_hour_by_day": {
+                        "type": [
+                            "array",
+                            "null"
+                        ],
+                        "items": {
+                            "type": "integer",
+                            "minimum": 1
+                        },
+                        "maxItems": 7
+                    },
                     "days": {
                         "type": "array",
                         "items": {
@@ -30670,6 +30681,12 @@
                             "null"
                         ]
                     },
+                    "max_tickets_per_hour_by_day": {
+                        "type": [
+                            "string",
+                            "null"
+                        ]
+                    },
                     "days": {
                         "type": "array",
                         "items": {}
@@ -30686,6 +30703,7 @@
                     "center_id",
                     "name",
                     "max_tickets_per_hour",
+                    "max_tickets_per_hour_by_day",
                     "days",
                     "hours"
                 ],

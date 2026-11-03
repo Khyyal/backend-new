@@ -133,3 +133,25 @@ test('cannot access a trainer of another center', function (): void {
     $this->deleteJson("{$this->url}/{$trainer->id}")->assertNotFound();
     $this->getJson($this->url)->assertOk()->assertJsonCount(0, 'data');
 });
+
+test('stores per-day hourly limits and clears them when omitted on update', function (): void {
+    $this->actingAs($this->user, 'center_user');
+
+    $id = $this->postJson($this->url, ($this->body)(['max_tickets_per_hour_by_day' => ['2' => 10]]))
+        ->assertCreated()
+        ->assertJsonPath('data.max_tickets_per_hour_by_day', ['2' => 10])
+        ->json('data.id');
+
+    expect(Trainer::query()->findOrFail($id)->maxTicketsPerHourOn(2))->toBe(10);
+
+    $this->putJson("{$this->url}/{$id}", ($this->body)())
+        ->assertOk()
+        ->assertJsonPath('data.max_tickets_per_hour_by_day', null);
+});
+
+test('per-day hourly limits must be positive and on the trainer days', function (): void {
+    $this->actingAs($this->user, 'center_user')
+        ->postJson($this->url, ($this->body)(['max_tickets_per_hour_by_day' => ['0' => 0, '3' => 5]]))
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['max_tickets_per_hour_by_day.0', 'max_tickets_per_hour_by_day.3']);
+});
