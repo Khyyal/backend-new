@@ -45,7 +45,7 @@ class VisitRequest extends FormRequest
             'description.en' => ['nullable', 'string'],
             'enter_type' => ['required', new Enum(VisitEnterType::class)],
             'max_tickets_per_day' => ['nullable', 'integer', 'min:1'],
-            'price' => ['required', 'numeric', 'min:0'],
+            'price' => ['required', 'integer', 'min:0'],
             'days' => ['required', 'array', 'min:1', 'max:7'],
             'days.*' => ['integer', 'between:0,6', 'distinct'],
             'hours' => ['required_if:enter_type,specific_time', 'prohibited_if:enter_type,all_day', 'array', 'min:2', 'max:48'],

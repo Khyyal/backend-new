@@ -85,7 +85,7 @@ class FakeGateway implements PaymentGateway
         return PaymentStatus::Cancelled;
     }
 
-    public function refund(Payment $payment, $amount): bool
+    public function refund(Payment $payment, int $amount): bool
     {
         return true;
     }

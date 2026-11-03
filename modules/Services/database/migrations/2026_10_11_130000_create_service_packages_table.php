@@ -13,7 +13,7 @@ return new class extends Migration
             $table->foreignId('service_id')->constrained('services')->cascadeOnDelete();
             $table->foreignId('price_option_id')->unique()->constrained('price_options')->cascadeOnDelete();
             $table->unsignedInteger('count');
-            $table->float('price');
+            $table->unsignedBigInteger('price');
             $table->unsignedSmallInteger('duration');
             $table->softDeletes();
         });

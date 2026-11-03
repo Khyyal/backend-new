@@ -16,7 +16,7 @@ trait HasStartPrice
     {
         return Attribute::get(function () {
             if (array_key_exists('start_price', $this->attributes)) {
-                return $this->attributes['start_price'] !== null ? (float) $this->attributes['start_price'] : null;
+                return $this->attributes['start_price'] !== null ? (int) $this->attributes['start_price'] : null;
             }
 
             $relation = $this->startPriceRelation();

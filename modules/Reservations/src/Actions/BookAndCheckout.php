@@ -40,7 +40,7 @@ class BookAndCheckout
         [$reservation, $checkout] = DB::transaction(function () use ($request, $source, $method, $paymentCompany, $notes): array {
             $reservation = $this->createReservation->execute($request, $source, notes: $notes);
 
-            if ((float) $reservation->total_amount <= 0) {
+            if ($reservation->total_amount <= 0) {
                 return [$this->reservationState->confirm($reservation), null];
             }
 

@@ -36,10 +36,10 @@ class PurchaseResource extends JsonResource
             ]),
             'items_count' => $this->whenCounted('items'),
             $this->mergeWhen($this->canViewPrices($request), fn (): array => [
-                'subtotal' => (float) $purchase->subtotal,
-                'discount_amount' => (float) $purchase->discount_amount,
-                'tax_amount' => (float) $purchase->tax_amount,
-                'total_amount' => (float) $purchase->total_amount,
+                'subtotal' => $purchase->subtotal,
+                'discount_amount' => $purchase->discount_amount,
+                'tax_amount' => $purchase->tax_amount,
+                'total_amount' => $purchase->total_amount,
             ]),
             'created_at' => $purchase->created_at?->toIso8601String(),
         ];

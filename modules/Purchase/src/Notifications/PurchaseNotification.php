@@ -13,7 +13,7 @@ final class PurchaseNotification extends AppNotification
     public function __construct(
         public readonly Purchase $purchase,
         public readonly string $event,
-        public readonly ?float $amount = null,
+        public readonly ?int $amount = null,
     ) {}
 
     public function type(): string
@@ -38,7 +38,7 @@ final class PurchaseNotification extends AppNotification
     {
         return [
             'id' => (string) $this->purchase->getKey(),
-            'amount' => number_format($this->amount ?? (float) $this->purchase->total_amount, 2),
+            'amount' => number_format(($this->amount ?? $this->purchase->total_amount) / 100, 2),
         ];
     }
 }

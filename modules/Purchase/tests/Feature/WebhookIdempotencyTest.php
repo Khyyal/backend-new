@@ -1,37 +1,40 @@
 <?php
 
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Schema;
+use Modules\Centers\Database\Factories\CenterFactory;
 use Modules\Clients\Database\Factories\ClientFactory;
 use Modules\Purchase\Actions\CreatePayment;
 use Modules\Purchase\Actions\CreatePurchase;
-use Modules\Purchase\Database\Factories\PaymentFactory;
 use Modules\Purchase\Enums\PaymentMethod;
 use Modules\Purchase\Enums\PaymentStatus;
 use Modules\Purchase\Enums\PurchaseSource;
-use Modules\Purchase\Enums\PurchaseStatus;
 use Modules\Purchase\Events\PaymentSucceeded;
 use Modules\Purchase\Gateways\FakeWebhookEventHandler;
+use Modules\Purchase\Models\WebhookEvent;
 use Modules\Purchase\Services\PaymentStateService;
 use Modules\Purchase\Services\WebhookProcessorService;
-use Illuminate\Support\Facades\Schema;
 use Modules\Purchase\Tests\Support\TestPurchasable;
+use Modules\Support\Database\Factories\CityFactory;
 use Tests\TestCase;
 
 uses(TestCase::class, RefreshDatabase::class);
 
 beforeEach(function (): void {
-    Schema::create('test_services', function (\Illuminate\Database\Schema\Blueprint $t) {
+    Schema::create('test_services', function (Blueprint $t) {
         $t->id();
         $t->string('name');
         $t->decimal('price', 14, 2);
     });
 
-    $this->city = \Modules\Support\Database\Factories\CityFactory::new()->create([
+    $this->city = CityFactory::new()->create([
         'name' => ['en' => 'Webhook City', 'ar' => 'مدينة الويب هوك'],
     ]);
 
-    $this->webhookSvc = new WebhookProcessorService(new PaymentStateService(), [
+    $this->webhookSvc = new WebhookProcessorService(new PaymentStateService, [
         'fake' => FakeWebhookEventHandler::class,
     ]);
 });
@@ -41,23 +44,23 @@ afterEach(function (): void {
 });
 
 $makePurchaseAndPaymentWithOrderId = function ($test, string $orderId) {
-    $center = \Modules\Centers\Database\Factories\CenterFactory::new()->create(['city_id' => $test->city->id]);
+    $center = CenterFactory::new()->create(['city_id' => $test->city->id]);
     $client = ClientFactory::new()->create();
     $svc = TestPurchasable::create(['name' => 'Svc', 'price' => 300]);
 
-    $purchase = (new CreatePurchase())->execute(
+    $purchase = (new CreatePurchase)->execute(
         buyer: $client,
         merchant: $center,
         source: PurchaseSource::Client,
         items: [
-            ['purchasable' => $svc, 'quantity' => 1, 'unit_price' => 300.0],
+            ['purchasable' => $svc, 'quantity' => 1, 'unit_price' => 300],
         ],
     );
 
-    $payment = (new CreatePayment())->execute(
+    $payment = (new CreatePayment)->execute(
         purchase: $purchase,
         method: PaymentMethod::Online,
-        amount: 300.0,
+        amount: 300,
         paymentCompany: 'fake',
         paymentType: 'card',
     );
@@ -69,7 +72,7 @@ $makePurchaseAndPaymentWithOrderId = function ($test, string $orderId) {
 };
 
 test('Unique webhook_event(gateway, external_event_id) blocks duplicates (AC-39)', function (): void {
-    \Modules\Purchase\Models\WebhookEvent::create([
+    WebhookEvent::create([
         'gateway' => 'fake',
         'external_event_id' => 'evt_unique_01',
         'event_type' => 'payment.succeeded',
@@ -77,9 +80,9 @@ test('Unique webhook_event(gateway, external_event_id) blocks duplicates (AC-39)
         'attempts' => 1,
     ]);
 
-    $this->expectException(\Illuminate\Database\UniqueConstraintViolationException::class);
+    $this->expectException(UniqueConstraintViolationException::class);
 
-    \Modules\Purchase\Models\WebhookEvent::create([
+    WebhookEvent::create([
         'gateway' => 'fake',
         'external_event_id' => 'evt_unique_01',
         'event_type' => 'payment.succeeded',
@@ -121,7 +124,7 @@ test('processed_at is set after first process; second call leaves it unchanged (
 
     $this->webhookSvc->process('fake', $extId, 'payment.succeeded', $payload);
 
-    $afterFirst = \Modules\Purchase\Models\WebhookEvent::query()
+    $afterFirst = WebhookEvent::query()
         ->where('gateway', 'fake')
         ->where('external_event_id', $extId)
         ->firstOrFail();
@@ -150,13 +153,13 @@ test('Webhook handler returns non-existent payment_order_id sets failed_at and i
     $caught = false;
     try {
         $this->webhookSvc->process('fake', $extId, 'payment.succeeded', $payload);
-    } catch (\InvalidArgumentException $e) {
+    } catch (InvalidArgumentException $e) {
         $caught = true;
     }
 
     $this->assertTrue($caught, 'Expected InvalidArgumentException to bubble up after marking failed');
 
-    $row = \Modules\Purchase\Models\WebhookEvent::query()
+    $row = WebhookEvent::query()
         ->where('gateway', 'fake')
         ->where('external_event_id', $extId)
         ->firstOrFail();
@@ -167,14 +170,14 @@ test('Webhook handler returns non-existent payment_order_id sets failed_at and i
 });
 
 test('FakeWebhookEventHandler correctly maps payload fields (TR-13 support)', function (): void {
-    $ev = \Modules\Purchase\Models\WebhookEvent::make([
+    $ev = WebhookEvent::make([
         'payload' => [
             'payment_order_id' => 'ORD-HANDLER-1',
             'status' => PaymentStatus::Failed->value,
         ],
     ]);
 
-    $handler = new FakeWebhookEventHandler();
+    $handler = new FakeWebhookEventHandler;
     $res = $handler->handle($ev);
 
     expect($res)->toBeArray();

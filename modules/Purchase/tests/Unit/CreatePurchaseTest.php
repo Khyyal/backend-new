@@ -1,30 +1,34 @@
 <?php
 
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Schema;
+use Modules\Centers\Database\Factories\CenterFactory;
 use Modules\Clients\Database\Factories\ClientFactory;
 use Modules\Purchase\Actions\CreatePurchase;
 use Modules\Purchase\Enums\PurchaseSource;
 use Modules\Purchase\Events\PurchaseCreated;
 use Modules\Purchase\Models\Merchant\Platform;
+use Modules\Purchase\Models\Purchase;
 use Modules\Purchase\Tests\Support\TestPurchasable;
+use Modules\Support\Database\Factories\CityFactory;
 use Tests\TestCase;
 
 uses(TestCase::class, RefreshDatabase::class);
 
 beforeEach(function (): void {
-    Schema::create('test_services', function (\Illuminate\Database\Schema\Blueprint $t) {
+    Schema::create('test_services', function (Blueprint $t) {
         $t->id();
         $t->string('name');
         $t->decimal('price', 14, 2);
     });
 
-    $this->city = \Modules\Support\Database\Factories\CityFactory::new()->create([
+    $this->city = CityFactory::new()->create([
         'name' => ['en' => 'Test City', 'ar' => 'المدينة'],
     ]);
 
-    $this->action = new CreatePurchase();
+    $this->action = new CreatePurchase;
 });
 
 afterEach(function (): void {
@@ -32,12 +36,12 @@ afterEach(function (): void {
 });
 
 $makeCenterMerchant = function ($test) {
-    return \Modules\Centers\Database\Factories\CenterFactory::new()->create([
+    return CenterFactory::new()->create([
         'city_id' => $test->city->id,
     ]);
 };
 
-$makePurchasable = static function (string $name = 'Facial', $price = 100.0): TestPurchasable {
+$makePurchasable = static function (string $name = 'Facial', $price = 100): TestPurchasable {
     return TestPurchasable::create([
         'name' => $name,
         'price' => $price,
@@ -50,7 +54,7 @@ test('CreatePurchase with Client buyer + Center merchant + 2 items persists corr
     $client = ClientFactory::new()->create();
     $center = $makeCenterMerchant($this);
     $svc1 = $makePurchasable('Swedish Massage', 250.00);
-    $svc2 = $makePurchasable('Facial', 180.5);
+    $svc2 = $makePurchasable('Facial', 18050);
 
     $purchase = $this->action->execute(
         buyer: $client,
@@ -60,12 +64,12 @@ test('CreatePurchase with Client buyer + Center merchant + 2 items persists corr
             [
                 'purchasable' => $svc1,
                 'quantity' => 1,
-                'unit_price' => 250.00,
+                'unit_price' => 250,
             ],
             [
                 'purchasable' => $svc2,
                 'quantity' => 2,
-                'unit_price' => 180.5,
+                'unit_price' => 18050,
             ],
         ]
     );
@@ -90,7 +94,7 @@ test('CreatePurchase with Center buyer + Platform merchant (center membership pu
     Event::fake();
 
     $center = $makeCenterMerchant($this);
-    $platform = new Platform();
+    $platform = new Platform;
     $plan = $makePurchasable('Premium Membership', 1200.0);
 
     $purchase = $this->action->execute(
@@ -102,8 +106,8 @@ test('CreatePurchase with Center buyer + Platform merchant (center membership pu
                 'purchasable' => $plan,
                 'name' => 'Annual Premium Plan',
                 'quantity' => 1,
-                'unit_price' => 1200.0,
-                'tax_amount' => 180.0,
+                'unit_price' => 1200,
+                'tax_amount' => 180,
             ],
         ],
         metadata: ['plan_code' => 'premium_annual_v1']
@@ -128,35 +132,35 @@ test('Purchase totals equal sum of item totals (subtotal/discount/tax/total)', f
         [
             'purchasable' => $svc1,
             'quantity' => 2,
-            'unit_price' => 100.00,
-            'discount_amount' => 20.00,
-            'tax_amount' => 9.0,
+            'unit_price' => 100,
+            'discount_amount' => 20,
+            'tax_amount' => 9,
         ],
         [
             'purchasable' => $svc2,
             'quantity' => 1,
-            'unit_price' => 200.00,
+            'unit_price' => 200,
             'discount_amount' => 0,
-            'tax_amount' => 30.0,
+            'tax_amount' => 30,
         ],
     ]);
 
     [$i1, $i2] = [$purchase->items[0], $purchase->items[1]];
 
-    $this->assertEqualsWithDelta(200.0, $i1->subtotal, 0.001, 'item1 subtotal');
-    $this->assertEqualsWithDelta(20.0, $i1->discount_amount, 0.001, 'item1 discount');
-    $this->assertEqualsWithDelta(9.0, $i1->tax_amount, 0.001, 'item1 tax');
-    $this->assertEqualsWithDelta(189.0, $i1->total_amount, 0.001, 'item1 total');
+    $this->assertEqualsWithDelta(200, $i1->subtotal, 0.001, 'item1 subtotal');
+    $this->assertEqualsWithDelta(20, $i1->discount_amount, 0.001, 'item1 discount');
+    $this->assertEqualsWithDelta(9, $i1->tax_amount, 0.001, 'item1 tax');
+    $this->assertEqualsWithDelta(189, $i1->total_amount, 0.001, 'item1 total');
 
-    $this->assertEqualsWithDelta(200.0, $i2->subtotal, 0.001, 'item2 subtotal');
-    $this->assertEqualsWithDelta(0.0, $i2->discount_amount, 0.001, 'item2 discount');
-    $this->assertEqualsWithDelta(30.0, $i2->tax_amount, 0.001, 'item2 tax');
-    $this->assertEqualsWithDelta(230.0, $i2->total_amount, 0.001, 'item2 total');
+    $this->assertEqualsWithDelta(200, $i2->subtotal, 0.001, 'item2 subtotal');
+    $this->assertEqualsWithDelta(0, $i2->discount_amount, 0.001, 'item2 discount');
+    $this->assertEqualsWithDelta(30, $i2->tax_amount, 0.001, 'item2 tax');
+    $this->assertEqualsWithDelta(230, $i2->total_amount, 0.001, 'item2 total');
 
-    $this->assertEqualsWithDelta(400.0, $purchase->subtotal, 0.001, 'purchase subtotal');
-    $this->assertEqualsWithDelta(20.0, $purchase->discount_amount, 0.001, 'purchase discount');
-    $this->assertEqualsWithDelta(39.0, $purchase->tax_amount, 0.001, 'purchase tax');
-    $this->assertEqualsWithDelta(419.0, $purchase->total_amount, 0.001, 'purchase total');
+    $this->assertEqualsWithDelta(400, $purchase->subtotal, 0.001, 'purchase subtotal');
+    $this->assertEqualsWithDelta(20, $purchase->discount_amount, 0.001, 'purchase discount');
+    $this->assertEqualsWithDelta(39, $purchase->tax_amount, 0.001, 'purchase tax');
+    $this->assertEqualsWithDelta(419, $purchase->total_amount, 0.001, 'purchase total');
 });
 
 test('PurchaseItem total_amount invariant = (unit_price*qty) - discount + tax', function () use ($makeCenterMerchant, $makePurchasable): void {
@@ -168,14 +172,14 @@ test('PurchaseItem total_amount invariant = (unit_price*qty) - discount + tax', 
         [
             'purchasable' => $svc,
             'quantity' => 3,
-            'unit_price' => 79.99,
-            'discount_amount' => 20.00,
-            'tax_amount' => 12.50,
+            'unit_price' => 7999,
+            'discount_amount' => 20,
+            'tax_amount' => 1250,
         ],
     ]);
 
     $item = $purchase->items[0];
-    $expected = (79.99 * 3) - 20.00 + 12.50;
+    $expected = (7999 * 3) - 20 + 1250;
     $this->assertEqualsWithDelta($expected, $item->total_amount, 0.001);
     expect($item->quantity)->toBe(3);
 });
@@ -190,7 +194,7 @@ test('CreatePurchase with 3 items creates exactly 3 purchase_items rows', functi
         $items[] = [
             'purchasable' => $svc,
             'quantity' => 1,
-            'unit_price' => 50.0 * $i,
+            'unit_price' => 50 * $i,
         ];
     }
 
@@ -212,10 +216,10 @@ test('Purchase metadata round-trips as array when stored via CreatePurchase', fu
     $meta = ['promo' => 'NY2026', 'ref' => 999, 'tags' => ['a', 'b']];
 
     $purchase = $this->action->execute($client, $center, PurchaseSource::System, [
-        ['purchasable' => $svc, 'quantity' => 1, 'unit_price' => 10.0],
+        ['purchasable' => $svc, 'quantity' => 1, 'unit_price' => 10],
     ], $meta);
 
-    $reloaded = \Modules\Purchase\Models\Purchase::findOrFail($purchase->id);
+    $reloaded = Purchase::findOrFail($purchase->id);
 
     expect($reloaded->metadata)->toBe($meta);
     expect($reloaded->metadata['tags'][0])->toBe('a');
@@ -234,13 +238,13 @@ test('PurchaseCreated event fires only after DB commit (state is queryable insid
         &$rowVisibleInEvent,
     ): void {
         $purchaseIdFromEvent = $e->purchase->id;
-        $rowVisibleInEvent = \Modules\Purchase\Models\Purchase::query()
+        $rowVisibleInEvent = Purchase::query()
             ->whereKey($e->purchase->id)
             ->exists();
     });
 
     $purchase = $this->action->execute($client, $center, PurchaseSource::Client, [
-        ['purchasable' => $svc, 'quantity' => 1, 'unit_price' => 55.0],
+        ['purchasable' => $svc, 'quantity' => 1, 'unit_price' => 55],
     ]);
 
     expect($purchaseIdFromEvent)->toBe($purchase->id);
@@ -251,7 +255,7 @@ test('CreatePurchase rejects empty items list', function () use ($makeCenterMerc
     $client = ClientFactory::new()->create();
     $center = $makeCenterMerchant($this);
 
-    $this->expectException(\InvalidArgumentException::class);
+    $this->expectException(InvalidArgumentException::class);
     $this->action->execute($client, $center, PurchaseSource::Client, items: []);
 });
 
@@ -259,7 +263,7 @@ test('CreatePurchase rejects items without purchasable', function () use ($makeC
     $client = ClientFactory::new()->create();
     $center = $makeCenterMerchant($this);
 
-    $this->expectException(\InvalidArgumentException::class);
+    $this->expectException(InvalidArgumentException::class);
     $this->action->execute($client, $center, PurchaseSource::Client, [
         ['quantity' => 1, 'unit_price' => 10],
     ]);
@@ -270,7 +274,7 @@ test('CreatePurchase rejects zero quantity', function () use ($makeCenterMerchan
     $center = $makeCenterMerchant($this);
     $svc = $makePurchasable('x', 10);
 
-    $this->expectException(\InvalidArgumentException::class);
+    $this->expectException(InvalidArgumentException::class);
     $this->action->execute($client, $center, PurchaseSource::Client, [
         ['purchasable' => $svc, 'quantity' => 0, 'unit_price' => 10],
     ]);
@@ -281,8 +285,8 @@ test('CreatePurchase rejects negative unit_price', function () use ($makeCenterM
     $center = $makeCenterMerchant($this);
     $svc = $makePurchasable('x', 10);
 
-    $this->expectException(\InvalidArgumentException::class);
+    $this->expectException(InvalidArgumentException::class);
     $this->action->execute($client, $center, PurchaseSource::Client, [
-        ['purchasable' => $svc, 'unit_price' => -1.0],
+        ['purchasable' => $svc, 'unit_price' => -1],
     ]);
 });

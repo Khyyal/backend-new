@@ -191,10 +191,10 @@ describe('refunds', function (): void {
         $payment = $this->svc->recordRefund($this->payment, 100);
 
         expect($payment->status)->toBe(PaymentStatus::Succeeded)
-            ->and((float) $payment->refunded_amount)->toBe(100.0)
-            ->and($payment->refundableAmount())->toBe(200.0)
+            ->and((int) $payment->refunded_amount)->toBe(100)
+            ->and($payment->refundableAmount())->toBe(200)
             ->and($payment->refunded_at)->not->toBeNull();
-        Event::assertDispatched(PaymentRefunded::class, fn (PaymentRefunded $event) => $event->amount === 100.0);
+        Event::assertDispatched(PaymentRefunded::class, fn (PaymentRefunded $event) => $event->amount === 100);
     });
 
     test('refunds add up until the payment is refunded', function (): void {
@@ -202,14 +202,14 @@ describe('refunds', function (): void {
         $payment = $this->svc->recordRefund($this->payment, 200);
 
         expect($payment->status)->toBe(PaymentStatus::Refunded)
-            ->and($payment->refundableAmount())->toBe(0.0);
+            ->and($payment->refundableAmount())->toBe(0);
     });
 
     test('cannot refund more than what is left', function (): void {
         $this->svc->recordRefund($this->payment, 250);
 
         $this->svc->recordRefund($this->payment, 100);
-    })->throws(InvalidArgumentException::class, 'Cannot refund 100.00; only 50.00 is left to refund.');
+    })->throws(InvalidArgumentException::class, 'Cannot refund 100; only 50 is left to refund.');
 
     test('only succeeded payments can be refunded', function (PaymentStatus $status): void {
         $this->payment->update(['status' => $status]);

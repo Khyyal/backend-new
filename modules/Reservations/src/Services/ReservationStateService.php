@@ -160,7 +160,7 @@ class ReservationStateService
                 ignoreReservationId: $locked->getKey(),
             ));
 
-            if (round($quote->subtotal, 2) !== round((float) $locked->subtotal, 2)) {
+            if ($quote->subtotal !== $locked->subtotal) {
                 throw ReservationNotAllowedException::because('reschedule_price_changed');
             }
 
@@ -308,7 +308,7 @@ class ReservationStateService
      * the center to settle by hand. Nothing was taken yet for pending or cash
      * payments.
      *
-     * @return array{amount: float, payment_id: int, method: string, status: string}|null
+     * @return array{amount: int, payment_id: int, method: string, status: string}|null
      *
      * @throws ReservationNotAllowedException
      */
@@ -329,7 +329,7 @@ class ReservationStateService
             return null;
         }
 
-        $amount = min((float) $item->total_amount, $payment->refundableAmount());
+        $amount = min($item->total_amount, $payment->refundableAmount());
 
         if ($amount <= 0) {
             return null;

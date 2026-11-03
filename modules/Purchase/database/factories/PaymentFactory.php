@@ -18,7 +18,7 @@ class PaymentFactory extends Factory
 
         return [
             'purchase_id' => Purchase::factory(),
-            'amount' => fake()->randomFloat(2, 50, 5000),
+            'amount' => fake()->numberBetween(5000, 500000),
             'method' => $method,
             'status' => PaymentStatus::Pending,
             'payment_company' => $method === PaymentMethod::Online ? fake()->randomElement(['moyasar', 'stripe', 'paypal']) : null,

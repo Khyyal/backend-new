@@ -125,11 +125,11 @@ test('create: addon PriceOptions have name + null quantity', function () use ($v
     $options = $resort->service->priceOptions()->whereNull('quantity')->orderBy('price')->get();
     expect($options)->toHaveCount(2);
     expect($options[0]->name)->toBe('Child');
-    expect($options[0]->price)->toBe(25.0);
+    expect($options[0]->price)->toBe(25);
     expect($options[0]->quantity)->toBeNull();
     expect($options[0]->unit)->toBe(PriceOptionUnit::OPTION);
     expect($options[1]->name)->toBe('Adult');
-    expect($options[1]->price)->toBe(50.0);
+    expect($options[1]->price)->toBe(50);
 });
 
 test('create: day-price PriceOptions carry the weekday in quantity, no name', function () use ($validData) {
@@ -140,11 +140,11 @@ test('create: day-price PriceOptions carry the weekday in quantity, no name', fu
     $dayPrices = $resort->service->priceOptions()->whereNotNull('quantity')->orderBy('quantity')->get();
     expect($dayPrices)->toHaveCount(2);
     expect($dayPrices[0]->quantity)->toBe(0);
-    expect($dayPrices[0]->price)->toBe(150.0);
+    expect($dayPrices[0]->price)->toBe(150);
     expect($dayPrices[0]->name)->toBeNull();
     expect($dayPrices[0]->unit)->toBe(PriceOptionUnit::OPTION);
     expect($dayPrices[1]->quantity)->toBe(5);
-    expect($dayPrices[1]->price)->toBe(220.0);
+    expect($dayPrices[1]->price)->toBe(220);
 });
 
 test('create: partial weekday coverage is allowed', function () use ($validData) {
@@ -224,7 +224,7 @@ test('update: PriceOptions full sync delete-then-recreate no stale IDs (both kin
     $days = $updated->service->priceOptions()->whereNotNull('quantity')->get();
     expect($days)->toHaveCount(1);
     expect($days->first()->quantity)->toBe(3);
-    expect($days->first()->price)->toBe(300.0);
+    expect($days->first()->price)->toBe(300);
 });
 
 test('update: returned model is fresh with relations preloaded', function () use ($validData) {

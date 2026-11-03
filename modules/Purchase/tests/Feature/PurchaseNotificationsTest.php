@@ -44,10 +44,10 @@ test('purchase status changes notify the client buyer', function (string $eventC
 ]);
 
 test('payment failures and refunds notify the buyer with the amount', function (): void {
-    $payment = PaymentFactory::new()->create(['purchase_id' => $this->purchase->id, 'amount' => 150]);
+    $payment = PaymentFactory::new()->create(['purchase_id' => $this->purchase->id, 'amount' => 15000]);
 
     event(new PaymentFailed($payment));
-    event(new PaymentRefunded($payment, 40));
+    event(new PaymentRefunded($payment, 4000));
 
     ($this->assertSent)($this->client, 'purchase_payment_failed');
     Notification::assertSentTo(

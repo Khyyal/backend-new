@@ -66,9 +66,9 @@ class Reservation extends Model implements Purchasable
             'date' => 'date:Y-m-d',
             'end_date' => 'date:Y-m-d',
             'quantity' => 'integer',
-            'unit_price' => 'decimal:2',
-            'subtotal' => 'decimal:2',
-            'total_amount' => 'decimal:2',
+            'unit_price' => 'integer',
+            'subtotal' => 'integer',
+            'total_amount' => 'integer',
             'cancelled_at' => 'datetime',
             'metadata' => 'array',
         ];

@@ -63,8 +63,8 @@ class EventRules implements ReservationRules
         $reserved = $this->guard->reservedQuantity($request->service, $request->date, ignoreReservationId: $request->ignoreReservationId);
         $this->guard->ensureCapacity($event->max_tickets_per_day, $reserved, $quantity);
 
-        $unitPrice = (float) $option->price;
-        $subtotal = round($unitPrice * $quantity, 2);
+        $unitPrice = (int) $option->price;
+        $subtotal = $unitPrice * $quantity;
 
         return new BookingQuote(
             date: $request->date,

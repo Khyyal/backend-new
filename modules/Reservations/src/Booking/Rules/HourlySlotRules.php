@@ -84,13 +84,13 @@ abstract class HourlySlotRules implements ReservationRules
 
         $this->guard->ensureCapacity($this->hourlyCapacity($owner, $request->date), $reserved, $request->quantity);
 
-        $unitPrice = $request->usesPackage() ? 0.0 : (float) $option->price;
+        $unitPrice = $request->usesPackage() ? 0 : (int) $option->price;
 
         return new BookingQuote(
             date: $request->date,
             quantity: $request->quantity,
             unitPrice: $unitPrice,
-            subtotal: round($unitPrice * $request->quantity, 2),
+            subtotal: $unitPrice * $request->quantity,
             startTime: $startTime,
             endTime: $endTime,
             priceOptionId: $option->getKey(),

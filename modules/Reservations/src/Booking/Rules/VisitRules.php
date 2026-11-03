@@ -46,13 +46,13 @@ class VisitRules implements ReservationRules
         $this->guard->ensureCapacity($visit->max_tickets_per_day, $reserved, $request->quantity);
 
         $option = $request->service->priceOptions()->first();
-        $unitPrice = (float) ($option?->price ?? 0);
+        $unitPrice = $option?->price ?? 0;
 
         return new BookingQuote(
             date: $request->date,
             quantity: $request->quantity,
             unitPrice: $unitPrice,
-            subtotal: round($unitPrice * $request->quantity, 2),
+            subtotal: $unitPrice * $request->quantity,
             startTime: $startTime,
             endTime: $endTime,
             priceOptionId: $option?->getKey(),

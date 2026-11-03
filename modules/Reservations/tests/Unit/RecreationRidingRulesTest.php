@@ -42,8 +42,8 @@ test('prices a slot by its duration option and quantity', function (): void {
 
     expect($quote->startTime)->toBe('10:00:00')
         ->and($quote->endTime)->toBe('11:00:00')
-        ->and($quote->unitPrice)->toBe(150.0)
-        ->and($quote->subtotal)->toBe(450.0)
+        ->and($quote->unitPrice)->toBe(150)
+        ->and($quote->subtotal)->toBe(450)
         ->and($quote->priceOptionId)->toBe($this->hour->id)
         ->and($quote->trainerId)->toBeNull();
 });
@@ -112,7 +112,7 @@ describe('package credits', function (): void {
 
         expect($quote->priceOptionId)->toBe($this->halfHour->id)
             ->and($quote->endTime)->toBe('10:30:00')
-            ->and($quote->subtotal)->toBe(0.0)
+            ->and($quote->subtotal)->toBe(0)
             ->and($quote->clientPackageId)->toBe($this->package->id);
     });
 

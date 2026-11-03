@@ -1,18 +1,23 @@
 <?php
 
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Validator;
+use Modules\Billing\Database\Factories\LimitFactory;
+use Modules\Billing\Database\Factories\PlanFactory;
 use Modules\Billing\Http\Requests\AttachLimitsRequest;
-use Modules\Billing\Http\Requests\StorePlanRequest;
 use Modules\Billing\Http\Requests\CreateSubscriptionRequest;
+use Modules\Billing\Http\Requests\StorePlanRequest;
+use Modules\Support\Database\Factories\CityFactory;
+use Tests\TestCase;
 
-uses(\Tests\TestCase::class, \Illuminate\Foundation\Testing\RefreshDatabase::class);
+uses(TestCase::class, RefreshDatabase::class);
 
 beforeEach(function (): void {
-    \Modules\Support\Database\Factories\CityFactory::new()->create();
+    CityFactory::new()->create();
 });
 
 test('StorePlanRequest validates billing_interval enum price numeric name required array and trial_days max 365', function (): void {
-    $rules = (new StorePlanRequest())->rules();
+    $rules = (new StorePlanRequest)->rules();
 
     $failsInvalid = Validator::make([
         'name' => 'plain-string',
@@ -29,7 +34,7 @@ test('StorePlanRequest validates billing_interval enum price numeric name requir
     $passes = Validator::make([
         'name' => ['en' => 'Pro', 'ar' => 'برو'],
         'slug' => 'pro',
-        'price' => 29.99,
+        'price' => 2999,
         'billing_interval' => 'monthly',
         'trial_days' => 14,
         'status' => 'active',
@@ -38,7 +43,7 @@ test('StorePlanRequest validates billing_interval enum price numeric name requir
 });
 
 test('AttachLimitsRequest enforces items array with required limit_id and integer value >=0', function (): void {
-    $rules = (new AttachLimitsRequest())->rules();
+    $rules = (new AttachLimitsRequest)->rules();
 
     $fails = Validator::make([
         'items' => [
@@ -48,7 +53,7 @@ test('AttachLimitsRequest enforces items array with required limit_id and intege
     ], $rules);
     expect($fails->fails())->toBeTrue();
 
-    $existingLimit = \Modules\Billing\Database\Factories\LimitFactory::new()->create();
+    $existingLimit = LimitFactory::new()->create();
     $passes = Validator::make([
         'items' => [
             ['limit_id' => $existingLimit->id, 'value' => 50],
@@ -59,7 +64,7 @@ test('AttachLimitsRequest enforces items array with required limit_id and intege
 });
 
 test('CreateSubscriptionRequest requires plan_id integer that exists in plans', function (): void {
-    $rules = (new CreateSubscriptionRequest())->rules();
+    $rules = (new CreateSubscriptionRequest)->rules();
 
     $fails = Validator::make([], $rules);
     expect($fails->fails())->toBeTrue();
@@ -68,13 +73,13 @@ test('CreateSubscriptionRequest requires plan_id integer that exists in plans', 
     $failsNotExist = Validator::make(['plan_id' => 999999], $rules);
     expect($failsNotExist->fails())->toBeTrue();
 
-    $plan = \Modules\Billing\Database\Factories\PlanFactory::new()->create();
+    $plan = PlanFactory::new()->create();
     $passes = Validator::make(['plan_id' => $plan->id], $rules);
     expect($passes->passes())->toBeTrue($passes->errors()->toJson());
 });
 
 test('StorePlanRequest requires name.en', function (): void {
-    $rules = (new StorePlanRequest())->rules();
+    $rules = (new StorePlanRequest)->rules();
     $v = Validator::make([
         'name' => ['ar' => 'عربي'],
         'price' => 0,

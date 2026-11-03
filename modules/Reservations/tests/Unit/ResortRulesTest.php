@@ -42,18 +42,18 @@ beforeEach(function (): void {
 test('prices each day by its weekday price and adds addons once', function (): void {
     $quote = ($this->book)(['lines' => [['price_option_id' => $this->breakfast->id, 'quantity' => 3]]]);
 
-    expect($quote->unitPrice)->toBe(2100.0)
-        ->and($quote->subtotal)->toBe(2220.0)
+    expect($quote->unitPrice)->toBe(2100)
+        ->and($quote->subtotal)->toBe(2220)
         ->and($quote->endDate->toDateString())->toBe('2026-10-31')
         ->and($quote->lines)->toHaveCount(1)
         ->and($quote->lines[0]['kind'])->toBe(ReservationLineKind::Addon)
-        ->and($quote->lines[0]['subtotal'])->toBe(120.0);
+        ->and($quote->lines[0]['subtotal'])->toBe(120);
 });
 
 test('a single day defaults the end date to the start date', function (): void {
     $quote = ($this->book)(['endDate' => null]);
 
-    expect($quote->subtotal)->toBe(500.0)->and($quote->endDate->toDateString())->toBe('2026-10-29');
+    expect($quote->subtotal)->toBe(500)->and($quote->endDate->toDateString())->toBe('2026-10-29');
 });
 
 test('every day of the range must be priced', function (): void {
@@ -85,7 +85,7 @@ test('cancelled and adjacent stays do not block the range', function (): void {
         ->status(ReservationStatus::Cancelled)->create();
     ReservationFactory::new()->forService($this->service)->state(['date' => '2026-10-22', 'end_date' => '2026-10-24'])->create();
 
-    expect(($this->book)()->subtotal)->toBe(2100.0);
+    expect(($this->book)()->subtotal)->toBe(2100);
 });
 
 test('a blocked day inside the range prevents booking', function (): void {

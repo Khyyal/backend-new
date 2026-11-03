@@ -4,7 +4,8 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     public function up(): void
     {
         Schema::create('purchase_items', function (Blueprint $table) {
@@ -21,11 +22,11 @@ return new class extends Migration {
 
             $table->unsignedInteger('quantity')->default(1);
 
-            $table->decimal('unit_price', 14, 2);
-            $table->decimal('subtotal', 14, 2);
-            $table->decimal('discount_amount', 14, 2)->default(0);
-            $table->decimal('tax_amount', 14, 2)->default(0);
-            $table->decimal('total_amount', 14, 2);
+            $table->unsignedBigInteger('unit_price');
+            $table->unsignedBigInteger('subtotal');
+            $table->unsignedBigInteger('discount_amount')->default(0);
+            $table->unsignedBigInteger('tax_amount')->default(0);
+            $table->unsignedBigInteger('total_amount');
 
             $table->json('metadata')->nullable();
 

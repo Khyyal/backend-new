@@ -57,7 +57,7 @@ class StartCheckout
             $payment = $this->createPayment->execute(
                 $purchase,
                 $method,
-                (float) $purchase->total_amount,
+                $purchase->total_amount,
                 $isOnline ? ($paymentCompany ?? $this->gateways->getDefaultDriver()) : null,
             );
 

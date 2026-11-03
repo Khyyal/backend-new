@@ -104,6 +104,6 @@ test('prices are hidden without the view prices permission', function (): void {
     $this->actingAs($this->user, 'center_user')
         ->getJson("{$this->url}/{$purchase->id}")
         ->assertOk()
-        ->assertJsonPath('data.total_amount', (float) $purchase->total_amount)
-        ->assertJsonPath('data.items.0.unit_price', (float) $purchase->items()->first()->unit_price);
+        ->assertJsonPath('data.total_amount', (int) $purchase->total_amount)
+        ->assertJsonPath('data.items.0.unit_price', (int) $purchase->items()->first()->unit_price);
 });

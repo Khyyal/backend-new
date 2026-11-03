@@ -2,7 +2,6 @@
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
-use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
 use Modules\Purchase\Contracts\PaymentGateway;
 use Modules\Purchase\Database\Factories\PaymentFactory;
@@ -62,22 +61,11 @@ test('T10: MoyasarGateway implements PaymentGateway with all 7 methods', functio
     expect(true)->toBeTrue();
 });
 
-// ---- Amount conversion (Moyasar halalas) ------------------------------------
-
-test('T10: MoyasarClient::toHalalas multiplies by 100 and rounds', function (): void {
-    $client = new MoyasarClient();
-    expect($client->toHalalas(100.00))->toBe(10000);
-    expect($client->toHalalas(99.99))->toBe(9999);
-    expect($client->toHalalas(50.5))->toBe(5050);
-    expect($client->toHalalas(49.995))->toBe(5000); // banker's round: 49.995 → 5000
-    expect($client->toHalalas('12.34'))->toBe(1234);
-    expect($client->toHalalas(0))->toBe(0);
-});
-
 // ---- Log redaction helper trait ---------------------------------------------
 
 test('T10: PaymentGatewayClientHelpers::redact masks sensitive keys', function (): void {
-    $subject = new class {
+    $subject = new class
+    {
         use PaymentGatewayClientHelpers;
 
         public function doRedact(array $data): array
@@ -114,7 +102,7 @@ test('T10: convertRequestException maps 422 → PaymentProviderValidationExcepti
     try {
         $client->getOrder('ord-123');
         throw new ExpectationFailedException('Should have thrown');
-    } catch (\Modules\Purchase\Exceptions\PaymentProviderValidationException $e) {
+    } catch (PaymentProviderValidationException $e) {
         expect($e)->toBeInstanceOf(PaymentGatewayException::class);
     }
 
@@ -131,7 +119,7 @@ test('T10: convertRequestException maps 5xx → PaymentProviderUnavailableExcept
     try {
         $client->getOrder('ord-456');
         throw new ExpectationFailedException('Should have thrown');
-    } catch (\Modules\Purchase\Exceptions\PaymentProviderUnavailableException $e) {
+    } catch (PaymentProviderUnavailableException $e) {
         expect($e)->toBeInstanceOf(PaymentGatewayException::class);
     }
 
@@ -143,7 +131,7 @@ test('T10: convertRequestException maps 5xx → PaymentProviderUnavailableExcept
 test('T10: Tamara initialize uses order_reference_id = Payment.id (stable across retries)', function (): void {
     $purchase = PurchaseFactory::new()->create();
     $payment = PaymentFactory::new()->for($purchase, 'purchase')->online()->create([
-        'amount' => 200.00,
+        'amount' => 200,
     ]);
     $pid = (string) $payment->getKey();
 
@@ -181,7 +169,7 @@ test('T10: Tamara initialize uses order_reference_id = Payment.id (stable across
 test('T10: Moyasar initialize returns given_id = Payment.id (stable across retries)', function (): void {
     $purchase = PurchaseFactory::new()->create();
     $payment = PaymentFactory::new()->for($purchase, 'purchase')->online()->create([
-        'amount' => 150.25,
+        'amount' => 15025,
     ]);
     $pid = (string) $payment->getKey();
 
@@ -202,7 +190,7 @@ test('T10: Moyasar initialize returns given_id = Payment.id (stable across retri
 // ---- Status mappers ---------------------------------------------------------
 
 test('T10: TamaraStatusMapper maps all 9 rule cases correctly', function (): void {
-    $mapper = new TamaraStatusMapper();
+    $mapper = new TamaraStatusMapper;
 
     $expectations = [
         'new' => PaymentStatus::Processing,
@@ -233,7 +221,7 @@ test('T10: TamaraStatusMapper maps all 9 rule cases correctly', function (): voi
 });
 
 test('T10: MoyasarStatusMapper maps 8 states correctly; refunded/verified null', function (): void {
-    $mapper = new MoyasarStatusMapper();
+    $mapper = new MoyasarStatusMapper;
     $expectations = [
         'initiated' => PaymentStatus::Processing,
         'paid' => PaymentStatus::Succeeded,
@@ -263,7 +251,7 @@ test('T10: MoyasarStatusMapper maps 8 states correctly; refunded/verified null',
 });
 
 test('T10: MoyasarSourceNormalizer maps 4 source types correctly; preserves raw', function (): void {
-    $norm = new MoyasarSourceNormalizer();
+    $norm = new MoyasarSourceNormalizer;
 
     $cases = [
         ['creditcard', 'card'],

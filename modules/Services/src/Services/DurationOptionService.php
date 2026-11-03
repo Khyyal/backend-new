@@ -21,9 +21,9 @@ use Modules\Services\Models\ServicePackage;
 class DurationOptionService
 {
     /**
-     * @param  array<int, array{id?: int, duration: int, price: float|int|string}>  $options
-     * @param  array<int, array{price_option: int, count: int, price: float|int|string, duration: int}>|null  $packages
-     *                                                                                                                   `null` leaves the existing packages untouched; an array replaces them.
+     * @param  array<int, array{id?: int, duration: int, price: int}>  $options
+     * @param  array<int, array{price_option: int, count: int, price: int, duration: int}>|null  $packages
+     *                                                                                                      `null` leaves the existing packages untouched; an array replaces them.
      *
      * @throws ValidationException
      */

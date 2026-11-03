@@ -1,8 +1,10 @@
 <?php
 
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Schema;
+use Modules\Centers\Database\Factories\CenterFactory;
 use Modules\Clients\Database\Factories\ClientFactory;
 use Modules\Purchase\Actions\CreatePayment;
 use Modules\Purchase\Actions\CreatePurchase;
@@ -10,39 +12,42 @@ use Modules\Purchase\Enums\PaymentMethod;
 use Modules\Purchase\Enums\PaymentStatus;
 use Modules\Purchase\Enums\PurchaseSource;
 use Modules\Purchase\Events\PaymentCreated;
+use Modules\Purchase\Models\Payment;
+use Modules\Purchase\Models\Purchase;
 use Modules\Purchase\Tests\Support\TestPurchasable;
+use Modules\Support\Database\Factories\CityFactory;
 use Tests\TestCase;
 
 uses(TestCase::class, RefreshDatabase::class);
 
 beforeEach(function (): void {
-    Schema::create('test_services', function (\Illuminate\Database\Schema\Blueprint $t) {
+    Schema::create('test_services', function (Blueprint $t) {
         $t->id();
         $t->string('name');
         $t->decimal('price', 14, 2);
     });
 
-    $this->city = \Modules\Support\Database\Factories\CityFactory::new()->create([
+    $this->city = CityFactory::new()->create([
         'name' => ['en' => 'Test City', 'ar' => 'المدينة'],
     ]);
 
-    $center = \Modules\Centers\Database\Factories\CenterFactory::new()->create([
+    $center = CenterFactory::new()->create([
         'city_id' => $this->city->id,
     ]);
     $client = ClientFactory::new()->create();
 
     $svc = TestPurchasable::create(['name' => 'Basic', 'price' => 100]);
 
-    $this->purchase = (new CreatePurchase())->execute(
+    $this->purchase = (new CreatePurchase)->execute(
         buyer: $client,
         merchant: $center,
         source: PurchaseSource::Client,
         items: [
-            ['purchasable' => $svc, 'quantity' => 1, 'unit_price' => 100.00],
+            ['purchasable' => $svc, 'quantity' => 1, 'unit_price' => 100],
         ],
     );
 
-    $this->createPayment = new CreatePayment();
+    $this->createPayment = new CreatePayment;
 });
 
 afterEach(function (): void {
@@ -55,7 +60,7 @@ test('CreatePayment creates new Pending Payment for the Purchase', function (): 
     $payment = $this->createPayment->execute(
         purchase: $this->purchase,
         method: PaymentMethod::Online,
-        amount: 100.0,
+        amount: 100,
         paymentCompany: 'moyasar',
         paymentType: 'card',
     );
@@ -98,7 +103,7 @@ test('PaymentCreated dispatched once per create, afterCommit with DB state visib
     $visible = false;
     Event::listen(PaymentCreated::class, function (PaymentCreated $e) use (&$sawId, &$visible): void {
         $sawId = $e->payment->id;
-        $visible = \Modules\Purchase\Models\Payment::query()
+        $visible = Payment::query()
             ->whereKey($e->payment->id)
             ->exists();
     });
@@ -124,14 +129,14 @@ test('CashOnArrival payment is Pending with null provider columns (AC-21)', func
 });
 
 test('CreatePayment rejects zero or negative amounts', function (): void {
-    $this->expectException(\InvalidArgumentException::class);
+    $this->expectException(InvalidArgumentException::class);
     $this->createPayment->execute($this->purchase, PaymentMethod::Online, amount: 0);
 });
 
 test('CreatePayment rejects non-existent purchase', function (): void {
-    $ghost = new \Modules\Purchase\Models\Purchase();
+    $ghost = new Purchase;
     $ghost->id = 9999999;
 
-    $this->expectException(\InvalidArgumentException::class);
+    $this->expectException(InvalidArgumentException::class);
     $this->createPayment->execute($ghost, PaymentMethod::Online, 50);
 });

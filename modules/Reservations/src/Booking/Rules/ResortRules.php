@@ -46,7 +46,7 @@ class ResortRules implements ReservationRules
         $resort = $request->service->serviceable;
         $dayPrices = $resort->dayPrices()->get()->keyBy(fn ($option): int => (int) $option->quantity);
 
-        $daysTotal = 0.0;
+        $daysTotal = 0;
 
         for ($day = $startDate; $day->lte($endDate); $day = $day->addDay()) {
             $price = $dayPrices->get($day->dayOfWeek)
@@ -54,7 +54,7 @@ class ResortRules implements ReservationRules
 
             $this->guard->ensureNotBlocked($request->service, $day);
 
-            $daysTotal += (float) $price->price;
+            $daysTotal += (int) $price->price;
         }
 
         $this->ensureFree($request, $startDate, $endDate);
@@ -65,8 +65,8 @@ class ResortRules implements ReservationRules
         return new BookingQuote(
             date: $startDate,
             quantity: 1,
-            unitPrice: round($daysTotal, 2),
-            subtotal: round($daysTotal + $addonsTotal, 2),
+            unitPrice: $daysTotal,
+            subtotal: $daysTotal + $addonsTotal,
             endDate: $endDate,
             lines: $lines,
         );
@@ -95,7 +95,7 @@ class ResortRules implements ReservationRules
     }
 
     /**
-     * @return array<int, array{price_option_id: int, kind: ReservationLineKind, quantity: int, unit_price: float, subtotal: float}>
+     * @return array<int, array{price_option_id: int, kind: ReservationLineKind, quantity: int, unit_price: int, subtotal: int}>
      *
      * @throws ReservationNotAllowedException
      */
@@ -116,14 +116,14 @@ class ResortRules implements ReservationRules
                 throw ReservationNotAllowedException::because('invalid_quantity');
             }
 
-            $unitPrice = (float) $addon->price;
+            $unitPrice = (int) $addon->price;
 
             return [
                 'price_option_id' => $addon->getKey(),
                 'kind' => ReservationLineKind::Addon,
                 'quantity' => $quantity,
                 'unit_price' => $unitPrice,
-                'subtotal' => round($unitPrice * $quantity, 2),
+                'subtotal' => $unitPrice * $quantity,
             ];
         }, $request->lines));
     }

@@ -40,7 +40,7 @@ $specificTimeData = function (int $centerId): array {
         'name' => ['ar' => 'زيارة', 'en' => 'Visit'],
         'description' => ['ar' => 'وصف الخدمة بالعربية', 'en' => 'English service description'],
         'enter_type' => VisitEnterType::SpecificTime->value,
-        'price' => 150.50,
+        'price' => 15050,
         'days' => [0, 2, 4],
         'hours' => ['09:00', '12:00', '14:00', '17:00'],
     ];
@@ -52,7 +52,7 @@ $allDayData = function (int $centerId): array {
         'name' => ['ar' => 'زيارة', 'en' => 'Visit'],
         'description' => ['ar' => 'وصف الخدمة بالعربية', 'en' => 'English service description'],
         'enter_type' => VisitEnterType::AllDay->value,
-        'price' => 150.50,
+        'price' => 15050,
         'days' => [0, 2, 4],
     ];
 };
@@ -139,7 +139,7 @@ test('create: single PriceOption has price only (no duration/name)', function ()
 
     $options = $visit->service->priceOptions()->get();
     expect($options)->toHaveCount(1);
-    expect($options[0]->price)->toBe(150.50);
+    expect($options[0]->price)->toBe(15050);
     expect($options[0]->quantity)->toBeNull();
     expect($options[0]->name)->toBeNull();
     expect($options[0]->unit)->toBe(PriceOptionUnit::OPTION);
@@ -238,7 +238,7 @@ test('update: PriceOption single-row replace, no stale IDs', function () use ($s
     expect(PriceOption::query()->whereIn('id', $oldIds)->count())->toBe(0);
     $opts = $updated->service->priceOptions()->get();
     expect($opts)->toHaveCount(1);
-    expect($opts[0]->price)->toBe(999.0);
+    expect($opts[0]->price)->toBe(999);
     expect($opts[0]->quantity)->toBeNull();
     expect($opts[0]->unit)->toBe(PriceOptionUnit::OPTION);
 });

@@ -39,7 +39,7 @@ final class SendPurchaseNotifications implements ShouldQueue
 
     public function handlePaymentFailed(PaymentFailed $event): void
     {
-        $this->notifyBuyer($event->payment->purchase, 'payment_failed', (float) $event->payment->amount);
+        $this->notifyBuyer($event->payment->purchase, 'payment_failed', $event->payment->amount);
     }
 
     public function handlePaymentRefunded(PaymentRefunded $event): void
@@ -60,7 +60,7 @@ final class SendPurchaseNotifications implements ShouldQueue
         ];
     }
 
-    private function notifyBuyer(?Purchase $purchase, string $event, ?float $amount = null): void
+    private function notifyBuyer(?Purchase $purchase, string $event, ?int $amount = null): void
     {
         $recipients = $this->recipients($purchase?->buyer);
 

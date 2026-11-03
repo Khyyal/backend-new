@@ -46,7 +46,7 @@ class ClientPackage extends Model implements Purchasable
             'status' => ClientPackageStatus::class,
             'total_sessions' => 'integer',
             'remaining_sessions' => 'integer',
-            'price' => 'decimal:2',
+            'price' => 'integer',
             'expires_at' => 'datetime',
         ];
     }

@@ -14,7 +14,7 @@ return new class extends Migration
                 ->default(PaymentStatus::Pending->value)
                 ->change();
 
-            $table->decimal('refunded_amount', 14, 2)->default(0)->after('amount');
+            $table->unsignedBigInteger('refunded_amount')->default(0)->after('amount');
             $table->timestamp('refunded_at')->nullable()->after('paid_at');
         });
     }

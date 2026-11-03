@@ -15,9 +15,9 @@ class PurchaseFactory extends Factory
 
     public function definition(): array
     {
-        $subtotal = fake()->randomFloat(2, 50, 5000);
-        $discount = fake()->randomFloat(2, 0, 500);
-        $tax = fake()->randomFloat(2, 0, 200);
+        $subtotal = fake()->numberBetween(5000, 500000);
+        $discount = fake()->numberBetween(0, 50000);
+        $tax = fake()->numberBetween(0, 20000);
         $total = $subtotal - $discount + $tax;
 
         $buyer = ClientFactory::new()->create();
@@ -25,7 +25,7 @@ class PurchaseFactory extends Factory
         return [
             'buyer_type' => $buyer->getMorphClass(),
             'buyer_id' => $buyer->getKey(),
-            'merchant_type' => (new Platform())->getMorphClass(),
+            'merchant_type' => (new Platform)->getMorphClass(),
             'merchant_id' => 1,
             'source' => fake()->randomElement(PurchaseSource::cases()),
             'status' => fake()->randomElement(PurchaseStatus::cases()),

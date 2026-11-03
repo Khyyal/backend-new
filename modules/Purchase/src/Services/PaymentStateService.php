@@ -77,10 +77,8 @@ class PaymentStateService
      * `refunded` once its whole amount has been returned. This is the only
      * way a succeeded payment changes.
      */
-    public function recordRefund(Payment $payment, float $amount): Payment
+    public function recordRefund(Payment $payment, int $amount): Payment
     {
-        $amount = round($amount, 2);
-
         if ($amount <= 0) {
             throw new InvalidArgumentException('Refund amount must be greater than 0.');
         }
@@ -100,13 +98,13 @@ class PaymentStateService
 
             if ($amount > $locked->refundableAmount()) {
                 throw new InvalidArgumentException(sprintf(
-                    'Cannot refund %.2f; only %.2f is left to refund.',
+                    'Cannot refund %d; only %d is left to refund.',
                     $amount,
                     $locked->refundableAmount()
                 ));
             }
 
-            $locked->refunded_amount = round((float) $locked->refunded_amount + $amount, 2);
+            $locked->refunded_amount += $amount;
             $locked->refunded_at = Carbon::now();
 
             if ($locked->refundableAmount() <= 0) {

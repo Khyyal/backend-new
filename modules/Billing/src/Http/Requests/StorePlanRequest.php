@@ -24,7 +24,7 @@ class StorePlanRequest extends FormRequest
             'description' => ['nullable', 'array'],
             'description.en' => ['nullable', 'string'],
             'description.ar' => ['nullable', 'string'],
-            'price' => ['required', 'numeric', 'gte:0'],
+            'price' => ['required', 'integer', 'gte:0'],
             'billing_interval' => ['required', Rule::enum(BillingInterval::class)],
             'display_features' => ['nullable', 'array'],
             'status' => ['nullable', Rule::enum(PlanStatus::class)],

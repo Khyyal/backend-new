@@ -45,10 +45,10 @@ test('T11: TamaraManager driver() resolves TamaraGateway', function (): void {
 });
 
 test('T11: Tamara initialize returns required fields and sets Payment provider metadata', function (): void {
-    $purchase = PurchaseFactory::new()->create(['total_amount' => 300.00]);
+    $purchase = PurchaseFactory::new()->create(['total_amount' => 30000]);
     $payment = PaymentFactory::new()->for($purchase, 'purchase')->create([
         'method' => PaymentMethod::Online,
-        'amount' => 300.00,
+        'amount' => 30000,
         'status' => PaymentStatus::Pending,
     ]);
 
@@ -61,7 +61,7 @@ test('T11: Tamara initialize returns required fields and sets Payment provider m
             expect($body['currency'])->toBe('SAR');
             expect($body['country'])->toBe('SA');
             expect($body['payment_type'])->toBe('PAY_BY_INSTALMENTS');
-            expect($body['total_amount']['amount'])->toBe(300.0);
+            expect($body['total_amount']['amount'])->toEqual(300); // halalas are sent as SAR
             expect($body['merchant_url']['success'])->toBe('https://example.com/ok');
 
             // Auth header check
@@ -198,7 +198,7 @@ test('T11: Tamara authorize endpoint (British spelling) maps to Succeeded', func
 
 test('T11: Tamara capture (fully_captured) → Succeeded; capture response saved', function (): void {
     $payment = PaymentFactory::new()->create([
-        'amount' => 500.00,
+        'amount' => 500,
         'payment_order_id' => 'tamara-ord-cap',
         'payment_company' => 'tamara',
     ]);
@@ -241,7 +241,7 @@ test('T11: Tamara cancel → Cancelled; provider_data updated', function (): voi
 
 test('T11: Tamara refund returns true; sets tamara_refunded=true in provider_data (no auto status change)', function (): void {
     $payment = PaymentFactory::new()->create([
-        'amount' => 250.00,
+        'amount' => 250,
         'status' => PaymentStatus::Succeeded,
         'payment_order_id' => 'tamara-ord-ref',
         'payment_company' => 'tamara',
@@ -255,21 +255,21 @@ test('T11: Tamara refund returns true; sets tamara_refunded=true in provider_dat
     ]);
 
     $gw = new TamaraGateway(new TamaraClient(tamaraConfig()));
-    $ret = $gw->refund($payment, 250.00);
+    $ret = $gw->refund($payment, 250);
     expect($ret)->toBeTrue();
 
     $payment->refresh();
     expect($payment->provider_data['tamara_refunded'])->toBeTrue();
-    expect((float) $payment->provider_data['tamara_refund_amount'])->toEqualWithDelta(250.0, 0.001);
+    expect((int) $payment->provider_data['tamara_refund_amount'])->toEqualWithDelta(250, 0.001);
     expect($payment->provider_data['tamara_status'])->toBe('refunded');
 });
 
 // ----- Webhook event handler matrix ------------------------------------------
 
 test('T11: TamaraWebhookEventHandler maps order_approved → Processing; order_declined → Failed', function (): void {
-    $handler = new TamaraWebhookEventHandler();
+    $handler = new TamaraWebhookEventHandler;
 
-    $evApproved = new WebhookEvent();
+    $evApproved = new WebhookEvent;
     $evApproved->event_type = 'order_approved';
     $evApproved->payload = ['order_id' => 'ord-w-1'];
     $a1 = $handler->handle($evApproved);
@@ -277,7 +277,7 @@ test('T11: TamaraWebhookEventHandler maps order_approved → Processing; order_d
     expect($a1['payment_order_id'])->toBe('ord-w-1');
     expect($a1['payment_status'])->toBe(PaymentStatus::Processing);
 
-    $evDeclined = new WebhookEvent();
+    $evDeclined = new WebhookEvent;
     $evDeclined->event_type = 'order_declined';
     $evDeclined->payload = ['order_id' => 'ord-w-1'];
     $a2 = $handler->handle($evDeclined);
@@ -286,7 +286,7 @@ test('T11: TamaraWebhookEventHandler maps order_approved → Processing; order_d
 });
 
 test('T11: TamaraWebhookEventHandler maps order_authorised→Succeeded; order_captured→Succeeded; order_expired→Expired', function (): void {
-    $handler = new TamaraWebhookEventHandler();
+    $handler = new TamaraWebhookEventHandler;
 
     $cases = [
         ['order_authorised', PaymentStatus::Succeeded],
@@ -296,7 +296,7 @@ test('T11: TamaraWebhookEventHandler maps order_authorised→Succeeded; order_ca
     ];
 
     foreach ($cases as [$type, $expected]) {
-        $ev = new WebhookEvent();
+        $ev = new WebhookEvent;
         $ev->event_type = $type;
         $ev->payload = ['order_id' => 'ord-'.$type];
         $a = $handler->handle($ev);
@@ -306,8 +306,8 @@ test('T11: TamaraWebhookEventHandler maps order_authorised→Succeeded; order_ca
 });
 
 test('T11: TamaraWebhookEventHandler order_refunded returns null (no state change; informational)', function (): void {
-    $handler = new TamaraWebhookEventHandler();
-    $ev = new WebhookEvent();
+    $handler = new TamaraWebhookEventHandler;
+    $ev = new WebhookEvent;
     $ev->event_type = 'order_refunded';
     $ev->payload = ['order_id' => 'ord-refx', 'refund_id' => 'r-1'];
 

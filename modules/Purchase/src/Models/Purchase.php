@@ -39,10 +39,10 @@ class Purchase extends Model
             'source' => PurchaseSource::class,
             'status' => PurchaseStatus::class,
             'metadata' => 'array',
-            'subtotal' => 'decimal:2',
-            'discount_amount' => 'decimal:2',
-            'tax_amount' => 'decimal:2',
-            'total_amount' => 'decimal:2',
+            'subtotal' => 'integer',
+            'discount_amount' => 'integer',
+            'tax_amount' => 'integer',
+            'total_amount' => 'integer',
         ];
     }
 

@@ -129,15 +129,15 @@ describe('cancel', function (): void {
 
         $cancelled = $this->state->cancel($reservation, $this->client);
 
-        expect($cancelled->metadata['refund'])->toMatchArray(['amount' => 100.0, 'status' => 'refunded', 'payment_id' => $payment->id])
+        expect($cancelled->metadata['refund'])->toMatchArray(['amount' => 100, 'status' => 'refunded', 'payment_id' => $payment->id])
             ->and($payment->fresh()->status)->toBe(PaymentStatus::Refunded)
-            ->and((float) $payment->fresh()->refunded_amount)->toBe(100.0);
+            ->and((int) $payment->fresh()->refunded_amount)->toBe(100);
     });
 
     test('a failed refund leaves the reservation untouched', function (): void {
         app(PaymentGatewayManager::class)->extend('failing', fn () => new class extends FakeGateway
         {
-            public function refund(Payment $payment, $amount): bool
+            public function refund(Payment $payment, int $amount): bool
             {
                 return false;
             }

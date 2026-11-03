@@ -43,7 +43,7 @@ class TrainingServiceRequest extends FormRequest
             'description.en' => ['nullable', 'string'],
             'price_options' => ['required', 'array', 'min:1', 'max:20'],
             'price_options.*.duration' => ['required', 'integer', 'min:1'],
-            'price_options.*.price' => ['required', 'numeric', 'min:0'],
+            'price_options.*.price' => ['required', 'integer', 'min:0'],
             'trainer_ids' => ['sometimes', 'array'],
             'trainer_ids.*' => [
                 'integer',

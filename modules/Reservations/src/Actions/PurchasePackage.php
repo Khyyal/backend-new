@@ -63,7 +63,7 @@ class PurchasePackage
                 items: [[
                     'purchasable' => $clientPackage,
                     'name' => $servicePackage->service->name,
-                    'unit_price' => (float) $servicePackage->price,
+                    'unit_price' => $servicePackage->price,
                     'metadata' => ['sessions' => $servicePackage->count],
                 ]],
                 paymentCompany: $paymentCompany,

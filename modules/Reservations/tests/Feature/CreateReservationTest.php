@@ -53,7 +53,7 @@ test('stores a pending reservation from the quote and announces it', function ()
         ->and($reservation->date->toDateString())->toBe('2026-10-26')
         ->and($reservation->start_time)->toBe('10:00:00')
         ->and($reservation->end_time)->toBe('11:00:00')
-        ->and((float) $reservation->total_amount)->toBe(200.0)
+        ->and((int) $reservation->total_amount)->toBe(200)
         ->and($reservation->notes)->toBe('First ride');
 
     Event::assertDispatched(ReservationCreated::class, fn (ReservationCreated $event) => $event->reservation->is($reservation));
@@ -97,7 +97,7 @@ test('stores the ticket line of an event reservation', function (): void {
     expect($reservation->quantity)->toBe(2)
         ->and($reservation->lines)->toHaveCount(1)
         ->and($reservation->lines->first()->kind)->toBe(ReservationLineKind::Ticket)
-        ->and((float) $reservation->lines->first()->subtotal)->toBe(120.0);
+        ->and((int) $reservation->lines->first()->subtotal)->toBe(120);
 });
 
 describe('booking from a package', function (): void {
@@ -124,7 +124,7 @@ describe('booking from a package', function (): void {
         expect($reservation->status)->toBe(ReservationStatus::Confirmed)
             ->and($reservation->client_package_id)->toBe($this->package->id)
             ->and($reservation->quantity)->toBe(1)
-            ->and((float) $reservation->total_amount)->toBe(0.0)
+            ->and((int) $reservation->total_amount)->toBe(0)
             ->and($this->package->fresh()->remaining_sessions)->toBe(1)
             ->and($this->package->fresh()->status)->toBe(ClientPackageStatus::Active);
     });

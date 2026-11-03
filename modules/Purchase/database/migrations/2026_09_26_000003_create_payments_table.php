@@ -6,7 +6,8 @@ use Illuminate\Support\Facades\Schema;
 use Modules\Purchase\Enums\PaymentMethod;
 use Modules\Purchase\Enums\PaymentStatus;
 
-return new class extends Migration {
+return new class extends Migration
+{
     public function up(): void
     {
         Schema::create('payments', function (Blueprint $table) {
@@ -16,7 +17,7 @@ return new class extends Migration {
                 ->constrained('purchases')
                 ->restrictOnDelete();
 
-            $table->decimal('amount', 14, 2);
+            $table->unsignedBigInteger('amount');
 
             $table->enum('method', [
                 PaymentMethod::Online->value,

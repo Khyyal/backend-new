@@ -52,10 +52,10 @@ test('Purchase enum cast round-trip: status and source persist as enum objects',
         'merchant_id' => 1,
         'source' => PurchaseSource::Client,
         'status' => PurchaseStatus::Pending,
-        'subtotal' => '100.00',
-        'discount_amount' => '0.00',
-        'tax_amount' => '0.00',
-        'total_amount' => '100.00',
+        'subtotal' => '100',
+        'discount_amount' => '0',
+        'tax_amount' => '0',
+        'total_amount' => '100',
         'metadata' => null,
     ]);
 
@@ -76,7 +76,7 @@ test('Payment enum cast round-trip: method and status persist as enum objects', 
 
     $payment = Payment::create([
         'purchase_id' => $purchase->id,
-        'amount' => 99.5,
+        'amount' => 9950,
         'method' => PaymentMethod::CashOnArrival,
         'status' => PaymentStatus::Pending,
         'payment_company' => null,

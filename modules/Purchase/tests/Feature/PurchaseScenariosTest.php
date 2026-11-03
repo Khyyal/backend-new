@@ -54,7 +54,7 @@ afterEach(function (): void {
 $makeClientCenterSvc = function ($test) {
     $center = CenterFactory::new()->create(['city_id' => $test->city->id]);
     $client = ClientFactory::new()->create();
-    $svc = TestPurchasable::create(['name' => 'Spa Day Pass', 'price' => 250.0]);
+    $svc = TestPurchasable::create(['name' => 'Spa Day Pass', 'price' => 250]);
 
     return [$client, $center, $svc];
 };
@@ -67,14 +67,14 @@ test('Cash on arrival valid scenario: Purchase confirmed, Payment Pending, metho
         merchant: $center,
         source: PurchaseSource::Client,
         items: [
-            ['purchasable' => $svc, 'quantity' => 1, 'unit_price' => 250.0],
+            ['purchasable' => $svc, 'quantity' => 1, 'unit_price' => 250],
         ],
     );
 
     $payment = (new CreatePayment)->execute(
         purchase: $purchase,
         method: PaymentMethod::CashOnArrival,
-        amount: 250.0,
+        amount: 250,
     );
 
     $purchaseSvc = new PurchaseStateService;
@@ -106,7 +106,7 @@ test('Failed Payment does NOT automatically cancel Purchase (AC-33)', function (
         merchant: $center,
         source: PurchaseSource::Client,
         items: [
-            ['purchasable' => $svc, 'quantity' => 2, 'unit_price' => 100.0],
+            ['purchasable' => $svc, 'quantity' => 2, 'unit_price' => 100],
         ],
     );
 
@@ -116,7 +116,7 @@ test('Failed Payment does NOT automatically cancel Purchase (AC-33)', function (
     $payment = (new CreatePayment)->execute(
         $purchase,
         PaymentMethod::Online,
-        amount: 200.0,
+        amount: 200,
         paymentCompany: 'moyasar',
         paymentType: 'card',
     );
@@ -135,7 +135,7 @@ test('Retry scenario: Payment1 failed, Payment2 created + succeeded; Payment1 re
 
     $purchase = (new CreatePurchase)->execute(
         $client, $center, PurchaseSource::Client,
-        [['purchasable' => $svc, 'quantity' => 1, 'unit_price' => 150.0]],
+        [['purchasable' => $svc, 'quantity' => 1, 'unit_price' => 150]],
     );
 
     $paySvc = new PaymentStateService;
@@ -167,12 +167,12 @@ test('Abandoned Pending/Processing payment retained forever (AC-35)', function (
 
     $purchase = (new CreatePurchase)->execute(
         $client, $center, PurchaseSource::Client,
-        [['purchasable' => $svc, 'quantity' => 1, 'unit_price' => 88.0]],
+        [['purchasable' => $svc, 'quantity' => 1, 'unit_price' => 88]],
     );
 
     $pPending = Payment::create([
         'purchase_id' => $purchase->id,
-        'amount' => 88.0,
+        'amount' => 88,
         'method' => PaymentMethod::Online,
         'status' => PaymentStatus::Pending,
         'payment_company' => 'fake',
@@ -182,7 +182,7 @@ test('Abandoned Pending/Processing payment retained forever (AC-35)', function (
 
     $pProcessing = Payment::create([
         'purchase_id' => $purchase->id,
-        'amount' => 99.0,
+        'amount' => 99,
         'method' => PaymentMethod::Online,
         'status' => PaymentStatus::Processing,
         'payment_company' => 'fake',
@@ -270,7 +270,7 @@ test('PurchaseItem purchasable MorphTo resolves correctly (AC-6)', function () u
     [$client, $center, $svc] = $makeClientCenterSvc($this);
 
     $purchase = (new CreatePurchase)->execute($client, $center, PurchaseSource::Client, [
-        ['purchasable' => $svc, 'quantity' => 1, 'unit_price' => 99.99],
+        ['purchasable' => $svc, 'quantity' => 1, 'unit_price' => 9999],
     ]);
 
     $item = $purchase->items->first();

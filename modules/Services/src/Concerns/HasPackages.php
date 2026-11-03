@@ -23,7 +23,7 @@ trait HasPackages
             'packages' => ['sometimes', 'array', 'max:20'],
             'packages.*.price_option' => ['required', 'integer', 'min:0', 'distinct'],
             'packages.*.count' => ['required', 'integer', 'min:1'],
-            'packages.*.price' => ['required', 'numeric', 'min:0'],
+            'packages.*.price' => ['required', 'integer', 'min:0'],
             'packages.*.duration' => ['required', 'integer', 'min:1', 'max:120'],
         ];
     }

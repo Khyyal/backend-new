@@ -27,7 +27,7 @@ class ClientPackageResource extends JsonResource
             'duration_minutes' => $this->whenLoaded('priceOption', fn (): ?int => $package->priceOption?->quantity),
             'total_sessions' => $package->total_sessions,
             'remaining_sessions' => $package->remaining_sessions,
-            'price' => (float) $package->price,
+            'price' => $package->price,
             'expires_at' => $package->expires_at?->toIso8601String(),
             'is_usable' => $package->isUsable(),
             'created_at' => $package->created_at?->toIso8601String(),

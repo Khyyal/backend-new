@@ -37,17 +37,17 @@ class Payment extends Model
             'metadata' => 'array',
             'paid_at' => 'datetime',
             'refunded_at' => 'datetime',
-            'amount' => 'decimal:2',
-            'refunded_amount' => 'decimal:2',
+            'amount' => 'integer',
+            'refunded_amount' => 'integer',
         ];
     }
 
     /**
      * What is left to refund on a succeeded payment.
      */
-    public function refundableAmount(): float
+    public function refundableAmount(): int
     {
-        return round((float) $this->amount - (float) $this->refunded_amount, 2);
+        return $this->amount - $this->refunded_amount;
     }
 
     public function purchase(): BelongsTo

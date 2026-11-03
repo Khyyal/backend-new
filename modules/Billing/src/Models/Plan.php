@@ -30,7 +30,7 @@ class Plan extends Model
         return [
             'name' => 'array',
             'description' => 'array',
-            'price' => 'decimal:2',
+            'price' => 'integer',
             'billing_interval' => BillingInterval::class,
             'display_features' => 'array',
             'status' => PlanStatus::class,

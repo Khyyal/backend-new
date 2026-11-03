@@ -12,11 +12,11 @@ class PurchaseItemFactory extends Factory
 
     public function definition(): array
     {
-        $unitPrice = fake()->randomFloat(2, 10, 2000);
+        $unitPrice = fake()->numberBetween(1000, 200000);
         $quantity = fake()->numberBetween(1, 5);
         $subtotal = $unitPrice * $quantity;
-        $discount = fake()->randomFloat(2, 0, $subtotal * 0.2);
-        $tax = fake()->randomFloat(2, 0, $subtotal * 0.15);
+        $discount = fake()->numberBetween(0, intdiv($subtotal, 5));
+        $tax = fake()->numberBetween(0, intdiv($subtotal * 15, 100));
         $total = $subtotal - $discount + $tax;
 
         return [

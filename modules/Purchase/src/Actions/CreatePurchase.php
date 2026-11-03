@@ -8,6 +8,7 @@ use InvalidArgumentException;
 use Modules\Purchase\Contracts\Buyer;
 use Modules\Purchase\Contracts\Purchasable;
 use Modules\Purchase\Enums\PurchaseSource;
+use Modules\Purchase\Enums\PurchaseStatus;
 use Modules\Purchase\Events\PurchaseCreated;
 use Modules\Purchase\Models\Purchase;
 use Modules\Purchase\Models\PurchaseItem;
@@ -18,7 +19,7 @@ class CreatePurchase
      * @param  Buyer  $buyer  Model that implements Buyer (Center, Client, etc.)
      * @param  Model  $merchant  Merchant-side model (Center for service sales, Platform for membership sales)
      * @param  PurchaseSource  $source  Who initiated the purchase (client/center/system)
-     * @param  array<int, array>  $items  Each item: purchasable (Purchasable), name (?string), quantity (int default 1), unit_price (numeric), discount_amount (numeric default 0), tax_amount (numeric default 0), metadata (array default [])
+     * @param  array<int, array>  $items  Each item: purchasable (Purchasable), name (?string), quantity (int default 1), unit_price (int, minor units), discount_amount (int default 0), tax_amount (int default 0), metadata (array default [])
      * @param  array<string, mixed>  $metadata  Optional purchase-level metadata
      */
     public function execute(
@@ -53,7 +54,7 @@ class CreatePurchase
                 throw new InvalidArgumentException(sprintf('Item #%d is missing "unit_price".', $idx + 1));
             }
 
-            $unitPrice = (float) $raw['unit_price'];
+            $unitPrice = (int) $raw['unit_price'];
             if ($unitPrice <= 0) {
                 throw new InvalidArgumentException(sprintf('Item #%d unit_price must be greater than 0.', $idx + 1));
             }
@@ -68,12 +69,12 @@ class CreatePurchase
                 throw new InvalidArgumentException(sprintf('Item #%d name cannot be empty.', $idx + 1));
             }
 
-            $discount = (float) ($raw['discount_amount'] ?? 0);
-            $tax = (float) ($raw['tax_amount'] ?? 0);
+            $discount = (int) ($raw['discount_amount'] ?? 0);
+            $tax = (int) ($raw['tax_amount'] ?? 0);
             $itemMeta = (array) ($raw['metadata'] ?? []);
 
-            $subtotal = $this->roundMoney($unitPrice * $quantity);
-            $itemTotal = $this->roundMoney($subtotal - $discount + $tax);
+            $subtotal = $unitPrice * $quantity;
+            $itemTotal = $subtotal - $discount + $tax;
 
             $totals['subtotal'] += $subtotal;
             $totals['discount_amount'] += $discount;
@@ -84,16 +85,14 @@ class CreatePurchase
                 'purchasable' => $purchasable,
                 'name' => (string) $name,
                 'quantity' => $quantity,
-                'unit_price' => $this->roundMoney($unitPrice),
+                'unit_price' => $unitPrice,
                 'subtotal' => $subtotal,
-                'discount_amount' => $this->roundMoney($discount),
-                'tax_amount' => $this->roundMoney($tax),
+                'discount_amount' => $discount,
+                'tax_amount' => $tax,
                 'total_amount' => $itemTotal,
                 'metadata' => $itemMeta,
             ];
         }
-
-        $totals = array_map(fn ($v): float => $this->roundMoney($v), $totals);
 
         $purchase = DB::transaction(function () use (
             $buyer,
@@ -109,7 +108,7 @@ class CreatePurchase
                 'merchant_type' => $merchant->getMorphClass(),
                 'merchant_id' => $merchant->getKey(),
                 'source' => $source,
-                'status' => \Modules\Purchase\Enums\PurchaseStatus::Pending,
+                'status' => PurchaseStatus::Pending,
                 'subtotal' => $totals['subtotal'],
                 'discount_amount' => $totals['discount_amount'],
                 'tax_amount' => $totals['tax_amount'],
@@ -162,10 +161,5 @@ class CreatePurchase
         }
 
         return null;
-    }
-
-    private function roundMoney(float $value): float
-    {
-        return round($value, 2);
     }
 }

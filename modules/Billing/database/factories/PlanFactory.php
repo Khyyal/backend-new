@@ -28,7 +28,7 @@ class PlanFactory extends Factory
                 'en' => fake()->sentence(),
                 'ar' => fake('ar_SA')->sentence(),
             ] : null,
-            'price' => fake()->randomFloat(2, 0, 500),
+            'price' => fake()->numberBetween(0, 50000),
             'billing_interval' => fake()->randomElement(BillingInterval::cases()),
             'display_features' => fake()->boolean(50) ? [
                 'en' => [fake()->sentence(), fake()->sentence()],

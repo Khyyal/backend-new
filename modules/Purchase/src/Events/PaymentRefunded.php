@@ -17,6 +17,6 @@ class PaymentRefunded
 
     public function __construct(
         public readonly Payment $payment,
-        public readonly float $amount,
+        public readonly int $amount,
     ) {}
 }

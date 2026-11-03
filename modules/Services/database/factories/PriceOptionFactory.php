@@ -14,9 +14,9 @@ class PriceOptionFactory extends Factory
     {
         return [
             'name' => $this->faker->name(),
-            'price' => $this->faker->randomFloat(),
+            'price' => $this->faker->numberBetween(1000, 50000),
             'quantity' => $this->faker->randomNumber(),
-            'unit' => $this->faker->randomElement(['option',]),
+            'unit' => $this->faker->randomElement(['option']),
 
             'service_id' => Service::factory(),
         ];
