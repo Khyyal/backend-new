@@ -66,3 +66,28 @@ test('lists the center buyers with their purchase summary', function (): void {
         ->assertJsonPath('data.1.first_purchase_at', '2026-09-01T10:00:00+00:00')
         ->assertJsonPath('data.1.last_purchase_at', '2026-10-10T12:00:00+00:00');
 });
+
+test('lists clients that belong to the center even without purchases', function (): void {
+    $buyer = ClientFactory::new()->create();
+    $memberBuyer = ClientFactory::new()->create();
+    $member = ClientFactory::new()->create();
+    $otherCenterMember = ClientFactory::new()->create();
+
+    $this->center->clients()->attach([$memberBuyer->id, $member->id]);
+    CenterFactory::new()->create()->clients()->attach($otherCenterMember->id);
+
+    ($this->purchase)($buyer, '2026-10-01 10:00:00');
+    ($this->purchase)($memberBuyer, '2026-10-05 10:00:00');
+
+    $this->actingAs($this->user, 'center_user')
+        ->getJson($this->url)
+        ->assertOk()
+        ->assertJsonCount(3, 'data')
+        ->assertJsonPath('data.0.id', $memberBuyer->id)
+        ->assertJsonPath('data.0.purchases_count', 1)
+        ->assertJsonPath('data.1.id', $buyer->id)
+        ->assertJsonPath('data.2.id', $member->id)
+        ->assertJsonPath('data.2.purchases_count', 0)
+        ->assertJsonPath('data.2.first_purchase_at', null)
+        ->assertJsonPath('data.2.last_purchase_at', null);
+});

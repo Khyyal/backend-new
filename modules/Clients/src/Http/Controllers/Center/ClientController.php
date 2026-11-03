@@ -20,36 +20,52 @@ class ClientController extends Controller
     /**
      * List the center's clients.
      *
-     * Clients with at least one confirmed or completed purchase in this center. Paginated (25 per page),
-     * most recent buyer first. Pending and cancelled purchases are ignored.
+     * Clients that belong to this center (registered from its page or created by it) or have at least one
+     * confirmed or completed purchase in it. Paginated (25 per page), most recent buyer first, then clients
+     * without purchases (newest first). Pending and cancelled purchases are ignored.
      */
-    #[Response(status: 200, description: 'Paginated collection of `{id, full_name, phone_number, first_purchase_at, last_purchase_at, purchases_count}`.')]
+    #[Response(status: 200, description: 'Paginated collection of `{id, full_name, phone_number, first_purchase_at, last_purchase_at, purchases_count}`. Purchase dates are `null` for clients without purchases.')]
     #[Response(status: 401, description: 'Missing or invalid Bearer token.')]
     #[Response(status: 403, description: 'No access to this center\'s reservations.')]
     public function index(Request $request, Center $center): AnonymousResourceCollection
     {
         Gate::forUser($request->user())->authorize('manageReservations', $center);
 
-        $clients = DB::table('purchases')
-            ->join('clients', 'clients.id', '=', 'purchases.buyer_id')
-            ->where('purchases.buyer_type', (new Client)->getMorphClass())
-            ->where('purchases.merchant_type', $center->getMorphClass())
-            ->where('purchases.merchant_id', $center->getKey())
-            ->whereIn('purchases.status', [PurchaseStatus::Confirmed->value, PurchaseStatus::Completed->value])
-            ->whereNull('purchases.deleted_at')
+        $purchaseStats = DB::table('purchases')
+            ->where('buyer_type', (new Client)->getMorphClass())
+            ->where('merchant_type', $center->getMorphClass())
+            ->where('merchant_id', $center->getKey())
+            ->whereIn('status', [PurchaseStatus::Confirmed->value, PurchaseStatus::Completed->value])
+            ->whereNull('deleted_at')
+            ->groupBy('buyer_id')
+            ->select([
+                'buyer_id',
+                DB::raw('min(created_at) as first_purchase_at'),
+                DB::raw('max(created_at) as last_purchase_at'),
+                DB::raw('count(id) as purchases_count'),
+            ]);
+
+        $clients = DB::table('clients')
+            ->leftJoinSub($purchaseStats, 'stats', 'stats.buyer_id', '=', 'clients.id')
             ->whereNull('clients.deleted_at')
-            ->groupBy('clients.id', 'clients.first_name', 'clients.last_name', 'clients.phone_number')
+            ->where(fn ($query) => $query
+                ->whereNotNull('stats.buyer_id')
+                ->orWhereExists(fn ($membership) => $membership
+                    ->from('center_client')
+                    ->whereColumn('center_client.client_id', 'clients.id')
+                    ->where('center_client.center_id', $center->getKey())))
             ->select([
                 'clients.id',
                 'clients.first_name',
                 'clients.last_name',
                 'clients.phone_number',
-                DB::raw('min(purchases.created_at) as first_purchase_at'),
-                DB::raw('max(purchases.created_at) as last_purchase_at'),
-                DB::raw('count(purchases.id) as purchases_count'),
+                'stats.first_purchase_at',
+                'stats.last_purchase_at',
+                DB::raw('coalesce(stats.purchases_count, 0) as purchases_count'),
             ])
-            ->orderByDesc('last_purchase_at')
-            ->orderBy('clients.id')
+            ->orderByRaw('stats.last_purchase_at is null')
+            ->orderByDesc('stats.last_purchase_at')
+            ->orderByDesc('clients.id')
             ->paginate(25)
             ->withQueryString();
 

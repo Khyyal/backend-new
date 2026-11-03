@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\DB;
 use Modules\Billing\Traits\HasSubscriptions;
 use Modules\Centers\Enums\CenterState;
 use Modules\Centers\Enums\CenterStatus;
+use Modules\Clients\Models\Client;
 use Modules\Promotion\Traits\HasDiscounts;
 use Modules\Purchase\Contracts\Buyer;
 use Modules\Purchase\Traits\IsBuyer;
@@ -122,6 +123,15 @@ class Center extends Model implements Buyer, HasMedia
                 'is_primary',
                 'trainer_id',
             ])
+            ->withTimestamps();
+    }
+
+    /**
+     * Clients that belong to the center (registered from its page or created by it).
+     */
+    public function clients(): BelongsToMany
+    {
+        return $this->belongsToMany(Client::class, 'center_client', 'center_id', 'client_id')
             ->withTimestamps();
     }
 

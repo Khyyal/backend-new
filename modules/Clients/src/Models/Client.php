@@ -50,6 +50,15 @@ class Client extends Authenticatable implements Buyer
             ->withTimestamps();
     }
 
+    /**
+     * Centers the client belongs to (registered from the center's page or created by the center).
+     */
+    public function centers(): BelongsToMany
+    {
+        return $this->belongsToMany(Center::class, 'center_client', 'client_id', 'center_id')
+            ->withTimestamps();
+    }
+
     public function reservations(): HasMany
     {
         return $this->hasMany(Reservation::class);

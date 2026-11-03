@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * A client with their purchase summary for one center. Wraps an aggregate row, not a model.
+ * A client with their purchase summary for one center (dates are null when they have no purchases). Wraps an aggregate row, not a model.
  */
 class CenterClientResource extends JsonResource
 {
@@ -22,8 +22,8 @@ class CenterClientResource extends JsonResource
             'id' => (int) $row->id,
             'full_name' => trim("{$row->first_name} {$row->last_name}"),
             'phone_number' => $row->phone_number,
-            'first_purchase_at' => CarbonImmutable::parse($row->first_purchase_at)->toIso8601String(),
-            'last_purchase_at' => CarbonImmutable::parse($row->last_purchase_at)->toIso8601String(),
+            'first_purchase_at' => $row->first_purchase_at ? CarbonImmutable::parse($row->first_purchase_at)->toIso8601String() : null,
+            'last_purchase_at' => $row->last_purchase_at ? CarbonImmutable::parse($row->last_purchase_at)->toIso8601String() : null,
             'purchases_count' => (int) $row->purchases_count,
         ];
     }
