@@ -113,6 +113,15 @@ class CenterPolicy
     }
 
     /**
+     * Center users: the primary user, or a user granted `analytics.view`.
+     * Analytics are center-wide, so they are not narrowed by purchase visibility.
+     */
+    public function viewAnalytics(User|SystemUser $user, Center $center): bool
+    {
+        return $this->canAccessCenter($user, $center, [CenterUserPermission::ViewAnalytics], SystemPermission::ManageCenterReservations);
+    }
+
+    /**
      * Center users: the primary user, or a user granted `promotions.manage`.
      * System users: denied; they manage promotions through the admin API.
      */
