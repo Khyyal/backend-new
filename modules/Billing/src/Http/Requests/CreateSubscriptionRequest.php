@@ -3,6 +3,7 @@
 namespace Modules\Billing\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class CreateSubscriptionRequest extends FormRequest
 {
@@ -15,6 +16,23 @@ class CreateSubscriptionRequest extends FormRequest
     {
         return [
             'plan_id' => ['required', 'integer', 'exists:plans,id'],
+            'payment_company' => ['nullable', 'string', Rule::in($this->availablePaymentCompanies())],
         ];
+    }
+
+    /**
+     * The enabled payment providers plus the default gateway.
+     *
+     * @return list<string>
+     */
+    private function availablePaymentCompanies(): array
+    {
+        return collect((array) config('purchase.providers', []))
+            ->filter(fn (array $provider): bool => (bool) ($provider['enabled'] ?? false))
+            ->keys()
+            ->push((string) config('purchase.default_gateway', 'fake'))
+            ->unique()
+            ->values()
+            ->all();
     }
 }

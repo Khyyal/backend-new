@@ -1,11 +1,13 @@
 <?php
 
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Billing\Enums\BillingInterval;
 use Modules\Billing\Enums\PlanStatus;
 use Modules\Billing\Enums\SubscriptionAction;
 use Modules\Billing\Enums\SubscriptionStatus;
+use Tests\TestCase;
 
-uses(\Tests\TestCase::class, \Illuminate\Foundation\Testing\RefreshDatabase::class);
+uses(TestCase::class, RefreshDatabase::class);
 
 test('billing interval enum has exact cases', function (): void {
     expect(BillingInterval::cases())->toHaveCount(2);
@@ -20,7 +22,8 @@ test('plan status enum has exact cases', function (): void {
 });
 
 test('subscription status enum has exact cases', function (): void {
-    expect(SubscriptionStatus::cases())->toHaveCount(4);
+    expect(SubscriptionStatus::cases())->toHaveCount(5);
+    expect(SubscriptionStatus::Pending->value)->toBe('pending');
     expect(SubscriptionStatus::Active->value)->toBe('active');
     expect(SubscriptionStatus::Canceled->value)->toBe('canceled');
     expect(SubscriptionStatus::Expired->value)->toBe('expired');
