@@ -19,3 +19,10 @@ Route::prefix('admin/centers/{center}/packages')
     ->group(function (): void {
         require __DIR__.'/partials/center-packages.php';
     });
+
+Route::prefix('admin/centers/{center}/client-memberships')
+    ->name('admin.centers.client-memberships.')
+    ->middleware(['auth:system_user'])
+    ->group(function (): void {
+        require __DIR__.'/partials/center-memberships.php';
+    });
