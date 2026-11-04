@@ -5,9 +5,11 @@ use Modules\Services\Http\Controllers\Center\CenterPeriodController;
 use Modules\Services\Http\Controllers\Center\EventController;
 use Modules\Services\Http\Controllers\Center\HorseCareController;
 use Modules\Services\Http\Controllers\Center\HorseServiceController;
+use Modules\Services\Http\Controllers\Center\MembershipController;
 use Modules\Services\Http\Controllers\Center\RecreationRidingController;
 use Modules\Services\Http\Controllers\Center\ResortController;
 use Modules\Services\Http\Controllers\Center\ServiceBlockController;
+use Modules\Services\Http\Controllers\Center\ServiceListController;
 use Modules\Services\Http\Controllers\Center\ServiceTypeCountController;
 use Modules\Services\Http\Controllers\Center\ServiceTypeTermController;
 use Modules\Services\Http\Controllers\Center\TrainerController;
@@ -30,9 +32,13 @@ Route::prefix('admin/centers/{center}')
             'horse-cares' => [HorseCareController::class, 'horseCare'],
             'horse-services' => [HorseServiceController::class, 'horseService'],
             'training-services' => [TrainingServiceController::class, 'trainingService'],
+            'memberships' => [MembershipController::class, 'membership'],
             'trainers' => [TrainerController::class, 'trainer'],
             'service-blocks' => [ServiceBlockController::class, 'serviceBlock'],
         ];
+
+        Route::get('trainers/list', [TrainerController::class, 'list'])->name('trainers.list');
+        Route::get('services/by-type', [ServiceListController::class, 'byType'])->name('services.by-type');
 
         foreach ($resources as $uri => [$controller, $parameter]) {
             Route::apiResource($uri, $controller)->parameters([$uri => $parameter]);
