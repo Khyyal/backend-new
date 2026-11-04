@@ -71,7 +71,7 @@ class PurchaseController extends Controller
             )))
             ->when(isset($validated['from']), fn (Builder $query) => $query->whereDate('created_at', '>=', $validated['from']))
             ->when(isset($validated['to']), fn (Builder $query) => $query->whereDate('created_at', '<=', $validated['to']))
-            ->with(['buyer', 'latestPayment'])
+            ->with(['buyer', 'latestPayment', 'fee'])
             ->withCount('items')
             ->latest()
             ->latest('id')
@@ -98,7 +98,7 @@ class PurchaseController extends Controller
     {
         $this->authorize($request, $center);
 
-        $purchase = $this->purchases($request, $center)->with(['buyer', 'items', 'payments', 'latestPayment', 'adjustments'])->withCount('items')->findOrFail($purchase);
+        $purchase = $this->purchases($request, $center)->with(['buyer', 'items', 'payments', 'latestPayment', 'adjustments', 'fee'])->withCount('items')->findOrFail($purchase);
 
         $purchase->items
             ->whereIn('purchasable_type', [(new Reservation)->getMorphClass(), (new ClientPackage)->getMorphClass()])

@@ -12,8 +12,10 @@ use Modules\Promotions\Exceptions\CouponRejectedException;
 use Modules\Promotions\Exceptions\PromotionUnavailableException;
 use Modules\Purchase\Actions\CreatePayment;
 use Modules\Purchase\Actions\CreatePurchase;
+use Modules\Purchase\Actions\RecordPurchaseFee;
 use Modules\Purchase\Contracts\Buyer;
 use Modules\Purchase\Enums\PaymentMethod;
+use Modules\Purchase\Enums\PurchaseChannel;
 use Modules\Purchase\Enums\PurchaseSource;
 use Modules\Purchase\Managers\PaymentGatewayManager;
 use Modules\Purchase\Models\Purchase;
@@ -34,7 +36,8 @@ use Modules\Reservations\Exceptions\ReservationNotAllowedException;
  * methods leave both pending for the gateway or the arrival. An online
  * payment is initialized with its gateway (the default one when no company is
  * given) so the client can pay. A purchase discounted to nothing is confirmed
- * without a payment.
+ * without a payment. A center selling records the platform fee it owes on
+ * the purchase, priced for the channel it was made on.
  */
 class StartCheckout
 {
@@ -46,6 +49,7 @@ class StartCheckout
         private PaymentGatewayManager $gateways,
         private CheckoutPricer $pricer,
         private PromotionRedeemer $redeemer,
+        private RecordPurchaseFee $recordFee,
     ) {}
 
     /**
@@ -64,24 +68,30 @@ class StartCheckout
         array $items,
         ?string $paymentCompany = null,
         DiscountInput $discount = new DiscountInput,
+        ?PurchaseChannel $channel = null,
     ): CheckoutResult {
         if ($method === PaymentMethod::Manual && $source !== PurchaseSource::Center) {
             throw ReservationNotAllowedException::because('manual_payment_not_allowed');
         }
 
         $items = array_values($items);
+        $channel = $this->channel($merchant, $channel);
 
-        return DB::transaction(function () use ($buyer, $merchant, $source, $method, $items, $paymentCompany, $discount): CheckoutResult {
+        return DB::transaction(function () use ($buyer, $merchant, $source, $method, $items, $paymentCompany, $discount, $channel): CheckoutResult {
             $quote = $this->quote($buyer, $merchant, $items, $discount);
 
             foreach ($items as $index => $item) {
                 $items[$index]['discount_amount'] = $quote?->lineDiscount($index) ?? 0;
             }
 
-            $purchase = $this->createPurchase->execute($buyer, $merchant, $source, $items);
+            $purchase = $this->createPurchase->execute($buyer, $merchant, $source, $items, channel: $channel);
 
             if ($quote !== null && $quote->adjustments() !== []) {
                 $this->recordDiscounts($purchase, $buyer, $quote);
+            }
+
+            if ($merchant instanceof Center) {
+                $this->recordFee->execute($purchase, $merchant);
             }
 
             if ($purchase->total_amount <= 0) {
@@ -108,6 +118,19 @@ class StartCheckout
 
             return new CheckoutResult($purchase, $payment, $gateway);
         });
+    }
+
+    /**
+     * A center's own app or website only counts as such when the center has
+     * one; otherwise the channel is unknown.
+     */
+    private function channel(Model $merchant, ?PurchaseChannel $channel): ?PurchaseChannel
+    {
+        if ($channel?->isCenterBranded() && ! ($merchant instanceof Center && $merchant->custom_site_enabled)) {
+            return null;
+        }
+
+        return $channel;
     }
 
     /**

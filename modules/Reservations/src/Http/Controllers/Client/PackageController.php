@@ -4,6 +4,7 @@ namespace Modules\Reservations\Http\Controllers\Client;
 
 use Carbon\CarbonImmutable;
 use Dedoc\Scramble\Attributes\Group;
+use Dedoc\Scramble\Attributes\HeaderParameter;
 use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -11,6 +12,7 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Routing\Controller;
 use Modules\Clients\Models\Client;
 use Modules\Purchase\Enums\PaymentMethod;
+use Modules\Purchase\Enums\PurchaseChannel;
 use Modules\Purchase\Enums\PurchaseSource;
 use Modules\Reservations\Actions\BookFromPackage;
 use Modules\Reservations\Actions\PurchasePackage;
@@ -62,6 +64,7 @@ class PackageController extends Controller
      * - `payment_company`: optional.
      * - `coupon_code`, `expected_total_amount`: optional, as when booking a reservation.
      */
+    #[HeaderParameter('X-Channel', description: 'Where the client is buying from: `khyyal_app`, `center_app`, `khyyal_web` or `center_web`. Prices the platform fee; unknown values are ignored.', type: 'string')]
     #[Response(status: 201, description: '`{data: ClientPackageResource, checkout: CheckoutResource}`.')]
     #[Response(status: 401, description: 'Missing or invalid Bearer token.')]
     #[Response(status: 422, description: 'Validation failed, or the package cannot be sold (see `reason`).')]
@@ -77,6 +80,7 @@ class PackageController extends Controller
             PaymentMethod::Online,
             $request->validated('payment_company'),
             $request->toDiscountInput(),
+            PurchaseChannel::fromClientRequest($request),
         );
 
         /** @var ClientPackage $package */

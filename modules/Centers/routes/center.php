@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Modules\Centers\Http\Controllers\Center\AnalyticsController;
 use Modules\Centers\Http\Controllers\Center\AuthController;
 use Modules\Centers\Http\Controllers\Center\BlockedClientController;
 use Modules\Centers\Http\Controllers\Center\CenterController;
@@ -76,6 +77,9 @@ Route::middleware(['api'])
 
                         Route::post('/{center}/blocked-clients', [BlockedClientController::class, 'store'])
                             ->name('blocked-clients.store');
+
+                        Route::get('/{center}/analytics', AnalyticsController::class)
+                            ->name('analytics');
 
                         Route::get('/{center}/purchases', [PurchaseController::class, 'index'])
                             ->name('purchases.index');

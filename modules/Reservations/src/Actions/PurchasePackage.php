@@ -5,6 +5,7 @@ namespace Modules\Reservations\Actions;
 use Illuminate\Support\Facades\DB;
 use Modules\Clients\Models\Client;
 use Modules\Purchase\Enums\PaymentMethod;
+use Modules\Purchase\Enums\PurchaseChannel;
 use Modules\Purchase\Enums\PurchaseSource;
 use Modules\Reservations\Booking\BookingGuard;
 use Modules\Reservations\Booking\CheckoutResult;
@@ -35,6 +36,7 @@ class PurchasePackage
         PaymentMethod $method,
         ?string $paymentCompany = null,
         DiscountInput $discount = new DiscountInput,
+        ?PurchaseChannel $channel = null,
     ): CheckoutResult {
         if ($method === PaymentMethod::CashOnArrival) {
             throw ReservationNotAllowedException::because('cash_on_arrival_disabled');
@@ -45,7 +47,7 @@ class PurchasePackage
         $this->guard->ensureServiceOpenTo($service, $client);
         $this->guard->ensureSettingEnabled($service, 'enable_package_booking', 'package_booking_disabled');
 
-        return DB::transaction(function () use ($client, $servicePackage, $source, $method, $paymentCompany, $discount): CheckoutResult {
+        return DB::transaction(function () use ($client, $servicePackage, $source, $method, $paymentCompany, $discount, $channel): CheckoutResult {
             $clientPackage = ClientPackage::query()->create([
                 'client_id' => $client->getKey(),
                 'service_id' => $servicePackage->service_id,
@@ -71,6 +73,7 @@ class PurchasePackage
                 ]],
                 paymentCompany: $paymentCompany,
                 discount: $discount,
+                channel: $channel,
             );
         });
     }

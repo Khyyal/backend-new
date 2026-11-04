@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Modules\Purchase\Database\Factories\PurchaseFactory;
+use Modules\Purchase\Enums\PurchaseChannel;
 use Modules\Purchase\Enums\PurchaseSource;
 use Modules\Purchase\Enums\PurchaseStatus;
 
@@ -23,6 +24,7 @@ class Purchase extends Model
         'merchant_type',
         'merchant_id',
         'source',
+        'channel',
         'status',
         'subtotal',
         'discount_amount',
@@ -36,6 +38,7 @@ class Purchase extends Model
     {
         return [
             'source' => PurchaseSource::class,
+            'channel' => PurchaseChannel::class,
             'status' => PurchaseStatus::class,
             'metadata' => 'array',
             'subtotal' => 'integer',
@@ -66,6 +69,14 @@ class Purchase extends Model
     public function adjustments(): HasMany
     {
         return $this->hasMany(PurchaseAdjustment::class);
+    }
+
+    /**
+     * The platform fee charged to the merchant center.
+     */
+    public function fee(): HasOne
+    {
+        return $this->hasOne(PurchaseFee::class);
     }
 
     public function payments(): HasMany

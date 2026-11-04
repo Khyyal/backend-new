@@ -4,6 +4,7 @@ namespace Modules\Reservations\Actions;
 
 use Illuminate\Support\Facades\DB;
 use Modules\Purchase\Enums\PaymentMethod;
+use Modules\Purchase\Enums\PurchaseChannel;
 use Modules\Purchase\Enums\PurchaseSource;
 use Modules\Reservations\Booking\BookingRequest;
 use Modules\Reservations\Booking\CheckoutResult;
@@ -38,8 +39,9 @@ class BookAndCheckout
         ?string $paymentCompany = null,
         ?string $notes = null,
         DiscountInput $discount = new DiscountInput,
+        ?PurchaseChannel $channel = null,
     ): array {
-        [$reservation, $checkout] = DB::transaction(function () use ($request, $source, $method, $paymentCompany, $notes, $discount): array {
+        [$reservation, $checkout] = DB::transaction(function () use ($request, $source, $method, $paymentCompany, $notes, $discount, $channel): array {
             $reservation = $this->createReservation->execute($request, $source, notes: $notes);
 
             if ($reservation->total_amount <= 0) {
@@ -53,6 +55,7 @@ class BookAndCheckout
                 $method,
                 $paymentCompany,
                 $discount,
+                $channel,
             );
 
             return [$reservation, $checkout];

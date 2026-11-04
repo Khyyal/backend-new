@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Gate;
 use Modules\Centers\Models\Center;
 use Modules\Clients\Models\Client;
 use Modules\Purchase\Enums\PaymentMethod;
+use Modules\Purchase\Enums\PurchaseChannel;
 use Modules\Reservations\Actions\BookAndCheckout;
 use Modules\Reservations\Actions\QuoteCheckout;
 use Modules\Reservations\Enums\ReservationSource;
@@ -28,6 +29,7 @@ use Modules\Reservations\Http\Resources\CheckoutQuoteResource;
 use Modules\Reservations\Http\Resources\CheckoutResource;
 use Modules\Reservations\Models\Reservation;
 use Modules\Reservations\Services\ReservationStateService;
+use Modules\Support\Models\SystemUser;
 use Spatie\QueryBuilder\AllowedFilter;
 use Spatie\QueryBuilder\AllowedSort;
 use Spatie\QueryBuilder\QueryBuilder;
@@ -163,6 +165,7 @@ class ReservationController extends Controller
             $request->validated('payment_company'),
             $request->validated('notes'),
             $request->toDiscountInput(),
+            $request->user() instanceof SystemUser ? null : PurchaseChannel::CenterDashboard,
         );
 
         return CenterReservationResource::make($reservation->load(self::RELATIONS))
