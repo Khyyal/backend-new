@@ -2,6 +2,8 @@
 
 namespace Modules\Promotions\Models;
 
+use Carbon\CarbonInterface;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -62,5 +64,23 @@ class Campaign extends Model implements HasMedia
     public function promotions(): HasMany
     {
         return $this->hasMany(Promotion::class);
+    }
+
+    /**
+     * Active campaigns inside their (optional) date window.
+     */
+    public function scopeRunningAt(Builder $query, CarbonInterface $at): Builder
+    {
+        return $query
+            ->where('status', CampaignStatus::Active->value)
+            ->where(fn (Builder $query) => $query->whereNull('starts_at')->orWhere('starts_at', '<=', $at))
+            ->where(fn (Builder $query) => $query->whereNull('ends_at')->orWhere('ends_at', '>', $at));
+    }
+
+    public function isRunningAt(CarbonInterface $at): bool
+    {
+        return $this->status === CampaignStatus::Active
+            && ($this->starts_at === null || $this->starts_at <= $at)
+            && ($this->ends_at === null || $this->ends_at > $at);
     }
 }
