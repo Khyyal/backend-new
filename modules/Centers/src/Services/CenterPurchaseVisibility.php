@@ -7,6 +7,7 @@ use Modules\Centers\Enums\CenterUserPermission;
 use Modules\Centers\Models\Center;
 use Modules\Centers\Models\User;
 use Modules\Purchase\Models\Purchase;
+use Modules\Reservations\Models\ClientMembership;
 use Modules\Reservations\Models\ClientPackage;
 use Modules\Reservations\Models\Reservation;
 use Modules\Services\Enums\ServiceType;
@@ -14,11 +15,11 @@ use Modules\Support\Models\SystemUser;
 
 /**
  * Narrows a center's purchases to those a center user may see. A purchase is
- * visible when at least one of its items (a reservation or a client package)
- * is for a service type the user can view and passes the trainer rule:
+ * visible when at least one of its items (a reservation, a client package or
+ * a client membership) is for a service type the user can view and passes the trainer rule:
  * reservations of the user's own trainer are always visible, those of another
  * trainer need `purchases.view_other_trainers`, and items without a trainer
- * (including every client package) need `purchases.view_unassigned`.
+ * (including every client package and membership) need `purchases.view_unassigned`.
  *
  * The primary user and system users see every purchase.
  */
@@ -47,7 +48,7 @@ class CenterPurchaseVisibility
         return $purchases->whereHas('items', function (Builder $items) use ($types, $trainerId, $canViewOtherTrainers, $canViewUnassigned): void {
             $items->whereHasMorph(
                 'purchasable',
-                [Reservation::class, ClientPackage::class],
+                [Reservation::class, ClientPackage::class, ClientMembership::class],
                 function (Builder $purchasable) use ($types, $trainerId, $canViewOtherTrainers, $canViewUnassigned): void {
                     $purchasable->whereHas('service', fn (Builder $service) => $service->whereIn('type', $types));
 

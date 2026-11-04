@@ -25,6 +25,7 @@ final readonly class BookingQuote
         public ?int $trainerId = null,
         public ?int $clientPackageId = null,
         public array $lines = [],
+        public ?int $clientMembershipId = null,
     ) {}
 
     /**
@@ -44,6 +45,7 @@ final readonly class BookingQuote
             'price_option_id' => $this->priceOptionId,
             'trainer_id' => $this->trainerId,
             'client_package_id' => $this->clientPackageId,
+            'client_membership_id' => $this->clientMembershipId,
         ];
     }
 }

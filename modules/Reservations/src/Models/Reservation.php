@@ -35,6 +35,7 @@ class Reservation extends Model implements Purchasable
         'trainer_id',
         'price_option_id',
         'client_package_id',
+        'client_membership_id',
         'source',
         'status',
         'date',
@@ -102,6 +103,11 @@ class Reservation extends Model implements Purchasable
     public function clientPackage(): BelongsTo
     {
         return $this->belongsTo(ClientPackage::class);
+    }
+
+    public function clientMembership(): BelongsTo
+    {
+        return $this->belongsTo(ClientMembership::class);
     }
 
     public function lines(): HasMany

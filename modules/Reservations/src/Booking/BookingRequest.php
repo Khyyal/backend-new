@@ -4,6 +4,7 @@ namespace Modules\Reservations\Booking;
 
 use Carbon\CarbonImmutable;
 use Modules\Clients\Models\Client;
+use Modules\Reservations\Models\ClientMembership;
 use Modules\Reservations\Models\ClientPackage;
 use Modules\Services\Models\Service;
 
@@ -17,6 +18,7 @@ final readonly class BookingRequest
      * @param  CarbonImmutable|null  $endDate  inclusive last day, for resorts
      * @param  array<int, array{price_option_id: int, quantity: int}>  $lines  event ticket / resort addons
      * @param  int|null  $ignoreReservationId  reservation being rescheduled, left out of capacity counts
+     * @param  ClientMembership|null  $clientMembership  membership granting a free visit
      */
     public function __construct(
         public Service $service,
@@ -30,11 +32,17 @@ final readonly class BookingRequest
         public array $lines = [],
         public ?ClientPackage $clientPackage = null,
         public ?int $ignoreReservationId = null,
+        public ?ClientMembership $clientMembership = null,
     ) {}
 
     public function usesPackage(): bool
     {
         return $this->clientPackage !== null;
+    }
+
+    public function usesMembership(): bool
+    {
+        return $this->clientMembership !== null;
     }
 
     /**

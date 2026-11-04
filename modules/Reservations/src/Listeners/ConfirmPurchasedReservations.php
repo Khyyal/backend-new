@@ -4,16 +4,19 @@ namespace Modules\Reservations\Listeners;
 
 use Illuminate\Support\Facades\DB;
 use Modules\Purchase\Events\PurchaseConfirmed;
+use Modules\Reservations\Enums\ClientMembershipStatus;
 use Modules\Reservations\Enums\ClientPackageStatus;
 use Modules\Reservations\Enums\ReservationStatus;
 use Modules\Reservations\Events\ClientPackageActivated;
+use Modules\Reservations\Models\ClientMembership;
 use Modules\Reservations\Models\ClientPackage;
 use Modules\Reservations\Models\Reservation;
 use Modules\Reservations\Services\ReservationStateService;
 
 /**
  * A confirmed purchase confirms its pending reservations and activates its
- * packages; a package's validity starts counting from activation.
+ * packages and memberships; validity starts counting from activation. A
+ * membership activates the packages it holds, each with its own validity.
  */
 class ConfirmPurchasedReservations
 {
@@ -33,7 +36,28 @@ class ConfirmPurchasedReservations
             if ($purchasable instanceof ClientPackage) {
                 $this->activate($purchasable);
             }
+
+            if ($purchasable instanceof ClientMembership) {
+                $this->activateMembership($purchasable);
+            }
         }
+    }
+
+    private function activateMembership(ClientMembership $clientMembership): void
+    {
+        DB::transaction(function () use ($clientMembership): void {
+            $membership = ClientMembership::query()->whereKey($clientMembership->getKey())->lockForUpdate()->firstOrFail();
+
+            if ($membership->status !== ClientMembershipStatus::Pending) {
+                return;
+            }
+
+            $membership->status = ClientMembershipStatus::Active;
+            $membership->expires_at = now()->addMonths($membership->duration);
+            $membership->save();
+
+            $membership->packages()->get()->each(fn (ClientPackage $package) => $this->activate($package));
+        });
     }
 
     private function activate(ClientPackage $clientPackage): void

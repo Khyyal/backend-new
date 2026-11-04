@@ -5,6 +5,7 @@ use Modules\Services\Http\Controllers\Center\CenterPeriodController;
 use Modules\Services\Http\Controllers\Center\EventController;
 use Modules\Services\Http\Controllers\Center\HorseCareController;
 use Modules\Services\Http\Controllers\Center\HorseServiceController;
+use Modules\Services\Http\Controllers\Center\MembershipController;
 use Modules\Services\Http\Controllers\Center\RecreationRidingController;
 use Modules\Services\Http\Controllers\Center\ResortController;
 use Modules\Services\Http\Controllers\Center\ServiceBlockController;
@@ -90,6 +91,17 @@ Route::prefix('centers/{center}/training-services')
         Route::get('/{trainingService}', [TrainingServiceController::class, 'show'])->name('show');
         Route::match(['put', 'patch'], '/{trainingService}', [TrainingServiceController::class, 'update'])->name('update');
         Route::delete('/{trainingService}', [TrainingServiceController::class, 'destroy'])->name('destroy');
+    });
+
+Route::prefix('centers/{center}/memberships')
+    ->name('centers.memberships.')
+    ->middleware(['auth:center_user', 'center.scope'])
+    ->group(function (): void {
+        Route::get('/', [MembershipController::class, 'index'])->name('index');
+        Route::post('/', [MembershipController::class, 'store'])->name('store');
+        Route::get('/{membership}', [MembershipController::class, 'show'])->name('show');
+        Route::match(['put', 'patch'], '/{membership}', [MembershipController::class, 'update'])->name('update');
+        Route::delete('/{membership}', [MembershipController::class, 'destroy'])->name('destroy');
     });
 
 Route::prefix('centers/{center}/trainers')

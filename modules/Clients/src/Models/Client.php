@@ -11,6 +11,7 @@ use Laravel\Sanctum\HasApiTokens;
 use Modules\Centers\Models\Center;
 use Modules\Purchase\Contracts\Buyer;
 use Modules\Purchase\Traits\IsBuyer;
+use Modules\Reservations\Models\ClientMembership;
 use Modules\Reservations\Models\ClientPackage;
 use Modules\Reservations\Models\Reservation;
 use Modules\Support\Concerns\ActionActor;
@@ -68,5 +69,10 @@ class Client extends Authenticatable implements Buyer
     public function packages(): HasMany
     {
         return $this->hasMany(ClientPackage::class);
+    }
+
+    public function memberships(): HasMany
+    {
+        return $this->hasMany(ClientMembership::class);
     }
 }

@@ -5,6 +5,7 @@ use Modules\Centers\Database\Factories\CenterFactory;
 use Modules\Centers\Database\Factories\UserFactory;
 use Modules\Centers\Enums\CenterUserPermission;
 use Modules\Services\Database\Factories\ServiceFactory;
+use Modules\Services\Enums\ServiceType;
 use Modules\Support\Enums\ActivationStatus;
 use Tests\TestCase;
 
@@ -36,7 +37,7 @@ test('services are grouped by type with only id and name', function (): void {
 
     $response = $this->actingAs($this->user, 'center_user')->getJson($this->url)->assertOk();
 
-    $response->assertJsonCount(7, 'data');
+    $response->assertJsonCount(count(ServiceType::cases()), 'data');
     $training = collect($response->json('data'))->firstWhere('service_type', 'training');
 
     expect($training['services'])->toHaveCount(1)

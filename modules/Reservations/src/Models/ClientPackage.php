@@ -14,10 +14,12 @@ use Modules\Reservations\Enums\ClientPackageStatus;
 use Modules\Services\Models\PriceOption;
 use Modules\Services\Models\Service;
 use Modules\Services\Models\ServicePackage;
+use Modules\Services\Models\Trainer;
 
 /**
  * A service package bought by a client: a stock of session credits, each one
- * spent on a single-person reservation before the package expires.
+ * spent on a single-person reservation before the package expires. Packages
+ * bought within a membership belong to it and may be bound to one trainer.
  */
 class ClientPackage extends Model implements Purchasable
 {
@@ -28,6 +30,8 @@ class ClientPackage extends Model implements Purchasable
         'service_id',
         'service_package_id',
         'price_option_id',
+        'client_membership_id',
+        'trainer_id',
         'total_sessions',
         'remaining_sessions',
         'price',
@@ -69,6 +73,16 @@ class ClientPackage extends Model implements Purchasable
     public function priceOption(): BelongsTo
     {
         return $this->belongsTo(PriceOption::class);
+    }
+
+    public function clientMembership(): BelongsTo
+    {
+        return $this->belongsTo(ClientMembership::class);
+    }
+
+    public function trainer(): BelongsTo
+    {
+        return $this->belongsTo(Trainer::class);
     }
 
     public function reservations(): HasMany

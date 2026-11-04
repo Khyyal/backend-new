@@ -8,10 +8,11 @@ use Modules\Reservations\Booking\CheckoutPricer;
 use Modules\Reservations\Booking\CheckoutQuote;
 use Modules\Reservations\Booking\ReservationRulesResolver;
 use Modules\Reservations\Exceptions\ReservationNotAllowedException;
+use Modules\Services\Models\Membership;
 use Modules\Services\Models\ServicePackage;
 
 /**
- * Prices a booking or a package purchase with the running promotions,
+ * Prices a booking, a package or a membership purchase with the running promotions,
  * without booking or reserving anything.
  */
 class QuoteCheckout
@@ -39,6 +40,16 @@ class QuoteCheckout
         return $this->pricer->quote($servicePackage->service->center, $client, [[
             'service_id' => $servicePackage->service_id,
             'unit_price' => $servicePackage->price,
+        ]], $couponCode);
+    }
+
+    public function forMembership(Client $client, Membership $membership, ?string $couponCode = null): CheckoutQuote
+    {
+        $service = $membership->service;
+
+        return $this->pricer->quote($service->center, $client, [[
+            'service_id' => $service->getKey(),
+            'unit_price' => (int) $service->priceOptions()->value('price'),
         ]], $couponCode);
     }
 }
