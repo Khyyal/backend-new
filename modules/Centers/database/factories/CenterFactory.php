@@ -34,12 +34,33 @@ class CenterFactory extends Factory
             ]),
 
             'state' => CenterState::Active,
+
+            'social_links' => null,
+            'site_theme' => null,
+            'custom_site_enabled' => false,
+            'domain' => null,
         ];
     }
 
     public function pending(): static
     {
         return $this->state(['state' => CenterState::Pending]);
+    }
+
+    public function withCustomSite(): static
+    {
+        return $this->state(fn () => [
+            'custom_site_enabled' => true,
+            'domain' => fake()->unique()->domainName(),
+            'site_theme' => [
+                'background' => '#ffffff',
+                'foreground' => '#111111',
+                'primary' => '#0f766e',
+                'button' => '#0f766e',
+                'secondary' => '#64748b',
+                'accent' => '#f59e0b',
+            ],
+        ]);
     }
 
     public function blocked(): static

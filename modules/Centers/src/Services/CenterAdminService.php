@@ -22,9 +22,9 @@ use Spatie\Permission\PermissionRegistrar;
  */
 class CenterAdminService
 {
-    private const ATTRIBUTES = ['city_id', 'status', 'state'];
+    private const ATTRIBUTES = ['city_id', 'status', 'state', 'custom_site_enabled', 'domain'];
 
-    private const CREATE_ATTRIBUTES = ['name', 'city_id', 'description', 'lat', 'lng', 'address', 'contact_phone', 'status', 'state'];
+    private const CREATE_ATTRIBUTES = ['name', 'city_id', 'description', 'lat', 'lng', 'address', 'contact_phone', 'social_links', 'site_theme', 'custom_site_enabled', 'domain', 'status', 'state'];
 
     public function __construct(private readonly CenterUpdateService $updateService) {}
 

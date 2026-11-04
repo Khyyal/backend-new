@@ -55,6 +55,10 @@ class Center extends Model implements Buyer, HasMedia
         'status',
         'state',
         'contact_phone',
+        'social_links',
+        'site_theme',
+        'custom_site_enabled',
+        'domain',
     ];
 
     public const MEDIA_COLLECTIONS = [
@@ -71,6 +75,9 @@ class Center extends Model implements Buyer, HasMedia
             'points' => 'integer',
             'status' => CenterStatus::class,
             'state' => CenterState::class,
+            'social_links' => 'array',
+            'site_theme' => 'array',
+            'custom_site_enabled' => 'boolean',
         ];
     }
 

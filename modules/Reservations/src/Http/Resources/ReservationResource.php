@@ -34,6 +34,7 @@ class ReservationResource extends JsonResource
             ]),
             'price_option_id' => $reservation->price_option_id,
             'client_package_id' => $reservation->client_package_id,
+            'client_membership_id' => $reservation->client_membership_id,
             'date' => $reservation->date->toDateString(),
             'end_date' => $reservation->end_date?->toDateString(),
             'start_time' => Schedule::clockTime($reservation->start_time),

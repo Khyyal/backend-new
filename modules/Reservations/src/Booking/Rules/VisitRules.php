@@ -13,7 +13,8 @@ use Modules\Services\Models\Visit;
 
 /**
  * An all-day visit needs only an open day; a specific-time visit books one of
- * the day's schedule windows. Both share the daily ticket limit.
+ * the day's schedule windows. Both share the daily ticket limit. A visit
+ * granted by a membership is free.
  */
 class VisitRules implements ReservationRules
 {
@@ -46,7 +47,7 @@ class VisitRules implements ReservationRules
         $this->guard->ensureCapacity($visit->max_tickets_per_day, $reserved, $request->quantity);
 
         $option = $request->service->priceOptions()->first();
-        $unitPrice = $option?->price ?? 0;
+        $unitPrice = $request->usesMembership() ? 0 : ($option?->price ?? 0);
 
         return new BookingQuote(
             date: $request->date,
@@ -56,6 +57,7 @@ class VisitRules implements ReservationRules
             startTime: $startTime,
             endTime: $endTime,
             priceOptionId: $option?->getKey(),
+            clientMembershipId: $request->clientMembership?->getKey(),
         );
     }
 

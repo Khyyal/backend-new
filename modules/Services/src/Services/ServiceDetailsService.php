@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Modules\Services\Models\Event;
 use Modules\Services\Models\HorseCare;
 use Modules\Services\Models\HorseService;
+use Modules\Services\Models\Membership;
 use Modules\Services\Models\RecreationalRiding;
 use Modules\Services\Models\Resort;
 use Modules\Services\Models\Service;
@@ -33,6 +34,7 @@ class ServiceDetailsService
         HorseCare::class => ['priceOptions', 'media'],
         HorseService::class => ['priceOptions', 'media'],
         TrainingService::class => ['priceOptions.package', 'settings', 'media'],
+        Membership::class => ['priceOptions', 'media'],
     ];
 
     /**
@@ -44,6 +46,7 @@ class ServiceDetailsService
         RecreationalRiding::class => ['schedules'],
         Visit::class => ['schedules'],
         TrainingService::class => ['trainers'],
+        Membership::class => ['packages.servicePackage.service', 'packages.trainer', 'visitService'],
     ];
 
     /**

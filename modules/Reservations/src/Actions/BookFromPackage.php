@@ -14,7 +14,8 @@ use Modules\Reservations\Models\Reservation;
 
 /**
  * Spends one package credit on a single-person reservation. The session is
- * already paid, so the reservation is confirmed straight away.
+ * already paid, so the reservation is confirmed straight away. A package
+ * bound to a trainer (from a membership) is only booked with that trainer.
  */
 class BookFromPackage
 {
@@ -36,6 +37,14 @@ class BookFromPackage
                 ->whereKey($clientPackage->getKey())
                 ->lockForUpdate()
                 ->firstOrFail();
+
+            if ($package->trainer_id !== null) {
+                if ($trainerId !== null && $trainerId !== $package->trainer_id) {
+                    throw ReservationNotAllowedException::because('trainer_not_allowed');
+                }
+
+                $trainerId = $package->trainer_id;
+            }
 
             $reservation = $this->createReservation->execute(
                 new BookingRequest(

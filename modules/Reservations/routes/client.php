@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Modules\Reservations\Http\Controllers\Client\AvailabilityController;
+use Modules\Reservations\Http\Controllers\Client\MembershipController;
 use Modules\Reservations\Http\Controllers\Client\PackageController;
 use Modules\Reservations\Http\Controllers\Client\ReservationController;
 
@@ -29,5 +30,14 @@ Route::middleware(['set.locale.from.accept.language', 'track.client.session', 'a
                 Route::post('/', [PackageController::class, 'store'])->middleware('throttle:coupon')->name('store');
                 Route::post('/quote', [PackageController::class, 'quote'])->middleware('throttle:coupon')->name('quote');
                 Route::post('/{package}/reservations', [PackageController::class, 'book'])->name('reservations.store');
+            });
+
+        Route::prefix('memberships')
+            ->name('memberships.')
+            ->group(function (): void {
+                Route::get('/', [MembershipController::class, 'index'])->name('index');
+                Route::post('/', [MembershipController::class, 'store'])->middleware('throttle:coupon')->name('store');
+                Route::post('/quote', [MembershipController::class, 'quote'])->middleware('throttle:coupon')->name('quote');
+                Route::post('/{membership}/visits', [MembershipController::class, 'bookVisit'])->name('visits.store');
             });
     });

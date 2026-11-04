@@ -3,15 +3,17 @@
 namespace Modules\Reservations\Listeners;
 
 use Modules\Purchase\Events\PurchaseCancelled;
+use Modules\Reservations\Enums\ClientMembershipStatus;
 use Modules\Reservations\Enums\ClientPackageStatus;
 use Modules\Reservations\Enums\ReservationStatus;
+use Modules\Reservations\Models\ClientMembership;
 use Modules\Reservations\Models\ClientPackage;
 use Modules\Reservations\Models\Reservation;
 use Modules\Reservations\Services\ReservationStateService;
 
 /**
  * A cancelled purchase frees the places of its still-pending reservations and
- * voids its unpaid packages. Confirmed ones (cash on arrival) are left to the center.
+ * voids its unpaid packages and memberships (with the packages they hold). Confirmed ones (cash on arrival) are left to the center.
  */
 class ReleaseCancelledPurchase
 {
@@ -28,6 +30,13 @@ class ReleaseCancelledPurchase
 
             if ($purchasable instanceof ClientPackage && $purchasable->status === ClientPackageStatus::Pending) {
                 $purchasable->update(['status' => ClientPackageStatus::Cancelled]);
+            }
+
+            if ($purchasable instanceof ClientMembership && $purchasable->status === ClientMembershipStatus::Pending) {
+                $purchasable->update(['status' => ClientMembershipStatus::Cancelled]);
+                $purchasable->packages()
+                    ->where('status', ClientPackageStatus::Pending)
+                    ->update(['status' => ClientPackageStatus::Cancelled]);
             }
         }
     }

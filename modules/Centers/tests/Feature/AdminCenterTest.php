@@ -174,3 +174,26 @@ test('center users keep their scoped access to the center portal', function (): 
     $this->actingAs($outsider, 'center_user')
         ->getJson("/api/v1/centers/{$this->center->id}/ratings")->assertForbidden();
 });
+
+test('admin sets the domain and enables the custom site', function (): void {
+    $this->actingAs($this->admin, 'system_user')
+        ->patchJson("{$this->base}/{$this->center->id}", [
+            'domain' => ' Club.Example.com ',
+            'custom_site_enabled' => true,
+        ])->assertOk()
+        ->assertJsonPath('data.domain', 'club.example.com')
+        ->assertJsonPath('data.custom_site_enabled', true);
+
+    $this->patchJson("{$this->base}/{$this->center->id}", ['domain' => 'club.example.com'])->assertOk();
+
+    $this->patchJson("{$this->base}/{$this->center->id}", ['domain' => 'not a domain'])
+        ->assertJsonValidationErrors('domain');
+});
+
+test('domain must be unique across centers', function (): void {
+    CenterFactory::new()->create(['domain' => 'taken.example.com']);
+
+    $this->actingAs($this->admin, 'system_user')
+        ->patchJson("{$this->base}/{$this->center->id}", ['domain' => 'taken.example.com'])
+        ->assertJsonValidationErrors('domain');
+});

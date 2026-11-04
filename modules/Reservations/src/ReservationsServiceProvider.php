@@ -16,6 +16,7 @@ use Modules\Reservations\Listeners\ConfirmPurchasedReservations;
 use Modules\Reservations\Listeners\RefundLatePayment;
 use Modules\Reservations\Listeners\ReleaseCancelledPurchase;
 use Modules\Reservations\Listeners\SendReservationNotifications;
+use Modules\Reservations\Models\ClientMembership;
 use Modules\Reservations\Models\ClientPackage;
 use Modules\Reservations\Models\Reservation;
 use Modules\Services\Models\Service;
@@ -43,6 +44,7 @@ class ReservationsServiceProvider extends ServiceProvider
         Relation::morphMap([
             'reservation' => Reservation::class,
             'client_package' => ClientPackage::class,
+            'client_membership' => ClientMembership::class,
         ]);
 
         // Lets availability eager-load reservations of a service or trainer without Services depending on Reservations.

@@ -36,4 +36,9 @@ return [
     'not_started_yet' => 'The reservation has not started yet.',
     'refund_failed' => 'The payment could not be refunded; the reservation was not cancelled.',
     'manual_payment_not_allowed' => 'Only center staff can record a manual payment.',
+    'trainer_not_allowed' => 'This package can only be booked with its assigned trainer.',
+    'membership_package_unavailable' => 'Some packages of this membership are no longer available.',
+    'membership_not_usable' => 'This membership is not active or has expired.',
+    'membership_has_no_visits' => 'This membership does not include visits.',
+    'membership_daily_visits_exceeded' => 'Daily free visits exceeded: :available left today.',
 ];

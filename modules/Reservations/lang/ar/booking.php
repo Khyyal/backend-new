@@ -36,4 +36,9 @@ return [
     'not_started_yet' => 'لم يبدأ الحجز بعد.',
     'refund_failed' => 'تعذر استرداد المبلغ؛ لم يتم إلغاء الحجز.',
     'manual_payment_not_allowed' => 'يمكن لموظفي المركز فقط تسجيل دفعة يدوية.',
+    'trainer_not_allowed' => 'لا يمكن حجز هذه الباقة إلا مع المدرب المحدد لها.',
+    'membership_package_unavailable' => 'بعض باقات هذه العضوية لم تعد متاحة.',
+    'membership_not_usable' => 'هذه العضوية غير مفعّلة أو منتهية.',
+    'membership_has_no_visits' => 'هذه العضوية لا تشمل الزيارات.',
+    'membership_daily_visits_exceeded' => 'تم تجاوز الزيارات المجانية اليومية: المتبقي اليوم :available.',
 ];

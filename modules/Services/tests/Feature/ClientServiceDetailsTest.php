@@ -8,6 +8,7 @@ use Modules\Reservations\Database\Factories\ReservationFactory;
 use Modules\Services\Database\Factories\EventFactory;
 use Modules\Services\Database\Factories\HorseCareFactory;
 use Modules\Services\Database\Factories\HorseServiceFactory;
+use Modules\Services\Database\Factories\MembershipFactory;
 use Modules\Services\Database\Factories\RecreationalRidingFactory;
 use Modules\Services\Database\Factories\ResortFactory;
 use Modules\Services\Database\Factories\ServiceFactory;
@@ -47,6 +48,7 @@ test('returns the serviceable details of each service type', function (ServiceTy
     'horse care' => [ServiceType::HorseCare, HorseCareFactory::class, 'price_options'],
     'horse service' => [ServiceType::HorseService, HorseServiceFactory::class, 'price_options'],
     'training' => [ServiceType::Training, TrainingServiceFactory::class, 'trainers'],
+    'membership' => [ServiceType::Membership, MembershipFactory::class, 'packages'],
 ]);
 
 test('resolves the slug within the given center', function (): void {

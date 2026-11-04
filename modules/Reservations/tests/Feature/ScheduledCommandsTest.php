@@ -49,7 +49,7 @@ describe('reservations:expire-packages', function (): void {
         $pending = ClientPackageFactory::new()->create(['expires_at' => null, 'status' => ClientPackageStatus::Pending]);
 
         $this->artisan('reservations:expire-packages')
-            ->expectsOutput('Expired 1 package(s).')
+            ->expectsOutput('Expired 1 package(s) and 0 membership(s).')
             ->assertSuccessful();
 
         expect($overdue->fresh()->status)->toBe(ClientPackageStatus::Expired)
