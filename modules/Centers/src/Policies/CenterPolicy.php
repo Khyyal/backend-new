@@ -122,6 +122,15 @@ class CenterPolicy
     }
 
     /**
+     * Center users: the primary user, or a user granted `payouts.view`.
+     * System users: by `payouts.manage`.
+     */
+    public function viewPayouts(User|SystemUser $user, Center $center): bool
+    {
+        return $this->canAccessCenter($user, $center, [CenterUserPermission::ViewPayouts], SystemPermission::ManagePayouts);
+    }
+
+    /**
      * Center users: the primary user, or a user granted `promotions.manage`.
      * System users: denied; they manage promotions through the admin API.
      */

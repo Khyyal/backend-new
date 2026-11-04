@@ -11,7 +11,9 @@ use Modules\Purchase\Models\Purchase;
  * A purchase as it appears in the center's list. `payment_method` and
  * `payment_status` come from the latest payment (`null` without one). Amounts
  * are only included when the user may view purchase prices (`purchases.view_prices`);
- * `platform_fee_amount` is the fee the center owes the platform (0 once reversed).
+ * `platform_fee_amount` is the fee the center owes the platform (0 once reversed);
+ * `center_amount` is what the platform owes the center for it (negative for
+ * cash sales, where the center collected the money and owes the fee).
  *
  * @property Purchase $resource
  */
@@ -43,6 +45,7 @@ class PurchaseResource extends JsonResource
                 'tax_amount' => $purchase->tax_amount,
                 'total_amount' => $purchase->total_amount,
                 'platform_fee_amount' => $this->whenLoaded('fee', fn (): int => $purchase->fee?->owedAmount() ?? 0),
+                'center_amount' => $this->whenLoaded('ledgerEntries', fn (): int => (int) $purchase->ledgerEntries->sum('amount')),
             ]),
             'created_at' => $purchase->created_at?->toIso8601String(),
         ];
