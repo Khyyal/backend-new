@@ -65,6 +65,8 @@
             "Modules\\Reservations\\Database\\Seeders\\":  "modules/Reservations/database/seeders/",
             "Modules\\Notifications\\": "modules/Notifications/src/",
             "Modules\\Notifications\\Database\\Factories\\": "modules/Notifications/database/factories/",
+            "Modules\\Homepage\\": "modules/Homepage/src/",
+            "Modules\\Homepage\\Database\\Factories\\": "modules/Homepage/database/factories/",
 
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/"

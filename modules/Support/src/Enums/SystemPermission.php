@@ -41,6 +41,8 @@ enum SystemPermission: string
     case ManageCampaigns = 'campaigns.manage';
     case ManageCoupons = 'coupons.manage';
 
+    case ManageHomepage = 'homepage.manage';
+
     /** @return array<string> */
     public static function all(): array
     {
