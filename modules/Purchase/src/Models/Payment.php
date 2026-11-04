@@ -17,6 +17,7 @@ class Payment extends Model
         'purchase_id',
         'amount',
         'refunded_amount',
+        'provider_fee_amount',
         'method',
         'status',
         'payment_company',
@@ -39,6 +40,7 @@ class Payment extends Model
             'refunded_at' => 'datetime',
             'amount' => 'integer',
             'refunded_amount' => 'integer',
+            'provider_fee_amount' => 'integer',
         ];
     }
 
