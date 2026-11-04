@@ -62,11 +62,68 @@ class SubscriptionLifecycleService
                 'canceled_at' => null,
             ]);
 
-            DB::afterCommit(function () use ($subscription) {
-                event(new SubscriptionCreated($subscription));
-            });
+            if ($status !== SubscriptionStatus::Pending) {
+                DB::afterCommit(function () use ($subscription) {
+                    event(new SubscriptionCreated($subscription));
+                });
+            }
 
             return $subscription;
+        });
+    }
+
+    /**
+     * Starts a pending subscription once its checkout is paid; its period
+     * counts from activation. Anything not pending is left as it is.
+     */
+    public function activate(Subscription $subscription): Subscription
+    {
+        return DB::transaction(function () use ($subscription) {
+            $locked = Subscription::query()
+                ->whereKey($subscription->id)
+                ->with('plan')
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($locked->status !== SubscriptionStatus::Pending) {
+                return $locked;
+            }
+
+            $now = Carbon::now();
+
+            $locked->status = SubscriptionStatus::Active;
+            $locked->starts_at = $now;
+            $locked->ends_at = $this->calculator->nextBillingDate($now, $locked->plan->billing_interval, 1);
+            $locked->save();
+
+            DB::afterCommit(function () use ($locked) {
+                event(new SubscriptionCreated($locked));
+            });
+
+            return $locked;
+        });
+    }
+
+    /**
+     * Voids a pending subscription whose checkout was never paid.
+     */
+    public function abandon(Subscription $subscription): Subscription
+    {
+        return DB::transaction(function () use ($subscription) {
+            $locked = Subscription::query()
+                ->whereKey($subscription->id)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            if ($locked->status !== SubscriptionStatus::Pending) {
+                return $locked;
+            }
+
+            $locked->status = SubscriptionStatus::Canceled;
+            $locked->canceled_at = Carbon::now();
+            $locked->save();
+
+            return $locked;
         });
     }
 

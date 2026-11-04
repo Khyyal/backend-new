@@ -19,6 +19,7 @@ class SubscriptionEligibilityService
         $hasActive = $subscribable->subscriptions()
             ->where('plan_id', $plan->id)
             ->whereIn('status', [
+                SubscriptionStatus::Pending,
                 SubscriptionStatus::Active,
                 SubscriptionStatus::Trialing,
             ])

@@ -4,6 +4,7 @@ namespace Modules\Billing\Http\Controllers\Center;
 
 use Dedoc\Scramble\Attributes\Group;
 use Dedoc\Scramble\Attributes\Response;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Routing\Controller;
@@ -12,10 +13,12 @@ use Modules\Billing\Enums\PlanStatus;
 use Modules\Billing\Exceptions\SubscriptionIneligibleException;
 use Modules\Billing\Http\Requests\CancelSubscriptionRequest;
 use Modules\Billing\Http\Requests\CreateSubscriptionRequest;
+use Modules\Billing\Http\Resources\SubscriptionCheckoutResource;
 use Modules\Billing\Http\Resources\SubscriptionCollection;
 use Modules\Billing\Http\Resources\SubscriptionResource;
 use Modules\Billing\Models\Plan;
 use Modules\Billing\Models\Subscription;
+use Modules\Billing\Services\SubscriptionCheckoutService;
 use Modules\Billing\Services\SubscriptionLifecycleService;
 use Modules\Centers\Models\Center;
 use Modules\Centers\Models\User as CenterUser;
@@ -26,6 +29,7 @@ class SubscriptionController extends Controller
 {
     public function __construct(
         private readonly SubscriptionLifecycleService $lifecycle,
+        private readonly SubscriptionCheckoutService $checkout,
     ) {
         $this->middleware('auth:center_user');
     }
@@ -51,11 +55,19 @@ class SubscriptionController extends Controller
         );
     }
 
-    #[Response(status: 201, description: 'Center subscribed to the plan.')]
+    /**
+     * Check out a plan.
+     *
+     * **Request body:** `plan_id` (required), `payment_company` (optional, defaults to the default gateway).
+     * A paid plan opens a `pending` subscription with an online payment; `checkout.gateway` holds what is needed
+     * to pay, and the subscription becomes `active` once the payment succeeds. Unpaid checkouts are released after
+     * the hold window. Free plans and plans with a trial start right away and `checkout` is null.
+     */
+    #[Response(status: 201, description: '`{data: SubscriptionResource, checkout: SubscriptionCheckoutResource|null}`.')]
     #[Response(status: 401, description: 'Unauthenticated.')]
     #[Response(status: 403, description: 'No center assignment.')]
-    #[Response(status: 422, description: 'Plan not active or already subscribed.')]
-    public function store(CreateSubscriptionRequest $request)
+    #[Response(status: 422, description: 'Plan not active, already subscribed, or a checkout for it is pending.')]
+    public function store(CreateSubscriptionRequest $request): JsonResponse
     {
         $center = $this->center($request);
         $validated = $request->validated();
@@ -69,16 +81,17 @@ class SubscriptionController extends Controller
         }
 
         try {
-            $subscription = $this->lifecycle->subscribe($center, $plan);
+            $checkout = $this->checkout->execute($center, $plan, $validated['payment_company'] ?? null);
         } catch (SubscriptionIneligibleException $e) {
             throw ValidationException::withMessages([
                 'plan_id' => [$e->getMessage() ?: __('billing::validation.subscription_ineligible')],
             ]);
         }
 
-        $subscription->load('plan');
-
-        return SubscriptionResource::make($subscription)->response()->setStatusCode(201);
+        return SubscriptionResource::make($checkout->subscription->load('plan'))
+            ->additional(['checkout' => $checkout->purchase === null ? null : SubscriptionCheckoutResource::make($checkout)])
+            ->response()
+            ->setStatusCode(201);
     }
 
     #[Response(status: 204, description: 'Subscription canceled.')]

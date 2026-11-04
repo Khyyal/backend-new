@@ -8,10 +8,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Modules\Billing\Database\Factories\SubscriptionFactory;
 use Modules\Billing\Enums\SubscriptionStatus;
+use Modules\Purchase\Contracts\Purchasable;
+use Modules\Purchase\Traits\IsPurchasable;
 
-class Subscription extends Model
+class Subscription extends Model implements Purchasable
 {
     use HasFactory;
+    use IsPurchasable;
 
     protected $fillable = [
         'subscribable_type',
