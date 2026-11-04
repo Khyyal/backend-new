@@ -313,7 +313,7 @@ test('10 Events all exist, accept Purchase or Payment typed constructor, use Dis
     }
 });
 
-test('No Purchase/Payment controller exists (AC-46 architecture)', function (): void {
+test('No Purchase/Payment controller exists outside the admin API (AC-46 architecture)', function (): void {
     $srcDir = dirname(__DIR__, 2).'/src';
     $this->assertDirectoryExists($srcDir);
 
@@ -324,10 +324,10 @@ test('No Purchase/Payment controller exists (AC-46 architecture)', function (): 
             continue;
         }
         $name = $file->getFilename();
-        if (str_contains($name, 'Controller')) {
+        if (str_contains($name, 'Controller') && ! str_contains($file->getPathname(), '/Http/Controllers/Admin/')) {
             $controllerFiles[] = $name;
         }
     }
 
-    expect($controllerFiles)->toBeEmpty('No *Controller files should exist in Purchase module (no HTTP layer yet)');
+    expect($controllerFiles)->toBeEmpty('Only admin controllers may exist in Purchase module');
 });

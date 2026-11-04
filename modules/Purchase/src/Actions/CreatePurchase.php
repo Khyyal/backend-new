@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 use Modules\Purchase\Contracts\Buyer;
 use Modules\Purchase\Contracts\Purchasable;
+use Modules\Purchase\Enums\PurchaseChannel;
 use Modules\Purchase\Enums\PurchaseSource;
 use Modules\Purchase\Enums\PurchaseStatus;
 use Modules\Purchase\Events\PurchaseCreated;
@@ -21,6 +22,7 @@ class CreatePurchase
      * @param  PurchaseSource  $source  Who initiated the purchase (client/center/system)
      * @param  array<int, array>  $items  Each item: purchasable (Purchasable), name (?string), quantity (int default 1), unit_price (int, minor units), discount_amount (int default 0), tax_amount (int default 0), metadata (array default [])
      * @param  array<string, mixed>  $metadata  Optional purchase-level metadata
+     * @param  PurchaseChannel|null  $channel  Where the purchase was made, when known
      */
     public function execute(
         Buyer $buyer,
@@ -28,6 +30,7 @@ class CreatePurchase
         PurchaseSource $source,
         array $items,
         array $metadata = [],
+        ?PurchaseChannel $channel = null,
     ): Purchase {
         if (count($items) === 0) {
             throw new InvalidArgumentException('A purchase must contain at least one item.');
@@ -98,6 +101,7 @@ class CreatePurchase
             $buyer,
             $merchant,
             $source,
+            $channel,
             $metadata,
             $normalized,
             $totals,
@@ -108,6 +112,7 @@ class CreatePurchase
                 'merchant_type' => $merchant->getMorphClass(),
                 'merchant_id' => $merchant->getKey(),
                 'source' => $source,
+                'channel' => $channel,
                 'status' => PurchaseStatus::Pending,
                 'subtotal' => $totals['subtotal'],
                 'discount_amount' => $totals['discount_amount'],

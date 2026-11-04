@@ -3,6 +3,7 @@
 namespace Modules\Reservations\Http\Controllers\Client;
 
 use Dedoc\Scramble\Attributes\Group;
+use Dedoc\Scramble\Attributes\HeaderParameter;
 use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -12,6 +13,7 @@ use Illuminate\Routing\Controller;
 use Illuminate\Validation\Rule;
 use Modules\Clients\Models\Client;
 use Modules\Purchase\Enums\PaymentMethod;
+use Modules\Purchase\Enums\PurchaseChannel;
 use Modules\Reservations\Actions\BookAndCheckout;
 use Modules\Reservations\Actions\QuoteCheckout;
 use Modules\Reservations\Enums\ReservationSource;
@@ -98,6 +100,7 @@ class ReservationController extends Controller
      * - `coupon_code`: optional; a code that cannot be applied fails the booking (422, `code: coupon_rejected`).
      * - `expected_total_amount`: optional, the quoted total; a different price fails the booking (409, `code: price_changed`).
      */
+    #[HeaderParameter('X-Channel', description: 'Where the client is buying from: `khyyal_app`, `center_app`, `khyyal_web` or `center_web`. Prices the platform fee; unknown values are ignored.', type: 'string')]
     #[Response(status: 201, description: '`{data: ReservationResource, checkout: CheckoutResource|null}`.')]
     #[Response(status: 401, description: 'Missing or invalid Bearer token.')]
     #[Response(status: 404, description: 'No such service.')]
@@ -112,6 +115,7 @@ class ReservationController extends Controller
             PaymentMethod::from($request->validated('payment_method')),
             $request->validated('payment_company'),
             discount: $request->toDiscountInput(),
+            channel: PurchaseChannel::fromClientRequest($request),
         );
 
         return ReservationResource::make($reservation->load(self::RELATIONS))

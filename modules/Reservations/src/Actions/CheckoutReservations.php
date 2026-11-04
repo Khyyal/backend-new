@@ -5,6 +5,7 @@ namespace Modules\Reservations\Actions;
 use Illuminate\Support\Facades\DB;
 use Modules\Clients\Models\Client;
 use Modules\Purchase\Enums\PaymentMethod;
+use Modules\Purchase\Enums\PurchaseChannel;
 use Modules\Purchase\Enums\PurchaseSource;
 use Modules\Reservations\Booking\BookingGuard;
 use Modules\Reservations\Booking\CheckoutResult;
@@ -41,6 +42,7 @@ class CheckoutReservations
         PaymentMethod $method,
         ?string $paymentCompany = null,
         DiscountInput $discount = new DiscountInput,
+        ?PurchaseChannel $channel = null,
     ): CheckoutResult {
         $reservations = array_values($reservations);
         $this->ensureCheckoutable($client, $reservations);
@@ -51,7 +53,7 @@ class CheckoutReservations
             }
         }
 
-        return DB::transaction(function () use ($client, $reservations, $source, $method, $paymentCompany, $discount): CheckoutResult {
+        return DB::transaction(function () use ($client, $reservations, $source, $method, $paymentCompany, $discount, $channel): CheckoutResult {
             $result = $this->startCheckout->execute(
                 buyer: $client,
                 merchant: $reservations[0]->center,
@@ -66,6 +68,7 @@ class CheckoutReservations
                 ], $reservations),
                 paymentCompany: $paymentCompany,
                 discount: $discount,
+                channel: $channel,
             );
 
             if ($method === PaymentMethod::CashOnArrival) {

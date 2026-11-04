@@ -5,6 +5,7 @@ namespace Modules\Reservations\Actions;
 use Illuminate\Support\Facades\DB;
 use Modules\Clients\Models\Client;
 use Modules\Purchase\Enums\PaymentMethod;
+use Modules\Purchase\Enums\PurchaseChannel;
 use Modules\Purchase\Enums\PurchaseSource;
 use Modules\Reservations\Booking\BookingGuard;
 use Modules\Reservations\Booking\CheckoutResult;
@@ -39,6 +40,7 @@ class PurchaseMembership
         PaymentMethod $method,
         ?string $paymentCompany = null,
         DiscountInput $discount = new DiscountInput,
+        ?PurchaseChannel $channel = null,
     ): CheckoutResult {
         if ($method === PaymentMethod::CashOnArrival) {
             throw ReservationNotAllowedException::because('cash_on_arrival_disabled');
@@ -52,7 +54,7 @@ class PurchaseMembership
 
         $price = (int) $service->priceOptions()->value('price');
 
-        return DB::transaction(function () use ($client, $membership, $service, $price, $source, $method, $paymentCompany, $discount): CheckoutResult {
+        return DB::transaction(function () use ($client, $membership, $service, $price, $source, $method, $paymentCompany, $discount, $channel): CheckoutResult {
             $clientMembership = ClientMembership::query()->create([
                 'client_id' => $client->getKey(),
                 'service_id' => $service->getKey(),
@@ -92,6 +94,7 @@ class PurchaseMembership
                 ]],
                 paymentCompany: $paymentCompany,
                 discount: $discount,
+                channel: $channel,
             );
         });
     }
