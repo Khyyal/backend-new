@@ -152,3 +152,38 @@ test('images reject duplicates and unknown ids', function (): void {
 
     $this->patchJson($this->url, ['images' => [(string) Str::uuid()]])->assertUnprocessable();
 });
+
+test('primary user updates social links and site theme', function (): void {
+    $this->actingAs($this->primary, 'center_user')->patchJson($this->url, [
+        'social_links' => ['instagram' => 'https://instagram.com/khyyal', 'whatsapp' => '+966500000000'],
+        'site_theme' => ['primary' => '#0f766e', 'background' => '#fff'],
+    ])->assertOk()
+        ->assertJsonPath('data.social_links.instagram', 'https://instagram.com/khyyal')
+        ->assertJsonPath('data.site_theme.primary', '#0f766e');
+
+    $center = $this->center->fresh();
+    expect($center->social_links)->toBe(['instagram' => 'https://instagram.com/khyyal', 'whatsapp' => '+966500000000'])
+        ->and($center->site_theme)->toBe(['primary' => '#0f766e', 'background' => '#fff']);
+});
+
+test('social links and site theme reject unknown keys and invalid colors', function (): void {
+    $this->actingAs($this->primary, 'center_user');
+
+    $this->patchJson($this->url, ['social_links' => ['myspace' => 'https://myspace.com/x']])
+        ->assertJsonValidationErrors('social_links');
+    $this->patchJson($this->url, ['site_theme' => ['border' => '#000000']])
+        ->assertJsonValidationErrors('site_theme');
+    $this->patchJson($this->url, ['site_theme' => ['primary' => 'red']])
+        ->assertJsonValidationErrors('site_theme.primary');
+});
+
+test('primary user cannot change domain or custom site toggle', function (): void {
+    $this->actingAs($this->primary, 'center_user')->patchJson($this->url, [
+        'domain' => 'mine.example.com',
+        'custom_site_enabled' => true,
+    ])->assertOk();
+
+    $center = $this->center->fresh();
+    expect($center->domain)->toBeNull()
+        ->and($center->custom_site_enabled)->toBeFalse();
+});

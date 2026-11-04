@@ -26,6 +26,8 @@ class CenterResource extends JsonResource
                 'lng' => $this->resource->lng,
             ],
             'contact_phone' => $this->resource->contact_phone,
+            'social_links' => $this->resource->social_links,
+            'site_theme' => $this->resource->site_theme,
             'tags' => $this->whenLoaded('tags', fn () => $this->resource->tags->map(fn ($tag) => [
                 'id' => $tag->id,
                 'name' => $tag->name,
