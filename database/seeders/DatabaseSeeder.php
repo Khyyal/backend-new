@@ -14,9 +14,10 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-       $this->call([
-           \Modules\Support\Database\Seeders\DatabaseSeeder::class,
-           \Modules\Centers\Database\Seeders\DatabaseSeeder::class,
+        $this->call([
+            \Modules\Support\Database\Seeders\DatabaseSeeder::class,
+            \Modules\Centers\Database\Seeders\DatabaseSeeder::class,
+            \Modules\Billing\Database\Seeders\DatabaseSeeder::class,
         ]);
     }
 }
