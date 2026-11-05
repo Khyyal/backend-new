@@ -17,7 +17,7 @@ class VerifyOtpRequest extends FormRequest
     {
         return [
             'phone_number' => ['required', 'string', 'max:30', 'regex:/^\+?[0-9]{6,20}$/'],
-            'code' => ['required', 'digits:6'],
+            'code' => ['required', 'digits:4'],
             'device_identifier' => ['nullable', 'string', 'max:255'],
             'platform' => ['nullable', Rule::enum(DevicePlatform::class)],
         ];
