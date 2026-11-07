@@ -2,11 +2,13 @@
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Modules\Centers\Database\Factories\CenterFactory;
 use Modules\Centers\Database\Factories\UserFactory;
 use Modules\Centers\Enums\CenterStatus;
 use Modules\Centers\Models\Center;
+use Modules\Centers\Models\User;
 use Modules\Clients\Database\Factories\ClientFactory;
 use Modules\Support\Database\Factories\CityFactory;
 use Modules\Support\Database\Seeders\SystemRolePermissionSeeder;
@@ -62,7 +64,6 @@ test('shows a center', function (): void {
 
 test('creates a center with a primary owner and media', function (): void {
     $city = CityFactory::new()->create();
-    $owner = UserFactory::new()->create();
     $logo = app(TemporaryMediaService::class)
         ->createTemporary(UploadedFile::fake()->image('logo.png'), $this->admin)->uuid;
 
@@ -70,7 +71,7 @@ test('creates a center with a primary owner and media', function (): void {
         'name' => 'New Stable',
         'city_id' => $city->id,
         'contact_phone' => '0555',
-        'primary_user_id' => $owner->id,
+        'primary_user' => ['name' => 'Owner', 'phone' => '0501112233', 'password' => 'password123'],
         'logo' => $logo,
     ])->assertCreated()->assertJsonPath('data.name', 'New Stable')
         ->assertJsonPath('data.status', 'invisible');
@@ -78,8 +79,44 @@ test('creates a center with a primary owner and media', function (): void {
     $center = Center::findOrFail($response->json('data.id'));
 
     expect($center->slug)->toBe('new-stable')
-        ->and($center->users()->wherePivot('is_primary', true)->pluck('center_users.id')->all())->toBe([$owner->id])
         ->and($center->media()->where('collection_name', 'logo')->count())->toBe(1);
+
+    $owner = $center->users()->wherePivot('is_primary', true)->sole();
+
+    expect($owner->phone)->toBe('0501112233')
+        ->and($owner->name)->toBe('Owner')
+        ->and($owner->phone_verified_at)->not->toBeNull()
+        ->and(Hash::check('password123', $owner->password))->toBeTrue();
+});
+
+test('the primary user created with the center sees it in their centers', function (): void {
+    $this->actingAs($this->admin, 'system_user')->postJson($this->base, [
+        'name' => 'Owned',
+        'city_id' => CityFactory::new()->create()->id,
+        'contact_phone' => '0555',
+        'primary_user' => ['name' => 'Owner', 'phone' => '0501112233', 'password' => 'password123'],
+    ])->assertCreated();
+
+    $owner = User::query()->where('phone', '0501112233')->sole();
+
+    $this->actingAs($owner, 'center_user')->getJson('/api/v1/centers')
+        ->assertOk()->assertJsonPath('data.0.name', 'Owned');
+});
+
+test('create requires the primary user and a free phone, and leaves nothing behind on failure', function (): void {
+    $this->actingAs($this->admin, 'system_user');
+    $city = CityFactory::new()->create();
+    $base = ['name' => 'X', 'city_id' => $city->id, 'contact_phone' => '0555'];
+
+    $this->postJson($this->base, $base)->assertJsonValidationErrors('primary_user');
+    $this->postJson($this->base, [...$base, 'primary_user' => ['name' => 'O']])
+        ->assertJsonValidationErrors(['primary_user.phone', 'primary_user.password']);
+
+    $taken = UserFactory::new()->create();
+    $this->postJson($this->base, [...$base, 'primary_user' => ['name' => 'O', 'phone' => $taken->phone, 'password' => 'password123']])
+        ->assertJsonValidationErrors('primary_user.phone');
+
+    expect(Center::query()->where('name', 'X')->exists())->toBeFalse();
 });
 
 test('create validates required fields', function (): void {

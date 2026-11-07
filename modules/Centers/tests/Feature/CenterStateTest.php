@@ -32,7 +32,7 @@ test('centers are active by default', function (): void {
     $admin = SystemUser::factory()->superAdmin()->create();
 
     $id = $this->actingAs($admin, 'system_user')
-        ->postJson('/api/v1/admin/centers', ['name' => 'New', 'city_id' => CityFactory::new()->create()->id, 'contact_phone' => '0555'])
+        ->postJson('/api/v1/admin/centers', ['name' => 'New', 'city_id' => CityFactory::new()->create()->id, 'contact_phone' => '0555', 'primary_user' => ['name' => 'Owner', 'phone' => '0501112233', 'password' => 'password123']])
         ->assertCreated()
         ->assertJsonPath('data.state', 'active')
         ->json('data.id');

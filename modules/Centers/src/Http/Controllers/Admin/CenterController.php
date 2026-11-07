@@ -45,15 +45,15 @@ class CenterController extends Controller
      * Create a center.
      *
      * **Request body:**
-     * - `name`, `city_id`, `contact_phone` — required.
+     * - `name`, `city_id`, `contact_phone`, `primary_user` — required.
      * - `description`, `address`, `lat`/`lng` (both or neither) — optional.
      * - `status` — `visible` or `invisible` (default `invisible`).
-     * - `primary_user_id` — optional existing center user to assign as the primary owner.
+     * - `primary_user` — `{name, phone, password}` (password 8+ chars), created with the center as its primary owner; `phone` must not belong to another center user. The phone is marked verified, so the owner can sign in by phone OTP.
      * - `tags`, `logo`, `cover`, `images` — same as the center portal update.
      */
     #[Response(status: 201, description: 'The created center as a `CenterResource`.')]
     #[Response(status: 403, description: 'Missing the `centers.create` permission.')]
-    #[Response(status: 422, description: 'Validation failed, or a media id is invalid, expired or not owned by the user.')]
+    #[Response(status: 422, description: 'Validation failed (including a `primary_user.phone` already in use), or a media id is invalid, expired or not owned by the user.')]
     public function store(StoreCenterRequest $request): JsonResponse
     {
         $center = $this->service->create($request->user(), $request->validated());
@@ -77,7 +77,7 @@ class CenterController extends Controller
     /**
      * Update a center.
      *
-     * Partial update; same fields as create except `primary_user_id`. Social links and the site theme have their own endpoints.
+     * Partial update; same fields as create except `primary_user`. Social links and the site theme have their own endpoints.
      */
     #[Response(status: 200, description: 'The updated center as a `CenterResource`.')]
     #[Response(status: 403, description: 'Missing the `centers.update` permission.')]

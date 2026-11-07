@@ -58,9 +58,14 @@ class CenterAdminService
                 'slug' => $this->generateUniqueSlug($data['name']),
             ]);
 
-            if (! empty($data['primary_user_id'])) {
-                $this->assignPrimaryUser($center, User::query()->findOrFail($data['primary_user_id']));
-            }
+            $owner = User::query()->create([
+                'name' => $data['primary_user']['name'],
+                'phone' => $data['primary_user']['phone'],
+                'password' => $data['primary_user']['password'],
+                'phone_verified_at' => now(),
+            ]);
+
+            $this->assignPrimaryUser($center, $owner);
 
             return $this->updateService->update($center, $actor, $data);
         });
