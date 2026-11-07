@@ -78,3 +78,40 @@ test('pagination spans all three models newest first', function (): void {
     expect($all->unique())->toHaveCount(24)
         ->and($first->json('data.0.kind'))->toBe('membership');
 });
+
+test('status in_active lists the history and never overlaps the active feed', function (): void {
+    $active = [
+        ReservationFactory::new()->for($this->client)->create(),
+        ClientPackageFactory::new()->for($this->client)->create(),
+        ClientMembershipFactory::new()->for($this->client)->create(),
+    ];
+
+    $cancelled = ReservationFactory::new()->for($this->client)->status(ReservationStatus::Cancelled)->create();
+    $past = ReservationFactory::new()->for($this->client)->at('2026-10-10')->create();
+    $expiredPackage = ClientPackageFactory::new()->for($this->client)->expired()->create();
+    $exhausted = ClientPackageFactory::new()->for($this->client)->create(['status' => ClientPackageStatus::Exhausted, 'remaining_sessions' => 0]);
+    $expiredMembership = ClientMembershipFactory::new()->for($this->client)->expired()->create();
+
+    ReservationFactory::new()->for($this->client)->create(['client_package_id' => $active[1]->id]);
+    ClientMembershipFactory::new()->for($this->client)->pending()->create();
+    ReservationFactory::new()->status(ReservationStatus::Cancelled)->create();
+
+    $this->actingAs($this->client, 'client');
+
+    $keys = fn (string $query): array => collect($this->getJson("/api/v1/clients/bookings{$query}")->assertOk()->json('data'))
+        ->map(fn (array $item): string => $item['kind'].':'.$item['data']['id'])->sort()->values()->all();
+
+    expect($keys('?status=in_active'))->toBe(collect([
+        "reservation:{$cancelled->id}",
+        "reservation:{$past->id}",
+        "package:{$expiredPackage->id}",
+        "package:{$exhausted->id}",
+        "membership:{$expiredMembership->id}",
+    ])->sort()->values()->all())
+        ->and($keys('?status=in_active&type=packages'))->toHaveCount(2)
+        ->and($keys('?status=in_active&type=membership'))->toHaveCount(1)
+        ->and($keys(''))->toHaveCount(3)
+        ->and($keys('?status=active'))->toBe($keys(''));
+
+    $this->getJson('/api/v1/clients/bookings?status=other')->assertUnprocessable();
+});

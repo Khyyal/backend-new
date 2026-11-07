@@ -5,6 +5,7 @@ namespace Modules\Reservations\Http\Controllers\Client;
 use Carbon\CarbonImmutable;
 use Dedoc\Scramble\Attributes\Group;
 use Dedoc\Scramble\Attributes\Response;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Http\Request;
@@ -32,6 +33,10 @@ class BookingController extends Controller
 
     private const string TYPE_PACKAGES = 'packages';
 
+    private const string STATUS_ACTIVE = 'active';
+
+    private const string STATUS_IN_ACTIVE = 'in_active';
+
     private const string KIND_RESERVATION = 'reservation';
 
     private const string KIND_PACKAGE = 'package';
@@ -47,7 +52,7 @@ class BookingController extends Controller
     public function __construct(private readonly BookVisitFromMembership $bookVisit) {}
 
     /**
-     * List my active bookings.
+     * List my bookings.
      *
      * One paginated feed (15 per page), newest first, mixing stand-alone reservations, packages and
      * memberships. Each item is `{kind, data}` where `kind` is `reservation`, `package` or `membership`
@@ -57,24 +62,28 @@ class BookingController extends Controller
      * membership are not listed on their own); a package with sessions left that has not expired; a
      * membership that has not expired.
      *
-     * **Query:** `type` (`all` by default, `membership` for memberships only, `packages` for packages only).
+     * **Query:** `type` (`all` by default, `membership` for memberships only, `packages` for packages only);
+     * `status` (`active` by default, or `in_active` for the history: cancelled, completed, no-show or past
+     * reservations, and exhausted, expired or cancelled packages and memberships; unpaid ones are in neither).
      */
     #[Response(status: 200, description: 'Paginated `ClientBookingResource` collection.')]
     #[Response(status: 401, description: 'Missing or invalid Bearer token.')]
-    #[Response(status: 422, description: 'Invalid `type`.')]
+    #[Response(status: 422, description: 'Invalid `type` or `status`.')]
     public function index(Request $request): AnonymousResourceCollection
     {
         $filters = $request->validate([
             'type' => ['nullable', Rule::in([self::TYPE_ALL, self::TYPE_MEMBERSHIP, self::TYPE_PACKAGES])],
+            'status' => ['nullable', Rule::in([self::STATUS_ACTIVE, self::STATUS_IN_ACTIVE])],
         ]);
 
         $type = $filters['type'] ?? self::TYPE_ALL;
+        $active = ($filters['status'] ?? self::STATUS_ACTIVE) === self::STATUS_ACTIVE;
         $client = $this->client($request);
 
         $branches = array_filter([
-            $type === self::TYPE_ALL ? $this->reservations($client) : null,
-            $type !== self::TYPE_MEMBERSHIP ? $this->packages($client) : null,
-            $type !== self::TYPE_PACKAGES ? $this->memberships($client) : null,
+            $type === self::TYPE_ALL ? $this->reservations($client, $active) : null,
+            $type !== self::TYPE_MEMBERSHIP ? $this->packages($client, $active) : null,
+            $type !== self::TYPE_PACKAGES ? $this->memberships($client, $active) : null,
         ]);
 
         $union = array_shift($branches);
@@ -104,32 +113,45 @@ class BookingController extends Controller
         }));
     }
 
-    private function reservations(Client $client): QueryBuilder
+    private function reservations(Client $client, bool $active): QueryBuilder
     {
+        $isActive = fn (Builder $query) => $query
+            ->whereIn('status', [ReservationStatus::Pending, ReservationStatus::Confirmed])
+            ->whereRaw('COALESCE(end_date, date) >= ?', [today()->toDateString()]);
+
         return $client->reservations()
             ->whereNull('client_package_id')
             ->whereNull('client_membership_id')
-            ->whereIn('status', [ReservationStatus::Pending, ReservationStatus::Confirmed])
-            ->whereRaw('COALESCE(end_date, date) >= ?', [today()->toDateString()])
+            ->when($active, fn (Builder $query) => $query->where($isActive), fn (Builder $query) => $query->whereNot($isActive))
             ->toBase()
             ->selectRaw("'".self::KIND_RESERVATION."' as kind, id, created_at");
     }
 
-    private function packages(Client $client): QueryBuilder
+    private function packages(Client $client, bool $active): QueryBuilder
     {
-        return $client->packages()
+        $isActive = fn (Builder $query) => $query
             ->where('status', ClientPackageStatus::Active)
             ->where('remaining_sessions', '>', 0)
-            ->where(fn ($query) => $query->whereNull('expires_at')->orWhere('expires_at', '>', now()))
+            ->where(fn (Builder $query) => $query->whereNull('expires_at')->orWhere('expires_at', '>', now()));
+
+        return $client->packages()
+            ->when($active, fn (Builder $query) => $query->where($isActive), fn (Builder $query) => $query
+                ->where('status', '!=', ClientPackageStatus::Pending)
+                ->whereNot($isActive))
             ->toBase()
             ->selectRaw("'".self::KIND_PACKAGE."' as kind, id, created_at");
     }
 
-    private function memberships(Client $client): QueryBuilder
+    private function memberships(Client $client, bool $active): QueryBuilder
     {
-        return $client->memberships()
+        $isActive = fn (Builder $query) => $query
             ->where('status', ClientMembershipStatus::Active)
-            ->where(fn ($query) => $query->whereNull('expires_at')->orWhere('expires_at', '>', now()))
+            ->where(fn (Builder $query) => $query->whereNull('expires_at')->orWhere('expires_at', '>', now()));
+
+        return $client->memberships()
+            ->when($active, fn (Builder $query) => $query->where($isActive), fn (Builder $query) => $query
+                ->where('status', '!=', ClientMembershipStatus::Pending)
+                ->whereNot($isActive))
             ->toBase()
             ->selectRaw("'".self::KIND_MEMBERSHIP."' as kind, id, created_at");
     }
