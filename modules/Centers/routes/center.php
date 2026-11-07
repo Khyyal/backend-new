@@ -8,6 +8,7 @@ use Modules\Centers\Http\Controllers\Center\CenterController;
 use Modules\Centers\Http\Controllers\Center\CenterUserController;
 use Modules\Centers\Http\Controllers\Center\LaunchController;
 use Modules\Centers\Http\Controllers\Center\PayoutController;
+use Modules\Centers\Http\Controllers\Center\ProfileCompletionController;
 use Modules\Centers\Http\Controllers\Center\PurchaseController;
 use Modules\Centers\Http\Controllers\Center\RatingController;
 use Modules\Centers\Http\Controllers\Center\RegisterController;
@@ -75,6 +76,9 @@ Route::middleware(['api'])
 
                         Route::match(['put', 'patch'], '/{center}/site-theme', [CenterController::class, 'updateSiteTheme'])
                             ->name('site-theme.update');
+
+                        Route::get('/{center}/profile-completion', ProfileCompletionController::class)
+                            ->name('profile-completion');
 
                         Route::get('/{center}/ratings', [RatingController::class, 'index'])
                             ->name('ratings');
