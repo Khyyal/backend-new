@@ -12,6 +12,7 @@ use Modules\Centers\Http\Controllers\Center\ProfileCompletionController;
 use Modules\Centers\Http\Controllers\Center\PurchaseController;
 use Modules\Centers\Http\Controllers\Center\RatingController;
 use Modules\Centers\Http\Controllers\Center\RegisterController;
+use Modules\Centers\Http\Controllers\Center\TagController;
 use Modules\Support\Http\Controllers\NotificationController;
 
 Route::middleware(['api'])
@@ -59,6 +60,9 @@ Route::middleware(['api'])
             ->group(function (): void {
                 Route::get('/', [CenterController::class, 'index'])
                     ->name('index');
+
+                Route::get('/tags', [TagController::class, 'index'])
+                    ->name('tags.index');
 
                 Route::post('/{center}/access', [CenterController::class, 'access'])
                     ->name('access');

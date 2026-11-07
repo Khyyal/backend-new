@@ -2,6 +2,7 @@
 
 namespace Modules\Clients\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -44,6 +45,21 @@ class Client extends Authenticatable implements Buyer
     public function getFullNameAttribute(): string
     {
         return trim("{$this->first_name} {$this->last_name}");
+    }
+
+    /**
+     * Match a full name and/or phone number: every word of the term must appear in the first name, last name or phone number.
+     */
+    public function scopeSearch(Builder $query, string $term): void
+    {
+        foreach (preg_split('/\s+/', trim($term), -1, PREG_SPLIT_NO_EMPTY) as $word) {
+            $word = addcslashes($word, '%_\\');
+
+            $query->where(fn (Builder $query) => $query
+                ->where('first_name', 'like', "%{$word}%")
+                ->orWhere('last_name', 'like', "%{$word}%")
+                ->orWhere('phone_number', 'like', "%{$word}%"));
+        }
     }
 
     public function favoriteCenters(): BelongsToMany

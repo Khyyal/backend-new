@@ -223,3 +223,15 @@ test('primary user cannot change domain or custom site toggle', function (): voi
     expect($center->domain)->toBeNull()
         ->and($center->custom_site_enabled)->toBeFalse();
 });
+
+test('a center user lists the available tags before any center is selected', function (): void {
+    TagFactory::new()->count(3)->create();
+
+    $this->getJson('/api/v1/centers/tags')->assertUnauthorized();
+
+    $this->actingAs($this->primary, 'center_user')
+        ->getJson('/api/v1/centers/tags')
+        ->assertOk()
+        ->assertJsonCount(3, 'data')
+        ->assertJsonStructure(['data' => [['id', 'name']]]);
+});

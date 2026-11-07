@@ -11,7 +11,9 @@ use Modules\Centers\Events\CenterRegistered;
 use Modules\Centers\Http\Middleware\EnsureCenterAccessScope;
 use Modules\Centers\Listeners\SendCenterRegisteredNotification;
 use Modules\Centers\Models\Center;
+use Modules\Centers\Models\Tag;
 use Modules\Centers\Policies\CenterPolicy;
+use Modules\Centers\Policies\TagPolicy;
 
 class CentersServiceProvider extends ServiceProvider
 {
@@ -28,6 +30,7 @@ class CentersServiceProvider extends ServiceProvider
         );
 
         Gate::policy(Center::class, CenterPolicy::class);
+        Gate::policy(Tag::class, TagPolicy::class);
 
         Route::middleware(['api'])
             ->prefix('api/v1')

@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Modules\Centers\Http\Controllers\Admin\CenterController;
+use Modules\Centers\Http\Controllers\Admin\TagController;
 use Modules\Centers\Http\Controllers\Center\BlockedClientController;
 use Modules\Centers\Http\Controllers\Center\PurchaseController;
 use Modules\Centers\Http\Controllers\Center\RatingController;
@@ -25,4 +26,10 @@ Route::prefix('admin/centers')
 
         Route::get('/{center}/purchases', [PurchaseController::class, 'index'])->name('purchases.index');
         Route::get('/{center}/purchases/{purchase}', [PurchaseController::class, 'show'])->name('purchases.show');
+    });
+
+Route::prefix('admin')
+    ->middleware(['auth:system_user'])
+    ->group(function (): void {
+        Route::apiResource('tags', TagController::class)->names('admin.tags');
     });

@@ -134,7 +134,25 @@ test('selected targets must exist in the audience', function (): void {
         'audience' => 'centers',
         'target_mode' => 'selected',
         'target_ids' => [$center->id],
-    ])->assertCreated()->assertJsonPath('data.target_ids', [$center->id]);
+    ])->assertCreated()
+        ->assertJsonPath('data.target_ids', [$center->id])
+        ->assertJsonPath('data.targets', [['id' => $center->id, 'name' => $center->name]]);
+});
+
+test('the show endpoint returns client targets with their names', function (): void {
+    $this->actingAs($this->admin, 'system_user');
+    $client = ClientFactory::new()->create(['first_name' => 'Aisha', 'last_name' => 'Noor']);
+
+    $id = $this->postJson('/api/v1/admin/notification-campaigns', [
+        ...$this->push,
+        'audience' => 'clients',
+        'target_mode' => 'selected',
+        'target_ids' => [$client->id],
+    ])->assertCreated()->json('data.id');
+
+    $this->getJson("/api/v1/admin/notification-campaigns/{$id}")
+        ->assertOk()
+        ->assertJsonPath('data.targets', [['id' => $client->id, 'name' => 'Aisha Noor']]);
 });
 
 test('scheduling, sending, duplicating and cancelling follow the lifecycle', function (): void {

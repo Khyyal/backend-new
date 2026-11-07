@@ -49,6 +49,15 @@ enum SystemPermission: string
     case UpdateCity = 'cities.update';
     case DeleteCity = 'cities.delete';
 
+    case ViewAnyTags = 'tags.view_any';
+    case ViewTag = 'tags.view';
+    case CreateTag = 'tags.create';
+    case UpdateTag = 'tags.update';
+    case DeleteTag = 'tags.delete';
+
+    case ViewAnyClients = 'clients.view_any';
+    case ViewClient = 'clients.view';
+
     case ManageFees = 'fees.manage';
     case ManagePayouts = 'payouts.manage';
 
