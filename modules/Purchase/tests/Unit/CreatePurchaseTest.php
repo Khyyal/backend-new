@@ -115,6 +115,7 @@ test('CreatePurchase with Center buyer + Platform merchant (center membership pu
 
     expect($purchase->buyer_type)->toBe($center->getMorphClass());
     expect($purchase->merchant_type)->toBe('platform');
+    expect($purchase->fresh()->merchant_id)->toBe(0);
     expect($purchase->source)->toBe(PurchaseSource::Center);
     expect($purchase->metadata)->toBe(['plan_code' => 'premium_annual_v1']);
     expect($purchase->items[0]->name)->toBe('Annual Premium Plan');

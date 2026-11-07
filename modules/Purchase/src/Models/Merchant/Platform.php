@@ -10,13 +10,17 @@ class Platform extends Model
 
     public $incrementing = false;
 
-    protected $keyType = 'string';
+    protected $keyType = 'int';
 
     protected $fillable = [];
 
-    public function getKey(): string
+    /**
+     * `purchases.merchant_id` is an unsigned integer, so the platform is stored as 0;
+     * `merchant_type = 'platform'` is what tells it apart from a center.
+     */
+    public function getKey(): int
     {
-        return 'platform';
+        return 0;
     }
 
     public function getKeyName(): string
@@ -27,7 +31,7 @@ class Platform extends Model
     public function getAttribute($key)
     {
         if ($key === 'id') {
-            return 'platform';
+            return 0;
         }
 
         return null;
