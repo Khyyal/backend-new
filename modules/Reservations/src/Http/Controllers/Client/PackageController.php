@@ -59,6 +59,26 @@ class PackageController extends Controller
      *
      * Opens an online checkout. The package becomes active once paid, and its validity starts then.
      *
+     * **`checkout.gateway`** is what the app needs to pay; its shape depends on `payment_company`
+     * (`moyasar`, `tamara`, or the default gateway; `fake` exists only in development and tests).
+     * Amounts are integer halalas. The app never decides the outcome: the status changes only
+     * after the payment provider confirms the payment to the backend.
+     *
+     * - `moyasar` (card, paid inside the app with the Moyasar SDK, no redirect from us):
+     *   `{type: "moyasar", publishable_key, amount_halalas, currency, given_id, description}`.
+     *   Create the Moyasar payment with `publishable_key`, `amount_halalas` and `currency` as given, and
+     *   send `given_id` unchanged as the payment's `given_id`: it is our payment id and links the
+     *   Moyasar payment to this checkout. `description` is the text to show. Moyasar returns a
+     *   `transaction_url` for 3-D Secure; open it when present.
+     * - `tamara` (installments, paid on Tamara's page): `{checkout_url, provider_reference, checkout_id, tamara_status}`.
+     *   Open `checkout_url` in a browser or web view. `provider_reference` is the Tamara order id,
+     *   `checkout_id` the Tamara checkout id, `tamara_status` the order status when created (`new`).
+     *   Tamara sends the customer back to the success, failure or cancel URL configured for the app.
+     * - `fake` (testing only): `{checkout_url, provider_reference}`, a placeholder that never charges.
+     *
+     * `checkout.payment.payment_company` repeats the gateway used. `checkout.gateway` is null when no
+     * online payment is needed.
+     *
      * **Request body:**
      * - `service_package_id`: required.
      * - `payment_company`: optional.

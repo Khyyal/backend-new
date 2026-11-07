@@ -63,6 +63,7 @@ class MoyasarWebhookEventHandler implements WebhookEventHandler
         return [
             'payment_order_id' => $paymentId,
             'payment_status' => $status,
+            'payment_id' => $this->extractGivenId($payload),
         ];
     }
 
@@ -73,6 +74,11 @@ class MoyasarWebhookEventHandler implements WebhookEventHandler
      */
     private function extractPaymentId(array $payload): string
     {
+        // Real webhooks carry the event id at the top and the payment under `data`.
+        if (isset($payload['data']) && is_array($payload['data']) && isset($payload['data']['id']) && is_string($payload['data']['id'])) {
+            return $payload['data']['id'];
+        }
+
         $candidates = [
             'id',
             'payment_id',
@@ -96,5 +102,18 @@ class MoyasarWebhookEventHandler implements WebhookEventHandler
         }
 
         return '';
+    }
+
+    /**
+     * Our payment id, sent to Moyasar as `given_id` when the app created the payment.
+     *
+     * @param  array<string, mixed>  $payload
+     */
+    private function extractGivenId(array $payload): ?string
+    {
+        $data = is_array($payload['data'] ?? null) ? $payload['data'] : $payload;
+        $givenId = $data['given_id'] ?? null;
+
+        return is_string($givenId) && $givenId !== '' ? $givenId : null;
     }
 }

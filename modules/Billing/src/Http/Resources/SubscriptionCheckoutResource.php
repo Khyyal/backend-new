@@ -8,7 +8,8 @@ use Modules\Billing\Data\SubscriptionCheckoutResult;
 
 /**
  * The purchase and payment opened for a paid plan; `gateway` holds what the
- * center needs to pay online.
+ * center needs to pay online: for `moyasar` `{type, publishable_key, amount_halalas, currency, given_id, description}`,
+ * for `tamara` `{checkout_url, provider_reference, checkout_id, tamara_status}`, for `fake` (tests) `{checkout_url, provider_reference}`.
  *
  * @property SubscriptionCheckoutResult $resource
  */

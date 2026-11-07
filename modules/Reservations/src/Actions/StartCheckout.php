@@ -13,6 +13,7 @@ use Modules\Promotions\Exceptions\PromotionUnavailableException;
 use Modules\Purchase\Actions\CreatePayment;
 use Modules\Purchase\Actions\CreatePurchase;
 use Modules\Purchase\Actions\RecordPurchaseFee;
+use Modules\Purchase\Actions\StartOnlinePayment;
 use Modules\Purchase\Contracts\Buyer;
 use Modules\Purchase\Enums\PaymentMethod;
 use Modules\Purchase\Enums\PurchaseChannel;
@@ -50,6 +51,7 @@ class StartCheckout
         private CheckoutPricer $pricer,
         private PromotionRedeemer $redeemer,
         private RecordPurchaseFee $recordFee,
+        private StartOnlinePayment $startOnlinePayment,
     ) {}
 
     /**
@@ -113,7 +115,7 @@ class StartCheckout
             }
 
             $gateway = $isOnline
-                ? $this->gateways->driver($payment->payment_company)->initialize($purchase, $payment)
+                ? $this->startOnlinePayment->execute($purchase, $payment)
                 : null;
 
             return new CheckoutResult($purchase, $payment, $gateway);

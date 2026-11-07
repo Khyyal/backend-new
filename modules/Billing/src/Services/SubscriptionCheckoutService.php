@@ -10,6 +10,7 @@ use Modules\Billing\Models\Plan;
 use Modules\Centers\Models\Center;
 use Modules\Purchase\Actions\CreatePayment;
 use Modules\Purchase\Actions\CreatePurchase;
+use Modules\Purchase\Actions\StartOnlinePayment;
 use Modules\Purchase\Enums\PaymentMethod;
 use Modules\Purchase\Enums\PurchaseChannel;
 use Modules\Purchase\Enums\PurchaseSource;
@@ -29,6 +30,7 @@ class SubscriptionCheckoutService
         private readonly CreatePurchase $createPurchase,
         private readonly CreatePayment $createPayment,
         private readonly PaymentGatewayManager $gateways,
+        private readonly StartOnlinePayment $startOnlinePayment,
     ) {}
 
     /**
@@ -62,7 +64,7 @@ class SubscriptionCheckoutService
                 $paymentCompany ?? $this->gateways->getDefaultDriver(),
             );
 
-            $gateway = $this->gateways->driver($payment->payment_company)->initialize($purchase, $payment);
+            $gateway = $this->startOnlinePayment->execute($purchase, $payment);
 
             return new SubscriptionCheckoutResult($subscription, $purchase, $payment, $gateway);
         });

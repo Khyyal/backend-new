@@ -16,6 +16,21 @@ use Modules\Purchase\Models\Payment;
 
 class PaymentStateService
 {
+    /**
+     * Move the payment to the status a provider reported; pending changes nothing.
+     */
+    public function applyStatus(Payment $payment, PaymentStatus $status): Payment
+    {
+        return match ($status) {
+            PaymentStatus::Processing => $this->markProcessing($payment),
+            PaymentStatus::Succeeded => $this->markSucceeded($payment),
+            PaymentStatus::Failed => $this->markFailed($payment),
+            PaymentStatus::Cancelled => $this->cancel($payment),
+            PaymentStatus::Expired => $this->expire($payment),
+            default => $payment,
+        };
+    }
+
     public function markProcessing(Payment $payment): Payment
     {
         return $this->transition(

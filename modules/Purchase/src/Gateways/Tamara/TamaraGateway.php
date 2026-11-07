@@ -3,11 +3,12 @@
 namespace Modules\Purchase\Gateways\Tamara;
 
 use Modules\Purchase\Contracts\PaymentGateway;
+use Modules\Purchase\Contracts\VerifiesWebhookPayments;
 use Modules\Purchase\Enums\PaymentStatus;
 use Modules\Purchase\Models\Payment;
 use Modules\Purchase\Models\Purchase;
 
-class TamaraGateway implements PaymentGateway
+class TamaraGateway implements PaymentGateway, VerifiesWebhookPayments
 {
     public function __construct(
         private readonly TamaraClient $client,

@@ -4,11 +4,13 @@ namespace Modules\Purchase\Services;
 
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
+use Modules\Purchase\Contracts\VerifiesWebhookPayments;
 use Modules\Purchase\Contracts\WebhookEventHandler;
 use Modules\Purchase\Enums\PaymentStatus;
 use Modules\Purchase\Gateways\FakeWebhookEventHandler;
 use Modules\Purchase\Gateways\Moyasar\MoyasarWebhookEventHandler;
 use Modules\Purchase\Gateways\Tamara\TamaraWebhookEventHandler;
+use Modules\Purchase\Managers\PaymentGatewayManager;
 use Modules\Purchase\Models\Payment;
 use Modules\Purchase\Models\WebhookEvent;
 
@@ -75,7 +77,7 @@ class WebhookProcessorService
             $action = $handler->handle($event);
 
             if ($action !== null) {
-                $this->applyPaymentAction($action);
+                $this->applyPaymentAction($gateway, $action);
             }
 
             // Mark processed (separate update that commits immediately)
@@ -102,13 +104,13 @@ class WebhookProcessorService
         string $externalEventId,
         string $eventType,
         array $payload,
-    ): \Modules\Purchase\Models\WebhookEvent {
+    ): WebhookEvent {
         return DB::transaction(function () use (
             $gateway,
             $externalEventId,
             $eventType,
             $payload,
-        ): \Modules\Purchase\Models\WebhookEvent {
+        ): WebhookEvent {
             $event = WebhookEvent::query()
                 ->where('gateway', $gateway)
                 ->where('external_event_id', $externalEventId)
@@ -145,30 +147,53 @@ class WebhookProcessorService
     }
 
     /**
-     * @param  array{payment_order_id: string, payment_status: PaymentStatus}  $action
+     * Finds the payment, asks Tamara-style gateways to authorize it when needed, re-checks a
+     * success with the provider and moves the payment to the resulting status.
+     *
+     * @param  array{payment_order_id: string, payment_status: PaymentStatus, payment_id?: string|null, authorize?: bool}  $action
      */
-    private function applyPaymentAction(array $action): void
+    private function applyPaymentAction(string $gateway, array $action): void
     {
-        $orderId = $action['payment_order_id'];
+        $payment = $this->findPayment($gateway, $action);
         $status = $action['payment_status'];
+        $driver = app(PaymentGatewayManager::class)->driver($gateway);
 
-        $payment = Payment::query()
-            ->where('payment_order_id', $orderId)
-            ->first();
+        if (($action['authorize'] ?? false) === true && $status !== PaymentStatus::Pending) {
+            $status = $driver->authorize($payment);
+        } elseif ($status === PaymentStatus::Succeeded && $driver instanceof VerifiesWebhookPayments) {
+            $status = $driver->verify($payment);
+        }
+
+        $this->paymentStateService->applyStatus($payment, $status);
+    }
+
+    /**
+     * Provider id first; otherwise our own payment id echoed by the provider, which also links the
+     * provider id for later calls. A payment of another gateway is never matched.
+     *
+     * @param  array{payment_order_id: string, payment_status: PaymentStatus, payment_id?: string|null}  $action
+     */
+    private function findPayment(string $gateway, array $action): Payment
+    {
+        $payment = Payment::query()->where('payment_order_id', $action['payment_order_id'])->first();
+
+        if ($payment === null && ($action['payment_id'] ?? null) !== null) {
+            $payment = Payment::query()
+                ->whereKey($action['payment_id'])
+                ->where('payment_company', $gateway)
+                ->first();
+
+            if ($payment !== null && ($payment->payment_order_id ?? '') === '') {
+                $payment->forceFill(['payment_order_id' => $action['payment_order_id']])->save();
+            }
+        }
 
         if ($payment === null) {
             throw new InvalidArgumentException(
-                sprintf('No payment found with payment_order_id "%s".', $orderId)
+                sprintf('No payment found with payment_order_id "%s".', $action['payment_order_id'])
             );
         }
 
-        match ($status) {
-            PaymentStatus::Processing => $this->paymentStateService->markProcessing($payment),
-            PaymentStatus::Succeeded => $this->paymentStateService->markSucceeded($payment),
-            PaymentStatus::Failed => $this->paymentStateService->markFailed($payment),
-            PaymentStatus::Cancelled => $this->paymentStateService->cancel($payment),
-            PaymentStatus::Expired => $this->paymentStateService->expire($payment),
-            PaymentStatus::Pending => null, // no state change: pending-to-pending is a no-op
-        };
+        return $payment;
     }
 }

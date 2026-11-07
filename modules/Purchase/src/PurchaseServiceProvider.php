@@ -75,6 +75,7 @@ class PurchaseServiceProvider extends ServiceProvider
             ->prefix('api/v1')
             ->group(function (): void {
                 require __DIR__.'/../routes/admin.php';
+                require __DIR__.'/../routes/webhooks.php';
             });
     }
 }

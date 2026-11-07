@@ -58,9 +58,13 @@ class TamaraWebhookEventHandler implements WebhookEventHandler
             return null;
         }
 
+        $reference = $payload['order_reference_id'] ?? ($payload['data']['order_reference_id'] ?? null);
+
         return [
             'payment_order_id' => $orderId,
             'payment_status' => $status,
+            'payment_id' => is_string($reference) && $reference !== '' ? $reference : null,
+            'authorize' => $eventType === 'order_approved',
         ];
     }
 

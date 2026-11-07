@@ -11,9 +11,11 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Modules\Support\Jobs\CleanupExpiredMedia;
 use Modules\Support\Listeners\DeleteExpiredNotificationTokens;
+use Modules\Support\Models\City;
 use Modules\Support\Models\SystemUser;
 use Modules\Support\Notifications\Contracts\NotificationServiceContract;
 use Modules\Support\Notifications\NotificationService;
+use Modules\Support\Policies\CityPolicy;
 use Modules\Support\Policies\MediaPolicy;
 use Modules\Support\Policies\SystemUserPolicy;
 use Modules\Support\WhatsApp\Contracts\WhatsAppGateway;
@@ -38,6 +40,7 @@ class SupportServiceProvider extends ServiceProvider
     {
         Gate::policy(config('media-library.media_model'), MediaPolicy::class);
         Gate::policy(SystemUser::class, SystemUserPolicy::class);
+        Gate::policy(City::class, CityPolicy::class);
 
         Event::listen(NotificationFailed::class, DeleteExpiredNotificationTokens::class);
 

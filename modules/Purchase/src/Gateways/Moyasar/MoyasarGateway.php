@@ -2,13 +2,15 @@
 
 namespace Modules\Purchase\Gateways\Moyasar;
 
+use Modules\Purchase\Contracts\LinksProviderPayment;
 use Modules\Purchase\Contracts\PaymentGateway;
+use Modules\Purchase\Contracts\VerifiesWebhookPayments;
 use Modules\Purchase\Enums\PaymentStatus;
 use Modules\Purchase\Exceptions\PaymentVerificationException;
 use Modules\Purchase\Models\Payment;
 use Modules\Purchase\Models\Purchase;
 
-class MoyasarGateway implements PaymentGateway
+class MoyasarGateway implements LinksProviderPayment, PaymentGateway, VerifiesWebhookPayments
 {
     public function __construct(
         private readonly MoyasarClient $client,
@@ -26,7 +28,7 @@ class MoyasarGateway implements PaymentGateway
      *   - amount_halalas: integer halalas of Payment.amount
      *   - currency: e.g. "SAR"
      *   - given_id: stable Payment.id (used as idempotency key on frontend create)
-     *   - callback_url, description
+     *   - description
      *
      * @return array{type: string, publishable_key: string, amount_halalas: int, currency: string, given_id: string, description: string}
      */
@@ -40,6 +42,23 @@ class MoyasarGateway implements PaymentGateway
             'given_id' => (string) $payment->getKey(),
             'description' => 'Purchase #'.$purchase->getKey(),
         ];
+    }
+
+    /**
+     * The app creates the Moyasar payment itself with `given_id` = our payment id, so the
+     * Moyasar id is linked here after confirming the payment really carries that id.
+     *
+     * @throws PaymentVerificationException
+     */
+    public function link(Payment $payment, string $providerPaymentId): void
+    {
+        $response = $this->client->fetchPayment($providerPaymentId);
+
+        if ((string) ($response['given_id'] ?? '') !== (string) $payment->getKey()) {
+            throw new PaymentVerificationException('The provider payment does not belong to this payment.');
+        }
+
+        $payment->forceFill(['payment_order_id' => $providerPaymentId])->save();
     }
 
     /**

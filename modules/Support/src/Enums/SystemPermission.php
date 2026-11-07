@@ -43,6 +43,12 @@ enum SystemPermission: string
 
     case ManageHomepage = 'homepage.manage';
 
+    case ViewAnyCities = 'cities.view_any';
+    case ViewCity = 'cities.view';
+    case CreateCity = 'cities.create';
+    case UpdateCity = 'cities.update';
+    case DeleteCity = 'cities.delete';
+
     case ManageFees = 'fees.manage';
     case ManagePayouts = 'payouts.manage';
 

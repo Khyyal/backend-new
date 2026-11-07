@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Modules\Support\Http\Controllers\Admin\AuthController;
+use Modules\Support\Http\Controllers\Admin\CityController;
 
 Route::prefix('admin')
     ->name('admin.')
@@ -17,4 +18,7 @@ Route::prefix('admin')
                     ->middleware('auth:system_user')
                     ->name('me');
             });
+
+        Route::middleware('auth:system_user')
+            ->apiResource('cities', CityController::class);
     });

@@ -313,7 +313,7 @@ test('10 Events all exist, accept Purchase or Payment typed constructor, use Dis
     }
 });
 
-test('No Purchase/Payment controller exists outside the admin API (AC-46 architecture)', function (): void {
+test('No Purchase/Payment controller exists outside the admin API except provider webhooks and payment verification (AC-46 architecture)', function (): void {
     $srcDir = dirname(__DIR__, 2).'/src';
     $this->assertDirectoryExists($srcDir);
 
@@ -324,10 +324,12 @@ test('No Purchase/Payment controller exists outside the admin API (AC-46 archite
             continue;
         }
         $name = $file->getFilename();
-        if (str_contains($name, 'Controller') && ! str_contains($file->getPathname(), '/Http/Controllers/Admin/')) {
+        $providerFacing = in_array($name, ['WebhookController.php', 'PaymentVerificationController.php'], true);
+
+        if (str_contains($name, 'Controller') && ! $providerFacing && ! str_contains($file->getPathname(), '/Http/Controllers/Admin/')) {
             $controllerFiles[] = $name;
         }
     }
 
-    expect($controllerFiles)->toBeEmpty('Only admin controllers may exist in Purchase module');
+    expect($controllerFiles)->toBeEmpty('Only admin, webhook and payment-verification controllers may exist in Purchase module');
 });
