@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Modules\Centers\Database\Factories\CenterFactory;
 use Modules\Centers\Enums\CenterStatus;
 use Modules\Homepage\Database\Factories\BannerFactory;
@@ -179,4 +180,17 @@ test('editing a section shows on the next request', function (): void {
 
 test('lat and lng must be sent together', function (): void {
     $this->getJson('/api/v1/clients/home?lat=24.7')->assertJsonValidationErrors('lng');
+});
+
+test('home definitions survive a serializing cache store', function (): void {
+    config(['cache.default' => 'file', 'cache.stores.file.path' => storage_path('framework/testing/cache-'.uniqid())]);
+    Cache::purge('file');
+    Cache::flush();
+
+    HomeSectionFactory::new()->published()->create(['key' => 'picks']);
+
+    $this->getJson('/api/v1/clients/home')->assertOk()->assertJsonCount(0, 'data');
+    $this->getJson('/api/v1/clients/home')->assertOk();
+
+    Cache::flush();
 });

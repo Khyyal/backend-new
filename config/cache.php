@@ -1,6 +1,13 @@
 <?php
 
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Str;
+use Modules\Homepage\Models\Banner;
+use Modules\Homepage\Models\HomeSection;
+use Modules\Homepage\Models\HomeSectionItem;
+use Modules\Promotions\Models\Promotion;
+use Modules\Promotions\Models\PromotionSchedule;
+use Modules\Promotions\Models\PromotionTarget;
 
 return [
 
@@ -131,6 +138,14 @@ return [
     |
     */
 
-    'serializable_classes' => false,
+    'serializable_classes' => [
+        Collection::class,
+        HomeSection::class,
+        HomeSectionItem::class,
+        Banner::class,
+        Promotion::class,
+        PromotionTarget::class,
+        PromotionSchedule::class,
+    ],
 
 ];
