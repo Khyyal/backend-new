@@ -2,6 +2,7 @@
 
 namespace Modules\Purchase\Models;
 
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -11,7 +12,7 @@ use Modules\Purchase\Enums\PaymentStatus;
 
 class Payment extends Model
 {
-    use HasFactory;
+    use HasFactory, HasUuids;
 
     protected $fillable = [
         'purchase_id',
@@ -42,6 +43,16 @@ class Payment extends Model
             'refunded_amount' => 'integer',
             'provider_fee_amount' => 'integer',
         ];
+    }
+
+    /**
+     * Only the public `uuid` is generated; `id` stays the auto-increment key.
+     *
+     * @return list<string>
+     */
+    public function uniqueIds(): array
+    {
+        return ['uuid'];
     }
 
     /**

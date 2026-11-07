@@ -9,10 +9,12 @@ namespace Modules\Purchase\Gateways\Moyasar;
  * Raw source.type values are NEVER discarded; they are preserved in provider_data.
  *
  * Normalization table:
- *   creditcard  → card
- *   Apple Pay   → apple_pay
- *   Samsung Pay → samsung_pay
- *   STC Pay     → stc_pay
+ *   creditcard            → card
+ *   applepay / Apple Pay  → apple_pay
+ *   samsungpay            → samsung_pay
+ *   stcpay                → stc_pay
+ *
+ * Moyasar's API spells source types without spaces (applepay, samsungpay, stcpay).
  *
  * source.company (e.g. "mada", "visa", "mastercard") is preserved in provider_data.source_company.
  */
@@ -20,6 +22,9 @@ class MoyasarSourceNormalizer
 {
     public const MAP = [
         'creditcard' => 'card',
+        'applepay' => 'apple_pay',
+        'samsungpay' => 'samsung_pay',
+        'stcpay' => 'stc_pay',
         'apple pay' => 'apple_pay',
         'samsung pay' => 'samsung_pay',
         'stc pay' => 'stc_pay',

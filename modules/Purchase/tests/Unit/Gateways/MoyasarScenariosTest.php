@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 use Modules\Purchase\Database\Factories\PaymentFactory;
 use Modules\Purchase\Database\Factories\PurchaseFactory;
 use Modules\Purchase\Enums\PaymentStatus;
@@ -51,19 +52,46 @@ test('T12: Moyasar initialize returns frontend config; NO backend HTTP call; nev
     expect($result['publishable_key'])->toBe('pk_test_mo_abc');
     expect($result['amount_halalas'])->toBe(14999);
     expect($result['currency'])->toBe('SAR');
-    expect($result['given_id'])->toBe((string) $payment->getKey());
+    expect($result['given_id'])->toBe($payment->uuid);
+    expect(Str::isUuid($result['given_id']))->toBeTrue();
 
     // Initialize MUST NOT contain the secret key
-    expect(implode(',', $result))->not->toContain('sk_test_mo_secret');
+    expect(json_encode($result))->not->toContain('sk_test_mo_secret');
 
     // And NO HTTP call was made (frontend-only config)
     Http::assertSentCount(0);
 });
 
+test('T12: Moyasar initialize offers Apple Pay only when it is enabled', function (): void {
+    $purchase = PurchaseFactory::new()->create();
+    $payment = PaymentFactory::new()->for($purchase, 'purchase')->create();
+
+    $disabled = (new MoyasarGateway(new MoyasarClient(moyasarConfig())))->initialize($purchase, $payment);
+
+    expect($disabled['apple_pay'])->toBeNull();
+    expect($disabled['methods'])->toBe(['creditcard', 'stcpay']);
+
+    $enabled = (new MoyasarGateway(new MoyasarClient([...moyasarConfig(), 'apple_pay' => [
+        'enabled' => true,
+        'merchant_id' => 'merchant.com.khyyal',
+        'label' => 'Khyyal',
+        'country' => 'SA',
+        'supported_networks' => ['mada', 'visa'],
+    ]])))->initialize($purchase, $payment);
+
+    expect($enabled['methods'])->toBe(['creditcard', 'applepay', 'stcpay']);
+    expect($enabled['apple_pay'])->toBe([
+        'merchant_id' => 'merchant.com.khyyal',
+        'label' => 'Khyyal',
+        'country' => 'SA',
+        'supported_networks' => ['mada', 'visa'],
+    ]);
+});
+
 test('T12: Moyasar given_id is stable across repeated initialize calls', function (): void {
     $purchase = PurchaseFactory::new()->create();
     $payment = PaymentFactory::new()->for($purchase, 'purchase')->create();
-    $id = (string) $payment->getKey();
+    $id = $payment->uuid;
 
     $gw = new MoyasarGateway(new MoyasarClient(moyasarConfig()));
     $r1 = $gw->initialize($purchase, $payment);
@@ -115,9 +143,10 @@ test('T12: Moyasar sync status=paid returns Succeeded; source.type creditcard→
 
 test('T12: Moyasar sync source normalization - Apple Pay / Samsung Pay / STC Pay', function (): void {
     $cases = [
+        ['applepay', 'apple_pay', 'mada'],
+        ['samsungpay', 'samsung_pay', 'mastercard'],
+        ['stcpay', 'stc_pay', 'stcpay'],
         ['Apple Pay', 'apple_pay', 'visa'],
-        ['Samsung Pay', 'samsung_pay', 'mastercard'],
-        ['STC Pay', 'stc_pay', 'stcpay'],
     ];
 
     $gw = new MoyasarGateway(new MoyasarClient(moyasarConfig()));
@@ -201,7 +230,7 @@ test('T12: Moyasar authorize calls backend createPayment with manual=true; HTTP 
         'payment_order_id' => null, // Force empty so gateway assigns from backend response
     ]);
 
-    $pid = (string) $payment->getKey();
+    $pid = $payment->uuid;
     $captured = [];
 
     Http::fake([
@@ -222,7 +251,7 @@ test('T12: Moyasar authorize calls backend createPayment with manual=true; HTTP 
     $got = $gw->authorize($payment);
     expect($got)->toBe(PaymentStatus::Processing);
 
-    // Payload: given_id = stable Payment.id, manual=true
+    // Payload: given_id = stable Payment.uuid, manual=true
     expect($captured['body']['given_id'])->toBe($pid);
     expect($captured['body']['manual'])->toBeTrue();
     expect($captured['body']['amount'])->toBe(20000);

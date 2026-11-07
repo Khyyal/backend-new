@@ -16,7 +16,7 @@ class MoyasarClient
     public const BASE_URL = 'https://api.moyasar.com/v1';
 
     /**
-     * @param  array{enabled?: bool, publishable_key?: string, secret_key?: string, webhook_secret?: string, currency?: string}  $config
+     * @param  array{enabled?: bool, publishable_key?: string, secret_key?: string, webhook_secret?: string, currency?: string, apple_pay?: array{enabled?: bool, merchant_id?: string|null, label?: string|null, country?: string, supported_networks?: list<string>}}  $config
      */
     public function __construct(
         private readonly array $config = [],
@@ -35,6 +35,27 @@ class MoyasarClient
     public function publishableKey(): string
     {
         return (string) ($this->config['publishable_key'] ?? '');
+    }
+
+    /**
+     * What the app needs to show the Apple Pay sheet, or null when Apple Pay is off.
+     *
+     * @return array{merchant_id: string, label: string, country: string, supported_networks: list<string>}|null
+     */
+    public function applePayConfig(): ?array
+    {
+        $applePay = (array) ($this->config['apple_pay'] ?? []);
+
+        if (! (bool) ($applePay['enabled'] ?? false)) {
+            return null;
+        }
+
+        return [
+            'merchant_id' => (string) ($applePay['merchant_id'] ?? ''),
+            'label' => (string) ($applePay['label'] ?? ''),
+            'country' => (string) ($applePay['country'] ?? 'SA'),
+            'supported_networks' => array_values((array) ($applePay['supported_networks'] ?? [])),
+        ];
     }
 
     public function webhookSecret(): string

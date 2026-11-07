@@ -27,6 +27,9 @@ class PaymentVerificationController extends Controller
      * the first time for `moyasar`, ignored for `tamara`). The backend asks the provider and moves the payment
      * and its purchase accordingly; the app's own result is never trusted.
      *
+     * Card, Apple Pay and STC Pay all go through the Moyasar SDK: create the payment with the checkout's
+     * `given_id`, without `manual`, then send the returned Moyasar id here.
+     *
      * Poll this endpoint (or the booking) while `status` is `pending` or `processing`.
      */
     #[Response(status: 200, description: '`{data: {id, status, purchase_status, payment_company}}`.')]

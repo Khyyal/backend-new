@@ -2,6 +2,7 @@
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
 use Modules\Clients\Database\Factories\ClientFactory;
 use Modules\Purchase\Database\Factories\PaymentFactory;
 use Modules\Purchase\Database\Factories\PurchaseFactory;
@@ -47,9 +48,9 @@ test('moyasar webhook rejects a wrong secret', function (): void {
 
 test('moyasar paid webhook finds the payment by given_id, links the provider id and verifies with moyasar', function (): void {
     $payment = ($this->makePayment)('moyasar');
-    Http::fake(['api.moyasar.com/*' => Http::response(['id' => 'mo_1', 'status' => 'paid', 'amount' => 5000, 'given_id' => (string) $payment->id])]);
+    Http::fake(['api.moyasar.com/*' => Http::response(['id' => 'mo_1', 'status' => 'paid', 'amount' => 5000, 'given_id' => $payment->uuid])]);
 
-    $body = ['id' => 'evt_1', 'type' => 'payment_paid', 'secret_token' => 'whsec', 'data' => ['id' => 'mo_1', 'given_id' => (string) $payment->id, 'status' => 'paid']];
+    $body = ['id' => 'evt_1', 'type' => 'payment_paid', 'secret_token' => 'whsec', 'data' => ['id' => 'mo_1', 'given_id' => $payment->uuid, 'status' => 'paid']];
 
     $this->postJson('/api/v1/webhooks/moyasar', $body)->assertOk();
     $this->postJson('/api/v1/webhooks/moyasar', $body)->assertOk();
@@ -62,9 +63,9 @@ test('moyasar paid webhook finds the payment by given_id, links the provider id 
 
 test('a paid webhook is not trusted when moyasar says otherwise', function (): void {
     $payment = ($this->makePayment)('moyasar');
-    Http::fake(['api.moyasar.com/*' => Http::response(['id' => 'mo_1', 'status' => 'initiated', 'amount' => 5000, 'given_id' => (string) $payment->id])]);
+    Http::fake(['api.moyasar.com/*' => Http::response(['id' => 'mo_1', 'status' => 'initiated', 'amount' => 5000, 'given_id' => $payment->uuid])]);
 
-    $this->postJson('/api/v1/webhooks/moyasar', ['id' => 'evt_2', 'type' => 'payment_paid', 'secret_token' => 'whsec', 'data' => ['id' => 'mo_1', 'given_id' => (string) $payment->id]])
+    $this->postJson('/api/v1/webhooks/moyasar', ['id' => 'evt_2', 'type' => 'payment_paid', 'secret_token' => 'whsec', 'data' => ['id' => 'mo_1', 'given_id' => $payment->uuid]])
         ->assertOk();
 
     expect($payment->refresh()->status)->not->toBe(PaymentStatus::Succeeded);
@@ -91,7 +92,7 @@ test('tamara approved webhook authorises the order and marks the payment paid', 
 
 test('client verifies a moyasar payment and links the provider payment', function (): void {
     $payment = ($this->makePayment)('moyasar');
-    Http::fake(['api.moyasar.com/*' => Http::response(['id' => 'mo_9', 'status' => 'paid', 'amount' => 5000, 'given_id' => (string) $payment->id])]);
+    Http::fake(['api.moyasar.com/*' => Http::response(['id' => 'mo_9', 'status' => 'paid', 'amount' => 5000, 'given_id' => $payment->uuid])]);
 
     $this->actingAs($this->client, 'client')
         ->postJson("/api/v1/clients/payments/{$payment->id}/verify", ['provider_payment_id' => 'mo_9'])
@@ -102,9 +103,30 @@ test('client verifies a moyasar payment and links the provider payment', functio
     expect($payment->refresh()->payment_order_id)->toBe('mo_9');
 });
 
+test('client verifies an apple pay payment made with the moyasar sdk', function (): void {
+    $payment = ($this->makePayment)('moyasar', ['payment_type' => null]);
+    Http::fake(['api.moyasar.com/*' => Http::response([
+        'id' => 'mo_ap',
+        'status' => 'paid',
+        'amount' => 5000,
+        'given_id' => $payment->uuid,
+        'source' => ['type' => 'applepay', 'company' => 'mada', 'number' => '4111 11** **** 1111'],
+    ])]);
+
+    $this->actingAs($this->client, 'client')
+        ->postJson("/api/v1/clients/payments/{$payment->id}/verify", ['provider_payment_id' => 'mo_ap'])
+        ->assertOk()
+        ->assertJsonPath('data.status', 'succeeded')
+        ->assertJsonPath('data.purchase_status', 'confirmed');
+
+    $payment->refresh();
+    expect($payment->payment_type)->toBe('apple_pay')
+        ->and($payment->provider_data['source_company'])->toBe('mada');
+});
+
 test('a moyasar payment of another checkout cannot be linked', function (): void {
     $payment = ($this->makePayment)('moyasar');
-    Http::fake(['api.moyasar.com/*' => Http::response(['id' => 'mo_x', 'status' => 'paid', 'amount' => 5000, 'given_id' => '99999'])]);
+    Http::fake(['api.moyasar.com/*' => Http::response(['id' => 'mo_x', 'status' => 'paid', 'amount' => 5000, 'given_id' => (string) Str::uuid()])]);
 
     $this->actingAs($this->client, 'client')
         ->postJson("/api/v1/clients/payments/{$payment->id}/verify", ['provider_payment_id' => 'mo_x'])

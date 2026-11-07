@@ -168,7 +168,7 @@ class WebhookProcessorService
     }
 
     /**
-     * Provider id first; otherwise our own payment id echoed by the provider, which also links the
+     * Provider id first; otherwise our own payment uuid echoed by the provider, which also links the
      * provider id for later calls. A payment of another gateway is never matched.
      *
      * @param  array{payment_order_id: string, payment_status: PaymentStatus, payment_id?: string|null}  $action
@@ -179,7 +179,7 @@ class WebhookProcessorService
 
         if ($payment === null && ($action['payment_id'] ?? null) !== null) {
             $payment = Payment::query()
-                ->whereKey($action['payment_id'])
+                ->where('uuid', $action['payment_id'])
                 ->where('payment_company', $gateway)
                 ->first();
 

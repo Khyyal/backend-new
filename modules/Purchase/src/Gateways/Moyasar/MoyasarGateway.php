@@ -27,25 +27,31 @@ class MoyasarGateway implements LinksProviderPayment, PaymentGateway, VerifiesWe
      *   - publishable_key: for client-side tokenization only (never secret key)
      *   - amount_halalas: integer halalas of Payment.amount
      *   - currency: e.g. "SAR"
-     *   - given_id: stable Payment.id (used as idempotency key on frontend create)
+     *   - given_id: stable Payment.uuid (Moyasar requires a UUID; idempotency key on frontend create)
      *   - description
+     *   - methods: the Moyasar sources the app may offer (creditcard, applepay, stcpay)
+     *   - apple_pay: what the app needs to show the Apple Pay sheet, or null when Apple Pay is off
      *
-     * @return array{type: string, publishable_key: string, amount_halalas: int, currency: string, given_id: string, description: string}
+     * @return array{type: string, publishable_key: string, amount_halalas: int, currency: string, given_id: string, description: string, methods: list<string>, apple_pay: array{merchant_id: string, label: string, country: string, supported_networks: list<string>}|null}
      */
     public function initialize(Purchase $purchase, Payment $payment): array
     {
+        $applePay = $this->client->applePayConfig();
+
         return [
             'type' => 'moyasar',
             'publishable_key' => $this->client->publishableKey(),
             'amount_halalas' => $payment->amount,
             'currency' => $this->client->currency(),
-            'given_id' => (string) $payment->getKey(),
+            'given_id' => (string) $payment->uuid,
             'description' => 'Purchase #'.$purchase->getKey(),
+            'methods' => $applePay === null ? ['creditcard', 'stcpay'] : ['creditcard', 'applepay', 'stcpay'],
+            'apple_pay' => $applePay,
         ];
     }
 
     /**
-     * The app creates the Moyasar payment itself with `given_id` = our payment id, so the
+     * The app creates the Moyasar payment itself with `given_id` = our payment uuid, so the
      * Moyasar id is linked here after confirming the payment really carries that id.
      *
      * @throws PaymentVerificationException
@@ -54,7 +60,7 @@ class MoyasarGateway implements LinksProviderPayment, PaymentGateway, VerifiesWe
     {
         $response = $this->client->fetchPayment($providerPaymentId);
 
-        if ((string) ($response['given_id'] ?? '') !== (string) $payment->getKey()) {
+        if ((string) ($response['given_id'] ?? '') !== (string) $payment->uuid) {
             throw new PaymentVerificationException('The provider payment does not belong to this payment.');
         }
 
@@ -146,7 +152,7 @@ class MoyasarGateway implements LinksProviderPayment, PaymentGateway, VerifiesWe
         $payload = [
             'amount' => $payment->amount,
             'currency' => $currency,
-            'given_id' => (string) $payment->getKey(),
+            'given_id' => (string) $payment->uuid,
             'description' => 'Authorize Payment #'.$payment->getKey(),
             'manual' => true,
             'source' => [

@@ -105,7 +105,7 @@ class MoyasarWebhookEventHandler implements WebhookEventHandler
     }
 
     /**
-     * Our payment id, sent to Moyasar as `given_id` when the app created the payment.
+     * Our payment uuid, sent to Moyasar as `given_id` when the app created the payment.
      *
      * @param  array<string, mixed>  $payload
      */

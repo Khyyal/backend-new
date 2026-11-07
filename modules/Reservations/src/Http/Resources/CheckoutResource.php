@@ -9,7 +9,7 @@ use Modules\Reservations\Booking\CheckoutResult;
 /**
  * The purchase and payment opened at checkout; `gateway` holds what the
  * client needs to pay online (null for other payment methods): for `moyasar`
- * `{type, publishable_key, amount_halalas, currency, given_id, description}`, for `tamara`
+ * `{type, publishable_key, amount_halalas, currency, given_id, description, methods, apple_pay}` (`given_id` is the payment uuid; `apple_pay` is `{merchant_id, label, country, supported_networks}` or null when off), for `tamara`
  * `{checkout_url, provider_reference, checkout_id, tamara_status}`, for `fake` (tests) `{checkout_url, provider_reference}`. `payment` is
  * null when promotions brought the total to zero.
  *

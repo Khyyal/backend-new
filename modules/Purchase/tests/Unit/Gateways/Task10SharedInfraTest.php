@@ -166,12 +166,12 @@ test('T10: Tamara initialize uses order_reference_id = Payment.id (stable across
     Http::assertSentCount(2);
 });
 
-test('T10: Moyasar initialize returns given_id = Payment.id (stable across retries)', function (): void {
+test('T10: Moyasar initialize returns given_id = Payment.uuid (stable across retries)', function (): void {
     $purchase = PurchaseFactory::new()->create();
     $payment = PaymentFactory::new()->for($purchase, 'purchase')->online()->create([
         'amount' => 15025,
     ]);
-    $pid = (string) $payment->getKey();
+    $pid = $payment->uuid;
 
     $client = new MoyasarClient(['publishable_key' => 'pk_test_xx', 'currency' => 'SAR']);
     $gw = new MoyasarGateway($client);
