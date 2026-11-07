@@ -5,7 +5,7 @@ namespace Modules\Billing\Http\Controllers\Center;
 use Dedoc\Scramble\Attributes\Group;
 use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Routing\Controller;
 use Modules\Billing\Enums\PlanStatus;
 use Modules\Billing\Http\Resources\PlanCollection;
@@ -36,7 +36,7 @@ class PlanController extends Controller
 
     #[Response(status: 200, description: 'Active plan catalog with features and limits.')]
     #[Response(status: 401, description: 'Missing or invalid center_user Bearer token.')]
-    public function index(Request $request): AnonymousResourceCollection
+    public function index(Request $request): ResourceCollection
     {
         $this->center($request);
 

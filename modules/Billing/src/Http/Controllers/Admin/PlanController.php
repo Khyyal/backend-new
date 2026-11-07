@@ -7,7 +7,7 @@ use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -37,7 +37,7 @@ class PlanController extends Controller
 
     #[Response(status: 200, description: 'Paginated list of plans with feature, limit, and subscription counts.')]
     #[Response(status: 401, description: 'Missing or invalid Bearer token.')]
-    public function index(Request $request): AnonymousResourceCollection
+    public function index(Request $request): ResourceCollection
     {
         $query = Plan::query()
             ->withCount(['features', 'limits', 'subscriptions']);
