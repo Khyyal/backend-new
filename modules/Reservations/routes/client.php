@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Modules\Reservations\Http\Controllers\Client\AvailabilityController;
+use Modules\Reservations\Http\Controllers\Client\BookingController;
 use Modules\Reservations\Http\Controllers\Client\MembershipController;
 use Modules\Reservations\Http\Controllers\Client\PackageController;
 use Modules\Reservations\Http\Controllers\Client\ReservationController;
@@ -12,6 +13,8 @@ Route::middleware(['set.locale.from.accept.language', 'track.client.session', 'a
     ->group(function (): void {
         Route::get('/services/{service}/availability', [AvailabilityController::class, 'show'])
             ->name('services.availability');
+
+        Route::get('/bookings', [BookingController::class, 'index'])->name('bookings.index');
 
         Route::prefix('reservations')
             ->name('reservations.')
