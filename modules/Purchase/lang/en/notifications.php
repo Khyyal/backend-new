@@ -17,8 +17,4 @@ return [
         'title' => 'Refund issued',
         'body' => ':amount SAR was refunded for order #:id.',
     ],
-    'payout_paid' => [
-        'title' => 'Payout transferred',
-        'body' => 'A payout of :amount SAR was transferred to your bank account (reference :reference).',
-    ],
 ];

@@ -85,14 +85,6 @@ class Purchase extends Model
     }
 
     /**
-     * How the purchase moved the merchant center's balance.
-     */
-    public function ledgerEntries(): HasMany
-    {
-        return $this->hasMany(CenterLedgerEntry::class);
-    }
-
-    /**
      * The most recent payment attempt, which reflects where the purchase's payment stands.
      */
     public function latestPayment(): HasOne

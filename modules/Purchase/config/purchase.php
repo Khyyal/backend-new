@@ -4,14 +4,6 @@ return [
 
     'default_gateway' => env('PURCHASE_GATEWAY', 'fake'),
 
-    'payouts' => [
-        /*
-         * Days after an online payment succeeds before the center can be
-         * paid for it, so refunds and chargebacks can land first.
-         */
-        'hold_days' => (int) env('PAYOUT_HOLD_DAYS', 7),
-    ],
-
     /*
      * What each gateway charges the platform per succeeded payment, used when
      * the provider does not report the fee itself. Basis points + halalas.

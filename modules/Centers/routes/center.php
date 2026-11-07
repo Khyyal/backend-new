@@ -7,7 +7,6 @@ use Modules\Centers\Http\Controllers\Center\BlockedClientController;
 use Modules\Centers\Http\Controllers\Center\CenterController;
 use Modules\Centers\Http\Controllers\Center\CenterUserController;
 use Modules\Centers\Http\Controllers\Center\LaunchController;
-use Modules\Centers\Http\Controllers\Center\PayoutController;
 use Modules\Centers\Http\Controllers\Center\ProfileCompletionController;
 use Modules\Centers\Http\Controllers\Center\PurchaseController;
 use Modules\Centers\Http\Controllers\Center\RatingController;
@@ -101,19 +100,6 @@ Route::middleware(['api'])
 
                         Route::get('/{center}/purchases/{purchase}', [PurchaseController::class, 'show'])
                             ->name('purchases.show');
-
-                        Route::get('/{center}/balance', [PayoutController::class, 'balance'])
-                            ->name('balance');
-
-                        Route::put('/{center}/payout-account', [PayoutController::class, 'updateAccount'])
-                            ->name('payout-account.update');
-
-                        Route::get('/{center}/payouts', [PayoutController::class, 'index'])
-                            ->name('payouts.index');
-
-                        Route::get('/{center}/payouts/{payout}', [PayoutController::class, 'show'])
-                            ->whereNumber('payout')
-                            ->name('payouts.show');
 
                         Route::prefix('/{center}/users')
                             ->name('users.')

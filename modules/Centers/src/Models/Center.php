@@ -17,7 +17,6 @@ use Modules\Centers\Enums\CenterStatus;
 use Modules\Clients\Models\Client;
 use Modules\Promotions\Concerns\HasPromotions;
 use Modules\Purchase\Contracts\Buyer;
-use Modules\Purchase\Models\CenterPayout;
 use Modules\Purchase\Traits\IsBuyer;
 use Modules\Services\Models\CenterPeriod;
 use Modules\Services\Models\Service;
@@ -176,14 +175,6 @@ class Center extends Model implements Buyer, HasMedia
             'id',
             'user_id'
         )->where('center_user_assignment.is_primary', true);
-    }
-
-    /**
-     * Transfers of what the platform owes the center.
-     */
-    public function payouts(): HasMany
-    {
-        return $this->hasMany(CenterPayout::class);
     }
 
     public function services(): HasMany

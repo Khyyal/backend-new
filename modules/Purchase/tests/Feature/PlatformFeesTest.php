@@ -173,3 +173,22 @@ test('the fee is reversed on a full refund only', function (): void {
     $payments->recordRefund($payment, 6000);
     expect(Purchase::query()->with('fee')->sole()->fee->reversed_at)->not->toBeNull();
 });
+
+test('the provider fee is taken from Moyasar when reported, else from the configured rate', function (): void {
+    config(['purchase.provider_fees.moyasar' => ['percentage_bps' => 250, 'fixed_amount' => 100]]);
+
+    $pay = function (array $providerData = []): Purchase {
+        ($this->book)();
+        $purchase = Purchase::query()->latest('id')->first();
+        $purchase->latestPayment->update(['payment_company' => 'moyasar', 'provider_data' => $providerData ?: null]);
+        app(PaymentStateService::class)->markSucceeded($purchase->latestPayment);
+
+        return $purchase->refresh();
+    };
+
+    expect($pay()->latestPayment->provider_fee_amount)->toBe(350);
+
+    $this->body['start_time'] = '11:00';
+
+    expect($pay(['moyasar_payment' => ['fee' => 287]])->latestPayment->provider_fee_amount)->toBe(287);
+});

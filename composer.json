@@ -51,6 +51,8 @@
             "Modules\\Purchase\\": "modules/Purchase/src/",
             "Modules\\Purchase\\Database\\Factories\\": "modules/Purchase/database/factories/",
             "Modules\\Purchase\\Database\\Seeders\\":  "modules/Purchase/database/seeders/",
+            "Modules\\Settlements\\": "modules/Settlements/src/",
+            "Modules\\Settlements\\Database\\Factories\\": "modules/Settlements/database/factories/",
             "Modules\\Promotions\\": "modules/Promotions/src/",
             "Modules\\Promotions\\Database\\Factories\\": "modules/Promotions/database/factories/",
             "Modules\\Billing\\": "modules/Billing/src/",
