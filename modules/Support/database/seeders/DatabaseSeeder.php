@@ -14,6 +14,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             CitySeeder::class,
             SystemRolePermissionSeeder::class,
+            SuperAdminSeeder::class,
         ]);
     }
 }

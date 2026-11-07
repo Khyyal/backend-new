@@ -24,6 +24,7 @@ class SupportServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->mergeConfigFrom(__DIR__.'/../config/media.php', 'support-media');
+        $this->mergeConfigFrom(__DIR__.'/../config/support.php', 'support');
 
         $this->app->bind(NotificationServiceContract::class, NotificationService::class);
         $this->app->bind(WhatsAppGateway::class, fn ($app): VoxaWhatsAppGateway => new VoxaWhatsAppGateway(
