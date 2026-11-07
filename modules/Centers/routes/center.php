@@ -70,6 +70,12 @@ Route::middleware(['api'])
                         Route::match(['put', 'patch'], '/{center}', [CenterController::class, 'update'])
                             ->name('update');
 
+                        Route::match(['put', 'patch'], '/{center}/social-links', [CenterController::class, 'updateSocialLinks'])
+                            ->name('social-links.update');
+
+                        Route::match(['put', 'patch'], '/{center}/site-theme', [CenterController::class, 'updateSiteTheme'])
+                            ->name('site-theme.update');
+
                         Route::get('/{center}/ratings', [RatingController::class, 'index'])
                             ->name('ratings');
 

@@ -11,6 +11,8 @@ use Illuminate\Routing\Controller;
 use Illuminate\Validation\ValidationException;
 use Modules\Centers\Http\Requests\Center\CenterAccessRequest;
 use Modules\Centers\Http\Requests\Center\UpdateCenterRequest;
+use Modules\Centers\Http\Requests\Center\UpdateCenterSiteThemeRequest;
+use Modules\Centers\Http\Requests\Center\UpdateCenterSocialLinksRequest;
 use Modules\Centers\Http\Resources\Center\CenterResource;
 use Modules\Centers\Http\Resources\Center\CenterWithRoleResource;
 use Modules\Centers\Models\Center;
@@ -199,7 +201,7 @@ class CenterController extends Controller
     /**
      * Update a center (primary user only).
      *
-     * Partial update: only the fields sent are changed. `tags` is the full
+     * Partial update: only the fields sent are changed. Social links and the site theme have their own endpoints. `tags` is the full
      * list of tag ids. `logo` and `cover` take a media id (`null` removes it).
      * `images` is the full list of media ids in display order: ids already on
      * the center are kept, new temporary ids are attached, omitted ones are
@@ -209,6 +211,38 @@ class CenterController extends Controller
     #[Response(status: 403, description: 'The authenticated user is not the primary user of this center.')]
     #[Response(status: 422, description: 'Validation failed, or a media id is invalid, expired or not owned by the user.')]
     public function update(UpdateCenterRequest $request, Center $center, CenterUpdateService $updateService): CenterResource
+    {
+        /** @var User $user */
+        $user = $request->user('center_user');
+
+        return CenterResource::make($updateService->update($center, $user, $request->validated()));
+    }
+
+    /**
+     * Update the center's social links (primary user only).
+     *
+     * **Request body:** `social_links`, required: an object keyed by platform, `null` to clear.
+     */
+    #[Response(status: 200, description: 'The updated center as a `CenterResource`.')]
+    #[Response(status: 403, description: 'The authenticated user is not the primary user of this center.')]
+    #[Response(status: 422, description: 'Validation failed (unknown platform or value too long).')]
+    public function updateSocialLinks(UpdateCenterSocialLinksRequest $request, Center $center, CenterUpdateService $updateService): CenterResource
+    {
+        /** @var User $user */
+        $user = $request->user('center_user');
+
+        return CenterResource::make($updateService->update($center, $user, $request->validated()));
+    }
+
+    /**
+     * Update the center's site theme (primary user only).
+     *
+     * **Request body:** `site_theme`, required: an object keyed by color role with hex colors, `null` to clear.
+     */
+    #[Response(status: 200, description: 'The updated center as a `CenterResource`.')]
+    #[Response(status: 403, description: 'The authenticated user is not the primary user of this center.')]
+    #[Response(status: 422, description: 'Validation failed (unknown color role or invalid hex color).')]
+    public function updateSiteTheme(UpdateCenterSiteThemeRequest $request, Center $center, CenterUpdateService $updateService): CenterResource
     {
         /** @var User $user */
         $user = $request->user('center_user');

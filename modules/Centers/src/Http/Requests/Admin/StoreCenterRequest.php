@@ -7,8 +7,6 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Modules\Centers\Enums\CenterState;
 use Modules\Centers\Enums\CenterStatus;
-use Modules\Centers\Enums\SiteThemeColor;
-use Modules\Centers\Enums\SocialPlatform;
 use Modules\Centers\Models\Center;
 
 class StoreCenterRequest extends FormRequest
@@ -40,10 +38,6 @@ class StoreCenterRequest extends FormRequest
             'lng' => ['nullable', 'numeric', 'between:-180,180', 'required_with:lat'],
             'address' => ['nullable', 'string', 'max:255'],
             'contact_phone' => ['required', 'string', 'max:32'],
-            'social_links' => ['sometimes', 'nullable', 'array:'.implode(',', SocialPlatform::values())],
-            'social_links.*' => ['nullable', 'string', 'max:255'],
-            'site_theme' => ['sometimes', 'nullable', 'array:'.implode(',', SiteThemeColor::values())],
-            'site_theme.*' => ['nullable', 'string', 'hex_color'],
             'custom_site_enabled' => ['sometimes', 'boolean'],
             'domain' => ['sometimes', 'nullable', 'string', 'max:255', 'regex:/^(?!-)[a-z0-9-]{1,63}(?<!-)(\\.(?!-)[a-z0-9-]{1,63}(?<!-))+$/', Rule::unique('centers', 'domain')],
             'status' => ['sometimes', Rule::enum(CenterStatus::class)],

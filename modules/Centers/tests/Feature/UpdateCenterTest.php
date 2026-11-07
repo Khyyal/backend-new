@@ -8,7 +8,9 @@ use Modules\Centers\Database\Factories\CenterFactory;
 use Modules\Centers\Database\Factories\TagFactory;
 use Modules\Centers\Database\Factories\UserFactory;
 use Modules\Centers\Models\Center;
+use Modules\Support\Database\Factories\CityFactory;
 use Modules\Support\Enums\ActivationStatus;
+use Modules\Support\Models\City;
 use Modules\Support\Services\Media\TemporaryMediaService;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Tests\TestCase;
@@ -153,28 +155,62 @@ test('images reject duplicates and unknown ids', function (): void {
     $this->patchJson($this->url, ['images' => [(string) Str::uuid()]])->assertUnprocessable();
 });
 
-test('primary user updates social links and site theme', function (): void {
-    $this->actingAs($this->primary, 'center_user')->patchJson($this->url, [
+test('primary user updates social links', function (): void {
+    $this->actingAs($this->primary, 'center_user')->patchJson("{$this->url}/social-links", [
         'social_links' => ['instagram' => 'https://instagram.com/khyyal', 'whatsapp' => '+966500000000'],
-        'site_theme' => ['primary' => '#0f766e', 'background' => '#fff'],
-    ])->assertOk()
-        ->assertJsonPath('data.social_links.instagram', 'https://instagram.com/khyyal')
-        ->assertJsonPath('data.site_theme.primary', '#0f766e');
+    ])->assertOk()->assertJsonPath('data.social_links.instagram', 'https://instagram.com/khyyal');
 
-    $center = $this->center->fresh();
-    expect($center->social_links)->toBe(['instagram' => 'https://instagram.com/khyyal', 'whatsapp' => '+966500000000'])
-        ->and($center->site_theme)->toBe(['primary' => '#0f766e', 'background' => '#fff']);
+    expect($this->center->fresh()->social_links)->toBe(['instagram' => 'https://instagram.com/khyyal', 'whatsapp' => '+966500000000']);
+
+    $this->patchJson("{$this->url}/social-links", ['social_links' => null])->assertOk();
+    expect($this->center->fresh()->social_links)->toBeNull();
+});
+
+test('primary user updates site theme', function (): void {
+    $this->actingAs($this->primary, 'center_user')->putJson("{$this->url}/site-theme", [
+        'site_theme' => ['primary' => '#0f766e', 'background' => '#fff'],
+    ])->assertOk()->assertJsonPath('data.site_theme.primary', '#0f766e');
+
+    expect($this->center->fresh()->site_theme)->toBe(['primary' => '#0f766e', 'background' => '#fff']);
 });
 
 test('social links and site theme reject unknown keys and invalid colors', function (): void {
     $this->actingAs($this->primary, 'center_user');
 
-    $this->patchJson($this->url, ['social_links' => ['myspace' => 'https://myspace.com/x']])
+    $this->patchJson("{$this->url}/social-links", ['social_links' => ['myspace' => 'https://myspace.com/x']])
         ->assertJsonValidationErrors('social_links');
-    $this->patchJson($this->url, ['site_theme' => ['border' => '#000000']])
+    $this->patchJson("{$this->url}/social-links", [])->assertJsonValidationErrors('social_links');
+    $this->patchJson("{$this->url}/site-theme", ['site_theme' => ['border' => '#000000']])
         ->assertJsonValidationErrors('site_theme');
-    $this->patchJson($this->url, ['site_theme' => ['primary' => 'red']])
+    $this->patchJson("{$this->url}/site-theme", ['site_theme' => ['primary' => 'red']])
         ->assertJsonValidationErrors('site_theme.primary');
+});
+
+test('only the primary user can change social links and site theme', function (): void {
+    $this->actingAs($this->member, 'center_user')
+        ->patchJson("{$this->url}/social-links", ['social_links' => ['instagram' => 'x']])->assertForbidden();
+    $this->patchJson("{$this->url}/site-theme", ['site_theme' => ['primary' => '#000000']])->assertForbidden();
+});
+
+test('social links and site theme are no longer accepted on the main update', function (): void {
+    $this->actingAs($this->primary, 'center_user')->patchJson($this->url, [
+        'social_links' => ['instagram' => 'https://instagram.com/khyyal'],
+        'site_theme' => ['primary' => '#0f766e'],
+    ])->assertOk();
+
+    $center = $this->center->fresh();
+    expect($center->social_links)->toBeNull()->and($center->site_theme)->toBeNull();
+});
+
+test('primary user changes the center city', function (): void {
+    $city = City::query()->first() ?? CityFactory::new()->create();
+
+    $this->actingAs($this->primary, 'center_user')->patchJson($this->url, ['city_id' => $city->id])
+        ->assertOk()->assertJsonPath('data.city.id', $city->id);
+
+    expect($this->center->fresh()->city_id)->toBe($city->id);
+
+    $this->patchJson($this->url, ['city_id' => 999999])->assertJsonValidationErrors('city_id');
 });
 
 test('primary user cannot change domain or custom site toggle', function (): void {

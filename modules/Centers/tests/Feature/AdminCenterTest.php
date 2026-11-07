@@ -197,3 +197,20 @@ test('domain must be unique across centers', function (): void {
         ->patchJson("{$this->base}/{$this->center->id}", ['domain' => 'taken.example.com'])
         ->assertJsonValidationErrors('domain');
 });
+
+test('admin updates social links and site theme through their own endpoints', function (): void {
+    $this->actingAs($this->admin, 'system_user');
+
+    $this->patchJson("{$this->base}/{$this->center->id}/social-links", ['social_links' => ['instagram' => 'https://instagram.com/khyyal']])
+        ->assertOk()->assertJsonPath('data.social_links.instagram', 'https://instagram.com/khyyal');
+    $this->putJson("{$this->base}/{$this->center->id}/site-theme", ['site_theme' => ['primary' => '#0f766e']])
+        ->assertOk()->assertJsonPath('data.site_theme.primary', '#0f766e');
+    $this->patchJson("{$this->base}/{$this->center->id}/site-theme", ['site_theme' => ['primary' => 'red']])
+        ->assertJsonValidationErrors('site_theme.primary');
+
+    $this->patchJson("{$this->base}/{$this->center->id}", ['social_links' => ['instagram' => 'ignored']])->assertOk();
+    expect($this->center->fresh()->social_links)->toBe(['instagram' => 'https://instagram.com/khyyal']);
+
+    $this->actingAs(SystemUser::factory()->create(), 'system_user')
+        ->patchJson("{$this->base}/{$this->center->id}/social-links", ['social_links' => null])->assertForbidden();
+});

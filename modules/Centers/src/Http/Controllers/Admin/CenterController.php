@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\Gate;
 use Modules\Centers\Http\Requests\Admin\ListCentersRequest;
 use Modules\Centers\Http\Requests\Admin\StoreCenterRequest;
 use Modules\Centers\Http\Requests\Admin\UpdateCenterRequest;
+use Modules\Centers\Http\Requests\Admin\UpdateCenterSiteThemeRequest;
+use Modules\Centers\Http\Requests\Admin\UpdateCenterSocialLinksRequest;
 use Modules\Centers\Http\Resources\Center\CenterResource;
 use Modules\Centers\Models\Center;
 use Modules\Centers\Services\CenterAdminService;
@@ -75,13 +77,41 @@ class CenterController extends Controller
     /**
      * Update a center.
      *
-     * Partial update; same fields as create except `primary_user_id`.
+     * Partial update; same fields as create except `primary_user_id`. Social links and the site theme have their own endpoints.
      */
     #[Response(status: 200, description: 'The updated center as a `CenterResource`.')]
     #[Response(status: 403, description: 'Missing the `centers.update` permission.')]
     #[Response(status: 404, description: 'No center with that id.')]
     #[Response(status: 422, description: 'Validation failed, or a media id is invalid, expired or not owned by the user.')]
     public function update(UpdateCenterRequest $request, Center $center): CenterResource
+    {
+        return CenterResource::make($this->service->update($request->user(), $center, $request->validated()));
+    }
+
+    /**
+     * Update a center's social links.
+     *
+     * **Request body:** `social_links`, required: an object keyed by platform, `null` to clear.
+     */
+    #[Response(status: 200, description: 'The updated center as a `CenterResource`.')]
+    #[Response(status: 403, description: 'Missing the `centers.update` permission.')]
+    #[Response(status: 404, description: 'No center with that id.')]
+    #[Response(status: 422, description: 'Validation failed (unknown platform or value too long).')]
+    public function updateSocialLinks(UpdateCenterSocialLinksRequest $request, Center $center): CenterResource
+    {
+        return CenterResource::make($this->service->update($request->user(), $center, $request->validated()));
+    }
+
+    /**
+     * Update a center's site theme.
+     *
+     * **Request body:** `site_theme`, required: an object keyed by color role with hex colors, `null` to clear.
+     */
+    #[Response(status: 200, description: 'The updated center as a `CenterResource`.')]
+    #[Response(status: 403, description: 'Missing the `centers.update` permission.')]
+    #[Response(status: 404, description: 'No center with that id.')]
+    #[Response(status: 422, description: 'Validation failed (unknown color role or invalid hex color).')]
+    public function updateSiteTheme(UpdateCenterSiteThemeRequest $request, Center $center): CenterResource
     {
         return CenterResource::make($this->service->update($request->user(), $center, $request->validated()));
     }
