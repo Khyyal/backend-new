@@ -99,6 +99,9 @@ class MembershipController extends Controller
     #[Response(status: 201, description: '`{data: ClientMembershipResource, checkout: CheckoutResource}`.')]
     #[Response(status: 401, description: 'Missing or invalid Bearer token.')]
     #[Response(status: 422, description: 'Validation failed, or the membership cannot be sold (see `reason`).')]
+    #[HeaderParameter('Idempotency-Key', description: 'Required. A unique value per operation (a UUID), reused unchanged when retrying it. A retry with the same key and body returns the stored response with `Idempotent-Replayed: true` instead of running again; the same key with a different body fails (422, `code: idempotency_key_reused`).', required: true, type: 'string')]
+    #[Response(status: 400, description: 'Missing `Idempotency-Key` header (`code: idempotency_key_required`).')]
+    #[Response(status: 409, description: 'A request with this `Idempotency-Key` is still running (`code: idempotency_request_in_progress`); retry after `Retry-After` seconds.')]
     public function store(PurchaseMembershipRequest $request): JsonResponse
     {
         $membership = Membership::query()->with('service.center')->findOrFail($request->validated('membership_id'));
@@ -157,6 +160,9 @@ class MembershipController extends Controller
     #[Response(status: 401, description: 'Missing or invalid Bearer token.')]
     #[Response(status: 404, description: 'No such membership of this client.')]
     #[Response(status: 422, description: 'Validation failed, or the visit cannot be booked (see `reason`).')]
+    #[HeaderParameter('Idempotency-Key', description: 'Required. A unique value per operation (a UUID), reused unchanged when retrying it. A retry with the same key and body returns the stored response with `Idempotent-Replayed: true` instead of running again; the same key with a different body fails (422, `code: idempotency_key_reused`).', required: true, type: 'string')]
+    #[Response(status: 400, description: 'Missing `Idempotency-Key` header (`code: idempotency_key_required`).')]
+    #[Response(status: 409, description: 'A request with this `Idempotency-Key` is still running (`code: idempotency_request_in_progress`); retry after `Retry-After` seconds.')]
     public function bookVisit(BookVisitFromMembershipRequest $request, int $membership): JsonResponse
     {
         $clientMembership = $this->client($request)->memberships()->findOrFail($membership);

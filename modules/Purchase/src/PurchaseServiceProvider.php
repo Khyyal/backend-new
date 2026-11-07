@@ -17,7 +17,9 @@ use Modules\Purchase\Listeners\SendPurchaseNotifications;
 use Modules\Purchase\Managers\PaymentGatewayManager;
 use Modules\Purchase\Models\FeeRule;
 use Modules\Purchase\Models\Merchant\Platform;
+use Modules\Purchase\Models\Purchase;
 use Modules\Purchase\Policies\FeeRulePolicy;
+use Modules\Purchase\Policies\PurchasePolicy;
 
 class PurchaseServiceProvider extends ServiceProvider
 {
@@ -50,6 +52,7 @@ class PurchaseServiceProvider extends ServiceProvider
         Event::listen(PaymentSucceeded::class, RecordPaymentProviderFee::class);
 
         Gate::policy(FeeRule::class, FeeRulePolicy::class);
+        Gate::policy(Purchase::class, PurchasePolicy::class);
 
         Route::middleware(['api'])
             ->prefix('api/v1')

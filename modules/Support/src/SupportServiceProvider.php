@@ -3,15 +3,18 @@
 namespace Modules\Support;
 
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Database\Console\PruneCommand;
 use Illuminate\Http\Client\Factory as HttpFactory;
 use Illuminate\Notifications\Events\NotificationFailed;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use Modules\Support\Http\Middleware\EnsureIdempotentRequest;
 use Modules\Support\Jobs\CleanupExpiredMedia;
 use Modules\Support\Listeners\DeleteExpiredNotificationTokens;
 use Modules\Support\Models\City;
+use Modules\Support\Models\IdempotencyKey;
 use Modules\Support\Models\SystemUser;
 use Modules\Support\Notifications\Contracts\NotificationServiceContract;
 use Modules\Support\Notifications\NotificationService;
@@ -44,8 +47,11 @@ class SupportServiceProvider extends ServiceProvider
 
         Event::listen(NotificationFailed::class, DeleteExpiredNotificationTokens::class);
 
+        $this->app['router']->aliasMiddleware('idempotent', EnsureIdempotentRequest::class);
+
         $this->callAfterResolving(Schedule::class, function (Schedule $schedule): void {
             $schedule->job(new CleanupExpiredMedia)->hourly();
+            $schedule->command(PruneCommand::class, ['--model' => [IdempotencyKey::class]])->hourly();
         });
 
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');

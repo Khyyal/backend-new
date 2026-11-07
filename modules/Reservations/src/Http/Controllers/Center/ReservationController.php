@@ -5,6 +5,7 @@ namespace Modules\Reservations\Http\Controllers\Center;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonPeriod;
 use Dedoc\Scramble\Attributes\Group;
+use Dedoc\Scramble\Attributes\HeaderParameter;
 use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -153,6 +154,9 @@ class ReservationController extends Controller
     #[Response(status: 403, description: 'No access to this center\'s reservations.')]
     #[Response(status: 404, description: 'No such service in this center.')]
     #[Response(status: 422, description: 'Validation failed, or the slot cannot be booked (see `reason`).')]
+    #[HeaderParameter('Idempotency-Key', description: 'Required. A unique value per operation (a UUID), reused unchanged when retrying it. A retry with the same key and body returns the stored response with `Idempotent-Replayed: true` instead of running again; the same key with a different body fails (422, `code: idempotency_key_reused`).', required: true, type: 'string')]
+    #[Response(status: 400, description: 'Missing `Idempotency-Key` header (`code: idempotency_key_required`).')]
+    #[Response(status: 409, description: 'A request with this `Idempotency-Key` is still running (`code: idempotency_request_in_progress`); retry after `Retry-After` seconds.')]
     public function store(StoreReservationRequest $request, Center $center): JsonResponse
     {
         $service = $center->services()->with(['serviceable', 'center'])->findOrFail($request->validated('service_id'));
@@ -208,6 +212,9 @@ class ReservationController extends Controller
     #[Response(status: 403, description: 'No access to this center\'s reservations.')]
     #[Response(status: 404, description: 'No such reservation in this center.')]
     #[Response(status: 422, description: 'Validation failed, or the reservation cannot move there (see `reason`).')]
+    #[HeaderParameter('Idempotency-Key', description: 'Required. A unique value per operation (a UUID), reused unchanged when retrying it. A retry with the same key and body returns the stored response with `Idempotent-Replayed: true` instead of running again; the same key with a different body fails (422, `code: idempotency_key_reused`).', required: true, type: 'string')]
+    #[Response(status: 400, description: 'Missing `Idempotency-Key` header (`code: idempotency_key_required`).')]
+    #[Response(status: 409, description: 'A request with this `Idempotency-Key` is still running (`code: idempotency_request_in_progress`); retry after `Retry-After` seconds.')]
     public function reschedule(RescheduleReservationRequest $request, Center $center, int $reservation): CenterReservationResource
     {
         $endDate = $request->validated('end_date');
@@ -236,6 +243,9 @@ class ReservationController extends Controller
     #[Response(status: 403, description: 'No access to this center\'s reservations.')]
     #[Response(status: 404, description: 'No such reservation in this center.')]
     #[Response(status: 422, description: 'The reservation cannot be cancelled (see `reason`).')]
+    #[HeaderParameter('Idempotency-Key', description: 'Required. A unique value per operation (a UUID), reused unchanged when retrying it. A retry with the same key and body returns the stored response with `Idempotent-Replayed: true` instead of running again; the same key with a different body fails (422, `code: idempotency_key_reused`).', required: true, type: 'string')]
+    #[Response(status: 400, description: 'Missing `Idempotency-Key` header (`code: idempotency_key_required`).')]
+    #[Response(status: 409, description: 'A request with this `Idempotency-Key` is still running (`code: idempotency_request_in_progress`); retry after `Retry-After` seconds.')]
     public function cancel(CancelReservationRequest $request, Center $center, int $reservation): CenterReservationResource
     {
         $this->authorizeEdit($request, $center);
@@ -259,6 +269,9 @@ class ReservationController extends Controller
     #[Response(status: 403, description: 'No access to this center\'s reservations.')]
     #[Response(status: 404, description: 'No such reservation in this center.')]
     #[Response(status: 422, description: 'The reservation cannot be completed (see `reason`).')]
+    #[HeaderParameter('Idempotency-Key', description: 'Required. A unique value per operation (a UUID), reused unchanged when retrying it. A retry with the same key and body returns the stored response with `Idempotent-Replayed: true` instead of running again; the same key with a different body fails (422, `code: idempotency_key_reused`).', required: true, type: 'string')]
+    #[Response(status: 400, description: 'Missing `Idempotency-Key` header (`code: idempotency_key_required`).')]
+    #[Response(status: 409, description: 'A request with this `Idempotency-Key` is still running (`code: idempotency_request_in_progress`); retry after `Retry-After` seconds.')]
     public function complete(Request $request, Center $center, int $reservation): CenterReservationResource
     {
         $this->authorizeEdit($request, $center);
@@ -278,6 +291,9 @@ class ReservationController extends Controller
     #[Response(status: 403, description: 'No access to this center\'s reservations.')]
     #[Response(status: 404, description: 'No such reservation in this center.')]
     #[Response(status: 422, description: 'The reservation cannot be marked (see `reason`).')]
+    #[HeaderParameter('Idempotency-Key', description: 'Required. A unique value per operation (a UUID), reused unchanged when retrying it. A retry with the same key and body returns the stored response with `Idempotent-Replayed: true` instead of running again; the same key with a different body fails (422, `code: idempotency_key_reused`).', required: true, type: 'string')]
+    #[Response(status: 400, description: 'Missing `Idempotency-Key` header (`code: idempotency_key_required`).')]
+    #[Response(status: 409, description: 'A request with this `Idempotency-Key` is still running (`code: idempotency_request_in_progress`); retry after `Retry-After` seconds.')]
     public function noShow(Request $request, Center $center, int $reservation): CenterReservationResource
     {
         $this->authorizeEdit($request, $center);

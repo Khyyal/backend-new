@@ -58,6 +58,8 @@ enum SystemPermission: string
     case ViewAnyClients = 'clients.view_any';
     case ViewClient = 'clients.view';
 
+    case ViewAnyPurchases = 'purchases.view_any';
+
     case ManageFees = 'fees.manage';
     case ManagePayouts = 'payouts.manage';
 
