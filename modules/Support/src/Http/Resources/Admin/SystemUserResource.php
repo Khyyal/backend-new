@@ -29,6 +29,9 @@ class SystemUserResource extends JsonResource
                 ->flatMap(fn (SystemRole $role) => $role->permissions->pluck('name'))
                 ->unique()
                 ->values(),
+            'created_at' => $this->resource->created_at?->toIso8601String(),
+            'updated_at' => $this->resource->updated_at?->toIso8601String(),
+            'deleted_at' => $this->resource->deleted_at?->toIso8601String(),
         ];
     }
 }

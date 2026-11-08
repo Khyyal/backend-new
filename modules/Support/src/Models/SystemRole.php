@@ -4,15 +4,36 @@ namespace Modules\Support\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Table;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Modules\Support\Database\Factories\SystemRoleFactory;
 use Modules\Support\Enums\SystemPermission as SystemPermissionEnum;
 use Modules\Support\Enums\SystemRole as SystemRoleEnum;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 #[Fillable(['name', 'description'])]
 #[Table('system_roles')]
 class SystemRole extends Model
 {
+    /** @use HasFactory<SystemRoleFactory> */
+    use HasFactory, LogsActivity;
+
+    protected static function newFactory(): SystemRoleFactory
+    {
+        return SystemRoleFactory::new();
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logFillable()
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges()
+            ->useLogName('system_role');
+    }
+
     public function permissions(): BelongsToMany
     {
         return $this->belongsToMany(
@@ -60,6 +81,26 @@ class SystemRole extends Model
         $ids = SystemPermission::whereIn('name', $names)->pluck('id');
 
         $this->permissions()->syncWithoutDetaching($ids);
+        $this->unsetRelation('permissions');
+
+        return $this;
+    }
+
+    /**
+     * Replace the role's permissions with exactly the given ones.
+     *
+     * @param  array<int, SystemPermissionEnum|string>  $permissions
+     */
+    public function syncPermissions(array $permissions): static
+    {
+        $names = array_map(
+            fn (SystemPermissionEnum|string $permission): string => $permission instanceof SystemPermissionEnum
+                ? $permission->value
+                : $permission,
+            $permissions
+        );
+
+        $this->permissions()->sync(SystemPermission::whereIn('name', $names)->pluck('id'));
         $this->unsetRelation('permissions');
 
         return $this;

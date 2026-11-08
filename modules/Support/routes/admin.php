@@ -4,6 +4,9 @@ use Illuminate\Support\Facades\Route;
 use Modules\Support\Http\Controllers\Admin\ActivityLogController;
 use Modules\Support\Http\Controllers\Admin\AuthController;
 use Modules\Support\Http\Controllers\Admin\CityController;
+use Modules\Support\Http\Controllers\Admin\SystemPermissionController;
+use Modules\Support\Http\Controllers\Admin\SystemRoleController;
+use Modules\Support\Http\Controllers\Admin\SystemUserController;
 
 Route::prefix('admin')
     ->name('admin.')
@@ -28,5 +31,16 @@ Route::prefix('admin')
             Route::get('activity-logs/{activity}', [ActivityLogController::class, 'show'])
                 ->whereNumber('activity')
                 ->name('activity-logs.show');
+
+            Route::apiResource('system-users', SystemUserController::class)
+                ->parameters(['system-users' => 'systemUser'])
+                ->withTrashed(['show']);
+            Route::post('system-users/{systemUser}/restore', [SystemUserController::class, 'restore'])
+                ->withTrashed()
+                ->name('system-users.restore');
+
+            Route::apiResource('system-roles', SystemRoleController::class)
+                ->parameters(['system-roles' => 'systemRole']);
+            Route::get('system-permissions', SystemPermissionController::class)->name('system-permissions.index');
         });
     });

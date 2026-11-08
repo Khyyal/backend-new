@@ -32,7 +32,8 @@ class SystemUserPolicy
 
     public function update(SystemUser $user, SystemUser $target): bool
     {
-        return $user->is($target) || $user->hasPermissionTo(SystemPermission::UpdateSystemUser);
+        return $user->is($target)
+            || ($this->canManage($user, $target) && $user->hasPermissionTo(SystemPermission::UpdateSystemUser));
     }
 
     /**
@@ -41,6 +42,7 @@ class SystemUserPolicy
     public function delete(SystemUser $user, SystemUser $target): bool
     {
         return ! $user->is($target)
+            && $this->canManage($user, $target)
             && $user->hasPermissionTo(SystemPermission::DeleteSystemUser);
     }
 
@@ -52,12 +54,22 @@ class SystemUserPolicy
     public function forceDelete(SystemUser $user, SystemUser $target): bool
     {
         return ! $user->is($target)
+            && $this->canManage($user, $target)
             && $user->hasPermissionTo(SystemPermission::ForceDeleteSystemUser);
     }
 
     public function assignRoles(SystemUser $user, SystemUser $target): bool
     {
         return ! $user->is($target)
+            && $this->canManage($user, $target)
             && $user->hasPermissionTo(SystemPermission::AssignSystemUserRoles);
+    }
+
+    /**
+     * Only a super admin may change another super admin's account.
+     */
+    private function canManage(SystemUser $user, SystemUser $target): bool
+    {
+        return ! $target->isSuperAdmin() || $user->isSuperAdmin();
     }
 }
