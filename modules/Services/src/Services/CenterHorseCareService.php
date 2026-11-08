@@ -26,6 +26,7 @@ class CenterHorseCareService
         private readonly HorseCareService $horseCareService,
         private readonly TemporaryMediaService $temporaryMedia,
         private readonly MediaService $mediaService,
+        private readonly ServiceActivityRecorder $activityRecorder,
     ) {}
 
     /**
@@ -50,13 +51,16 @@ class CenterHorseCareService
     public function update(Center $center, HorseCare $horseCare, Model $user, array $data): HorseCare
     {
         $horseCare = DB::transaction(function () use ($horseCare, $user, $data) {
-            $horseCare = $this->horseCareService->update($horseCare, $data);
-
-            // Serialize concurrent media changes of the same service.
+            // Serialize concurrent edits and media changes of the same service, and keep the activity snapshot consistent.
             $service = Service::query()->lockForUpdate()->findOrFail($horseCare->service->getKey());
-            $this->syncMedia($service, $user, $data);
 
-            return $horseCare;
+            return $this->activityRecorder->record($service, function () use ($horseCare, $service, $user, $data) {
+                $horseCare = $this->horseCareService->update($horseCare, $data);
+
+                $this->syncMedia($service, $user, $data);
+
+                return $horseCare;
+            });
         });
 
         // Loaded after commit so files removed in afterCommit callbacks are not returned.

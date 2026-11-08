@@ -20,17 +20,30 @@ class ExpirePackagesCommand extends Command
 
     public function handle(): int
     {
-        $expired = ClientPackage::query()
+        $expired = 0;
+
+        // Saved one by one so each status change fires model events and is audited.
+        ClientPackage::query()
             ->where('status', ClientPackageStatus::Active)
             ->whereNotNull('expires_at')
             ->where('expires_at', '<=', now())
-            ->update(['status' => ClientPackageStatus::Expired, 'updated_at' => now()]);
+            ->lazyById()
+            ->each(function (ClientPackage $package) use (&$expired): void {
+                $package->update(['status' => ClientPackageStatus::Expired]);
+                $expired++;
+            });
 
-        $expiredMemberships = ClientMembership::query()
+        $expiredMemberships = 0;
+
+        ClientMembership::query()
             ->where('status', ClientMembershipStatus::Active)
             ->whereNotNull('expires_at')
             ->where('expires_at', '<=', now())
-            ->update(['status' => ClientMembershipStatus::Expired, 'updated_at' => now()]);
+            ->lazyById()
+            ->each(function (ClientMembership $membership) use (&$expiredMemberships): void {
+                $membership->update(['status' => ClientMembershipStatus::Expired]);
+                $expiredMemberships++;
+            });
 
         $this->info("Expired {$expired} package(s) and {$expiredMemberships} membership(s).");
 

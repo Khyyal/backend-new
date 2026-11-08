@@ -26,6 +26,7 @@ class CenterEventService
         private readonly EventService $eventService,
         private readonly TemporaryMediaService $temporaryMedia,
         private readonly MediaService $mediaService,
+        private readonly ServiceActivityRecorder $activityRecorder,
     ) {}
 
     /**
@@ -50,13 +51,16 @@ class CenterEventService
     public function update(Center $center, Event $event, Model $user, array $data): Event
     {
         $event = DB::transaction(function () use ($event, $user, $data) {
-            $event = $this->eventService->update($event, $data);
-
-            // Serialize concurrent media changes of the same service.
+            // Serialize concurrent edits and media changes of the same service, and keep the activity snapshot consistent.
             $service = Service::query()->lockForUpdate()->findOrFail($event->service->getKey());
-            $this->syncMedia($service, $user, $data);
 
-            return $event;
+            return $this->activityRecorder->record($service, function () use ($event, $service, $user, $data) {
+                $event = $this->eventService->update($event, $data);
+
+                $this->syncMedia($service, $user, $data);
+
+                return $event;
+            });
         });
 
         // Loaded after commit so files removed in afterCommit callbacks are not returned.

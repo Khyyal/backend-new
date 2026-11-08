@@ -36,7 +36,8 @@ class ReleaseCancelledPurchase
                 $purchasable->update(['status' => ClientMembershipStatus::Cancelled]);
                 $purchasable->packages()
                     ->where('status', ClientPackageStatus::Pending)
-                    ->update(['status' => ClientPackageStatus::Cancelled]);
+                    ->get()
+                    ->each->update(['status' => ClientPackageStatus::Cancelled]);
             }
         }
     }

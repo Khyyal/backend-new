@@ -25,7 +25,10 @@ use Spatie\Translatable\HasTranslations;
 #[Translatable('name', 'description')]
 class Service extends Model implements HasMedia
 {
-    use HasFactory, HasTranslations, InteractsWithMedia, LogsActivity, SoftDeletes;
+    use HasFactory, HasTranslations, InteractsWithMedia, SoftDeletes;
+    use LogsActivity {
+        resolveAttributeValue as baseResolveAttributeValue;
+    }
 
     protected $fillable = [
         'name',
@@ -55,6 +58,21 @@ class Service extends Model implements HasMedia
             ->logOnlyDirty()
             ->dontLogEmptyChanges()
             ->useLogName('service');
+    }
+
+    /**
+     * Log translatable attributes with every locale, so an edit of a non-current
+     * locale (e.g. only the Arabic name) is detected and shown.
+     *
+     * @return array<string, mixed>
+     */
+    protected static function resolveAttributeValue(Model $model, string $attribute, LogOptions $options): array
+    {
+        if ($model instanceof self && $model->isTranslatableAttribute($attribute)) {
+            return [$attribute => $model->getTranslations($attribute)];
+        }
+
+        return static::baseResolveAttributeValue($model, $attribute, $options);
     }
 
     protected function casts(): array

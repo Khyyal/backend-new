@@ -14,12 +14,14 @@ use Modules\Purchase\Models\Payment;
 use Modules\Purchase\Services\PaymentStateService;
 use Modules\Reservations\Actions\CheckoutReservations;
 use Modules\Reservations\Actions\PurchasePackage;
+use Modules\Reservations\Database\Factories\ClientMembershipFactory;
 use Modules\Reservations\Database\Factories\ClientPackageFactory;
 use Modules\Reservations\Database\Factories\ReservationFactory;
 use Modules\Reservations\Enums\ClientPackageStatus;
 use Modules\Reservations\Enums\ReservationStatus;
 use Modules\Reservations\Tests\Support\BookingFixtures;
 use Modules\Services\Models\ServicePackage;
+use Spatie\Activitylog\Models\Activity;
 use Tests\TestCase;
 
 uses(TestCase::class, RefreshDatabase::class);
@@ -56,6 +58,19 @@ describe('reservations:expire-packages', function (): void {
             ->and($valid->fresh()->status)->toBe(ClientPackageStatus::Active)
             ->and($exhausted->fresh()->status)->toBe(ClientPackageStatus::Exhausted)
             ->and($pending->fresh()->status)->toBe(ClientPackageStatus::Pending);
+    });
+
+    test('audits each expired package and membership', function (): void {
+        $package = ClientPackageFactory::new()->expired()->create();
+        $membership = ClientMembershipFactory::new()->expired()->create();
+
+        $this->artisan('reservations:expire-packages')->assertSuccessful();
+
+        foreach ([$package, $membership] as $model) {
+            $log = Activity::query()->forSubject($model)->forEvent('updated')->sole();
+
+            expect($log->attribute_changes['attributes'])->toBe(['status' => 'expired']);
+        }
     });
 });
 

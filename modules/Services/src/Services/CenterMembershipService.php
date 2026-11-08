@@ -26,6 +26,7 @@ class CenterMembershipService
         private readonly MembershipService $membershipService,
         private readonly TemporaryMediaService $temporaryMedia,
         private readonly MediaService $mediaService,
+        private readonly ServiceActivityRecorder $activityRecorder,
     ) {}
 
     /**
@@ -50,13 +51,16 @@ class CenterMembershipService
     public function update(Center $center, Membership $membership, Model $user, array $data): Membership
     {
         $membership = DB::transaction(function () use ($membership, $user, $data) {
-            $membership = $this->membershipService->update($membership, $data);
-
-            // Serialize concurrent media changes of the same service.
+            // Serialize concurrent edits and media changes of the same service, and keep the activity snapshot consistent.
             $service = Service::query()->lockForUpdate()->findOrFail($membership->service->getKey());
-            $this->syncMedia($service, $user, $data);
 
-            return $membership;
+            return $this->activityRecorder->record($service, function () use ($membership, $service, $user, $data) {
+                $membership = $this->membershipService->update($membership, $data);
+
+                $this->syncMedia($service, $user, $data);
+
+                return $membership;
+            });
         });
 
         // Loaded after commit so files removed in afterCommit callbacks are not returned.
