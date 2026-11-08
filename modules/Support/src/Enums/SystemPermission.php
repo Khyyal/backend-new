@@ -22,6 +22,7 @@ enum SystemPermission: string
     case ViewAnyCenters = 'centers.view_any';
     case ViewCenter = 'centers.view';
     case CreateCenter = 'centers.create';
+    case ExportCenters = 'centers.export';
     case UpdateCenter = 'centers.update';
     case DeleteCenter = 'centers.delete';
     case ManageCenterServices = 'centers.manage_services';
@@ -57,11 +58,14 @@ enum SystemPermission: string
 
     case ViewAnyClients = 'clients.view_any';
     case ViewClient = 'clients.view';
+    case ExportClients = 'clients.export';
 
     case ViewAnyPurchases = 'purchases.view_any';
+    case ExportPurchases = 'purchases.export';
 
     case ManageFees = 'fees.manage';
     case ManagePayouts = 'payouts.manage';
+    case ExportCenterLedgers = 'payouts.export';
 
     case ViewAnalytics = 'analytics.view';
 

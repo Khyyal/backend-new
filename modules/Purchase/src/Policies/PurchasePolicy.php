@@ -19,4 +19,9 @@ class PurchasePolicy
     {
         return $user->hasPermissionTo(SystemPermission::ViewAnyPurchases);
     }
+
+    public function export(SystemUser $user): bool
+    {
+        return $user->hasPermissionTo(SystemPermission::ExportPurchases);
+    }
 }

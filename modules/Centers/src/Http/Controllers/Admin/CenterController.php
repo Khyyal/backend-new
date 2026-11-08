@@ -9,6 +9,8 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Gate;
+use Modules\Centers\Exports\CentersExport;
+use Modules\Centers\Http\Requests\Admin\ExportCentersRequest;
 use Modules\Centers\Http\Requests\Admin\ListCentersRequest;
 use Modules\Centers\Http\Requests\Admin\StoreCenterRequest;
 use Modules\Centers\Http\Requests\Admin\UpdateCenterRequest;
@@ -17,6 +19,9 @@ use Modules\Centers\Http\Requests\Admin\UpdateCenterSocialLinksRequest;
 use Modules\Centers\Http\Resources\Center\CenterResource;
 use Modules\Centers\Models\Center;
 use Modules\Centers\Services\CenterAdminService;
+use Modules\Exports\Enums\ExportType;
+use Modules\Exports\Http\Resources\ExportResource;
+use Modules\Exports\Services\ExportService;
 use Symfony\Component\HttpFoundation\Response as ResponseAlias;
 
 #[Group(name: 'Admin / Centers', description: 'System user management of centers. Requires a system user Bearer token (see `POST /admin/auth/login`) with the matching `centers.*` permission.')]
@@ -131,5 +136,23 @@ class CenterController extends Controller
         $this->service->delete($center);
 
         return response()->noContent();
+    }
+
+    /**
+     * Export centers.
+     *
+     * Queues an `.xlsx` export of the centers matching the same filters as the list (`search`, `status`,
+     * `state`, `city_id`, `from`/`to` on the creation date). Download it from
+     * `GET /admin/exports/{export}/download` once ready.
+     */
+    #[Response(status: 202, description: 'The queued `ExportResource`; the requester is notified (`export_ready` / `export_failed`) when it finishes.')]
+    #[Response(status: 403, description: 'Missing the `centers.export` permission.')]
+    #[Response(status: 422, description: 'Invalid filters.')]
+    #[Response(status: 429, description: 'An export of this kind is already being generated.')]
+    public function export(ExportCentersRequest $request, ExportService $exports): JsonResponse
+    {
+        $export = $exports->start($request->user(), ExportType::AdminCenters, new CentersExport($request->validated()));
+
+        return ExportResource::make($export)->response()->setStatusCode(ResponseAlias::HTTP_ACCEPTED);
     }
 }

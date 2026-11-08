@@ -4,19 +4,26 @@ namespace Modules\Purchase\Http\Controllers\Admin;
 
 use Dedoc\Scramble\Attributes\Group;
 use Dedoc\Scramble\Attributes\Response;
-use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Gate;
 use Modules\Centers\Models\Center;
 use Modules\Clients\Models\Client;
+use Modules\Exports\Enums\ExportType;
+use Modules\Exports\Http\Resources\ExportResource;
+use Modules\Exports\Services\ExportService;
+use Modules\Purchase\Exports\AdminPurchasesExport;
+use Modules\Purchase\Http\Requests\Admin\ExportPurchasesRequest;
 use Modules\Purchase\Http\Requests\Admin\ListPurchasesRequest;
 use Modules\Purchase\Http\Resources\Admin\PurchaseDetailsResource;
 use Modules\Purchase\Http\Resources\Admin\PurchaseResource;
 use Modules\Purchase\Models\Purchase;
+use Modules\Purchase\Services\AdminPurchaseQuery;
 use Modules\Reservations\Models\ClientPackage;
 use Modules\Reservations\Models\Reservation;
+use Symfony\Component\HttpFoundation\Response as HttpStatus;
 
 #[Group(name: 'Admin / Purchases', description: 'Platform-wide view of what clients bought from centers. Requires a system user Bearer token with the `purchases.view_any` permission.')]
 class PurchaseController extends Controller
@@ -36,36 +43,9 @@ class PurchaseController extends Controller
     #[Response(status: 401, description: 'Missing or invalid system user Bearer token.')]
     #[Response(status: 403, description: 'Missing the `purchases.view_any` permission.')]
     #[Response(status: 422, description: 'Invalid filters.')]
-    public function index(ListPurchasesRequest $request): AnonymousResourceCollection
+    public function index(ListPurchasesRequest $request, AdminPurchaseQuery $query): AnonymousResourceCollection
     {
-        $filters = $request->validated();
-
-        $purchases = Purchase::query()
-            ->where('buyer_type', (new Client)->getMorphClass())
-            ->where('merchant_type', (new Center)->getMorphClass())
-            ->when($filters['center_id'] ?? null, fn (Builder $query, int $id) => $query->where('merchant_id', $id))
-            ->when($filters['client_id'] ?? null, fn (Builder $query, int $id) => $query->where('buyer_id', $id))
-            ->when($filters['status'] ?? null, fn (Builder $query, string $value) => $query->where('status', $value))
-            ->when($filters['source'] ?? null, fn (Builder $query, string $value) => $query->where('source', $value))
-            ->when($filters['channel'] ?? null, fn (Builder $query, string $value) => $query->where('channel', $value))
-            ->when(filled($filters['q'] ?? null), fn (Builder $query) => $query->whereHasMorph(
-                'buyer',
-                [Client::class],
-                fn (Builder $client) => $client->search($filters['q']),
-            ))
-            ->when($filters['payment_method'] ?? null, fn (Builder $query, string $value) => $query->whereHas('latestPayment', fn (Builder $payment) => $payment->where('method', $value)))
-            ->when($filters['payment_status'] ?? null, fn (Builder $query, string $value) => $query->whereHas('latestPayment', fn (Builder $payment) => $payment->where('status', $value)))
-            ->when($filters['service_id'] ?? null, fn (Builder $query, int $id) => $query->whereHas('items', fn (Builder $items) => $items->whereHasMorph(
-                'purchasable',
-                [Reservation::class, ClientPackage::class],
-                fn (Builder $purchasable) => $purchasable->where('service_id', $id),
-            )))
-            ->when($filters['from'] ?? null, fn (Builder $query, string $date) => $query->whereDate('created_at', '>=', $date))
-            ->when($filters['to'] ?? null, fn (Builder $query, string $date) => $query->whereDate('created_at', '<=', $date))
-            ->with(['buyer', 'merchant', 'latestPayment', 'fee'])
-            ->withCount('items')
-            ->latest()
-            ->latest('id')
+        $purchases = $query->build($request->validated())
             ->paginate($request->integer('per_page', 25))
             ->withQueryString();
 
@@ -102,5 +82,23 @@ class PurchaseController extends Controller
             ]);
 
         return PurchaseDetailsResource::make($purchase);
+    }
+
+    /**
+     * Export client purchases.
+     *
+     * Queues an `.xlsx` export of the purchases matching the same filters as the list (`center_id`,
+     * `client_id`, `q`, `status`, `source`, `channel`, `payment_method`, `payment_status`, `service_id`,
+     * `from`/`to`). Amounts are in SAR. Download it from `GET /admin/exports/{export}/download` once ready.
+     */
+    #[Response(status: 202, description: 'The queued `ExportResource`; the requester is notified (`export_ready` / `export_failed`) when it finishes.')]
+    #[Response(status: 403, description: 'Missing the `purchases.export` permission.')]
+    #[Response(status: 422, description: 'Invalid filters.')]
+    #[Response(status: 429, description: 'An export of this kind is already being generated.')]
+    public function export(ExportPurchasesRequest $request, ExportService $exports): JsonResponse
+    {
+        $export = $exports->start($request->user(), ExportType::AdminPurchases, new AdminPurchasesExport($request->validated()));
+
+        return ExportResource::make($export)->response()->setStatusCode(HttpStatus::HTTP_ACCEPTED);
     }
 }

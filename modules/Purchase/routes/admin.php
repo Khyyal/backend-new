@@ -9,6 +9,7 @@ Route::prefix('admin')
     ->middleware(['auth:system_user'])
     ->group(function (): void {
         Route::get('purchases', [PurchaseController::class, 'index'])->name('purchases.index');
+        Route::post('purchases/export', [PurchaseController::class, 'export'])->name('purchases.export');
         Route::get('purchases/{purchase}', [PurchaseController::class, 'show'])->whereNumber('purchase')->name('purchases.show');
         Route::apiResource('fee-rules', FeeRuleController::class);
     });

@@ -13,6 +13,7 @@ Route::prefix('admin/centers')
     ->group(function (): void {
         Route::get('/', [CenterController::class, 'index'])->name('index');
         Route::post('/', [CenterController::class, 'store'])->name('store');
+        Route::post('/export', [CenterController::class, 'export'])->name('export');
         Route::get('/{center}', [CenterController::class, 'show'])->name('show');
         Route::match(['put', 'patch'], '/{center}', [CenterController::class, 'update'])->name('update');
         Route::match(['put', 'patch'], '/{center}/social-links', [CenterController::class, 'updateSocialLinks'])->name('social-links.update');
@@ -25,6 +26,7 @@ Route::prefix('admin/centers')
         Route::post('/{center}/blocked-clients', [BlockedClientController::class, 'store'])->name('blocked-clients.store');
 
         Route::get('/{center}/purchases', [PurchaseController::class, 'index'])->name('purchases.index');
+        Route::post('/{center}/purchases/export', [PurchaseController::class, 'export'])->name('purchases.export');
         Route::get('/{center}/purchases/{purchase}', [PurchaseController::class, 'show'])->name('purchases.show');
     });
 

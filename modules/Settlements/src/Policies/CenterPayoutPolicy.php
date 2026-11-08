@@ -25,6 +25,11 @@ class CenterPayoutPolicy
         return $this->manages($user);
     }
 
+    public function export(SystemUser $user): bool
+    {
+        return $user->hasPermissionTo(SystemPermission::ExportCenterLedgers);
+    }
+
     public function view(SystemUser $user, CenterPayout $payout): bool
     {
         return $this->manages($user);

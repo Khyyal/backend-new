@@ -33,8 +33,21 @@ class CenterAdminService
      */
     public function paginate(array $filters, int $perPage = 15): LengthAwarePaginator
     {
-        return Center::query()
+        return $this->query($filters)
             ->with(['city', 'media'])
+            ->paginate($perPage);
+    }
+
+    /**
+     * Centers filtered like the admin center list, newest first. Shared by the
+     * list endpoint and the centers export.
+     *
+     * @param  array{search?: string|null, status?: string|null, state?: string|null, city_id?: int|null, from?: string, to?: string}  $filters
+     * @return Builder<Center>
+     */
+    public function query(array $filters): Builder
+    {
+        return Center::query()
             ->when($filters['search'] ?? null, fn (Builder $query, string $search) => $query
                 ->where(fn (Builder $inner) => $inner
                     ->where('name', 'like', "%{$search}%")
@@ -42,8 +55,9 @@ class CenterAdminService
             ->when($filters['status'] ?? null, fn (Builder $query, string $status) => $query->where('status', $status))
             ->when($filters['state'] ?? null, fn (Builder $query, string $state) => $query->where('state', $state))
             ->when($filters['city_id'] ?? null, fn (Builder $query, int $cityId) => $query->where('city_id', $cityId))
-            ->latest('id')
-            ->paginate($perPage);
+            ->when($filters['from'] ?? null, fn (Builder $query, string $date) => $query->whereDate('created_at', '>=', $date))
+            ->when($filters['to'] ?? null, fn (Builder $query, string $date) => $query->whereDate('created_at', '<=', $date))
+            ->latest('id');
     }
 
     /**
