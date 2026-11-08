@@ -4,8 +4,10 @@ namespace Modules\Support;
 
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Database\Console\PruneCommand;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Client\Factory as HttpFactory;
 use Illuminate\Notifications\Events\NotificationFailed;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
@@ -18,11 +20,14 @@ use Modules\Support\Models\IdempotencyKey;
 use Modules\Support\Models\SystemUser;
 use Modules\Support\Notifications\Contracts\NotificationServiceContract;
 use Modules\Support\Notifications\NotificationService;
+use Modules\Support\Policies\ActivityLogPolicy;
 use Modules\Support\Policies\CityPolicy;
 use Modules\Support\Policies\MediaPolicy;
 use Modules\Support\Policies\SystemUserPolicy;
 use Modules\Support\WhatsApp\Contracts\WhatsAppGateway;
 use Modules\Support\WhatsApp\VoxaWhatsAppGateway;
+use Spatie\Activitylog\Models\Activity;
+use Spatie\Activitylog\Support\CauserResolver;
 
 class SupportServiceProvider extends ServiceProvider
 {
@@ -44,6 +49,23 @@ class SupportServiceProvider extends ServiceProvider
         Gate::policy(config('media-library.media_model'), MediaPolicy::class);
         Gate::policy(SystemUser::class, SystemUserPolicy::class);
         Gate::policy(City::class, CityPolicy::class);
+        Gate::policy(Activity::class, ActivityLogPolicy::class);
+
+        $this->app->make(CauserResolver::class)->resolveUsing(function (mixed $subject = null): ?Model {
+            if ($subject instanceof Model) {
+                return $subject;
+            }
+
+            foreach (['system_user', 'center_user', 'client'] as $guard) {
+                $user = Auth::guard($guard)->user();
+
+                if ($user instanceof Model) {
+                    return $user;
+                }
+            }
+
+            return null;
+        });
 
         Event::listen(NotificationFailed::class, DeleteExpiredNotificationTokens::class);
 

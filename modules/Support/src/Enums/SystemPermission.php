@@ -65,6 +65,8 @@ enum SystemPermission: string
 
     case ViewAnalytics = 'analytics.view';
 
+    case ViewAnyActivityLogs = 'activity_logs.view_any';
+
     /** @return array<string> */
     public static function all(): array
     {

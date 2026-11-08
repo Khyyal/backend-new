@@ -13,6 +13,8 @@ use Modules\Reservations\Database\Factories\ClientMembershipFactory;
 use Modules\Reservations\Enums\ClientMembershipStatus;
 use Modules\Services\Models\Membership;
 use Modules\Services\Models\Service;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 /**
  * A membership bought by a client: one client package per included service
@@ -22,7 +24,7 @@ use Modules\Services\Models\Service;
  */
 class ClientMembership extends Model implements Purchasable
 {
-    use HasFactory, IsPurchasable;
+    use HasFactory, IsPurchasable, LogsActivity;
 
     protected $fillable = [
         'client_id',
@@ -39,6 +41,15 @@ class ClientMembership extends Model implements Purchasable
     protected static function newFactory(): ClientMembershipFactory
     {
         return ClientMembershipFactory::new();
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logFillable()
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges()
+            ->useLogName('client_membership');
     }
 
     protected function casts(): array

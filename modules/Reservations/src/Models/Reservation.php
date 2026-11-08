@@ -19,6 +19,8 @@ use Modules\Reservations\Enums\ReservationStatus;
 use Modules\Services\Models\PriceOption;
 use Modules\Services\Models\Service;
 use Modules\Services\Models\Trainer;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 /**
  * The smallest session a client gets from a center. Hour-based services carry a
@@ -26,7 +28,7 @@ use Modules\Services\Models\Trainer;
  */
 class Reservation extends Model implements Purchasable
 {
-    use HasFactory, IsPurchasable, SoftDeletes;
+    use HasFactory, IsPurchasable, LogsActivity, SoftDeletes;
 
     protected $fillable = [
         'center_id',
@@ -57,6 +59,16 @@ class Reservation extends Model implements Purchasable
     protected static function newFactory(): ReservationFactory
     {
         return ReservationFactory::new();
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logFillable()
+            ->logExcept(['metadata'])
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges()
+            ->useLogName('reservation');
     }
 
     protected function casts(): array

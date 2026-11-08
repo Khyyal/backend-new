@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Modules\Support\Http\Controllers\Admin\ActivityLogController;
 use Modules\Support\Http\Controllers\Admin\AuthController;
 use Modules\Support\Http\Controllers\Admin\CityController;
 
@@ -21,4 +22,11 @@ Route::prefix('admin')
 
         Route::middleware('auth:system_user')
             ->apiResource('cities', CityController::class);
+
+        Route::middleware('auth:system_user')->group(function () {
+            Route::get('activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
+            Route::get('activity-logs/{activity}', [ActivityLogController::class, 'show'])
+                ->whereNumber('activity')
+                ->name('activity-logs.show');
+        });
     });

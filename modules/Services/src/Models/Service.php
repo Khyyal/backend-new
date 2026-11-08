@@ -13,6 +13,8 @@ use Modules\Centers\Models\Center;
 use Modules\Services\Database\Factories\ServiceFactory;
 use Modules\Services\Enums\ServiceType;
 use Modules\Support\Enums\ActivationStatus;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 use Spatie\Image\Enums\Fit;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -23,7 +25,7 @@ use Spatie\Translatable\HasTranslations;
 #[Translatable('name', 'description')]
 class Service extends Model implements HasMedia
 {
-    use HasFactory, HasTranslations, InteractsWithMedia, SoftDeletes;
+    use HasFactory, HasTranslations, InteractsWithMedia, LogsActivity, SoftDeletes;
 
     protected $fillable = [
         'name',
@@ -44,6 +46,15 @@ class Service extends Model implements HasMedia
     public function center(): BelongsTo
     {
         return $this->belongsTo(Center::class);
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logFillable()
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges()
+            ->useLogName('service');
     }
 
     protected function casts(): array

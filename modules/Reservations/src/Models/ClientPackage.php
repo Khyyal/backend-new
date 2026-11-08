@@ -15,6 +15,8 @@ use Modules\Services\Models\PriceOption;
 use Modules\Services\Models\Service;
 use Modules\Services\Models\ServicePackage;
 use Modules\Services\Models\Trainer;
+use Spatie\Activitylog\Models\Concerns\LogsActivity;
+use Spatie\Activitylog\Support\LogOptions;
 
 /**
  * A service package bought by a client: a stock of session credits, each one
@@ -23,7 +25,7 @@ use Modules\Services\Models\Trainer;
  */
 class ClientPackage extends Model implements Purchasable
 {
-    use HasFactory, IsPurchasable;
+    use HasFactory, IsPurchasable, LogsActivity;
 
     protected $fillable = [
         'client_id',
@@ -42,6 +44,15 @@ class ClientPackage extends Model implements Purchasable
     protected static function newFactory(): ClientPackageFactory
     {
         return ClientPackageFactory::new();
+    }
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logFillable()
+            ->logOnlyDirty()
+            ->dontLogEmptyChanges()
+            ->useLogName('client_package');
     }
 
     protected function casts(): array
