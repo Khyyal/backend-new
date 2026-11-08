@@ -1,6 +1,7 @@
 <?php
 
 use App\Providers\AppServiceProvider;
+use Modules\Analytics\AnalyticsServiceProvider;
 use Modules\Billing\BillingServiceProvider;
 use Modules\Centers\CentersServiceProvider;
 use Modules\Clients\ClientsServiceProvider;
@@ -26,4 +27,5 @@ return [
     ReservationsServiceProvider::class,
     NotificationsServiceProvider::class,
     HomepageServiceProvider::class,
+    AnalyticsServiceProvider::class,
 ];

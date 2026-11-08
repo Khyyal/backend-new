@@ -69,6 +69,7 @@
             "Modules\\Notifications\\Database\\Factories\\": "modules/Notifications/database/factories/",
             "Modules\\Homepage\\": "modules/Homepage/src/",
             "Modules\\Homepage\\Database\\Factories\\": "modules/Homepage/database/factories/",
+            "Modules\\Analytics\\": "modules/Analytics/src/",
 
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/"
@@ -78,7 +79,8 @@
         "psr-4": {
             "Tests\\": "tests/",
             "Modules\\Purchase\\Tests\\": "modules/Purchase/tests/",
-            "Modules\\Reservations\\Tests\\": "modules/Reservations/tests/"
+            "Modules\\Reservations\\Tests\\": "modules/Reservations/tests/",
+            "Modules\\Analytics\\Tests\\": "modules/Analytics/tests/"
         }
     },
     "scripts": {

@@ -63,6 +63,8 @@ enum SystemPermission: string
     case ManageFees = 'fees.manage';
     case ManagePayouts = 'payouts.manage';
 
+    case ViewAnalytics = 'analytics.view';
+
     /** @return array<string> */
     public static function all(): array
     {

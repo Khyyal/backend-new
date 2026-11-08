@@ -21,6 +21,7 @@
             <directory>modules/Reservations/tests</directory>
             <directory>modules/Notifications/tests</directory>
             <directory>modules/Homepage/tests</directory>
+            <directory>modules/Analytics/tests</directory>
         </testsuite>
     </testsuites>
     <source>
