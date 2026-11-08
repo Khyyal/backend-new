@@ -6,6 +6,8 @@ use Modules\Billing\Database\Factories\LimitFactory;
 use Modules\Billing\Database\Factories\SubscriptionFactory;
 use Modules\Centers\Database\Factories\CenterFactory;
 use Modules\Centers\Database\Factories\UserFactory;
+use Modules\Support\Database\Factories\SystemUserFactory;
+use Modules\Support\Database\Seeders\SystemRolePermissionSeeder;
 use Modules\Support\Enums\ActivationStatus;
 use Tests\TestCase;
 
@@ -14,9 +16,9 @@ uses(TestCase::class, RefreshDatabase::class);
 test('feature and limit lists return paginated data', function (): void {
     FeatureFactory::new()->create();
     LimitFactory::new()->create();
-    $user = UserFactory::new()->create();
+    $this->seed(SystemRolePermissionSeeder::class);
 
-    $this->actingAs($user, 'sanctum');
+    $this->actingAs(SystemUserFactory::new()->superAdmin()->create(), 'system_user');
 
     $this->getJson('/api/admin/features')->assertOk()->assertJsonCount(1, 'data');
     $this->getJson('/api/admin/limits')->assertOk()->assertJsonCount(1, 'data');

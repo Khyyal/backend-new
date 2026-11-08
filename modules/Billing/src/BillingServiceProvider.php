@@ -12,7 +12,9 @@ use Modules\Billing\Console\ReleaseUnpaidSubscriptionsCommand;
 use Modules\Billing\Listeners\AbandonCancelledSubscription;
 use Modules\Billing\Listeners\ActivatePaidSubscription;
 use Modules\Billing\Listeners\RefundLateSubscriptionPayment;
+use Modules\Billing\Models\Plan;
 use Modules\Billing\Models\Subscription;
+use Modules\Billing\Policies\PlanPolicy;
 use Modules\Billing\Policies\SubscriptionPolicy;
 use Modules\Purchase\Events\PaymentSucceeded;
 use Modules\Purchase\Events\PurchaseCancelled;
@@ -36,6 +38,7 @@ class BillingServiceProvider extends ServiceProvider
         require __DIR__.'/../routes/admin.php';
         require __DIR__.'/../routes/center.php';
 
+        Gate::policy(Plan::class, PlanPolicy::class);
         Gate::policy(Subscription::class, SubscriptionPolicy::class);
 
         Route::middleware(['api'])

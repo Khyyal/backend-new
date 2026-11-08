@@ -16,13 +16,9 @@ use Modules\Billing\Models\Limit;
 #[Group(name: 'Admin / Limits', description: 'Platform admin: manage reusable numeric quota limit keys.')]
 class LimitController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware('auth:sanctum');
-    }
-
     #[Response(status: 200, description: 'Paginated list of limits.')]
-    #[Response(status: 401, description: 'Unauthenticated.')]
+    #[Response(status: 401, description: 'Missing or invalid system user Bearer token.')]
+    #[Response(status: 403, description: 'Missing the required plans.* permission.')]
     public function index(): ResourceCollection
     {
         return LimitCollection::make(
@@ -31,7 +27,8 @@ class LimitController extends Controller
     }
 
     #[Response(status: 201, description: 'Limit created.')]
-    #[Response(status: 401, description: 'Unauthenticated.')]
+    #[Response(status: 401, description: 'Missing or invalid system user Bearer token.')]
+    #[Response(status: 403, description: 'Missing the required plans.* permission.')]
     #[Response(status: 422, description: 'Invalid payload or duplicate key.')]
     public function store(StoreLimitRequest $request)
     {
@@ -41,7 +38,8 @@ class LimitController extends Controller
     }
 
     #[Response(status: 200, description: 'Limit detail.')]
-    #[Response(status: 401, description: 'Unauthenticated.')]
+    #[Response(status: 401, description: 'Missing or invalid system user Bearer token.')]
+    #[Response(status: 403, description: 'Missing the required plans.* permission.')]
     #[Response(status: 404, description: 'Limit not found.')]
     public function show(Limit $limit): LimitResource
     {
@@ -49,7 +47,8 @@ class LimitController extends Controller
     }
 
     #[Response(status: 200, description: 'Limit updated.')]
-    #[Response(status: 401, description: 'Unauthenticated.')]
+    #[Response(status: 401, description: 'Missing or invalid system user Bearer token.')]
+    #[Response(status: 403, description: 'Missing the required plans.* permission.')]
     #[Response(status: 404, description: 'Limit not found.')]
     #[Response(status: 422, description: 'Invalid payload.')]
     public function update(UpdateLimitRequest $request, Limit $limit): LimitResource
@@ -60,7 +59,8 @@ class LimitController extends Controller
     }
 
     #[Response(status: 204, description: 'Limit deleted.')]
-    #[Response(status: 401, description: 'Unauthenticated.')]
+    #[Response(status: 401, description: 'Missing or invalid system user Bearer token.')]
+    #[Response(status: 403, description: 'Missing the required plans.* permission.')]
     #[Response(status: 404, description: 'Limit not found.')]
     public function destroy(Limit $limit): JsonResponse
     {

@@ -30,13 +30,9 @@ use Modules\Billing\Models\PlanLimit;
 #[Group(name: 'Admin / Plans', description: 'Platform admin: manage subscription plans, features, and limits.')]
 class PlanController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware('auth:sanctum');
-    }
-
     #[Response(status: 200, description: 'Paginated list of plans with feature, limit, and subscription counts.')]
-    #[Response(status: 401, description: 'Missing or invalid Bearer token.')]
+    #[Response(status: 401, description: 'Missing or invalid system user Bearer token.')]
+    #[Response(status: 403, description: 'Missing the required plans.* permission.')]
     public function index(Request $request): ResourceCollection
     {
         $query = Plan::query()
@@ -48,7 +44,8 @@ class PlanController extends Controller
     }
 
     #[Response(status: 201, description: 'Plan created successfully.')]
-    #[Response(status: 401, description: 'Unauthenticated.')]
+    #[Response(status: 401, description: 'Missing or invalid system user Bearer token.')]
+    #[Response(status: 403, description: 'Missing the required plans.* permission.')]
     #[Response(status: 422, description: 'Invalid payload.')]
     public function store(StorePlanRequest $request)
     {
@@ -74,7 +71,8 @@ class PlanController extends Controller
     }
 
     #[Response(status: 200, description: 'Plan detail with features, limits, and counts.')]
-    #[Response(status: 401, description: 'Unauthenticated.')]
+    #[Response(status: 401, description: 'Missing or invalid system user Bearer token.')]
+    #[Response(status: 403, description: 'Missing the required plans.* permission.')]
     #[Response(status: 404, description: 'Plan not found.')]
     public function show(Plan $plan): PlanResource
     {
@@ -85,7 +83,8 @@ class PlanController extends Controller
     }
 
     #[Response(status: 200, description: 'Plan updated.')]
-    #[Response(status: 401, description: 'Unauthenticated.')]
+    #[Response(status: 401, description: 'Missing or invalid system user Bearer token.')]
+    #[Response(status: 403, description: 'Missing the required plans.* permission.')]
     #[Response(status: 404, description: 'Plan not found.')]
     #[Response(status: 422, description: 'Invalid payload.')]
     public function update(UpdatePlanRequest $request, Plan $plan): PlanResource
@@ -103,7 +102,8 @@ class PlanController extends Controller
     }
 
     #[Response(status: 204, description: 'Plan deleted.')]
-    #[Response(status: 401, description: 'Unauthenticated.')]
+    #[Response(status: 401, description: 'Missing or invalid system user Bearer token.')]
+    #[Response(status: 403, description: 'Missing the required plans.* permission.')]
     #[Response(status: 404, description: 'Plan not found.')]
     #[Response(status: 422, description: 'Plan has subscriptions and cannot be deleted.')]
     public function destroy(Plan $plan): JsonResponse
@@ -120,7 +120,8 @@ class PlanController extends Controller
     }
 
     #[Response(status: 200, description: 'Plan status updated.')]
-    #[Response(status: 401, description: 'Unauthenticated.')]
+    #[Response(status: 401, description: 'Missing or invalid system user Bearer token.')]
+    #[Response(status: 403, description: 'Missing the required plans.* permission.')]
     #[Response(status: 422, description: 'Invalid status value.')]
     public function updateStatus(UpdatePlanStatusRequest $request, Plan $plan): PlanResource
     {

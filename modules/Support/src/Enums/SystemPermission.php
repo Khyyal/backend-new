@@ -69,6 +69,12 @@ enum SystemPermission: string
 
     case ViewAnalytics = 'analytics.view';
 
+    case ViewAnyPlans = 'plans.view_any';
+    case CreatePlan = 'plans.create';
+    case UpdatePlan = 'plans.update';
+    case DeletePlan = 'plans.delete';
+    case ManagePlanCatalog = 'plans.manage_catalog';
+
     case ViewAnySubscriptions = 'subscriptions.view_any';
     case ChangeSubscriptions = 'subscriptions.change';
 

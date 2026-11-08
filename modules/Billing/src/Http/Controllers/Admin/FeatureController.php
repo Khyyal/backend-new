@@ -16,13 +16,9 @@ use Modules\Billing\Models\Feature;
 #[Group(name: 'Admin / Features', description: 'Platform admin: manage reusable feature flags.')]
 class FeatureController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware('auth:sanctum');
-    }
-
     #[Response(status: 200, description: 'Paginated list of features.')]
-    #[Response(status: 401, description: 'Unauthenticated.')]
+    #[Response(status: 401, description: 'Missing or invalid system user Bearer token.')]
+    #[Response(status: 403, description: 'Missing the required plans.* permission.')]
     public function index(): ResourceCollection
     {
         return FeatureCollection::make(
@@ -31,7 +27,8 @@ class FeatureController extends Controller
     }
 
     #[Response(status: 201, description: 'Feature created.')]
-    #[Response(status: 401, description: 'Unauthenticated.')]
+    #[Response(status: 401, description: 'Missing or invalid system user Bearer token.')]
+    #[Response(status: 403, description: 'Missing the required plans.* permission.')]
     #[Response(status: 422, description: 'Invalid payload or duplicate key.')]
     public function store(StoreFeatureRequest $request)
     {
@@ -46,7 +43,8 @@ class FeatureController extends Controller
     }
 
     #[Response(status: 200, description: 'Feature detail.')]
-    #[Response(status: 401, description: 'Unauthenticated.')]
+    #[Response(status: 401, description: 'Missing or invalid system user Bearer token.')]
+    #[Response(status: 403, description: 'Missing the required plans.* permission.')]
     #[Response(status: 404, description: 'Feature not found.')]
     public function show(Feature $feature): FeatureResource
     {
@@ -54,7 +52,8 @@ class FeatureController extends Controller
     }
 
     #[Response(status: 200, description: 'Feature updated.')]
-    #[Response(status: 401, description: 'Unauthenticated.')]
+    #[Response(status: 401, description: 'Missing or invalid system user Bearer token.')]
+    #[Response(status: 403, description: 'Missing the required plans.* permission.')]
     #[Response(status: 404, description: 'Feature not found.')]
     #[Response(status: 422, description: 'Invalid payload.')]
     public function update(UpdateFeatureRequest $request, Feature $feature): FeatureResource
@@ -69,7 +68,8 @@ class FeatureController extends Controller
     }
 
     #[Response(status: 204, description: 'Feature deleted.')]
-    #[Response(status: 401, description: 'Unauthenticated.')]
+    #[Response(status: 401, description: 'Missing or invalid system user Bearer token.')]
+    #[Response(status: 403, description: 'Missing the required plans.* permission.')]
     #[Response(status: 404, description: 'Feature not found.')]
     public function destroy(Feature $feature): JsonResponse
     {
