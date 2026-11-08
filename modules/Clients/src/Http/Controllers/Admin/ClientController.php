@@ -10,8 +10,16 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Gate;
+use Modules\Clients\Exports\AdminClientsExport;
+use Modules\Clients\Http\Requests\Admin\ExportClientsRequest;
+use Modules\Clients\Http\Requests\Admin\ListClientsRequest;
 use Modules\Clients\Http\Resources\Admin\ClientResource;
 use Modules\Clients\Models\Client;
+use Modules\Clients\Services\AdminClientQuery;
+use Modules\Exports\Enums\ExportType;
+use Modules\Exports\Http\Resources\ExportResource;
+use Modules\Exports\Services\ExportService;
+use Symfony\Component\HttpFoundation\Response as HttpStatus;
 
 #[Group(name: 'Admin / Clients', description: 'System user view of every client across all centers. Requires a system user Bearer token with the matching `clients.*` permission.')]
 class ClientController extends Controller
@@ -22,21 +30,13 @@ class ClientController extends Controller
      * Global list across every center (not scoped to one center). Paginated (15 per page, `per_page` up to 100),
      * newest first. Soft-deleted clients are excluded.
      */
-    #[QueryParameter('search', description: 'Matches the full name (e.g. `Aisha Noor`) or the phone number; every word must match.', type: 'string')]
-    #[QueryParameter('city_id', description: 'Only clients of this city.', type: 'integer')]
     #[Response(status: 200, description: 'Paginated `ClientResource` collection with `centers_count`, `reservations_count`, `packages_count` and `memberships_count`.')]
     #[Response(status: 401, description: 'Missing or invalid Bearer token.')]
     #[Response(status: 403, description: 'Missing the `clients.view_any` permission.')]
-    public function index(Request $request): AnonymousResourceCollection
+    #[Response(status: 422, description: 'Invalid filters.')]
+    public function index(ListClientsRequest $request, AdminClientQuery $query): AnonymousResourceCollection
     {
-        Gate::forUser($request->user())->authorize('viewAny', Client::class);
-
-        $clients = Client::query()
-            ->with('city')
-            ->withCount(['centers', 'reservations', 'packages', 'memberships'])
-            ->when($request->query('search'), fn ($query, string $term) => $query->search($term))
-            ->when($request->integer('city_id'), fn ($query, int $cityId) => $query->where('city_id', $cityId))
-            ->orderByDesc('id')
+        $clients = $query->build($request->validated())
             ->paginate(min(100, max(1, $request->integer('per_page', 15))))
             ->withQueryString();
 
@@ -84,5 +84,23 @@ class ClientController extends Controller
         Gate::forUser($request->user())->authorize('view', $client);
 
         return ClientResource::make($client->load('city')->loadCount(['centers', 'reservations', 'packages', 'memberships']));
+    }
+
+    /**
+     * Export clients.
+     *
+     * Queues an `.xlsx` export of every client matching the same filters as the list (`search`, `city_id`,
+     * `gender`, `from`/`to` on the registration date). Download it from
+     * `GET /admin/exports/{export}/download` once ready.
+     */
+    #[Response(status: 202, description: 'The queued `ExportResource`; the requester is notified (`export_ready` / `export_failed`) when it finishes.')]
+    #[Response(status: 403, description: 'Missing the `clients.export` permission.')]
+    #[Response(status: 422, description: 'Invalid filters.')]
+    #[Response(status: 429, description: 'An export of this kind is already being generated.')]
+    public function export(ExportClientsRequest $request, ExportService $exports): JsonResponse
+    {
+        $export = $exports->start($request->user(), ExportType::AdminClients, new AdminClientsExport($request->validated()));
+
+        return ExportResource::make($export)->response()->setStatusCode(HttpStatus::HTTP_ACCEPTED);
     }
 }

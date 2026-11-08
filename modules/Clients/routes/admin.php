@@ -15,6 +15,7 @@ Route::prefix('admin/clients')
     ->middleware(['auth:system_user'])
     ->group(function (): void {
         Route::get('/', [ClientController::class, 'index'])->name('index');
+        Route::post('/export', [ClientController::class, 'export'])->name('export');
         Route::get('/search', [ClientController::class, 'search'])->name('search');
         Route::get('/{client}', [ClientController::class, 'show'])->name('show')->whereNumber('client');
     });

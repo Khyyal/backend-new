@@ -16,6 +16,7 @@
         "laravel/octane": "^2.22",
         "laravel/sanctum": "^4.3",
         "laravel/tinker": "^3.0",
+        "maatwebsite/excel": "^4.0",
         "spatie/laravel-activitylog": "^5.1",
         "spatie/laravel-medialibrary": "^11.23",
         "spatie/laravel-permission": "^8.3",
@@ -71,6 +72,8 @@
             "Modules\\Homepage\\": "modules/Homepage/src/",
             "Modules\\Homepage\\Database\\Factories\\": "modules/Homepage/database/factories/",
             "Modules\\Analytics\\": "modules/Analytics/src/",
+            "Modules\\Exports\\": "modules/Exports/src/",
+            "Modules\\Exports\\Database\\Factories\\": "modules/Exports/database/factories/",
 
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/"
@@ -81,7 +84,8 @@
             "Tests\\": "tests/",
             "Modules\\Purchase\\Tests\\": "modules/Purchase/tests/",
             "Modules\\Reservations\\Tests\\": "modules/Reservations/tests/",
-            "Modules\\Analytics\\Tests\\": "modules/Analytics/tests/"
+            "Modules\\Analytics\\Tests\\": "modules/Analytics/tests/",
+            "Modules\\Exports\\Tests\\": "modules/Exports/tests/"
         }
     },
     "scripts": {

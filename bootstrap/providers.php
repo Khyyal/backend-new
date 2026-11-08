@@ -5,6 +5,7 @@ use Modules\Analytics\AnalyticsServiceProvider;
 use Modules\Billing\BillingServiceProvider;
 use Modules\Centers\CentersServiceProvider;
 use Modules\Clients\ClientsServiceProvider;
+use Modules\Exports\ExportsServiceProvider;
 use Modules\Homepage\HomepageServiceProvider;
 use Modules\Notifications\NotificationsServiceProvider;
 use Modules\Promotions\PromotionsServiceProvider;
@@ -28,4 +29,5 @@ return [
     NotificationsServiceProvider::class,
     HomepageServiceProvider::class,
     AnalyticsServiceProvider::class,
+    ExportsServiceProvider::class,
 ];

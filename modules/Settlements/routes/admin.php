@@ -14,5 +14,6 @@ Route::prefix('admin')
         Route::post('payouts/{payout}/cancel', [CenterPayoutController::class, 'cancel'])->name('payouts.cancel');
 
         Route::get('centers/{center}/ledger', [CenterLedgerController::class, 'index'])->name('centers.ledger');
+        Route::post('centers/{center}/ledger/export', [CenterLedgerController::class, 'export'])->name('centers.ledger.export');
         Route::get('purchases/{purchase}/financials', [CenterLedgerController::class, 'financials'])->name('purchases.financials');
     });

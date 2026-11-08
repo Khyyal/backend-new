@@ -26,6 +26,11 @@ class CenterPolicy
         return $this->systemUserCan($user, SystemPermission::ViewCenter);
     }
 
+    public function export(User|SystemUser $user): bool
+    {
+        return $this->systemUserCan($user, SystemPermission::ExportCenters);
+    }
+
     public function create(User|SystemUser $user): bool
     {
         return $this->systemUserCan($user, SystemPermission::CreateCenter);
@@ -110,6 +115,32 @@ class CenterPolicy
     public function viewPurchasePrices(User|SystemUser $user, Center $center): bool
     {
         return $this->canAccessCenter($user, $center, [CenterUserPermission::ViewPurchasePrices], SystemPermission::ManageCenterReservations);
+    }
+
+    /**
+     * Center users: `purchases.export` on top of seeing purchases (the export
+     * is narrowed by purchase visibility). System users: `purchases.export`.
+     */
+    public function exportPurchases(User|SystemUser $user, Center $center): bool
+    {
+        if ($user instanceof SystemUser) {
+            return $this->systemUserCan($user, SystemPermission::ExportPurchases);
+        }
+
+        return $this->viewPurchases($user, $center)
+            && $user->hasCenterPermission($center, CenterUserPermission::ExportPurchases);
+    }
+
+    /**
+     * Center users: `clients.export` on top of the access to the client list
+     * (`reservations.manage`). System users: denied; they export every client
+     * through the admin API.
+     */
+    public function exportClients(User|SystemUser $user, Center $center): bool
+    {
+        return $user instanceof User
+            && $this->manageReservations($user, $center)
+            && $user->hasCenterPermission($center, CenterUserPermission::ExportClients);
     }
 
     /**

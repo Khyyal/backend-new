@@ -21,6 +21,11 @@ class ClientPolicy
         return $user->hasPermissionTo(SystemPermission::ViewAnyClients);
     }
 
+    public function export(SystemUser $user): bool
+    {
+        return $user->hasPermissionTo(SystemPermission::ExportClients);
+    }
+
     public function view(SystemUser $user, Client $client): bool
     {
         return $user->hasPermissionTo(SystemPermission::ViewClient);
