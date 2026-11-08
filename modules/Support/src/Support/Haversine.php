@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\Homepage\Support;
+namespace Modules\Support\Support;
 
 /**
  * Great-circle distance in kilometres between a row's lat/lng columns and a point.

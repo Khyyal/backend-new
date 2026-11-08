@@ -16,7 +16,6 @@ use Modules\Homepage\Http\Resources\Client\HomeServiceResource;
 use Modules\Homepage\Models\Banner;
 use Modules\Homepage\Models\HomeSection;
 use Modules\Homepage\Models\HomeSectionItem;
-use Modules\Homepage\Support\Haversine;
 use Modules\Promotions\Contracts\ServicePriceDisplay;
 use Modules\Promotions\Http\Resources\OfferResource;
 use Modules\Promotions\Models\Campaign;
@@ -24,6 +23,7 @@ use Modules\Promotions\Models\Promotion;
 use Modules\Promotions\Services\UsageLimitGuard;
 use Modules\Services\Models\Service;
 use Modules\Support\Enums\ActivationStatus;
+use Modules\Support\Support\Haversine;
 
 /**
  * Turns one section definition into a page of resolved (plain array) items.

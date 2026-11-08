@@ -12,6 +12,9 @@ Route::middleware(['set.locale.from.accept.language'])
         Route::get('/centers', [CenterController::class, 'index'])
             ->name('centers.index');
 
+        Route::get('/centers/{slug}', [CenterController::class, 'show'])
+            ->name('centers.show');
+
         Route::middleware(['track.client.session', 'auth:client'])
             ->group(function (): void {
                 Route::post('/ratings', [RatingController::class, 'rate'])

@@ -7,13 +7,19 @@ use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Routing\Controller;
 use Modules\Centers\Http\Requests\Client\ListCentersRequest;
+use Modules\Centers\Http\Requests\Client\ShowCenterRequest;
+use Modules\Centers\Http\Resources\Client\CenterDetailsResource;
 use Modules\Centers\Http\Resources\Client\CenterResource;
+use Modules\Centers\Services\CenterDetailsService;
 use Modules\Centers\Services\CenterSearchService;
 
 #[Group(name: 'Client / Centers', description: 'Browse and search centers. Public, no authentication required.')]
 class CenterController extends Controller
 {
-    public function __construct(private readonly CenterSearchService $service) {}
+    public function __construct(
+        private readonly CenterSearchService $service,
+        private readonly CenterDetailsService $detailsService,
+    ) {}
 
     /**
      * List/search centers.
@@ -37,5 +43,27 @@ class CenterController extends Controller
     public function index(ListCentersRequest $request): AnonymousResourceCollection
     {
         return CenterResource::collection($this->service->search($request->validated()));
+    }
+
+    /**
+     * Center details.
+     *
+     * Looked up by `slug`; only visible, active centers are returned. Includes
+     * images, cover, logo, tags and an overview of the center's active services
+     * (`name`, `cover`, `start_price` in halalas). Send `lat` and `lng` together
+     * to get `distance_km`; otherwise it is `null`.
+     */
+    #[Response(status: 200, description: '`CenterDetailsResource`.')]
+    #[Response(status: 404, description: 'Center not found or not visible.')]
+    #[Response(status: 422, description: 'Validation failed.')]
+    public function show(ShowCenterRequest $request, string $slug): CenterDetailsResource
+    {
+        $center = $this->detailsService->findBySlug(
+            $slug,
+            $request->filled('lat') ? (float) $request->input('lat') : null,
+            $request->filled('lng') ? (float) $request->input('lng') : null,
+        );
+
+        return new CenterDetailsResource($center);
     }
 }
