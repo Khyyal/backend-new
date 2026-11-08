@@ -96,12 +96,38 @@ class SubscriptionLifecycleService
             $locked->ends_at = $this->calculator->nextBillingDate($now, $locked->plan->billing_interval, 1);
             $locked->save();
 
+            $this->replacePrevious($locked, $now);
+
             DB::afterCommit(function () use ($locked) {
                 event(new SubscriptionCreated($locked));
             });
 
             return $locked;
         });
+    }
+
+    /**
+     * An activated plan change ends the subscriber's other running subscriptions.
+     */
+    private function replacePrevious(Subscription $activated, Carbon $now): void
+    {
+        Subscription::query()
+            ->where('subscribable_type', $activated->subscribable_type)
+            ->where('subscribable_id', $activated->subscribable_id)
+            ->whereKeyNot($activated->id)
+            ->whereIn('status', [SubscriptionStatus::Active, SubscriptionStatus::Trialing])
+            ->lockForUpdate()
+            ->get()
+            ->each(function (Subscription $previous) use ($now): void {
+                $previous->status = SubscriptionStatus::Canceled;
+                $previous->canceled_at = $now;
+                $previous->ends_at = $now;
+                $previous->save();
+
+                DB::afterCommit(function () use ($previous) {
+                    event(new SubscriptionCanceled($previous));
+                });
+            });
     }
 
     /**

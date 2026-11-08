@@ -69,6 +69,9 @@ enum SystemPermission: string
 
     case ViewAnalytics = 'analytics.view';
 
+    case ViewAnySubscriptions = 'subscriptions.view_any';
+    case ChangeSubscriptions = 'subscriptions.change';
+
     case ViewAnyActivityLogs = 'activity_logs.view_any';
 
     /** @return array<string> */
