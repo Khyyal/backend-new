@@ -6,7 +6,7 @@ use Dedoc\Scramble\Attributes\Group;
 use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Routing\Controller;
 use Illuminate\Validation\ValidationException;
 use Modules\Billing\Enums\PlanStatus;
@@ -157,7 +157,7 @@ class SubscriptionController extends Controller
     #[Response(status: 200, description: 'All subscriptions (paginated) for the center.')]
     #[Response(status: 401, description: 'Unauthenticated.')]
     #[Response(status: 403, description: 'No center assignment.')]
-    public function index(Request $request): AnonymousResourceCollection
+    public function index(Request $request): ResourceCollection
     {
         $center = $this->center($request);
 

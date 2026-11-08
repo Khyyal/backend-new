@@ -5,7 +5,7 @@ namespace Modules\Billing\Http\Controllers\Admin;
 use Dedoc\Scramble\Attributes\Group;
 use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Routing\Controller;
 use Modules\Billing\Http\Requests\StoreFeatureRequest;
 use Modules\Billing\Http\Requests\UpdateFeatureRequest;
@@ -23,7 +23,7 @@ class FeatureController extends Controller
 
     #[Response(status: 200, description: 'Paginated list of features.')]
     #[Response(status: 401, description: 'Unauthenticated.')]
-    public function index(): AnonymousResourceCollection
+    public function index(): ResourceCollection
     {
         return FeatureCollection::make(
             Feature::query()->latest()->paginate(50)

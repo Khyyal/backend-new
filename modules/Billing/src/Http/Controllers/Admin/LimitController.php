@@ -5,7 +5,7 @@ namespace Modules\Billing\Http\Controllers\Admin;
 use Dedoc\Scramble\Attributes\Group;
 use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Routing\Controller;
 use Modules\Billing\Http\Requests\StoreLimitRequest;
 use Modules\Billing\Http\Requests\UpdateLimitRequest;
@@ -23,7 +23,7 @@ class LimitController extends Controller
 
     #[Response(status: 200, description: 'Paginated list of limits.')]
     #[Response(status: 401, description: 'Unauthenticated.')]
-    public function index(): AnonymousResourceCollection
+    public function index(): ResourceCollection
     {
         return LimitCollection::make(
             Limit::query()->latest()->paginate(50)
