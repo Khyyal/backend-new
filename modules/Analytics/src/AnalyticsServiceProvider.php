@@ -2,8 +2,11 @@
 
 namespace Modules\Analytics;
 
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Console\Scheduling\Schedule;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Modules\Analytics\Console\BuildAnalyticsCommand;
@@ -38,8 +41,14 @@ class AnalyticsServiceProvider extends ServiceProvider
             $schedule->command(BuildAnalyticsCommand::class)->dailyAt('00:30')->withoutOverlapping()->onOneServer();
         });
 
+        RateLimiter::for('engagement-events', fn (Request $request): Limit => Limit::perMinute(60)
+            ->by('engagement-events:'.($request->user('client')?->getKey() ?? $request->ip())));
+
         Route::middleware(['api'])
             ->prefix('api/v1')
-            ->group(__DIR__.'/../routes/admin.php');
+            ->group(function (): void {
+                require __DIR__.'/../routes/admin.php';
+                require __DIR__.'/../routes/client.php';
+            });
     }
 }

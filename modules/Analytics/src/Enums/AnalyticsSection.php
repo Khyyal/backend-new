@@ -15,4 +15,5 @@ enum AnalyticsSection: string
     case Centers = 'centers';
     case Promotions = 'promotions';
     case Subscriptions = 'subscriptions';
+    case Engagement = 'engagement';
 }

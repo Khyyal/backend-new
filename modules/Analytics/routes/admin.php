@@ -15,5 +15,6 @@ Route::prefix('admin/analytics')
         Route::get('/centers', [AnalyticsController::class, 'centers'])->name('centers');
         Route::get('/promotions', [AnalyticsController::class, 'promotions'])->name('promotions');
         Route::get('/subscriptions', [AnalyticsController::class, 'subscriptions'])->name('subscriptions');
+        Route::get('/engagement', [AnalyticsController::class, 'engagement'])->name('engagement');
         Route::get('/export', [AnalyticsController::class, 'export'])->name('export');
     });

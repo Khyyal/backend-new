@@ -13,6 +13,7 @@ use Modules\Analytics\Models\DailyPlatformStat;
 use Modules\Analytics\Services\BookingsAnalytics;
 use Modules\Analytics\Services\CentersAnalytics;
 use Modules\Analytics\Services\ClientsAnalytics;
+use Modules\Analytics\Services\EngagementAnalytics;
 use Modules\Analytics\Services\OverviewAnalytics;
 use Modules\Analytics\Services\PaymentsAnalytics;
 use Modules\Analytics\Services\PromotionsAnalytics;
@@ -165,10 +166,29 @@ class AnalyticsController extends Controller
     }
 
     /**
+     * Engagement.
+     *
+     * Client engagement with centers, counted live from the apps: center
+     * clicks, service clicks, map (location) clicks and WhatsApp clicks, the
+     * series, and the most engaged centers and services (`limit` 1-50,
+     * default 10). Honors `center_id` and `city_id`.
+     */
+    #[ApiResponse(status: 200, description: '`{data: {period, kpis, series, top_centers, top_services}, meta}`.')]
+    #[ApiResponse(status: 403, description: 'Missing `analytics.view`.')]
+    #[ApiResponse(status: 422, description: 'Invalid filters.')]
+    public function engagement(AnalyticsFilterRequest $request, EngagementAnalytics $analytics): JsonResponse
+    {
+        return $this->respond($request, fn (AnalyticsPeriod $period): array => $analytics->report(
+            $period,
+            (int) $request->validated('limit', 10),
+        ));
+    }
+
+    /**
      * Export a section's series as CSV.
      *
      * `section` is `overview` (default), `revenue`, `bookings`, `payments`,
-     * `clients`, `centers`, `promotions` or `subscriptions`; one row per
+     * `clients`, `centers`, `promotions`, `subscriptions` or `engagement`; one row per
      * series bucket.
      */
     #[ApiResponse(status: 200, description: '`text/csv` download.')]
@@ -189,6 +209,7 @@ class AnalyticsController extends Controller
             AnalyticsSection::Centers => CentersAnalytics::class,
             AnalyticsSection::Promotions => PromotionsAnalytics::class,
             AnalyticsSection::Subscriptions => SubscriptionsAnalytics::class,
+            AnalyticsSection::Engagement => EngagementAnalytics::class,
         });
 
         $rows = $service->series($period);
