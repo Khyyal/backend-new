@@ -40,3 +40,4 @@ graphify-out/
 
 # VitePress docs-site: built output in storage/app/docs is committed, the cache is not
 docs-site/.vitepress/cache
+khyyal_database.sql
