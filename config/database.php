@@ -64,6 +64,26 @@ return [
             ]) : [],
         ],
 
+        /*
+         * Read-only source for the legacy data migrators (app/Console/Commands/Migrator).
+         * Import the old dump into its own database and point LEGACY_DB_DATABASE at it.
+         */
+        'legacy' => [
+            'driver' => 'mysql',
+            'host' => env('LEGACY_DB_HOST', env('DB_HOST', '127.0.0.1')),
+            'port' => env('LEGACY_DB_PORT', env('DB_PORT', '3306')),
+            'database' => env('LEGACY_DB_DATABASE', 'khyyal_legacy'),
+            'username' => env('LEGACY_DB_USERNAME', env('DB_USERNAME', 'root')),
+            'password' => env('LEGACY_DB_PASSWORD', env('DB_PASSWORD', '')),
+            'unix_socket' => env('LEGACY_DB_SOCKET', env('DB_SOCKET', '')),
+            'charset' => 'utf8mb4',
+            'collation' => 'utf8mb4_unicode_ci',
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'strict' => false,
+            'engine' => null,
+        ],
+
         'mariadb' => [
             'driver' => 'mariadb',
             'url' => env('DB_URL'),
