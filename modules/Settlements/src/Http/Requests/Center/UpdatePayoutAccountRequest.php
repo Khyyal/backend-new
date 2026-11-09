@@ -3,10 +3,14 @@
 namespace Modules\Settlements\Http\Requests\Center;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Knuckles\Scribe\Attributes\BodyParam;
 
 /**
  * A Saudi IBAN: `SA` followed by 22 digits, spaces ignored.
  */
+#[BodyParam('iban', 'string', 'Saudi IBAN: `SA` followed by 22 digits.', example: 'SA0380000000608010167519')]
+#[BodyParam('account_name', 'string', 'Account holder (max 255).', example: 'Al Fursan Stables LLC')]
+#[BodyParam('bank_name', 'string', 'Bank (max 255).', example: 'Al Rajhi Bank')]
 class UpdatePayoutAccountRequest extends FormRequest
 {
     public function authorize(): bool

@@ -3,8 +3,6 @@
 namespace Modules\Reservations\Http\Controllers\Client;
 
 use Carbon\CarbonImmutable;
-use Dedoc\Scramble\Attributes\Group;
-use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Query\Builder as QueryBuilder;
@@ -14,6 +12,11 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Knuckles\Scribe\Attributes\Endpoint;
+use Knuckles\Scribe\Attributes\Group;
+use Knuckles\Scribe\Attributes\QueryParam;
+use Knuckles\Scribe\Attributes\Response as ApiResponse;
+use Knuckles\Scribe\Attributes\ResponseFromApiResource;
 use Modules\Clients\Models\Client;
 use Modules\Reservations\Actions\BookVisitFromMembership;
 use Modules\Reservations\Enums\ClientMembershipStatus;
@@ -23,8 +26,9 @@ use Modules\Reservations\Http\Resources\ClientBookingResource;
 use Modules\Reservations\Models\ClientMembership;
 use Modules\Reservations\Models\ClientPackage;
 use Modules\Reservations\Models\Reservation;
+use Modules\Support\Documentation\ApiExamples;
 
-#[Group(name: 'Client / Reservations', description: 'Book, list and cancel reservations, and buy and spend service packages. Requires a client Bearer token.')]
+#[Group('Client / Reservations', 'Book, list and cancel reservations, and buy and spend packages and memberships.')]
 class BookingController extends Controller
 {
     private const string TYPE_ALL = 'all';
@@ -51,24 +55,13 @@ class BookingController extends Controller
 
     public function __construct(private readonly BookVisitFromMembership $bookVisit) {}
 
-    /**
-     * List my bookings.
-     *
-     * One paginated feed (15 per page), newest first, mixing stand-alone reservations, packages and
-     * memberships. Each item is `{kind, data}` where `kind` is `reservation`, `package` or `membership`
-     * and `data` is the matching `ReservationResource`, `ClientPackageResource` or `ClientMembershipResource`.
-     *
-     * Active means: a pending or confirmed reservation not yet over (sessions drawn from a package or
-     * membership are not listed on their own); a package with sessions left that has not expired; a
-     * membership that has not expired.
-     *
-     * **Query:** `type` (`all` by default, `membership` for memberships only, `packages` for packages only);
-     * `status` (`active` by default, or `in_active` for the history: cancelled, completed, no-show or past
-     * reservations, and exhausted, expired or cancelled packages and memberships; unpaid ones are in neither).
-     */
-    #[Response(status: 200, description: 'Paginated `ClientBookingResource` collection.')]
-    #[Response(status: 401, description: 'Missing or invalid Bearer token.')]
-    #[Response(status: 422, description: 'Invalid `type` or `status`.')]
+    #[Endpoint('List my bookings', 'One feed of reservations, packages and memberships, newest first, 15 per page. Active: pending or confirmed reservations not yet over (sessions drawn from a package or membership are not listed alone), packages with sessions left and not expired, memberships not expired. Unpaid packages and memberships are in neither list.')]
+    #[QueryParam('type', 'string', '`all` (default), `membership` or `packages`.', required: false, enum: ['all', 'membership', 'packages'], example: 'all')]
+    #[QueryParam('status', 'string', '`active` (default) or `in_active` (history).', required: false, enum: ['active', 'in_active'], example: 'active')]
+    #[QueryParam('page', 'integer', 'Page number (1-based).', required: false, example: 1)]
+    #[ResponseFromApiResource(ClientBookingResource::class, Reservation::class, status: 200, description: 'Paginated bookings.', paginate: 15)]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(['message' => 'The selected type is invalid.', 'errors' => ['type' => ['The selected type is invalid.']]], 422, 'Invalid `type` or `status`.')]
     public function index(Request $request): AnonymousResourceCollection
     {
         $filters = $request->validate([

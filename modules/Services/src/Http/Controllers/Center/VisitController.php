@@ -2,36 +2,39 @@
 
 namespace Modules\Services\Http\Controllers\Center;
 
-use Dedoc\Scramble\Attributes\Group;
-use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Gate;
+use Knuckles\Scribe\Attributes\Endpoint;
+use Knuckles\Scribe\Attributes\Group;
+use Knuckles\Scribe\Attributes\QueryParam;
+use Knuckles\Scribe\Attributes\Response as ApiResponse;
+use Knuckles\Scribe\Attributes\ResponseFromApiResource;
+use Knuckles\Scribe\Attributes\UrlParam;
 use Modules\Centers\Models\Center;
 use Modules\Services\Enums\ServiceType;
 use Modules\Services\Http\Requests\Center\VisitRequest;
 use Modules\Services\Http\Resources\Center\VisitResource;
 use Modules\Services\Models\Visit;
 use Modules\Services\Services\CenterVisitService;
+use Modules\Support\Documentation\ApiExamples;
 use Symfony\Component\HttpFoundation\Response as ResponseAlias;
 
-#[Group(name: 'Center / Visit', description: 'Manage the visit services of a center. Requires a center-scoped Bearer token (see `POST /centers/{center}/access`).')]
+#[Group('Visits', 'The visit services of a center. Served on `centers/{center}/…` (center-scoped token; center users need `services.visit.manage`) and `admin/centers/{center}/…` (system users need `centers.manage_services`).')]
 class VisitController extends Controller
 {
     public function __construct(private readonly CenterVisitService $service) {}
 
-    /**
-     * List the center's visit services.
-     *
-     * Paginated (15 per page, `?page=`), newest first. Each item is a
-     * `VisitResource`.
-     */
-    #[Response(status: 200, description: 'Paginated `VisitResource` collection.')]
-    #[Response(status: 401, description: 'Missing or invalid Bearer token for the `center_user` guard.')]
-    #[Response(status: 403, description: 'The token has no access to this center, or the user is not assigned to it.')]
+    #[Endpoint('List visit services', 'Newest first, 15 per page.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[QueryParam('page', 'integer', 'Page number (1-based).', required: false, example: 1)]
+    #[ResponseFromApiResource(VisitResource::class, Visit::class, status: 200, description: 'Paginated visit services.', paginate: 15)]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `services.visit.manage` for this center (system users: `centers.manage_services`). Also returned when the token lacks `center-access:{center}` or the center is not active.')]
     public function index(Request $request, Center $center): AnonymousResourceCollection
     {
         Gate::forUser($request->user())->authorize('manageServices', [$center, ServiceType::Visit]);
@@ -45,31 +48,12 @@ class VisitController extends Controller
         return VisitResource::collection($visits);
     }
 
-    /**
-     * Create a visit service.
-     *
-     * **Request body:**
-     * - `name`                    required object; `ar` required string, `en` optional string.
-     * - `description`             required object; `ar` required string, `en` optional string.
-     * - `enter_type`              required `all_day` or `specific_time`.
-     * - `max_tickets_per_day`     optional integer >= 1, or `null`/omitted for no daily limit.
-     * - `price`                   required number >= 0.
-     * - `days`                    required array of distinct weekday numbers `0`-`6`.
-     * - `hours`                   required flat list of `HH:mm` start/end pairs when `enter_type` is `specific_time`
-     *                             (applied to every day in `days`); must be omitted when `enter_type` is `all_day`.
-     * - `cover`                   optional media id (uuid) or `null`.
-     * - `images`                  optional array (max 10) of media ids, in display order.
-     * - `settings`              optional object of booleans keyed by the service type's setting keys (unknown keys are rejected). On update it replaces all settings: omitted keys reset to `false`; omit `settings` to leave them untouched.
-     *
-     * Media ids come from the Support media API (`POST /media`); temporary
-     * uploads must belong to the authenticated user and not be expired.
-     *
-     * The service is created `active`.
-     */
-    #[Response(status: 201, description: 'The created service as a `VisitResource`: `id`, `service_id`, `center_id`, `slug`, `status`, `name` {ar,en}, `description` {ar,en}, `enter_type`, `max_tickets_per_day`, `price`, `days`, `hours`, `cover`, `images`.')]
-    #[Response(status: 401, description: 'Missing or invalid Bearer token.')]
-    #[Response(status: 403, description: 'The token has no access to this center, or the user is not assigned to it.')]
-    #[Response(status: 422, description: 'Validation failed, or a media id is invalid, expired or not owned by the user.')]
+    #[Endpoint('Create a visit service', 'Created `active`. Media UUIDs must be your own unexpired temporary uploads.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[ResponseFromApiResource(VisitResource::class, Visit::class, status: 201, description: 'The created visit service.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `services.visit.manage` for this center (system users: `centers.manage_services`). Also returned when the token lacks `center-access:{center}` or the center is not active.')]
+    #[ApiResponse(['message' => 'The hours field is required when enter type is specific time.', 'errors' => ['hours' => ['The hours field is required when enter type is specific time.']]], 422, 'Validation failed, or a media UUID is invalid, expired or not yours.')]
     public function store(VisitRequest $request, Center $center): JsonResponse
     {
         $visit = $this->service->create($center, $this->user($request), $request->validated());
@@ -77,12 +61,13 @@ class VisitController extends Controller
         return VisitResource::make($visit)->response()->setStatusCode(ResponseAlias::HTTP_CREATED);
     }
 
-    /**
-     * Show a visit service.
-     */
-    #[Response(status: 200, description: 'The service as a `VisitResource`.')]
-    #[Response(status: 403, description: 'The token has no access to this center, or the user is not assigned to it.')]
-    #[Response(status: 404, description: 'No such service in this center.')]
+    #[Endpoint('Show a visit service')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[UrlParam('visit', 'integer', 'ID of the visit service (the `id` field, not `service_id`).', example: 12)]
+    #[ResponseFromApiResource(VisitResource::class, Visit::class, status: 200, description: 'The visit service.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `services.visit.manage` for this center (system users: `centers.manage_services`). Also returned when the token lacks `center-access:{center}` or the center is not active.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No such visit service in this center.')]
     public function show(Request $request, Center $center, int $visit): VisitResource
     {
         Gate::forUser($request->user())->authorize('manageServices', [$center, ServiceType::Visit]);
@@ -90,21 +75,14 @@ class VisitController extends Controller
         return VisitResource::make($this->service->findForCenter($center, $visit));
     }
 
-    /**
-     * Update a visit service.
-     *
-     * Replaces the definition: `name`, `description`, `enter_type`, `price`,
-     * `max_tickets_per_day` (optional), `days` (and `hours`, when applicable) are all required and take the same
-     * shape as on create (old price option and schedules are replaced).
-     * `cover` and `images` are optional and untouched when omitted: `cover`
-     * takes a media id (`null` removes it); `images` is the full list of media
-     * ids in display order, so existing ids are kept, new temporary ids are
-     * attached and omitted ones are removed.
-     */
-    #[Response(status: 200, description: 'The updated service as a `VisitResource`.')]
-    #[Response(status: 403, description: 'The token has no access to this center, or the user is not assigned to it.')]
-    #[Response(status: 404, description: 'No such service in this center.')]
-    #[Response(status: 422, description: 'Validation failed, or a media id is invalid, expired or not owned by the user.')]
+    #[Endpoint('Update a visit service', 'Replaces the definition: send the same body as on create (old price options, schedules and day prices are replaced). `cover`, `images`, `settings`, `packages` and trainer lists are left untouched when omitted.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[UrlParam('visit', 'integer', 'ID of the visit service (the `id` field, not `service_id`).', example: 12)]
+    #[ResponseFromApiResource(VisitResource::class, Visit::class, status: 200, description: 'The updated visit service.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `services.visit.manage` for this center (system users: `centers.manage_services`). Also returned when the token lacks `center-access:{center}` or the center is not active.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No such visit service in this center.')]
+    #[ApiResponse(['message' => 'The hours field is required when enter type is specific time.', 'errors' => ['hours' => ['The hours field is required when enter type is specific time.']]], 422, 'Validation failed, or a media UUID is invalid, expired or not yours.')]
     public function update(VisitRequest $request, Center $center, int $visit): VisitResource
     {
         $model = $this->service->findForCenter($center, $visit);
@@ -114,15 +92,14 @@ class VisitController extends Controller
         );
     }
 
-    /**
-     * Delete a visit service.
-     *
-     * Soft-deletes the service together with its price option and schedules.
-     */
-    #[Response(status: 204, description: 'Deleted; no content.')]
-    #[Response(status: 403, description: 'The token has no access to this center, or the user is not assigned to it.')]
-    #[Response(status: 404, description: 'No such service in this center.')]
-    public function destroy(Request $request, Center $center, int $visit): \Illuminate\Http\Response
+    #[Endpoint('Delete a visit service', 'Soft-deletes the service with its price option and schedules.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[UrlParam('visit', 'integer', 'ID of the visit service (the `id` field, not `service_id`).', example: 12)]
+    #[ApiResponse(status: 204, description: 'Deleted. Empty body.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `services.visit.manage` for this center (system users: `centers.manage_services`). Also returned when the token lacks `center-access:{center}` or the center is not active.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No such visit service in this center.')]
+    public function destroy(Request $request, Center $center, int $visit): Response
     {
         Gate::forUser($request->user())->authorize('manageServices', [$center, ServiceType::Visit]);
 

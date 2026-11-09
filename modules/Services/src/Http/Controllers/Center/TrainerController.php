@@ -2,35 +2,39 @@
 
 namespace Modules\Services\Http\Controllers\Center;
 
-use Dedoc\Scramble\Attributes\Group;
-use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Gate;
+use Knuckles\Scribe\Attributes\Endpoint;
+use Knuckles\Scribe\Attributes\Group;
+use Knuckles\Scribe\Attributes\QueryParam;
+use Knuckles\Scribe\Attributes\Response as ApiResponse;
+use Knuckles\Scribe\Attributes\ResponseFromApiResource;
+use Knuckles\Scribe\Attributes\UrlParam;
 use Modules\Centers\Models\Center;
 use Modules\Services\Enums\ServiceType;
 use Modules\Services\Http\Requests\Center\TrainerRequest;
 use Modules\Services\Http\Resources\Center\TrainerOptionResource;
 use Modules\Services\Http\Resources\Center\TrainerResource;
+use Modules\Services\Models\Trainer;
 use Modules\Services\Services\TrainerService;
+use Modules\Support\Documentation\ApiExamples;
 use Symfony\Component\HttpFoundation\Response as ResponseAlias;
 
-#[Group(name: 'Center / Trainers', description: 'Manage the trainers of a center. Requires a center-scoped Bearer token (see `POST /centers/{center}/access`).')]
+#[Group('Trainers', 'The trainers of a center, their weekly schedules and hourly limits. Served on `centers/{center}/…` (center-scoped token; center users need `services.training.manage`) and `admin/centers/{center}/…` (system users need `centers.manage_services`).')]
 class TrainerController extends Controller
 {
     public function __construct(private readonly TrainerService $service) {}
 
-    /**
-     * List the center's trainers.
-     *
-     * Paginated (15 per page, `?page=`), newest first. Each item is a
-     * `TrainerResource`.
-     */
-    #[Response(status: 200, description: 'Paginated `TrainerResource` collection.')]
-    #[Response(status: 401, description: 'Missing or invalid Bearer token for the `center_user` guard.')]
-    #[Response(status: 403, description: 'The token has no access to this center, or the user is not assigned to it.')]
+    #[Endpoint('List trainers', 'Newest first, 15 per page.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[QueryParam('page', 'integer', 'Page number (1-based).', required: false, example: 1)]
+    #[ResponseFromApiResource(TrainerResource::class, Trainer::class, status: 200, description: 'Paginated trainers.', paginate: 15)]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `services.training.manage` for this center (system users: `centers.manage_services`). Also returned when the token lacks `center-access:{center}` or the center is not active.')]
     public function index(Request $request, Center $center): AnonymousResourceCollection
     {
         Gate::forUser($request->user())->authorize('manageServices', [$center, ServiceType::Training]);
@@ -38,14 +42,11 @@ class TrainerController extends Controller
         return TrainerResource::collection($this->service->list($center));
     }
 
-    /**
-     * List all the center's trainers (id and name only).
-     *
-     * Not paginated, ordered by name. Each item is a `TrainerOptionResource`: `id`, `name`.
-     */
-    #[Response(status: 200, description: '`TrainerOptionResource` collection.')]
-    #[Response(status: 401, description: 'Missing or invalid Bearer token for the `center_user` guard.')]
-    #[Response(status: 403, description: 'The token has no access to this center, or the user is not assigned to it.')]
+    #[Endpoint('List all trainers (id and name)', 'For pickers. Ordered by name, not paginated.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[ResponseFromApiResource(TrainerOptionResource::class, Trainer::class, status: 200, description: 'All trainers.', collection: true)]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `services.training.manage` for this center (system users: `centers.manage_services`). Also returned when the token lacks `center-access:{center}` or the center is not active.')]
     public function list(Request $request, Center $center): AnonymousResourceCollection
     {
         Gate::forUser($request->user())->authorize('manageServices', [$center, ServiceType::Training]);
@@ -53,21 +54,12 @@ class TrainerController extends Controller
         return TrainerOptionResource::collection($this->service->simpleList($center));
     }
 
-    /**
-     * Create a trainer.
-     *
-     * **Request body:**
-     * - `name`                    required string.
-     * - `max_tickets_per_hour`    optional integer >= 1, or `null`/omitted for no hourly limit.
-     * - `max_tickets_per_hour_by_day` optional map of weekday (one of `days`) to an integer >= 1 overriding `max_tickets_per_hour` on that day, e.g. `{"5": 10, "6": 6}`; `null`/omitted means every day uses `max_tickets_per_hour`.
-     * - `days`                    required array of distinct weekday numbers `0`-`6`.
-     * - `hours`                   required flat list of `HH:mm` start/end pairs, e.g. `["09:00","12:00","14:00","17:00"]` (two slots); applied to every day in `days`. Each end must be after its start.
-     * - `training_service_ids`    optional array of training service ids of this center the trainer works in.
-     */
-    #[Response(status: 201, description: 'The created trainer as a `TrainerResource`: `id`, `center_id`, `name`, `max_tickets_per_hour`, `max_tickets_per_hour_by_day` ({day: max} or null), `days`, `hours`, `training_services` [{id,name}].')]
-    #[Response(status: 401, description: 'Missing or invalid Bearer token.')]
-    #[Response(status: 403, description: 'The token has no access to this center, or the user is not assigned to it.')]
-    #[Response(status: 422, description: 'Validation failed.')]
+    #[Endpoint('Create a trainer')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[ResponseFromApiResource(TrainerResource::class, Trainer::class, status: 201, description: 'The created trainer.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `services.training.manage` for this center (system users: `centers.manage_services`). Also returned when the token lacks `center-access:{center}` or the center is not active.')]
+    #[ApiResponse(['message' => 'Each end time must be after its start time.', 'errors' => ['hours' => ['Each end time must be after its start time.']]], 422, 'Validation failed.')]
     public function store(TrainerRequest $request, Center $center): JsonResponse
     {
         $trainer = $this->service->create($center, $request->validated());
@@ -75,12 +67,13 @@ class TrainerController extends Controller
         return TrainerResource::make($trainer)->response()->setStatusCode(ResponseAlias::HTTP_CREATED);
     }
 
-    /**
-     * Show a trainer.
-     */
-    #[Response(status: 200, description: 'The trainer as a `TrainerResource`.')]
-    #[Response(status: 403, description: 'The token has no access to this center, or the user is not assigned to it.')]
-    #[Response(status: 404, description: 'No such trainer in this center.')]
+    #[Endpoint('Show a trainer')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[UrlParam('trainer', 'integer', 'Trainer ID.', example: 6)]
+    #[ResponseFromApiResource(TrainerResource::class, Trainer::class, status: 200, description: 'The trainer.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `services.training.manage` for this center (system users: `centers.manage_services`). Also returned when the token lacks `center-access:{center}` or the center is not active.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No such trainer in this center.')]
     public function show(Request $request, Center $center, int $trainer): TrainerResource
     {
         Gate::forUser($request->user())->authorize('manageServices', [$center, ServiceType::Training]);
@@ -88,19 +81,14 @@ class TrainerController extends Controller
         return TrainerResource::make($this->service->findForCenter($center, $trainer));
     }
 
-    /**
-     * Update a trainer.
-     *
-     * Replaces the definition: `name`, `days` and `hours` are required
-     * (`max_tickets_per_hour` and `max_tickets_per_hour_by_day` are optional and reset to `null` when omitted)
-     * and take the same shape as on create (old schedules are replaced).
-     * `training_service_ids` is optional and untouched when omitted; when
-     * sent it is the full list of training services.
-     */
-    #[Response(status: 200, description: 'The updated trainer as a `TrainerResource`.')]
-    #[Response(status: 403, description: 'The token has no access to this center, or the user is not assigned to it.')]
-    #[Response(status: 404, description: 'No such trainer in this center.')]
-    #[Response(status: 422, description: 'Validation failed.')]
+    #[Endpoint('Update a trainer', 'Replaces the definition (old schedules are replaced). The hourly limits reset to null when omitted; `training_service_ids` is left untouched when omitted.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[UrlParam('trainer', 'integer', 'Trainer ID.', example: 6)]
+    #[ResponseFromApiResource(TrainerResource::class, Trainer::class, status: 200, description: 'The updated trainer.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `services.training.manage` for this center (system users: `centers.manage_services`). Also returned when the token lacks `center-access:{center}` or the center is not active.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No such trainer in this center.')]
+    #[ApiResponse(['message' => 'The days field is required.', 'errors' => ['days' => ['The days field is required.']]], 422, 'Validation failed.')]
     public function update(TrainerRequest $request, Center $center, int $trainer): TrainerResource
     {
         $model = $this->service->findForCenter($center, $trainer);
@@ -108,16 +96,14 @@ class TrainerController extends Controller
         return TrainerResource::make($this->service->update($model, $request->validated()));
     }
 
-    /**
-     * Delete a trainer.
-     *
-     * Soft-deletes the trainer together with its schedules and detaches it
-     * from its training services.
-     */
-    #[Response(status: 204, description: 'Deleted; no content.')]
-    #[Response(status: 403, description: 'The token has no access to this center, or the user is not assigned to it.')]
-    #[Response(status: 404, description: 'No such trainer in this center.')]
-    public function destroy(Request $request, Center $center, int $trainer): \Illuminate\Http\Response
+    #[Endpoint('Delete a trainer', 'Soft-deletes the trainer with its schedules and detaches it from its training services.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[UrlParam('trainer', 'integer', 'Trainer ID.', example: 6)]
+    #[ApiResponse(status: 204, description: 'Deleted. Empty body.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `services.training.manage` for this center (system users: `centers.manage_services`). Also returned when the token lacks `center-access:{center}` or the center is not active.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No such trainer in this center.')]
+    public function destroy(Request $request, Center $center, int $trainer): Response
     {
         Gate::forUser($request->user())->authorize('manageServices', [$center, ServiceType::Training]);
 

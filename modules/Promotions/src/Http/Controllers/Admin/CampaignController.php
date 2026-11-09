@@ -2,9 +2,6 @@
 
 namespace Modules\Promotions\Http\Controllers\Admin;
 
-use Dedoc\Scramble\Attributes\Group;
-use Dedoc\Scramble\Attributes\QueryParameter;
-use Dedoc\Scramble\Attributes\Response as ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -13,25 +10,35 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Knuckles\Scribe\Attributes\Endpoint;
+use Knuckles\Scribe\Attributes\Group;
+use Knuckles\Scribe\Attributes\QueryParam;
+use Knuckles\Scribe\Attributes\Response as ApiResponse;
+use Knuckles\Scribe\Attributes\ResponseFromApiResource;
+use Knuckles\Scribe\Attributes\UrlParam;
+use Modules\Promotions\Enums\CampaignStatus;
 use Modules\Promotions\Http\Requests\StoreCampaignRequest;
 use Modules\Promotions\Http\Requests\UpdateCampaignRequest;
 use Modules\Promotions\Http\Resources\CampaignResource;
 use Modules\Promotions\Models\Campaign;
 use Modules\Promotions\Services\CoverMedia;
+use Modules\Support\Documentation\ApiExamples;
 use Symfony\Component\HttpFoundation\Response as ResponseAlias;
 
-#[Group(name: 'Admin / Promotions', description: 'Marketing campaigns that group platform promotions. Requires `campaigns.manage`.')]
+#[Group('Admin / Campaigns', 'Marketing campaigns that group platform promotions. Requires `campaigns.manage`.')]
 class CampaignController extends Controller
 {
     public function __construct(
         private readonly CoverMedia $cover,
     ) {}
 
-    /**
-     * List campaigns.
-     */
-    #[QueryParameter('status', description: '`draft`, `active` or `archived`.', type: 'string')]
-    #[ApiResponse(status: 200, description: 'Paginated `CampaignResource` collection.')]
+    #[Endpoint('List campaigns', 'Newest first, paginated, with promotion counts.')]
+    #[QueryParam('status', 'string', 'Filter by status.', required: false, enum: CampaignStatus::class, example: 'active')]
+    #[QueryParam('page', 'integer', 'Page number (1-based).', required: false, example: 1)]
+    #[QueryParam('per_page', 'integer', 'Items per page, 1-100. Default 15.', required: false, example: 15)]
+    #[ResponseFromApiResource(CampaignResource::class, Campaign::class, status: 200, description: 'Paginated campaigns.', paginate: 15, withCount: ['promotions'])]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `campaigns.manage`.')]
     public function index(Request $request): AnonymousResourceCollection
     {
         Gate::forUser($request->user())->authorize('viewAny', Campaign::class);
@@ -46,11 +53,11 @@ class CampaignController extends Controller
         return CampaignResource::collection($campaigns);
     }
 
-    /**
-     * Create a campaign.
-     */
-    #[ApiResponse(status: 201, description: 'The created campaign.')]
-    #[ApiResponse(status: 422, description: 'Validation failed.')]
+    #[Endpoint('Create a campaign', 'Status defaults to `draft`. `cover` takes a temporary upload UUID.')]
+    #[ResponseFromApiResource(CampaignResource::class, Campaign::class, status: 201, description: 'The created campaign.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `campaigns.manage`.')]
+    #[ApiResponse(['message' => 'The slug has already been taken.', 'errors' => ['slug' => ['The slug has already been taken.']]], 422, 'Validation failed (e.g. slug taken, end before start, invalid cover).')]
     public function store(StoreCampaignRequest $request): JsonResponse
     {
         Gate::forUser($request->user())->authorize('create', Campaign::class);
@@ -69,10 +76,12 @@ class CampaignController extends Controller
             ->setStatusCode(ResponseAlias::HTTP_CREATED);
     }
 
-    /**
-     * Show a campaign.
-     */
-    #[ApiResponse(status: 200, description: 'The `CampaignResource`.')]
+    #[Endpoint('Show a campaign')]
+    #[UrlParam('campaign', 'integer', 'Campaign ID.', example: 3)]
+    #[ResponseFromApiResource(CampaignResource::class, Campaign::class, status: 200, description: 'The campaign.', withCount: ['promotions'])]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `campaigns.manage`.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'Campaign not found.')]
     public function show(Request $request, Campaign $campaign): CampaignResource
     {
         Gate::forUser($request->user())->authorize('view', $campaign);
@@ -80,11 +89,13 @@ class CampaignController extends Controller
         return CampaignResource::make($campaign->load('media')->loadCount('promotions'));
     }
 
-    /**
-     * Update a campaign.
-     */
-    #[ApiResponse(status: 200, description: 'The updated campaign.')]
-    #[ApiResponse(status: 422, description: 'Validation failed.')]
+    #[Endpoint('Update a campaign', 'Partial update. Send `cover: null` to remove the cover.')]
+    #[UrlParam('campaign', 'integer', 'Campaign ID.', example: 3)]
+    #[ResponseFromApiResource(CampaignResource::class, Campaign::class, status: 200, description: 'The updated campaign.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `campaigns.manage`.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'Campaign not found.')]
+    #[ApiResponse(['message' => 'The ends at field must be a date after starts at.', 'errors' => ['ends_at' => ['The ends at field must be a date after starts at.']]], 422, 'Validation failed.')]
     public function update(UpdateCampaignRequest $request, Campaign $campaign): CampaignResource
     {
         Gate::forUser($request->user())->authorize('update', $campaign);
@@ -97,10 +108,12 @@ class CampaignController extends Controller
         return CampaignResource::make($campaign->refresh()->load('media'));
     }
 
-    /**
-     * Delete a campaign. Its promotions are kept, without a campaign.
-     */
-    #[ApiResponse(status: 204, description: 'Deleted.')]
+    #[Endpoint('Delete a campaign', 'Soft delete. Its promotions are kept, detached from the campaign.')]
+    #[UrlParam('campaign', 'integer', 'Campaign ID.', example: 3)]
+    #[ApiResponse(status: 204, description: 'Deleted. Empty body.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `campaigns.manage`.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'Campaign not found.')]
     public function destroy(Request $request, Campaign $campaign): Response
     {
         Gate::forUser($request->user())->authorize('delete', $campaign);

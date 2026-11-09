@@ -4,6 +4,10 @@ namespace Modules\Homepage\Http\Resources\Admin;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Knuckles\Scribe\Attributes\ResponseField;
+use Modules\Homepage\Enums\HomeSectionType;
+use Modules\Homepage\Enums\ItemableType;
+use Modules\Homepage\Enums\PublishStatus;
 use Modules\Homepage\Models\HomeSection;
 use Modules\Homepage\Models\HomeSectionItem;
 
@@ -30,6 +34,37 @@ class HomeSectionResource extends JsonResource
         return $this;
     }
 
+    #[ResponseField('id', 'integer', 'Section ID.', example: 2)]
+    #[ResponseField('key', 'string', 'Unique key; used by `GET /api/v1/clients/home/sections/{key}`.', example: 'summer-deals')]
+    #[ResponseField('type', 'string', 'Section type, fixed at creation.', enum: HomeSectionType::class, example: 'curated_promotions')]
+    #[ResponseField('item_type', 'string', 'Item kind a curated section holds; null for `banner_carousel` and `top_centers`.', nullable: true, enum: ItemableType::class, example: 'promotion')]
+    #[ResponseField('title', 'object', 'Title. Keyed by locale; empty object when unset.')]
+    #[ResponseField('title.en', 'string', 'English.', required: false, example: 'Summer deals')]
+    #[ResponseField('title.ar', 'string', 'Arabic.', required: false, example: 'عروض الصيف')]
+    #[ResponseField('subtitle', 'object', 'Subtitle. Keyed by locale; empty object when unset.')]
+    #[ResponseField('subtitle.en', 'string', 'English.', required: false, example: 'Limited time')]
+    #[ResponseField('subtitle.ar', 'string', 'Arabic.', required: false, example: 'لفترة محدودة')]
+    #[ResponseField('sort_order', 'integer', 'Display order (ascending).', example: 1)]
+    #[ResponseField('status', 'string', 'Publish status.', enum: PublishStatus::class, example: 'published')]
+    #[ResponseField('starts_at', 'string', 'Schedule start (ISO-8601).', nullable: true, example: 'No-example')]
+    #[ResponseField('ends_at', 'string', 'Schedule end (ISO-8601).', nullable: true, example: 'No-example')]
+    #[ResponseField('is_live', 'boolean', 'Published and within its schedule now.', example: true)]
+    #[ResponseField('config', 'object', '`limit` (items shown, default 10) and, for center/service/banner/top-centers sections, `radius_km`. Empty object when unset.', example: ['limit' => 10, 'radius_km' => 50])]
+    #[ResponseField('items', 'object[]', 'Picked items in display order. Present on show and after changes.', required: false)]
+    #[ResponseField('items[].type', 'string', 'Item kind.', enum: ItemableType::class, example: 'promotion')]
+    #[ResponseField('items[].id', 'integer', 'Item ID.', example: 12)]
+    #[ResponseField('items[].sort_order', 'integer', 'Display order.', example: 0)]
+    #[ResponseField('items[].starts_at', 'string', 'Item window start (ISO-8601).', nullable: true, example: 'No-example')]
+    #[ResponseField('items[].ends_at', 'string', 'Item window end (ISO-8601).', nullable: true, example: 'No-example')]
+    #[ResponseField('items[].label', 'string', 'Item name for the admin UI.', nullable: true, example: '15% off rides')]
+    #[ResponseField('items[].subtitle', 'string', 'Secondary text (e.g. center name).', nullable: true, example: 'Al Fursan Stables')]
+    #[ResponseField('items[].thumb', 'string', 'Thumbnail URL.', nullable: true, example: 'No-example')]
+    #[ResponseField('items[].exists', 'boolean', 'False when the record was deleted.', example: true)]
+    #[ResponseField('items[].is_available', 'boolean', 'Visible to clients right now.', example: true)]
+    #[ResponseField('items_count', 'integer', 'Picked items.', required: false, example: 3)]
+    #[ResponseField('banners_count', 'integer', 'Attached banners (carousels).', required: false, example: 0)]
+    #[ResponseField('created_at', 'string', 'Creation time (ISO-8601).', example: '2026-05-20T09:30:00+00:00')]
+    #[ResponseField('updated_at', 'string', 'Last update time (ISO-8601).', example: '2026-05-20T09:30:00+00:00')]
     public function toArray(Request $request): array
     {
         $section = $this->resource;

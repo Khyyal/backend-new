@@ -4,8 +4,15 @@ namespace Modules\Support\Http\Requests\Admin;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
+use Knuckles\Scribe\Attributes\BodyParam;
 use Modules\Support\Models\City;
 
+#[BodyParam('name', 'object', 'City name; both locales are required.', required: true, example: ['en' => 'Riyadh', 'ar' => 'الرياض'])]
+#[BodyParam('name.en', 'string', 'English name (max 255).', required: true, example: 'Riyadh')]
+#[BodyParam('name.ar', 'string', 'Arabic name (max 255).', required: true, example: 'الرياض')]
+#[BodyParam('lat', 'number', 'Latitude, -90 to 90.', required: true, example: 24.7136)]
+#[BodyParam('lng', 'number', 'Longitude, -180 to 180.', required: true, example: 46.6753)]
+#[BodyParam('radius', 'integer', 'Coverage radius in km, 1-1000.', required: true, example: 40)]
 class StoreCityRequest extends FormRequest
 {
     public function authorize(): bool

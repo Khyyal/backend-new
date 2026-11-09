@@ -2,13 +2,18 @@
 
 namespace Modules\Support\Http\Controllers\Admin;
 
-use Dedoc\Scramble\Attributes\Group;
-use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Gate;
+use Knuckles\Scribe\Attributes\Endpoint;
+use Knuckles\Scribe\Attributes\Group;
+use Knuckles\Scribe\Attributes\Response as ApiResponse;
+use Knuckles\Scribe\Attributes\ResponseFromApiResource;
+use Knuckles\Scribe\Attributes\UrlParam;
+use Modules\Support\Documentation\ApiExamples;
 use Modules\Support\Http\Requests\Admin\ListSystemUsersRequest;
 use Modules\Support\Http\Requests\Admin\StoreSystemUserRequest;
 use Modules\Support\Http\Requests\Admin\UpdateSystemUserRequest;
@@ -17,18 +22,15 @@ use Modules\Support\Models\SystemUser;
 use Modules\Support\Services\SystemUserService;
 use Symfony\Component\HttpFoundation\Response as ResponseAlias;
 
-#[Group(name: 'Admin / System users', description: 'Management of admin accounts. Requires a system user Bearer token with the matching `system_users.*` permission. Only super admins may change other super admins or grant the super admin role, and the last active super admin is always kept.')]
+#[Group('Admin / System users', 'Admin accounts. Requires the matching `system_users.*` permission. Only super admins change other super admins or grant `super_admin`, and the last active super admin is always kept.')]
 class SystemUserController extends Controller
 {
     public function __construct(private readonly SystemUserService $systemUsers) {}
 
-    /**
-     * List system users.
-     *
-     * Paginated (15 per page, `per_page` up to 100), newest first, with roles and permissions.
-     */
-    #[Response(status: 200, description: 'Paginated `SystemUserResource` collection.')]
-    #[Response(status: 403, description: 'Missing the `system_users.view_any` permission.')]
+    #[Endpoint('List system users', 'Newest first, paginated, with roles and permissions. Filters are query parameters.')]
+    #[ResponseFromApiResource(SystemUserResource::class, SystemUser::class, status: 200, description: 'Paginated system users.', paginate: 15)]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `system_users.view_any`.')]
     public function index(ListSystemUsersRequest $request): AnonymousResourceCollection
     {
         $filters = $request->validated();
@@ -48,14 +50,11 @@ class SystemUserController extends Controller
         return SystemUserResource::collection($users);
     }
 
-    /**
-     * Create a system user.
-     *
-     * **Request body:** `name`, `email`, `password` + `password_confirmation` (min 8), optional `status` (default `active`) and `roles` (role names; needs `system_users.assign_roles`).
-     */
-    #[Response(status: 201, description: 'The created `SystemUserResource`.')]
-    #[Response(status: 403, description: 'Missing the `system_users.create` (or `assign_roles`) permission, or granting `super_admin` without being one.')]
-    #[Response(status: 422, description: 'Validation failed.')]
+    #[Endpoint('Create a system user')]
+    #[ResponseFromApiResource(SystemUserResource::class, SystemUser::class, status: 201, description: 'The created user.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `system_users.create` (or `system_users.assign_roles` when sending `roles`), or granting `super_admin` without being one.')]
+    #[ApiResponse(['message' => 'The email has already been taken.', 'errors' => ['email' => ['The email has already been taken.']]], 422, 'Validation failed.')]
     public function store(StoreSystemUserRequest $request): JsonResponse
     {
         $user = $this->systemUsers->create($request->user(), $request->validated());
@@ -63,14 +62,12 @@ class SystemUserController extends Controller
         return SystemUserResource::make($user)->response()->setStatusCode(ResponseAlias::HTTP_CREATED);
     }
 
-    /**
-     * Show a system user.
-     *
-     * Deleted users are shown too (see `deleted_at`).
-     */
-    #[Response(status: 200, description: 'The `SystemUserResource`.')]
-    #[Response(status: 403, description: 'Missing the `system_users.view` permission.')]
-    #[Response(status: 404, description: 'No system user with that id.')]
+    #[Endpoint('Show a system user', 'Deleted users are returned too (see `deleted_at`).')]
+    #[UrlParam('systemUser', 'integer', 'System user ID.', example: 2)]
+    #[ResponseFromApiResource(SystemUserResource::class, SystemUser::class, status: 200, description: 'The user.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `system_users.view`.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No user with that ID.')]
     public function show(Request $request, SystemUser $systemUser): SystemUserResource
     {
         Gate::forUser($request->user())->authorize('view', $systemUser);
@@ -78,30 +75,26 @@ class SystemUserController extends Controller
         return SystemUserResource::make($systemUser);
     }
 
-    /**
-     * Update a system user.
-     *
-     * Partial update. A new `password` (with `password_confirmation`) or `status: inactive` revokes the user's tokens. `roles` replaces the user's roles and needs `system_users.assign_roles`. Nobody changes their own `status` or `roles`.
-     */
-    #[Response(status: 200, description: 'The updated `SystemUserResource`.')]
-    #[Response(status: 403, description: 'Missing the permission, or the change targets yourself or a super admin.')]
-    #[Response(status: 404, description: 'No system user with that id.')]
-    #[Response(status: 422, description: 'Validation failed, or the change would leave no active super admin.')]
+    #[Endpoint('Update a system user', 'Partial update. A new `password` or `status: inactive` revokes the user\'s tokens. `roles` replaces the roles and needs `system_users.assign_roles`. Nobody changes their own `status` or `roles`.')]
+    #[UrlParam('systemUser', 'integer', 'System user ID.', example: 2)]
+    #[ResponseFromApiResource(SystemUserResource::class, SystemUser::class, status: 200, description: 'The updated user.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing the permission, or the change targets yourself or a super admin.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No user with that ID.')]
+    #[ApiResponse(['message' => 'At least one active super admin is required.', 'errors' => ['status' => ['At least one active super admin is required.']]], 422, 'Validation failed, or the change would leave no active super admin.')]
     public function update(UpdateSystemUserRequest $request, SystemUser $systemUser): SystemUserResource
     {
         return SystemUserResource::make($this->systemUsers->update($request->user(), $systemUser, $request->validated()));
     }
 
-    /**
-     * Delete a system user.
-     *
-     * Soft delete; revokes every token. Nobody deletes themselves.
-     */
-    #[Response(status: 204, description: 'Deleted; no content.')]
-    #[Response(status: 403, description: 'Missing the `system_users.delete` permission, or the target is yourself.')]
-    #[Response(status: 404, description: 'No system user with that id.')]
-    #[Response(status: 422, description: 'The user is the last active super admin.')]
-    public function destroy(Request $request, SystemUser $systemUser): \Illuminate\Http\Response
+    #[Endpoint('Delete a system user', 'Soft delete; revokes every token. Nobody deletes themselves.')]
+    #[UrlParam('systemUser', 'integer', 'System user ID.', example: 2)]
+    #[ApiResponse(status: 204, description: 'Deleted. Empty body.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `system_users.delete`, or the target is yourself.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No user with that ID.')]
+    #[ApiResponse(['message' => 'At least one active super admin is required.', 'errors' => ['user' => ['At least one active super admin is required.']]], 422, 'The user is the last active super admin.')]
+    public function destroy(Request $request, SystemUser $systemUser): Response
     {
         Gate::forUser($request->user())->authorize('delete', $systemUser);
 
@@ -110,12 +103,12 @@ class SystemUserController extends Controller
         return response()->noContent();
     }
 
-    /**
-     * Restore a deleted system user.
-     */
-    #[Response(status: 200, description: 'The restored `SystemUserResource`.')]
-    #[Response(status: 403, description: 'Missing the `system_users.restore` permission.')]
-    #[Response(status: 404, description: 'No system user with that id.')]
+    #[Endpoint('Restore a deleted system user')]
+    #[UrlParam('systemUser', 'integer', 'System user ID.', example: 2)]
+    #[ResponseFromApiResource(SystemUserResource::class, SystemUser::class, status: 200, description: 'The restored user.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `system_users.restore`.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No user with that ID.')]
     public function restore(Request $request, SystemUser $systemUser): SystemUserResource
     {
         Gate::forUser($request->user())->authorize('restore', $systemUser);

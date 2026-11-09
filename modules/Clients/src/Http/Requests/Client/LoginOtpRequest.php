@@ -3,7 +3,9 @@
 namespace Modules\Clients\Http\Requests\Client;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Knuckles\Scribe\Attributes\BodyParam;
 
+#[BodyParam('phone_number', 'string', 'Phone in international format: optional `+` then 6-20 digits (max 30).', example: '+966500000003')]
 class LoginOtpRequest extends FormRequest
 {
     public function authorize(): bool

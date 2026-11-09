@@ -2,31 +2,31 @@
 
 namespace Modules\Services\Http\Controllers\Center;
 
-use Dedoc\Scramble\Attributes\Group;
-use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Gate;
+use Knuckles\Scribe\Attributes\Endpoint;
+use Knuckles\Scribe\Attributes\Group;
+use Knuckles\Scribe\Attributes\Response as ApiResponse;
+use Knuckles\Scribe\Attributes\ResponseFromApiResource;
+use Knuckles\Scribe\Attributes\UrlParam;
 use Modules\Centers\Models\Center;
 use Modules\Services\Http\Resources\Center\ServiceTypeCountResource;
+use Modules\Services\Models\Service;
 use Modules\Services\Services\ServiceTypeCountService;
+use Modules\Support\Documentation\ApiExamples;
 
-#[Group(name: 'Center / Service Type Counts', description: 'Count a center\'s services per service type. Requires a center-scoped Bearer token (see `POST /centers/{center}/access`).')]
+#[Group('Service type counts', 'How many services a center has per type. Served on `centers/{center}/…` (center-scoped token; center users need `a `services.*.manage` permission`) and `admin/centers/{center}/…` (system users need `centers.manage_services`).')]
 class ServiceTypeCountController extends Controller
 {
     public function __construct(private readonly ServiceTypeCountService $service) {}
 
-    /**
-     * List every service type with how many services this center has of it.
-     *
-     * Always returns one entry per service type (`recreation_riding`, `visit`,
-     * `event`, `resort`, `horse_care`, `horse_service`, `training`); `count` is `0` for a
-     * type the center has none of.
-     */
-    #[Response(status: 200, description: '`ServiceTypeCountResource` collection, one per service type: `service_type`, `count`.')]
-    #[Response(status: 401, description: 'Missing or invalid Bearer token for the `center_user` guard.')]
-    #[Response(status: 403, description: 'The token has no access to this center, or the user is not assigned to it.')]
+    #[Endpoint('Count services per type', 'One entry per service type (except membership); `count` is 0 when none.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[ResponseFromApiResource(ServiceTypeCountResource::class, Service::class, status: 200, description: 'One count per type.', collection: true)]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Not allowed to manage this center\'s services. Also returned when the token lacks `center-access:{center}` or the center is not active.')]
     public function index(Request $request, Center $center): AnonymousResourceCollection
     {
         Gate::forUser($request->user())->authorize('manageServices', $center);

@@ -3,7 +3,11 @@
 namespace Modules\Centers\Http\Requests\Client;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Knuckles\Scribe\Attributes\BodyParam;
 
+#[BodyParam('center_id', 'integer', 'Existing center ID.', example: 8)]
+#[BodyParam('stars', 'integer', 'Stars, 1-5.', example: 5)]
+#[BodyParam('comment', 'string', 'Optional comment (max 1000).', required: false, nullable: true, example: 'Great trainers!')]
 class RateCenterRequest extends FormRequest
 {
     public function authorize(): bool

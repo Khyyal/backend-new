@@ -2,35 +2,35 @@
 
 namespace Modules\Centers\Http\Controllers\Client;
 
-use Dedoc\Scramble\Attributes\Group;
-use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Routing\Controller;
+use Knuckles\Scribe\Attributes\Endpoint;
+use Knuckles\Scribe\Attributes\Group;
+use Knuckles\Scribe\Attributes\QueryParam;
+use Knuckles\Scribe\Attributes\Response as ApiResponse;
+use Knuckles\Scribe\Attributes\ResponseField;
+use Knuckles\Scribe\Attributes\ResponseFromApiResource;
+use Knuckles\Scribe\Attributes\UrlParam;
 use Modules\Centers\Http\Requests\Client\FavoriteCenterRequest;
 use Modules\Centers\Http\Resources\Client\CenterResource;
 use Modules\Centers\Models\Center;
 use Modules\Centers\Services\FavoriteService;
 use Modules\Clients\Models\Client;
+use Modules\Support\Documentation\ApiExamples;
 
-#[Group(name: 'Client / Favorites', description: 'Authenticated client favorite centers management.')]
+#[Group('Client / Favorites', 'The client\'s favorite centers.')]
 class FavoriteController extends Controller
 {
     public function __construct(
         private readonly FavoriteService $favoriteService,
     ) {}
 
-    /**
-     * List the authenticated client's favorite centers.
-     *
-     * Paginated (15 per page, `?page=`), most recently favorited first.
-     *
-     * **Authentication:** Requires a valid Bearer token issued by the
-     * `/clients/auth/verify` endpoint for the `client` guard.
-     */
-    #[Response(status: 200, description: 'Paginated `CenterResource` collection of the client\'s favorite centers.')]
-    #[Response(status: 401, description: 'Missing or invalid Bearer token for the `client` guard.')]
+    #[Endpoint('List favorite centers', 'Most recently favorited first, 15 per page.')]
+    #[QueryParam('page', 'integer', 'Page number (1-based).', required: false, example: 1)]
+    #[ResponseFromApiResource(CenterResource::class, Center::class, status: 200, description: 'Paginated favorite centers.', paginate: 15, with: ['city'])]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
     public function index(Request $request): AnonymousResourceCollection
     {
         /** @var Client $client */
@@ -39,21 +39,14 @@ class FavoriteController extends Controller
         return CenterResource::collection($this->favoriteService->list($client));
     }
 
-    /**
-     * Favorite a center.
-     *
-     * Adds the given center to the authenticated client's favorites.
-     * Idempotent — favoriting an already-favorited center simply confirms it.
-     *
-     * **Request body:**
-     * - `center_id` — required, integer, must exist in the `centers` table.
-     *
-     * @param  FavoriteCenterRequest  $request  Validated via {@see FavoriteCenterRequest}.
-     */
-    #[Response(status: 201, description: 'Center added to favorites.')]
-    #[Response(status: 200, description: 'Center was already in the client\'s favorites.')]
-    #[Response(status: 401, description: 'Missing or invalid Bearer token for the `client` guard.')]
-    #[Response(status: 422, description: 'Validation failure on `center_id`.')]
+    #[Endpoint('Favorite a center', 'Idempotent: 201 when added, 200 when it was already a favorite.')]
+    #[ApiResponse(['message' => 'messages.favorite_added', 'favorite' => ['center_id' => 8, 'client_id' => 77]], 201, 'Added.')]
+    #[ApiResponse(['message' => 'messages.favorite_already_exists', 'favorite' => ['center_id' => 8, 'client_id' => 77]], 200, 'Already a favorite.')]
+    #[ResponseField('message', 'string', 'Confirmation message key.', example: 'messages.favorite_added')]
+    #[ResponseField('favorite.center_id', 'integer', 'Center ID.', example: 8)]
+    #[ResponseField('favorite.client_id', 'integer', 'Client ID.', example: 77)]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(['message' => 'The selected center id is invalid.', 'errors' => ['center_id' => ['The selected center id is invalid.']]], 422, 'Unknown center.')]
     public function store(FavoriteCenterRequest $request): JsonResponse
     {
         /** @var Client $client */
@@ -77,16 +70,12 @@ class FavoriteController extends Controller
         ], $alreadyFavorited ? 200 : 201);
     }
 
-    /**
-     * Unfavorite a center.
-     *
-     * Removes the given center from the authenticated client's favorites.
-     *
-     * **Authentication:** Requires a valid Bearer token for the `client` guard.
-     */
-    #[Response(status: 200, description: 'Center removed from favorites.')]
-    #[Response(status: 401, description: 'Missing or invalid Bearer token for the `client` guard.')]
-    #[Response(status: 404, description: 'Center was not in the client\'s favorites.')]
+    #[Endpoint('Unfavorite a center')]
+    #[UrlParam('center', 'integer', 'Center ID.', example: 8)]
+    #[ApiResponse(['message' => 'messages.favorite_removed'], 200, 'Removed.')]
+    #[ResponseField('message', 'string', 'Confirmation message key.', example: 'messages.favorite_removed')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(['message' => 'messages.favorite_not_found'], 404, 'The center was not a favorite (or does not exist).')]
     public function destroy(Request $request, Center $center): JsonResponse
     {
         /** @var Client $client */

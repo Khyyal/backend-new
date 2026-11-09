@@ -3,7 +3,10 @@
 namespace Modules\Support\Http\Requests\Admin;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Knuckles\Scribe\Attributes\BodyParam;
 
+#[BodyParam('email', 'string', 'System user email (max 255).', example: 'sara@khyyal.com')]
+#[BodyParam('password', 'string', 'Password (max 255).', example: 'secret-password')]
 class LoginRequest extends FormRequest
 {
     public function authorize(): bool

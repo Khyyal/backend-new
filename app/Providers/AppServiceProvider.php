@@ -47,7 +47,7 @@ class AppServiceProvider extends ServiceProvider
 
         if ($this->app->runningInConsole()) {
             Event::listen(CommandStarting::class, static function (CommandStarting $event) use ($raise): void {
-                if (str_starts_with((string) $event->command, 'scramble:')) {
+                if (str_starts_with((string) $event->command, 'scribe:')) {
                     $raise();
                 }
             });
@@ -55,7 +55,7 @@ class AppServiceProvider extends ServiceProvider
             return;
         }
 
-        if ($this->app['request']->is('docs/*')) {
+        if ($this->app['request']->is('docs', 'docs.*', 'docs/*')) {
             $raise();
         }
     }

@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use Knuckles\Scribe\Scribe;
+use Modules\Support\Enums\SystemPermission;
 use Modules\Support\Http\Middleware\EnsureIdempotentRequest;
 use Modules\Support\Jobs\CleanupExpiredMedia;
 use Modules\Support\Listeners\DeleteExpiredNotificationTokens;
@@ -53,6 +55,9 @@ class SupportServiceProvider extends ServiceProvider
         Gate::policy(SystemRole::class, SystemRolePolicy::class);
         Gate::policy(City::class, CityPolicy::class);
         Gate::policy(Activity::class, ActivityLogPolicy::class);
+        Gate::define('viewApiDocs', fn (mixed $user): bool => $user instanceof SystemUser
+            && $user->isActive()
+            && $user->hasPermissionTo(SystemPermission::ViewApiDocs));
 
         $this->app->make(CauserResolver::class)->resolveUsing(function (mixed $subject = null): ?Model {
             if ($subject instanceof Model) {
@@ -72,6 +77,11 @@ class SupportServiceProvider extends ServiceProvider
 
         Event::listen(NotificationFailed::class, DeleteExpiredNotificationTokens::class);
 
+        if ($this->app->runningInConsole()) {
+            // Document routes with their real parameter names ({promotion}), not Scribe's {promotion_id}/{id}.
+            Scribe::normalizeEndpointUrlUsing(fn (string $url): string => (string) preg_replace('/\{(\w+):\w+(\??)\}/', '{$1$2}', $url));
+        }
+
         $this->app['router']->aliasMiddleware('idempotent', EnsureIdempotentRequest::class);
 
         $this->callAfterResolving(Schedule::class, function (Schedule $schedule): void {
@@ -81,6 +91,7 @@ class SupportServiceProvider extends ServiceProvider
 
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
         $this->loadTranslationsFrom(__DIR__.'/../lang', 'support');
+        $this->loadViewsFrom(__DIR__.'/../resources/views', 'support');
         $this->publishes([
             __DIR__.'/../lang' => $this->app->langPath('vendor/support'),
         ], 'support-lang');
@@ -88,6 +99,8 @@ class SupportServiceProvider extends ServiceProvider
         Route::middleware(['api'])
             ->prefix('api/v1')
             ->group(__DIR__.'/../routes/api.php');
+
+        Route::middleware(['web'])->group(__DIR__.'/../routes/docs.php');
 
     }
 }

@@ -3,7 +3,9 @@
 namespace Modules\Centers\Http\Requests\Center;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Knuckles\Scribe\Attributes\BodyParam;
 
+#[BodyParam('phone', 'string', 'Phone not yet registered as a center user (max 32).', example: '+966500000002')]
 class SendRegisterOtpRequest extends FormRequest
 {
     public function authorize(): bool

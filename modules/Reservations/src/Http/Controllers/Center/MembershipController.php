@@ -3,14 +3,18 @@
 namespace Modules\Reservations\Http\Controllers\Center;
 
 use Carbon\CarbonImmutable;
-use Dedoc\Scramble\Attributes\Group;
-use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Gate;
+use Knuckles\Scribe\Attributes\Endpoint;
+use Knuckles\Scribe\Attributes\Group;
+use Knuckles\Scribe\Attributes\Response as ApiResponse;
+use Knuckles\Scribe\Attributes\ResponseField;
+use Knuckles\Scribe\Attributes\ResponseFromApiResource;
+use Knuckles\Scribe\Attributes\UrlParam;
 use Modules\Centers\Models\Center;
 use Modules\Reservations\Actions\BookVisitFromMembership;
 use Modules\Reservations\Enums\ClientMembershipStatus;
@@ -18,28 +22,19 @@ use Modules\Reservations\Http\Requests\Center\ListClientMembershipsRequest;
 use Modules\Reservations\Http\Resources\CenterClientMembershipDetailsResource;
 use Modules\Reservations\Http\Resources\CenterClientMembershipResource;
 use Modules\Reservations\Models\ClientMembership;
+use Modules\Support\Documentation\ApiExamples;
 
-#[Group(name: 'Center / Client memberships', description: 'The memberships clients bought from the center. Requires a center-scoped Bearer token (see `POST /centers/{center}/access`).')]
+#[Group('Client memberships', 'Memberships clients bought from a center. Unpaid (`pending`) memberships are never listed or counted. Served on `centers/{center}/…` (center-scoped token) and `admin/centers/{center}/…` (system user).')]
 class MembershipController extends Controller
 {
     public function __construct(private readonly BookVisitFromMembership $bookVisit) {}
 
-    /**
-     * List the center's client memberships.
-     *
-     * Paginated (25 per page), newest first. Unpaid (`pending`) memberships are never listed.
-     *
-     * **Query:**
-     * - `active`: `1` keeps only active memberships.
-     * - `not_active`: `1` keeps only the other statuses (expired, cancelled). With both flags set, all of them are returned.
-     * - `q`: search in the client's name or phone number.
-     * - `from` / `to`: inclusive range on the purchase date (`Y-m-d`).
-     * - `service_id`: memberships of one membership service.
-     */
-    #[Response(status: 200, description: 'Paginated `CenterClientMembershipResource` collection.')]
-    #[Response(status: 401, description: 'Missing or invalid Bearer token.')]
-    #[Response(status: 403, description: 'No access to this center\'s reservations.')]
-    #[Response(status: 422, description: 'Invalid filters.')]
+    #[Endpoint('List client memberships', 'Newest first, 25 per page.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[ResponseFromApiResource(CenterClientMembershipResource::class, ClientMembership::class, status: 200, description: 'Paginated memberships.', paginate: 25)]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'No access to this center\'s reservations (center users: `reservations.manage`; system users: `centers.manage_reservations`), or the token lacks `center-access:{center}`.')]
+    #[ApiResponse(['message' => 'The to field must be a date after or equal to from.', 'errors' => ['to' => ['The to field must be a date after or equal to from.']]], 422, 'Invalid filters.')]
     public function index(ListClientMembershipsRequest $request, Center $center): AnonymousResourceCollection
     {
         $active = $request->boolean('active');
@@ -57,16 +52,13 @@ class MembershipController extends Controller
         return CenterClientMembershipResource::collection($memberships);
     }
 
-    /**
-     * Show a client membership.
-     *
-     * With its owner, its packages, the free visits left today and the visits booked from it
-     * (`reservations`, by date). A pending (unpaid) membership is not found.
-     */
-    #[Response(status: 200, description: 'The `CenterClientMembershipDetailsResource`.')]
-    #[Response(status: 401, description: 'Missing or invalid Bearer token.')]
-    #[Response(status: 403, description: 'No access to this center\'s reservations.')]
-    #[Response(status: 404, description: 'No such membership in this center.')]
+    #[Endpoint('Show a client membership', 'With its owner, packages, free visits left today and the visits booked from it.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[UrlParam('membership', 'integer', 'Client membership ID.', example: 9)]
+    #[ResponseFromApiResource(CenterClientMembershipDetailsResource::class, ClientMembership::class, status: 200, description: 'The membership.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'No access to this center\'s reservations (center users: `reservations.manage`; system users: `centers.manage_reservations`), or the token lacks `center-access:{center}`.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No such paid membership in this center.')]
     public function show(Request $request, Center $center, int $membership): CenterClientMembershipDetailsResource
     {
         Gate::forUser($request->user())->authorize('manageReservations', $center);
@@ -89,16 +81,14 @@ class MembershipController extends Controller
             ->withVisitsUsedToday($this->bookVisit->usedVisits($clientMembership, CarbonImmutable::today()));
     }
 
-    /**
-     * Count the center's client memberships.
-     *
-     * Returns how many are active and how many are not (expired or cancelled). Unpaid
-     * (`pending`) memberships are never counted. Takes the same `q`, `from`, `to` and `service_id` filters as the list.
-     */
-    #[Response(status: 200, description: '`{data: {active: int, not_active: int}}`.')]
-    #[Response(status: 401, description: 'Missing or invalid Bearer token.')]
-    #[Response(status: 403, description: 'No access to this center\'s reservations.')]
-    #[Response(status: 422, description: 'Invalid filters.')]
+    #[Endpoint('Count client memberships', 'Active vs. not active (expired, cancelled), with the list filters `q`, `from`, `to`, `service_id`.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[ApiResponse(['data' => ['active' => 12, 'not_active' => 30]], 200, 'Counts.')]
+    #[ResponseField('data.active', 'integer', 'Active ones.', example: 12)]
+    #[ResponseField('data.not_active', 'integer', 'All other paid statuses.', example: 30)]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'No access to this center\'s reservations (center users: `reservations.manage`; system users: `centers.manage_reservations`), or the token lacks `center-access:{center}`.')]
+    #[ApiResponse(['message' => 'The from field must match the format Y-m-d.', 'errors' => ['from' => ['The from field must match the format Y-m-d.']]], 422, 'Invalid filters.')]
     public function counts(ListClientMembershipsRequest $request, Center $center): JsonResponse
     {
         $active = (clone $this->baseQuery($request, $center))->where('status', ClientMembershipStatus::Active)->count();

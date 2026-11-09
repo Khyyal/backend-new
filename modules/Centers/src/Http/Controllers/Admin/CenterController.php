@@ -2,13 +2,17 @@
 
 namespace Modules\Centers\Http\Controllers\Admin;
 
-use Dedoc\Scramble\Attributes\Group;
-use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Gate;
+use Knuckles\Scribe\Attributes\Endpoint;
+use Knuckles\Scribe\Attributes\Group;
+use Knuckles\Scribe\Attributes\Response as ApiResponse;
+use Knuckles\Scribe\Attributes\ResponseFromApiResource;
+use Knuckles\Scribe\Attributes\UrlParam;
 use Modules\Centers\Exports\CentersExport;
 use Modules\Centers\Http\Requests\Admin\ExportCentersRequest;
 use Modules\Centers\Http\Requests\Admin\ListCentersRequest;
@@ -21,24 +25,20 @@ use Modules\Centers\Models\Center;
 use Modules\Centers\Services\CenterAdminService;
 use Modules\Exports\Enums\ExportType;
 use Modules\Exports\Http\Resources\ExportResource;
+use Modules\Exports\Models\Export;
 use Modules\Exports\Services\ExportService;
+use Modules\Support\Documentation\ApiExamples;
 use Symfony\Component\HttpFoundation\Response as ResponseAlias;
 
-#[Group(name: 'Admin / Centers', description: 'System user management of centers. Requires a system user Bearer token (see `POST /admin/auth/login`) with the matching `centers.*` permission.')]
+#[Group('Admin / Centers', 'Centers as managed by system users. Requires the matching `centers.*` permission.')]
 class CenterController extends Controller
 {
     public function __construct(private readonly CenterAdminService $service) {}
 
-    /**
-     * List centers.
-     *
-     * Paginated (`per_page`, default 15), newest first. Optional filters:
-     * `search` (name or contact phone), `status` (`visible`/`invisible`) and
-     * `city_id`.
-     */
-    #[Response(status: 200, description: 'Paginated `CenterResource` collection.')]
-    #[Response(status: 401, description: 'Missing or invalid system user Bearer token.')]
-    #[Response(status: 403, description: 'Missing the `centers.view_any` permission.')]
+    #[Endpoint('List centers', 'Newest first, paginated. Filters are query parameters.')]
+    #[ResponseFromApiResource(CenterResource::class, Center::class, status: 200, description: 'Paginated centers.', paginate: 15, with: ['city'])]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `centers.view_any`.')]
     public function index(ListCentersRequest $request): AnonymousResourceCollection
     {
         return CenterResource::collection(
@@ -46,19 +46,11 @@ class CenterController extends Controller
         );
     }
 
-    /**
-     * Create a center.
-     *
-     * **Request body:**
-     * - `name`, `city_id`, `contact_phone`, `primary_user` — required.
-     * - `description`, `address`, `lat`/`lng` (both or neither) — optional.
-     * - `status` — `visible` or `invisible` (default `invisible`).
-     * - `primary_user` — `{name, phone, password}` (password 8+ chars), created with the center as its primary owner; `phone` must not belong to another center user. The phone is marked verified, so the owner can sign in by phone OTP.
-     * - `tags`, `logo`, `cover`, `images` — same as the center portal update.
-     */
-    #[Response(status: 201, description: 'The created center as a `CenterResource`.')]
-    #[Response(status: 403, description: 'Missing the `centers.create` permission.')]
-    #[Response(status: 422, description: 'Validation failed (including a `primary_user.phone` already in use), or a media id is invalid, expired or not owned by the user.')]
+    #[Endpoint('Create a center', 'Also creates its primary (owner) user. `status` defaults to `invisible`.')]
+    #[ResponseFromApiResource(CenterResource::class, Center::class, status: 201, description: 'The created center.', with: ['city', 'tags'])]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `centers.create`.')]
+    #[ApiResponse(['message' => 'The primary user.phone has already been taken.', 'errors' => ['primary_user.phone' => ['The primary user.phone has already been taken.']]], 422, 'Validation failed (e.g. `primary_user.phone` in use), or a media UUID is invalid.')]
     public function store(StoreCenterRequest $request): JsonResponse
     {
         $center = $this->service->create($request->user(), $request->validated());
@@ -66,12 +58,12 @@ class CenterController extends Controller
         return CenterResource::make($center)->response()->setStatusCode(ResponseAlias::HTTP_CREATED);
     }
 
-    /**
-     * Show a center.
-     */
-    #[Response(status: 200, description: 'The center as a `CenterResource`, with `city`, `tags`, `logo`, `cover` and `images`.')]
-    #[Response(status: 403, description: 'Missing the `centers.view` permission.')]
-    #[Response(status: 404, description: 'No center with that id.')]
+    #[Endpoint('Show a center', 'With city, tags and media.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[ResponseFromApiResource(CenterResource::class, Center::class, status: 200, description: 'The center.', with: ['city', 'tags'])]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `centers.view`.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No center with that ID.')]
     public function show(Request $request, Center $center): CenterResource
     {
         Gate::forUser($request->user())->authorize('view', $center);
@@ -79,57 +71,49 @@ class CenterController extends Controller
         return CenterResource::make($this->service->find($center));
     }
 
-    /**
-     * Update a center.
-     *
-     * Partial update; same fields as create except `primary_user`. Social links and the site theme have their own endpoints.
-     */
-    #[Response(status: 200, description: 'The updated center as a `CenterResource`.')]
-    #[Response(status: 403, description: 'Missing the `centers.update` permission.')]
-    #[Response(status: 404, description: 'No center with that id.')]
-    #[Response(status: 422, description: 'Validation failed, or a media id is invalid, expired or not owned by the user.')]
+    #[Endpoint('Update a center', 'Partial update; same fields as create except `primary_user`. Social links and the site theme have their own endpoints.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[ResponseFromApiResource(CenterResource::class, Center::class, status: 200, description: 'The updated center.', with: ['city', 'tags'])]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `centers.update`.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No center with that ID.')]
+    #[ApiResponse(['message' => 'The domain has already been taken.', 'errors' => ['domain' => ['The domain has already been taken.']]], 422, 'Validation failed, or a media UUID is invalid.')]
     public function update(UpdateCenterRequest $request, Center $center): CenterResource
     {
         return CenterResource::make($this->service->update($request->user(), $center, $request->validated()));
     }
 
-    /**
-     * Update a center's social links.
-     *
-     * **Request body:** `social_links`, required: an object keyed by platform, `null` to clear.
-     */
-    #[Response(status: 200, description: 'The updated center as a `CenterResource`.')]
-    #[Response(status: 403, description: 'Missing the `centers.update` permission.')]
-    #[Response(status: 404, description: 'No center with that id.')]
-    #[Response(status: 422, description: 'Validation failed (unknown platform or value too long).')]
+    #[Endpoint('Update a center\'s social links', 'Replaces all links.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[ResponseFromApiResource(CenterResource::class, Center::class, status: 200, description: 'The updated center.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `centers.update`.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No center with that ID.')]
+    #[ApiResponse(['message' => 'The social_links.x field must not be greater than 255 characters.', 'errors' => ['social_links.x' => ['The social_links.x field must not be greater than 255 characters.']]], 422, 'Unknown platform or value too long.')]
     public function updateSocialLinks(UpdateCenterSocialLinksRequest $request, Center $center): CenterResource
     {
         return CenterResource::make($this->service->update($request->user(), $center, $request->validated()));
     }
 
-    /**
-     * Update a center's site theme.
-     *
-     * **Request body:** `site_theme`, required: an object keyed by color role with hex colors, `null` to clear.
-     */
-    #[Response(status: 200, description: 'The updated center as a `CenterResource`.')]
-    #[Response(status: 403, description: 'Missing the `centers.update` permission.')]
-    #[Response(status: 404, description: 'No center with that id.')]
-    #[Response(status: 422, description: 'Validation failed (unknown color role or invalid hex color).')]
+    #[Endpoint('Update a center\'s site theme', 'Replaces the theme.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[ResponseFromApiResource(CenterResource::class, Center::class, status: 200, description: 'The updated center.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `centers.update`.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No center with that ID.')]
+    #[ApiResponse(['message' => 'The site_theme.primary field must be a valid hexadecimal color.', 'errors' => ['site_theme.primary' => ['The site_theme.primary field must be a valid hexadecimal color.']]], 422, 'Unknown color role or invalid hex color.')]
     public function updateSiteTheme(UpdateCenterSiteThemeRequest $request, Center $center): CenterResource
     {
         return CenterResource::make($this->service->update($request->user(), $center, $request->validated()));
     }
 
-    /**
-     * Delete a center.
-     *
-     * Soft-deletes the center.
-     */
-    #[Response(status: 204, description: 'Deleted; no content.')]
-    #[Response(status: 403, description: 'Missing the `centers.delete` permission.')]
-    #[Response(status: 404, description: 'No center with that id.')]
-    public function destroy(Request $request, Center $center): \Illuminate\Http\Response
+    #[Endpoint('Delete a center', 'Soft delete.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[ApiResponse(status: 204, description: 'Deleted. Empty body.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `centers.delete`.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No center with that ID.')]
+    public function destroy(Request $request, Center $center): Response
     {
         Gate::forUser($request->user())->authorize('delete', $center);
 
@@ -138,17 +122,12 @@ class CenterController extends Controller
         return response()->noContent();
     }
 
-    /**
-     * Export centers.
-     *
-     * Queues an `.xlsx` export of the centers matching the same filters as the list (`search`, `status`,
-     * `state`, `city_id`, `from`/`to` on the creation date). Download it from
-     * `GET /admin/exports/{export}/download` once ready.
-     */
-    #[Response(status: 202, description: 'The queued `ExportResource`; the requester is notified (`export_ready` / `export_failed`) when it finishes.')]
-    #[Response(status: 403, description: 'Missing the `centers.export` permission.')]
-    #[Response(status: 422, description: 'Invalid filters.')]
-    #[Response(status: 429, description: 'An export of this kind is already being generated.')]
+    #[Endpoint('Export centers', 'Queues an `.xlsx` export of the centers matching the list filters. Download it from `GET /api/v1/admin/exports/{export}/download` once `completed`.')]
+    #[ResponseFromApiResource(ExportResource::class, Export::class, status: 202, description: 'The queued export; the requester gets an `export_ready` or `export_failed` notification when it finishes.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `centers.export`.')]
+    #[ApiResponse(['message' => 'The to field must be a date after or equal to from.', 'errors' => ['to' => ['The to field must be a date after or equal to from.']]], 422, 'Invalid filters.')]
+    #[ApiResponse(['message' => 'An export of this kind is already being generated. You will be notified when it is ready.'], 429, 'An export of this kind is already being generated.')]
     public function export(ExportCentersRequest $request, ExportService $exports): JsonResponse
     {
         $export = $exports->start($request->user(), ExportType::AdminCenters, new CentersExport($request->validated()));

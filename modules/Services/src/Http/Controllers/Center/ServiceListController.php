@@ -2,31 +2,31 @@
 
 namespace Modules\Services\Http\Controllers\Center;
 
-use Dedoc\Scramble\Attributes\Group;
-use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Gate;
+use Knuckles\Scribe\Attributes\Endpoint;
+use Knuckles\Scribe\Attributes\Group;
+use Knuckles\Scribe\Attributes\Response as ApiResponse;
+use Knuckles\Scribe\Attributes\ResponseFromApiResource;
+use Knuckles\Scribe\Attributes\UrlParam;
 use Modules\Centers\Models\Center;
 use Modules\Services\Http\Resources\Center\ServiceTypeGroupResource;
+use Modules\Services\Models\Service;
 use Modules\Services\Services\ServiceListService;
+use Modules\Support\Documentation\ApiExamples;
 
-#[Group(name: 'Center / Service List', description: 'Lightweight lists of a center\'s services. Requires a center-scoped Bearer token (see `POST /centers/{center}/access`).')]
+#[Group('Service list', 'Lightweight service lists for pickers. Served on `centers/{center}/…` (center-scoped token; center users need `a `services.*.manage` permission`) and `admin/centers/{center}/…` (system users need `centers.manage_services`).')]
 class ServiceListController extends Controller
 {
     public function __construct(private readonly ServiceListService $service) {}
 
-    /**
-     * List the center's services grouped by service type.
-     *
-     * Not paginated. Always returns one entry per service type (`recreation_riding`, `visit`,
-     * `event`, `resort`, `horse_care`, `horse_service`, `training`); `services` is empty for a
-     * type the center has none of. Each service has only `id` and `name`.
-     */
-    #[Response(status: 200, description: '`ServiceTypeGroupResource` collection, one per service type: `service_type`, `services` [{id,name}].')]
-    #[Response(status: 401, description: 'Missing or invalid Bearer token for the `center_user` guard.')]
-    #[Response(status: 403, description: 'The token has no access to this center, or the user is not assigned to it.')]
+    #[Endpoint('List services grouped by type', 'One entry per service type (except membership); `services` is empty for a type the center has none of. Not paginated.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[ResponseFromApiResource(ServiceTypeGroupResource::class, Service::class, status: 200, description: 'One group per type.', collection: true)]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Not allowed to manage this center\'s services. Also returned when the token lacks `center-access:{center}` or the center is not active.')]
     public function byType(Request $request, Center $center): AnonymousResourceCollection
     {
         Gate::forUser($request->user())->authorize('manageServices', $center);

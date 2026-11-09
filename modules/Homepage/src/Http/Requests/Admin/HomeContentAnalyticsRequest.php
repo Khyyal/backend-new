@@ -4,8 +4,14 @@ namespace Modules\Homepage\Http\Requests\Admin;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Knuckles\Scribe\Attributes\QueryParam;
 use Modules\Homepage\Enums\ContentEntityType;
 
+#[QueryParam('from_date', 'string', 'Range start `Y-m-d`; send with `to_date`. Default: 29 days before `to_date`.', required: false, example: '2026-05-01')]
+#[QueryParam('to_date', 'string', 'Range end `Y-m-d`; send with `from_date`. Default: today.', required: false, example: '2026-05-30')]
+#[QueryParam('compare', 'string', 'Comparison period. Default `prior_period`.', required: false, enum: ['prior_period', 'prior_year', 'none'], example: 'prior_period')]
+#[QueryParam('limit', 'integer', 'Size of `top_content`, 1-50. Default 10.', required: false, example: 10)]
+#[QueryParam('entity_type', 'string', 'Only this kind of content.', required: false, enum: ContentEntityType::class, example: 'banner')]
 class HomeContentAnalyticsRequest extends FormRequest
 {
     public function authorize(): bool

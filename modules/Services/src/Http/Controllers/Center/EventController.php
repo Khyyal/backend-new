@@ -2,36 +2,39 @@
 
 namespace Modules\Services\Http\Controllers\Center;
 
-use Dedoc\Scramble\Attributes\Group;
-use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Gate;
+use Knuckles\Scribe\Attributes\Endpoint;
+use Knuckles\Scribe\Attributes\Group;
+use Knuckles\Scribe\Attributes\QueryParam;
+use Knuckles\Scribe\Attributes\Response as ApiResponse;
+use Knuckles\Scribe\Attributes\ResponseFromApiResource;
+use Knuckles\Scribe\Attributes\UrlParam;
 use Modules\Centers\Models\Center;
 use Modules\Services\Enums\ServiceType;
 use Modules\Services\Http\Requests\Center\EventRequest;
 use Modules\Services\Http\Resources\Center\EventResource;
 use Modules\Services\Models\Event;
 use Modules\Services\Services\CenterEventService;
+use Modules\Support\Documentation\ApiExamples;
 use Symfony\Component\HttpFoundation\Response as ResponseAlias;
 
-#[Group(name: 'Center / Event', description: 'Manage the event services of a center. Requires a center-scoped Bearer token (see `POST /centers/{center}/access`).')]
+#[Group('Events', 'The events of a center. Served on `centers/{center}/…` (center-scoped token; center users need `services.event.manage`) and `admin/centers/{center}/…` (system users need `centers.manage_services`).')]
 class EventController extends Controller
 {
     public function __construct(private readonly CenterEventService $service) {}
 
-    /**
-     * List the center's event services.
-     *
-     * Paginated (15 per page, `?page=`), newest first. Each item is an
-     * `EventResource`.
-     */
-    #[Response(status: 200, description: 'Paginated `EventResource` collection.')]
-    #[Response(status: 401, description: 'Missing or invalid Bearer token for the `center_user` guard.')]
-    #[Response(status: 403, description: 'The token has no access to this center, or the user is not assigned to it.')]
+    #[Endpoint('List events', 'Newest first, 15 per page.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[QueryParam('page', 'integer', 'Page number (1-based).', required: false, example: 1)]
+    #[ResponseFromApiResource(EventResource::class, Event::class, status: 200, description: 'Paginated events.', paginate: 15)]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `services.event.manage` for this center (system users: `centers.manage_services`). Also returned when the token lacks `center-access:{center}` or the center is not active.')]
     public function index(Request $request, Center $center): AnonymousResourceCollection
     {
         Gate::forUser($request->user())->authorize('manageServices', [$center, ServiceType::Event]);
@@ -45,32 +48,12 @@ class EventController extends Controller
         return EventResource::collection($events);
     }
 
-    /**
-     * Create an event service.
-     *
-     * **Request body:**
-     * - `name`                    required object; `ar` required string, `en` optional string.
-     * - `description`             required object; `ar` required string, `en` optional string.
-     * - `occurrence_type`         required `specific_day` or `general`.
-     * - `start_date`              required date.
-     * - `end_date`                required date, on or after `start_date`.
-     * - `open_date`               required date (ticket sales open).
-     * - `close_date`              required date (ticket sales close).
-     * - `max_tickets_per_day`     required integer >= 1.
-     * - `price_options`           required array (1-20) of `{ name, price }`.
-     * - `cover`                   optional media id (uuid) or `null`.
-     * - `images`                  optional array (max 10) of media ids, in display order.
-     * - `settings`              optional object of booleans keyed by the service type's setting keys (unknown keys are rejected). On update it replaces all settings: omitted keys reset to `false`; omit `settings` to leave them untouched.
-     *
-     * Media ids come from the Support media API (`POST /media`); temporary
-     * uploads must belong to the authenticated user and not be expired.
-     *
-     * The service is created `active`.
-     */
-    #[Response(status: 201, description: 'The created service as an `EventResource`: `id`, `service_id`, `center_id`, `slug`, `status`, `name` {ar,en}, `description` {ar,en}, `occurrence_type`, `start_date`, `end_date`, `open_date`, `close_date`, `max_tickets_per_day`, `price_options` [{id,name,price}], `cover`, `images`.')]
-    #[Response(status: 401, description: 'Missing or invalid Bearer token.')]
-    #[Response(status: 403, description: 'The token has no access to this center, or the user is not assigned to it.')]
-    #[Response(status: 422, description: 'Validation failed, or a media id is invalid, expired or not owned by the user.')]
+    #[Endpoint('Create a event', 'Created `active`. Media UUIDs must be your own unexpired temporary uploads.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[ResponseFromApiResource(EventResource::class, Event::class, status: 201, description: 'The created event.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `services.event.manage` for this center (system users: `centers.manage_services`). Also returned when the token lacks `center-access:{center}` or the center is not active.')]
+    #[ApiResponse(['message' => 'The end date field must be a date after or equal to start date.', 'errors' => ['end_date' => ['The end date field must be a date after or equal to start date.']]], 422, 'Validation failed, or a media UUID is invalid, expired or not yours.')]
     public function store(EventRequest $request, Center $center): JsonResponse
     {
         $event = $this->service->create($center, $this->user($request), $request->validated());
@@ -78,12 +61,13 @@ class EventController extends Controller
         return EventResource::make($event)->response()->setStatusCode(ResponseAlias::HTTP_CREATED);
     }
 
-    /**
-     * Show an event service.
-     */
-    #[Response(status: 200, description: 'The service as an `EventResource`.')]
-    #[Response(status: 403, description: 'The token has no access to this center, or the user is not assigned to it.')]
-    #[Response(status: 404, description: 'No such service in this center.')]
+    #[Endpoint('Show a event')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[UrlParam('event', 'integer', 'ID of the event (the `id` field, not `service_id`).', example: 12)]
+    #[ResponseFromApiResource(EventResource::class, Event::class, status: 200, description: 'The event.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `services.event.manage` for this center (system users: `centers.manage_services`). Also returned when the token lacks `center-access:{center}` or the center is not active.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No such event in this center.')]
     public function show(Request $request, Center $center, int $event): EventResource
     {
         Gate::forUser($request->user())->authorize('manageServices', [$center, ServiceType::Event]);
@@ -91,21 +75,14 @@ class EventController extends Controller
         return EventResource::make($this->service->findForCenter($center, $event));
     }
 
-    /**
-     * Update an event service.
-     *
-     * Replaces the definition: `name`, `description`, `occurrence_type`,
-     * dates, `max_tickets_per_day` and `price_options` are all required and
-     * take the same shape as on create (the old price options are replaced).
-     * `cover` and `images` are optional and untouched when omitted: `cover`
-     * takes a media id (`null` removes it); `images` is the full list of media
-     * ids in display order, so existing ids are kept, new temporary ids are
-     * attached and omitted ones are removed.
-     */
-    #[Response(status: 200, description: 'The updated service as an `EventResource`.')]
-    #[Response(status: 403, description: 'The token has no access to this center, or the user is not assigned to it.')]
-    #[Response(status: 404, description: 'No such service in this center.')]
-    #[Response(status: 422, description: 'Validation failed, or a media id is invalid, expired or not owned by the user.')]
+    #[Endpoint('Update a event', 'Replaces the definition: send the same body as on create (old price options, schedules and day prices are replaced). `cover`, `images`, `settings`, `packages` and trainer lists are left untouched when omitted.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[UrlParam('event', 'integer', 'ID of the event (the `id` field, not `service_id`).', example: 12)]
+    #[ResponseFromApiResource(EventResource::class, Event::class, status: 200, description: 'The updated event.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `services.event.manage` for this center (system users: `centers.manage_services`). Also returned when the token lacks `center-access:{center}` or the center is not active.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No such event in this center.')]
+    #[ApiResponse(['message' => 'The end date field must be a date after or equal to start date.', 'errors' => ['end_date' => ['The end date field must be a date after or equal to start date.']]], 422, 'Validation failed, or a media UUID is invalid, expired or not yours.')]
     public function update(EventRequest $request, Center $center, int $event): EventResource
     {
         $model = $this->service->findForCenter($center, $event);
@@ -115,15 +92,14 @@ class EventController extends Controller
         );
     }
 
-    /**
-     * Delete an event service.
-     *
-     * Soft-deletes the service together with its price options.
-     */
-    #[Response(status: 204, description: 'Deleted; no content.')]
-    #[Response(status: 403, description: 'The token has no access to this center, or the user is not assigned to it.')]
-    #[Response(status: 404, description: 'No such service in this center.')]
-    public function destroy(Request $request, Center $center, int $event): \Illuminate\Http\Response
+    #[Endpoint('Delete a event', 'Soft-deletes the service with its price options.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[UrlParam('event', 'integer', 'ID of the event (the `id` field, not `service_id`).', example: 12)]
+    #[ApiResponse(status: 204, description: 'Deleted. Empty body.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `services.event.manage` for this center (system users: `centers.manage_services`). Also returned when the token lacks `center-access:{center}` or the center is not active.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No such event in this center.')]
+    public function destroy(Request $request, Center $center, int $event): Response
     {
         Gate::forUser($request->user())->authorize('manageServices', [$center, ServiceType::Event]);
 

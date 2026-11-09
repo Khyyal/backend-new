@@ -2,18 +2,24 @@
 
 namespace Modules\Centers\Http\Controllers\Client;
 
-use Dedoc\Scramble\Attributes\Group;
-use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Routing\Controller;
+use Knuckles\Scribe\Attributes\Endpoint;
+use Knuckles\Scribe\Attributes\Group;
+use Knuckles\Scribe\Attributes\Response as ApiResponse;
+use Knuckles\Scribe\Attributes\ResponseFromApiResource;
+use Knuckles\Scribe\Attributes\Unauthenticated;
+use Knuckles\Scribe\Attributes\UrlParam;
 use Modules\Centers\Http\Requests\Client\ListCentersRequest;
 use Modules\Centers\Http\Requests\Client\ShowCenterRequest;
 use Modules\Centers\Http\Resources\Client\CenterDetailsResource;
 use Modules\Centers\Http\Resources\Client\CenterResource;
+use Modules\Centers\Models\Center;
 use Modules\Centers\Services\CenterDetailsService;
 use Modules\Centers\Services\CenterSearchService;
+use Modules\Support\Documentation\ApiExamples;
 
-#[Group(name: 'Client / Centers', description: 'Browse and search centers. Public, no authentication required.')]
+#[Group('Client / Centers', 'Browse and search centers. Public: no token needed.')]
 class CenterController extends Controller
 {
     public function __construct(
@@ -21,41 +27,21 @@ class CenterController extends Controller
         private readonly CenterDetailsService $detailsService,
     ) {}
 
-    /**
-     * List/search centers.
-     *
-     * Paginated (15 per page, `?page=`). Only `visible` centers are
-     * returned.
-     *
-     * **Filters (all optional):**
-     * - `city_id`         — integer, must exist.
-     * - `lat` / `lng`     — required together, and required when `order` is `nearest`.
-     * - `search`          — matches the center name.
-     * - `services_types`  — array of service types; matches centers with any of them.
-     * - `tags`            — array of tag ids; matches centers with any of them.
-     * - `bounds`          — `{north, south, east, west}`, all four required together.
-     *
-     * **Order:** `order` is `most_popular` (default, by `points` descending)
-     * or `nearest` (by distance to `lat`/`lng`, ascending).
-     */
-    #[Response(status: 200, description: 'Paginated `CenterResource` collection.')]
-    #[Response(status: 422, description: 'Validation failed.')]
+    #[Unauthenticated]
+    #[Endpoint('Search centers', 'Only visible centers, 15 per page. Ordered by popularity (default) or distance.')]
+    #[ResponseFromApiResource(CenterResource::class, Center::class, status: 200, description: 'Paginated centers.', paginate: 15, with: ['city', 'tags'])]
+    #[ApiResponse(['message' => 'The lat field is required when order is nearest.', 'errors' => ['lat' => ['The lat field is required when order is nearest.']]], 422, 'Validation failed (e.g. `order=nearest` without `lat`/`lng`).')]
     public function index(ListCentersRequest $request): AnonymousResourceCollection
     {
         return CenterResource::collection($this->service->search($request->validated()));
     }
 
-    /**
-     * Center details.
-     *
-     * Looked up by `slug`; only visible, active centers are returned. Includes
-     * images, cover, logo, tags and an overview of the center's active services
-     * (`name`, `cover`, `start_price` in halalas). Send `lat` and `lng` together
-     * to get `distance_km`; otherwise it is `null`.
-     */
-    #[Response(status: 200, description: '`CenterDetailsResource`.')]
-    #[Response(status: 404, description: 'Center not found or not visible.')]
-    #[Response(status: 422, description: 'Validation failed.')]
+    #[Unauthenticated]
+    #[Endpoint('Show a center', 'Looked up by slug; only visible, active centers. Includes images, tags and an overview of active services.')]
+    #[UrlParam('slug', 'string', 'Center slug.', example: 'al-fursan-stables')]
+    #[ResponseFromApiResource(CenterDetailsResource::class, Center::class, status: 200, description: 'The center.', with: ['city', 'tags'])]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'Center not found or not visible.')]
+    #[ApiResponse(['message' => 'The lng field is required when lat is present.', 'errors' => ['lng' => ['The lng field is required when lat is present.']]], 422, 'Validation failed.')]
     public function show(ShowCenterRequest $request, string $slug): CenterDetailsResource
     {
         $center = $this->detailsService->findBySlug(

@@ -6,6 +6,7 @@ use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Knuckles\Scribe\Attributes\BodyParam;
 use Modules\Promotions\Enums\TargetMode;
 use Modules\Promotions\Enums\TargetType;
 use Modules\Promotions\Http\Requests\Concerns\ResolvesPromotionContext;
@@ -13,6 +14,10 @@ use Modules\Promotions\Http\Requests\Concerns\ResolvesPromotionContext;
 /**
  * On the center API only the center's own services can be targeted.
  */
+#[BodyParam('targets', 'object[]', 'Full replacement list of targets (max 500). Send `[]` to target everything the promotion can reach.', example: [['type' => 'service', 'id' => 31, 'mode' => 'include']])]
+#[BodyParam('targets[].type', 'string', 'Target kind. The center API accepts only `service` (its own services).', enum: TargetType::class, example: 'service')]
+#[BodyParam('targets[].id', 'integer', 'ID of an existing, non-deleted center or service. Each type+id pair must be unique.', example: 31)]
+#[BodyParam('targets[].mode', 'string', 'Default `include`.', required: false, nullable: true, enum: TargetMode::class, example: 'include')]
 class SyncPromotionTargetsRequest extends FormRequest
 {
     use ResolvesPromotionContext;

@@ -2,28 +2,33 @@
 
 namespace Modules\Settlements\Http\Controllers\Center;
 
-use Dedoc\Scramble\Attributes\Group;
-use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Gate;
-use Modules\Settlements\Http\Requests\Center\UpdatePayoutAccountRequest;
+use Knuckles\Scribe\Attributes\Endpoint;
+use Knuckles\Scribe\Attributes\Group;
+use Knuckles\Scribe\Attributes\QueryParam;
+use Knuckles\Scribe\Attributes\Response as ApiResponse;
+use Knuckles\Scribe\Attributes\ResponseField;
+use Knuckles\Scribe\Attributes\ResponseFromApiResource;
+use Knuckles\Scribe\Attributes\UrlParam;
 use Modules\Centers\Models\Center;
+use Modules\Settlements\Http\Requests\Center\UpdatePayoutAccountRequest;
 use Modules\Settlements\Http\Resources\CenterPayoutResource;
 use Modules\Settlements\Models\CenterPayout;
 use Modules\Settlements\Services\CenterBalance;
+use Modules\Support\Documentation\ApiExamples;
 
-#[Group(name: 'Center / Payouts', description: 'What the platform owes the center and the weekly transfers of it. Online payments become payable after a hold period; the platform fee (also on cash sales) is netted against them. Amounts are halalas. Requires a center-scoped Bearer token (see `POST /centers/{center}/access`).')]
+#[Group('Center / Payouts', 'What the platform owes the center and the weekly transfers of it. Online payments become payable after a hold period; the platform fee (also on cash sales) is netted against them. Amounts are halalas.')]
 class PayoutController extends Controller
 {
-    /**
-     * List the center's payouts.
-     *
-     * Paginated (25 per page), newest first. Requires `payouts.view`.
-     */
-    #[Response(status: 200, description: 'Paginated `CenterPayoutResource` collection.')]
-    #[Response(status: 403, description: 'No access to this center\'s payouts.')]
+    #[Endpoint('List payouts', 'Newest first, 25 per page.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[QueryParam('page', 'integer', 'Page number (1-based).', required: false, example: 1)]
+    #[ResponseFromApiResource(CenterPayoutResource::class, CenterPayout::class, status: 200, description: 'Paginated payouts.', paginate: 25)]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `payouts.view` for this center (system users: `payouts.manage`), or the token lacks `center-access:{center}`.')]
     public function index(Request $request, Center $center): AnonymousResourceCollection
     {
         Gate::forUser($request->user())->authorize('viewPayouts', $center);
@@ -33,12 +38,13 @@ class PayoutController extends Controller
         );
     }
 
-    /**
-     * Show a payout with the ledger entries it pays.
-     */
-    #[Response(status: 200, description: 'The `CenterPayoutResource` with `entries`.')]
-    #[Response(status: 403, description: 'No access to this center\'s payouts.')]
-    #[Response(status: 404, description: 'No such payout in this center.')]
+    #[Endpoint('Show a payout', 'With the ledger entries it pays.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[UrlParam('payout', 'integer', 'Payout ID (of this center).', example: 17)]
+    #[ResponseFromApiResource(CenterPayoutResource::class, CenterPayout::class, status: 200, description: 'The payout with entries.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `payouts.view` for this center (system users: `payouts.manage`), or the token lacks `center-access:{center}`.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No such payout in this center.')]
     public function show(Request $request, Center $center, int $payout): CenterPayoutResource
     {
         Gate::forUser($request->user())->authorize('viewPayouts', $center);
@@ -49,16 +55,16 @@ class PayoutController extends Controller
         return CenterPayoutResource::make($model);
     }
 
-    /**
-     * Show the center's balance and payout account.
-     *
-     * `available` goes into the next weekly payout (negative carries forward),
-     * `on_hold` is still within the hold period, `in_pending_payouts` awaits
-     * transfer and `paid_out` has been transferred. `account` is `null` until
-     * the primary user sets it; payouts are skipped without one.
-     */
-    #[Response(status: 200, description: '`{data: {available, on_hold, in_pending_payouts, paid_out, account}}`')]
-    #[Response(status: 403, description: 'No access to this center\'s payouts.')]
+    #[Endpoint('Show the balance and payout account', 'Payouts are skipped while `account` is null; the primary user sets it.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[ApiResponse(['data' => ['available' => 812500, 'on_hold' => 120000, 'in_pending_payouts' => 0, 'paid_out' => 4300000, 'account' => ['iban' => 'SA0380000000608010167519', 'account_name' => 'Al Fursan Stables LLC', 'bank_name' => 'Al Rajhi Bank']]], 200, 'Balance.')]
+    #[ResponseField('data.available', 'integer', 'Goes into the next weekly payout, in halalas (negative carries forward).', example: 812500)]
+    #[ResponseField('data.on_hold', 'integer', 'Still within the hold period, in halalas.', example: 120000)]
+    #[ResponseField('data.in_pending_payouts', 'integer', 'In pending payouts awaiting transfer, in halalas.', example: 0)]
+    #[ResponseField('data.paid_out', 'integer', 'Already transferred, in halalas.', example: 4300000)]
+    #[ResponseField('data.account', 'object', 'Payout bank account (`iban`, `account_name`, `bank_name`); null until set.', nullable: true)]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `payouts.view` for this center (system users: `payouts.manage`), or the token lacks `center-access:{center}`.')]
     public function balance(Request $request, Center $center, CenterBalance $balance): array
     {
         Gate::forUser($request->user())->authorize('viewPayouts', $center);
@@ -73,15 +79,15 @@ class PayoutController extends Controller
         ]];
     }
 
-    /**
-     * Set the bank account payouts are sent to.
-     *
-     * Primary user only. Payouts already created keep the account they were
-     * created with.
-     */
-    #[Response(status: 200, description: '`{data: {iban, account_name, bank_name}}`')]
-    #[Response(status: 403, description: 'Not the center\'s primary user.')]
-    #[Response(status: 422, description: 'Invalid IBAN (`SA` + 22 digits) or missing fields.')]
+    #[Endpoint('Set the payout bank account', 'Primary user only. Payouts already created keep the account they were created with.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[ApiResponse(['data' => ['iban' => 'SA0380000000608010167519', 'account_name' => 'Al Fursan Stables LLC', 'bank_name' => 'Al Rajhi Bank']], 200, 'The account.')]
+    #[ResponseField('data.iban', 'string', 'IBAN.', example: 'SA0380000000608010167519')]
+    #[ResponseField('data.account_name', 'string', 'Account holder.', example: 'Al Fursan Stables LLC')]
+    #[ResponseField('data.bank_name', 'string', 'Bank.', example: 'Al Rajhi Bank')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Not the center\'s primary user, or the token lacks `center-access:{center}`.')]
+    #[ApiResponse(['message' => 'The iban field format is invalid.', 'errors' => ['iban' => ['The iban field format is invalid.']]], 422, 'Invalid IBAN or missing fields.')]
     public function updateAccount(UpdatePayoutAccountRequest $request, Center $center): array
     {
         Gate::forUser($request->user())->authorize('update', $center);

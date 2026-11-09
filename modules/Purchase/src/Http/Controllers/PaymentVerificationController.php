@@ -2,40 +2,39 @@
 
 namespace Modules\Purchase\Http\Controllers;
 
-use Dedoc\Scramble\Attributes\Group;
-use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
 use Illuminate\Validation\ValidationException;
+use Knuckles\Scribe\Attributes\Endpoint;
+use Knuckles\Scribe\Attributes\Group;
+use Knuckles\Scribe\Attributes\Response as ApiResponse;
+use Knuckles\Scribe\Attributes\ResponseField;
+use Knuckles\Scribe\Attributes\UrlParam;
 use Modules\Centers\Models\Center;
 use Modules\Clients\Models\Client;
+use Modules\Purchase\Enums\PaymentStatus;
+use Modules\Purchase\Enums\PurchaseStatus;
 use Modules\Purchase\Exceptions\PaymentGatewayException;
 use Modules\Purchase\Http\Requests\VerifyPaymentRequest;
 use Modules\Purchase\Models\Payment;
 use Modules\Purchase\Services\PaymentVerificationService;
+use Modules\Support\Documentation\ApiExamples;
 
-#[Group(name: 'Payments', description: 'Confirm an online payment with the provider after the app returns from paying.')]
+#[Group('Payments', 'Confirm an online payment with the provider when the app returns from paying, without waiting for the webhook. The app\'s own result is never trusted.')]
 class PaymentVerificationController extends Controller
 {
     public function __construct(private readonly PaymentVerificationService $verification) {}
 
-    /**
-     * Verify one of my payments (client).
-     *
-     * Call it when the Moyasar SDK or the Tamara page returns, so the status does not wait for the provider's
-     * webhook. **Request body:** `provider_payment_id`, the Moyasar payment id returned by the SDK (required
-     * the first time for `moyasar`, ignored for `tamara`). The backend asks the provider and moves the payment
-     * and its purchase accordingly; the app's own result is never trusted.
-     *
-     * Card, Apple Pay and STC Pay all go through the Moyasar SDK: create the payment with the checkout's
-     * `given_id`, without `manual`, then send the returned Moyasar id here.
-     *
-     * Poll this endpoint (or the booking) while `status` is `pending` or `processing`.
-     */
-    #[Response(status: 200, description: '`{data: {id, status, purchase_status, payment_company}}`.')]
-    #[Response(status: 401, description: 'Missing or invalid Bearer token.')]
-    #[Response(status: 404, description: 'No such payment of this client.')]
-    #[Response(status: 422, description: 'Not an online payment, or the provider payment belongs to another payment.')]
+    #[Endpoint('Verify my payment', 'Card, Apple Pay and STC Pay go through the Moyasar SDK: create the payment with the checkout `given_id` (without `manual`), then send the returned Moyasar ID here. For Tamara call it after the Tamara page returns.')]
+    #[UrlParam('payment', 'integer', 'Payment ID (`checkout.payment.id`).', example: 801)]
+    #[ApiResponse(['data' => ['id' => 801, 'status' => 'succeeded', 'purchase_status' => 'confirmed', 'payment_company' => 'moyasar']], 200, 'Payment state.')]
+    #[ResponseField('data.id', 'integer', 'Payment ID.', example: 801)]
+    #[ResponseField('data.status', 'string', 'Payment status after asking the provider; poll again while `pending` or `processing`.', enum: PaymentStatus::class, example: 'succeeded')]
+    #[ResponseField('data.purchase_status', 'string', 'Purchase status after the check.', enum: PurchaseStatus::class, example: 'confirmed')]
+    #[ResponseField('data.payment_company', 'string', 'Gateway.', nullable: true, example: 'moyasar')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No such payment of yours.')]
+    #[ApiResponse(['message' => 'The provider payment does not belong to this payment.', 'errors' => ['provider_payment_id' => ['The provider payment does not belong to this payment.']]], 422, 'Not an online payment, or the provider payment belongs to another payment.')]
     public function client(VerifyPaymentRequest $request, int $payment): JsonResponse
     {
         /** @var Client $client */
@@ -44,15 +43,18 @@ class PaymentVerificationController extends Controller
         return $this->respond($request, $this->ownedPayment($payment, $client->getMorphClass(), $client->getKey()));
     }
 
-    /**
-     * Verify one of the center's payments (center).
-     *
-     * Same as the client call, for payments the center made (for example a plan subscription).
-     */
-    #[Response(status: 200, description: '`{data: {id, status, purchase_status, payment_company}}`.')]
-    #[Response(status: 401, description: 'Missing or invalid Bearer token.')]
-    #[Response(status: 404, description: 'No such payment of this center.')]
-    #[Response(status: 422, description: 'Not an online payment, or the provider payment belongs to another payment.')]
+    #[Endpoint('Verify a center payment', 'Same as the client call, for payments the center made (e.g. a plan subscription).')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[UrlParam('payment', 'integer', 'Payment ID.', example: 801)]
+    #[ApiResponse(['data' => ['id' => 801, 'status' => 'succeeded', 'purchase_status' => 'confirmed', 'payment_company' => 'moyasar']], 200, 'Payment state.')]
+    #[ResponseField('data.id', 'integer', 'Payment ID.', example: 801)]
+    #[ResponseField('data.status', 'string', 'Payment status after asking the provider; poll again while `pending` or `processing`.', enum: PaymentStatus::class, example: 'succeeded')]
+    #[ResponseField('data.purchase_status', 'string', 'Purchase status after the check.', enum: PurchaseStatus::class, example: 'confirmed')]
+    #[ResponseField('data.payment_company', 'string', 'Gateway.', nullable: true, example: 'moyasar')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'The token lacks `center-access:{center}` or the center is not active.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No such payment of this center.')]
+    #[ApiResponse(['message' => 'The provider payment does not belong to this payment.', 'errors' => ['provider_payment_id' => ['The provider payment does not belong to this payment.']]], 422, 'Not an online payment, or the provider payment belongs to another payment.')]
     public function center(VerifyPaymentRequest $request, Center $center, int $payment): JsonResponse
     {
         return $this->respond($request, $this->ownedPayment($payment, $center->getMorphClass(), $center->getKey()));

@@ -2,33 +2,29 @@
 
 namespace Modules\Analytics\Http\Controllers\Client;
 
-use Dedoc\Scramble\Attributes\Group;
-use Dedoc\Scramble\Attributes\Response as ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
+use Knuckles\Scribe\Attributes\Endpoint;
+use Knuckles\Scribe\Attributes\Group;
+use Knuckles\Scribe\Attributes\Response as ApiResponse;
+use Knuckles\Scribe\Attributes\ResponseField;
+use Knuckles\Scribe\Attributes\Unauthenticated;
 use Modules\Analytics\Http\Requests\Client\EngagementEventsRequest;
 use Modules\Analytics\Services\CenterEngagementRecorder;
+use Modules\Support\Documentation\ApiExamples;
 use Symfony\Component\HttpFoundation\Response as ResponseAlias;
 
-#[Group(name: 'Client / Engagement', description: 'Anonymous engagement tracking for centers. Guests may call it; no Bearer token is required.')]
+#[Group('Client / Engagement', 'Anonymous engagement tracking for centers. Guests may call it; no token needed.')]
 class EngagementController extends Controller
 {
     public function __construct(private readonly CenterEngagementRecorder $recorder) {}
 
-    /**
-     * Report center engagement events.
-     *
-     * Batched client actions (max 50 per request): `center_click` (opened a
-     * center), `service_click` (opened one of its services, `service_id`
-     * required), `map_click` (opened the center's location) and
-     * `whatsapp_click` (opened the center's WhatsApp). Aggregated per day and
-     * center; nothing identifying is stored. Events for unknown centers, or
-     * services that are not the center's, are ignored. Throttled to 60
-     * requests per minute.
-     */
-    #[ApiResponse(status: 202, description: '`{data: {accepted: int}}`, the number of events counted.')]
-    #[ApiResponse(status: 422, description: 'Validation failed.')]
-    #[ApiResponse(status: 429, description: 'Too many requests.')]
+    #[Unauthenticated]
+    #[Endpoint('Report center engagement events', 'Aggregated per day and center; nothing identifying is stored. Events for unknown centers, or services that are not the center\'s, are ignored. Limited to 60 requests per minute.')]
+    #[ApiResponse(['data' => ['accepted' => 3]], 202, 'Events counted.')]
+    #[ResponseField('data.accepted', 'integer', 'Events counted.', example: 3)]
+    #[ApiResponse(['message' => 'The events.0.service_id field is required when events.0.action is service_click.', 'errors' => ['events.0.service_id' => ['The events.0.service_id field is required when events.0.action is service_click.']]], 422, 'Validation failed.')]
+    #[ApiResponse(ApiExamples::THROTTLED, 429, 'Too many attempts; retry after the `Retry-After` header.')]
     public function store(EngagementEventsRequest $request): JsonResponse
     {
         $accepted = $this->recorder->record($request->validated('events'));

@@ -2,31 +2,35 @@
 
 namespace Modules\Centers\Http\Controllers\Admin;
 
-use Dedoc\Scramble\Attributes\Group;
-use Dedoc\Scramble\Attributes\QueryParameter;
-use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Gate;
+use Knuckles\Scribe\Attributes\Endpoint;
+use Knuckles\Scribe\Attributes\Group;
+use Knuckles\Scribe\Attributes\QueryParam;
+use Knuckles\Scribe\Attributes\Response as ApiResponse;
+use Knuckles\Scribe\Attributes\ResponseFromApiResource;
+use Knuckles\Scribe\Attributes\UrlParam;
 use Modules\Centers\Http\Requests\Admin\StoreTagRequest;
 use Modules\Centers\Http\Requests\Admin\UpdateTagRequest;
 use Modules\Centers\Http\Resources\Admin\TagResource;
 use Modules\Centers\Models\Tag;
+use Modules\Support\Documentation\ApiExamples;
 use Symfony\Component\HttpFoundation\Response as ResponseAlias;
 
-#[Group(name: 'Admin / Tags', description: 'System user management of the global center tags. Requires a system user Bearer token with the matching `tags.*` permission. Tags are attached to a center with the `tags` id array of the center update endpoints.')]
+#[Group('Admin / Tags', 'Global center tags. Requires the matching `tags.*` permission. Centers pick tags with the `tags` ID list of the center update endpoints.')]
 class TagController extends Controller
 {
-    /**
-     * List tags.
-     *
-     * Paginated (15 per page, `per_page` up to 100), ordered by id, each with its `centers_count`.
-     */
-    #[QueryParameter('search', description: 'Matches the English or Arabic name.', type: 'string')]
-    #[Response(status: 200, description: 'Paginated `TagResource` collection.')]
-    #[Response(status: 403, description: 'Missing the `tags.view_any` permission.')]
+    #[Endpoint('List tags', 'Ordered by ID, paginated, with `centers_count`.')]
+    #[QueryParam('search', 'string', 'Matches the English or Arabic name (contains).', required: false, example: 'Family')]
+    #[QueryParam('page', 'integer', 'Page number (1-based).', required: false, example: 1)]
+    #[QueryParam('per_page', 'integer', 'Items per page, 1-100. Default 15.', required: false, example: 15)]
+    #[ResponseFromApiResource(TagResource::class, Tag::class, status: 200, description: 'Paginated tags.', paginate: 15, withCount: ['centers'])]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `tags.view_any`.')]
     public function index(Request $request): AnonymousResourceCollection
     {
         Gate::forUser($request->user())->authorize('viewAny', Tag::class);
@@ -42,14 +46,11 @@ class TagController extends Controller
         return TagResource::collection($tags);
     }
 
-    /**
-     * Create a tag.
-     *
-     * **Request body:** `name` (`{en, ar}`), both required.
-     */
-    #[Response(status: 201, description: 'The created `TagResource`.')]
-    #[Response(status: 403, description: 'Missing the `tags.create` permission.')]
-    #[Response(status: 422, description: 'Validation failed.')]
+    #[Endpoint('Create a tag')]
+    #[ResponseFromApiResource(TagResource::class, Tag::class, status: 201, description: 'The created tag.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `tags.create`.')]
+    #[ApiResponse(['message' => 'The name.ar field is required.', 'errors' => ['name.ar' => ['The name.ar field is required.']]], 422, 'Validation failed.')]
     public function store(StoreTagRequest $request): JsonResponse
     {
         $tag = Tag::query()->create($request->validated());
@@ -57,12 +58,12 @@ class TagController extends Controller
         return TagResource::make($tag->loadCount('centers'))->response()->setStatusCode(ResponseAlias::HTTP_CREATED);
     }
 
-    /**
-     * Show a tag.
-     */
-    #[Response(status: 200, description: 'The `TagResource`.')]
-    #[Response(status: 403, description: 'Missing the `tags.view` permission.')]
-    #[Response(status: 404, description: 'No tag with that id.')]
+    #[Endpoint('Show a tag')]
+    #[UrlParam('tag', 'integer', 'Tag ID.', example: 4)]
+    #[ResponseFromApiResource(TagResource::class, Tag::class, status: 200, description: 'The tag.', withCount: ['centers'])]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `tags.view`.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No tag with that ID.')]
     public function show(Request $request, Tag $tag): TagResource
     {
         Gate::forUser($request->user())->authorize('view', $tag);
@@ -70,15 +71,13 @@ class TagController extends Controller
         return TagResource::make($tag->loadCount('centers'));
     }
 
-    /**
-     * Update a tag.
-     *
-     * Send `name` with both `en` and `ar`.
-     */
-    #[Response(status: 200, description: 'The updated `TagResource`.')]
-    #[Response(status: 403, description: 'Missing the `tags.update` permission.')]
-    #[Response(status: 404, description: 'No tag with that id.')]
-    #[Response(status: 422, description: 'Validation failed.')]
+    #[Endpoint('Update a tag', 'When `name` is sent it needs both `en` and `ar`.')]
+    #[UrlParam('tag', 'integer', 'Tag ID.', example: 4)]
+    #[ResponseFromApiResource(TagResource::class, Tag::class, status: 200, description: 'The updated tag.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `tags.update`.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No tag with that ID.')]
+    #[ApiResponse(['message' => 'The name.en field is required when name is present.', 'errors' => ['name.en' => ['The name.en field is required when name is present.']]], 422, 'Validation failed.')]
     public function update(UpdateTagRequest $request, Tag $tag): TagResource
     {
         $tag->update($request->validated());
@@ -86,15 +85,13 @@ class TagController extends Controller
         return TagResource::make($tag->loadCount('centers'));
     }
 
-    /**
-     * Delete a tag.
-     *
-     * The tag is also removed from every center that used it.
-     */
-    #[Response(status: 204, description: 'Deleted; no content.')]
-    #[Response(status: 403, description: 'Missing the `tags.delete` permission.')]
-    #[Response(status: 404, description: 'No tag with that id.')]
-    public function destroy(Request $request, Tag $tag): \Illuminate\Http\Response
+    #[Endpoint('Delete a tag', 'Also removes it from every center.')]
+    #[UrlParam('tag', 'integer', 'Tag ID.', example: 4)]
+    #[ApiResponse(status: 204, description: 'Deleted. Empty body.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `tags.delete`.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No tag with that ID.')]
+    public function destroy(Request $request, Tag $tag): Response
     {
         Gate::forUser($request->user())->authorize('delete', $tag);
 

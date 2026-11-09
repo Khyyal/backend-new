@@ -2,41 +2,34 @@
 
 namespace Modules\Clients\Http\Controllers\Client;
 
-use Dedoc\Scramble\Attributes\Group;
-use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
+use Knuckles\Scribe\Attributes\Endpoint;
+use Knuckles\Scribe\Attributes\Group;
+use Knuckles\Scribe\Attributes\Response as ApiResponse;
+use Knuckles\Scribe\Attributes\ResponseField;
+use Knuckles\Scribe\Attributes\Unauthenticated;
+use Modules\Support\Documentation\ApiExamples;
 use Modules\Support\Enums\DevicePlatform;
 use Modules\Support\Http\Requests\LaunchDeviceRequest;
 use Modules\Support\Services\DeviceService;
 
-#[Group(name: 'Client / Device', description: 'Device registration for push notifications.')]
+#[Group('Client / Device', 'Device registration for push notifications.')]
 class LaunchController extends Controller
 {
     public function __construct(
         private readonly DeviceService $deviceService,
     ) {}
 
-    /**
-     * Register the device on app launch.
-     *
-     * Called every time the client app starts. Registers or refreshes the
-     * device with its FCM token, platform and locale. Unauthenticated launches
-     * store the device unlinked; it is linked to the client on `/auth/verify`
-     * when the same `device_identifier` is sent. When a Bearer token is sent,
-     * the authenticated client's device is updated directly.
-     *
-     * **Request body:**
-     * - `device_identifier` — required; unique ID of the app install.
-     * - `platform`          — required; `ios` or `android`.
-     * - `fcm_token`         — optional; Firebase Cloud Messaging token.
-     * - `locale`            — optional; device locale (e.g. `ar`, `en`).
-     *
-     * @param  LaunchDeviceRequest  $request  Validated via {@see LaunchDeviceRequest}.
-     * @return JsonResponse 200 with the registered `device`.
-     */
-    #[Response(status: 200, description: 'Device registered or refreshed.')]
-    #[Response(status: 422, description: 'Validation failure on `device_identifier`, `platform`, `fcm_token` or `locale`.')]
+    #[Unauthenticated]
+    #[Endpoint('Register the device on app launch', 'Call on every app start. Registers or refreshes the device with its FCM token, platform and locale. Without a token the device is stored unlinked and linked on `POST /api/v1/clients/auth/verify` when the same `device_identifier` is sent; with a client bearer token it is linked directly. Limited to 30 requests per minute.')]
+    #[ApiResponse(['device' => ['device_identifier' => 'b3f1c2d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6', 'platform' => 'android', 'locale' => 'ar', 'linked' => true]], 200, 'Device registered or refreshed.')]
+    #[ResponseField('device.device_identifier', 'string', 'The device ID.', example: 'b3f1c2d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6')]
+    #[ResponseField('device.platform', 'string', '`ios` or `android`.', example: 'android')]
+    #[ResponseField('device.locale', 'string', 'Push locale.', nullable: true, example: 'ar')]
+    #[ResponseField('device.linked', 'boolean', 'Whether the device is linked to a client.', example: true)]
+    #[ApiResponse(['message' => 'The device identifier field is required.', 'errors' => ['device_identifier' => ['The device identifier field is required.']]], 422, 'Validation failed.')]
+    #[ApiResponse(ApiExamples::THROTTLED, 429, 'Too many attempts; retry after the `Retry-After` header.')]
     public function __invoke(LaunchDeviceRequest $request): JsonResponse
     {
         /** @var array{device_identifier: string, platform: string, fcm_token?: ?string, locale?: ?string} $validated */

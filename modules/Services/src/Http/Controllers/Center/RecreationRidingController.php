@@ -2,36 +2,39 @@
 
 namespace Modules\Services\Http\Controllers\Center;
 
-use Dedoc\Scramble\Attributes\Group;
-use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Gate;
+use Knuckles\Scribe\Attributes\Endpoint;
+use Knuckles\Scribe\Attributes\Group;
+use Knuckles\Scribe\Attributes\QueryParam;
+use Knuckles\Scribe\Attributes\Response as ApiResponse;
+use Knuckles\Scribe\Attributes\ResponseFromApiResource;
+use Knuckles\Scribe\Attributes\UrlParam;
 use Modules\Centers\Models\Center;
 use Modules\Services\Enums\ServiceType;
 use Modules\Services\Http\Requests\Center\RecreationRidingRequest;
 use Modules\Services\Http\Resources\Center\RecreationRidingResource;
 use Modules\Services\Models\RecreationalRiding;
 use Modules\Services\Services\CenterRecreationRidingService;
+use Modules\Support\Documentation\ApiExamples;
 use Symfony\Component\HttpFoundation\Response as ResponseAlias;
 
-#[Group(name: 'Center / Recreation Riding', description: 'Manage the recreation riding services of a center. Requires a center-scoped Bearer token (see `POST /centers/{center}/access`).')]
+#[Group('Recreation riding', 'The recreation riding services of a center. Served on `centers/{center}/…` (center-scoped token; center users need `services.recreation_riding.manage`) and `admin/centers/{center}/…` (system users need `centers.manage_services`).')]
 class RecreationRidingController extends Controller
 {
     public function __construct(private readonly CenterRecreationRidingService $service) {}
 
-    /**
-     * List the center's recreation riding services.
-     *
-     * Paginated (15 per page, `?page=`), newest first. Each item is a
-     * `RecreationRidingResource`.
-     */
-    #[Response(status: 200, description: 'Paginated `RecreationRidingResource` collection.')]
-    #[Response(status: 401, description: 'Missing or invalid Bearer token for the `center_user` guard.')]
-    #[Response(status: 403, description: 'The token has no access to this center, or the user is not assigned to it.')]
+    #[Endpoint('List recreation riding services', 'Newest first, 15 per page.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[QueryParam('page', 'integer', 'Page number (1-based).', required: false, example: 1)]
+    #[ResponseFromApiResource(RecreationRidingResource::class, RecreationalRiding::class, status: 200, description: 'Paginated recreation riding services.', paginate: 15)]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `services.recreation_riding.manage` for this center (system users: `centers.manage_services`). Also returned when the token lacks `center-access:{center}` or the center is not active.')]
     public function index(Request $request, Center $center): AnonymousResourceCollection
     {
         Gate::forUser($request->user())->authorize('manageServices', [$center, ServiceType::RecreationRiding]);
@@ -45,31 +48,12 @@ class RecreationRidingController extends Controller
         return RecreationRidingResource::collection($ridings);
     }
 
-    /**
-     * Create a recreation riding service.
-     *
-     * **Request body:**
-     * - `name`                    required object; `ar` required string, `en` optional string.
-     * - `description`             required object; `ar` required string, `en` optional string.
-     * - `max_tickets_per_hour`    optional integer >= 1, or `null`/omitted for no hourly limit.
-     * - `price_options`           required array (1-20) of `{ duration, price }`; `duration` is minutes (integer >= 1), `price` a number >= 0.
-     * - `days`                    required array of distinct weekday numbers `0`-`6`.
-     * - `hours`                   required flat list of `HH:mm` start/end pairs, e.g. `["09:00","12:00","14:00","17:00"]` (two slots); applied to every day in `days`. Each end must be after its start.
-     * - `cover`                   optional media id (uuid) or `null`.
-     * - `images`                  optional array (max 10) of media ids, in display order.
-     * - `price_options[].id`     optional (update only); keeps that existing option, and its package, in place. Existing options not sent are deleted together with their package.
-     * - `packages`               optional array (max 20) of `{ price_option, count, price, duration }`: `price_option` is the 0-based index into `price_options`, `count` the number of sessions, `duration` the validity in months. One package per option. On update it replaces all packages; omit it to leave them untouched.
-     * - `settings`              optional object of booleans keyed by the service type's setting keys (unknown keys are rejected). On update it replaces all settings: omitted keys reset to `false`; omit `settings` to leave them untouched.
-     *
-     * Media ids come from the Support media API (`POST /media`); temporary
-     * uploads must belong to the authenticated user and not be expired.
-     *
-     * The service is created `active`.
-     */
-    #[Response(status: 201, description: 'The created service as a `RecreationRidingResource`: `id`, `service_id`, `center_id`, `slug`, `status`, `name` {ar,en}, `description` {ar,en}, `max_tickets_per_hour`, `price_options` [{id,duration,price}], `days`, `hours`, `cover`, `images`.')]
-    #[Response(status: 401, description: 'Missing or invalid Bearer token.')]
-    #[Response(status: 403, description: 'The token has no access to this center, or the user is not assigned to it.')]
-    #[Response(status: 422, description: 'Validation failed, or a media id is invalid, expired or not owned by the user.')]
+    #[Endpoint('Create a recreation riding service', 'Created `active`. Media UUIDs must be your own unexpired temporary uploads.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[ResponseFromApiResource(RecreationRidingResource::class, RecreationalRiding::class, status: 201, description: 'The created recreation riding service.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `services.recreation_riding.manage` for this center (system users: `centers.manage_services`). Also returned when the token lacks `center-access:{center}` or the center is not active.')]
+    #[ApiResponse(['message' => 'Each end time must be after its start time.', 'errors' => ['hours' => ['Each end time must be after its start time.']]], 422, 'Validation failed, or a media UUID is invalid, expired or not yours.')]
     public function store(RecreationRidingRequest $request, Center $center): JsonResponse
     {
         $riding = $this->service->create($center, $this->user($request), $request->validated());
@@ -77,12 +61,13 @@ class RecreationRidingController extends Controller
         return RecreationRidingResource::make($riding)->response()->setStatusCode(ResponseAlias::HTTP_CREATED);
     }
 
-    /**
-     * Show a recreation riding service.
-     */
-    #[Response(status: 200, description: 'The service as a `RecreationRidingResource`.')]
-    #[Response(status: 403, description: 'The token has no access to this center, or the user is not assigned to it.')]
-    #[Response(status: 404, description: 'No such service in this center.')]
+    #[Endpoint('Show a recreation riding service')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[UrlParam('recreationRiding', 'integer', 'ID of the recreation riding service (the `id` field, not `service_id`).', example: 12)]
+    #[ResponseFromApiResource(RecreationRidingResource::class, RecreationalRiding::class, status: 200, description: 'The recreation riding service.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `services.recreation_riding.manage` for this center (system users: `centers.manage_services`). Also returned when the token lacks `center-access:{center}` or the center is not active.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No such recreation riding service in this center.')]
     public function show(Request $request, Center $center, int $recreationRiding): RecreationRidingResource
     {
         Gate::forUser($request->user())->authorize('manageServices', [$center, ServiceType::RecreationRiding]);
@@ -90,21 +75,14 @@ class RecreationRidingController extends Controller
         return RecreationRidingResource::make($this->service->findForCenter($center, $recreationRiding));
     }
 
-    /**
-     * Update a recreation riding service.
-     *
-     * Replaces the definition: `name`, `description`, `price_options`, `days`
-     * and `hours` are all required (`max_tickets_per_hour` is optional and resets to `null` when omitted) and take the same shape as on create (old
-     * price options and schedules are replaced). `cover` and `images` are
-     * optional and untouched when omitted: `cover` takes a media id (`null`
-     * removes it); `images` is the full list of media ids in display order, so
-     * existing ids are kept, new temporary ids are attached and omitted ones
-     * are removed.
-     */
-    #[Response(status: 200, description: 'The updated service as a `RecreationRidingResource`.')]
-    #[Response(status: 403, description: 'The token has no access to this center, or the user is not assigned to it.')]
-    #[Response(status: 404, description: 'No such service in this center.')]
-    #[Response(status: 422, description: 'Validation failed, or a media id is invalid, expired or not owned by the user.')]
+    #[Endpoint('Update a recreation riding service', 'Replaces the definition: send the same body as on create (old price options, schedules and day prices are replaced). `cover`, `images`, `settings`, `packages` and trainer lists are left untouched when omitted.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[UrlParam('recreationRiding', 'integer', 'ID of the recreation riding service (the `id` field, not `service_id`).', example: 12)]
+    #[ResponseFromApiResource(RecreationRidingResource::class, RecreationalRiding::class, status: 200, description: 'The updated recreation riding service.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `services.recreation_riding.manage` for this center (system users: `centers.manage_services`). Also returned when the token lacks `center-access:{center}` or the center is not active.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No such recreation riding service in this center.')]
+    #[ApiResponse(['message' => 'Each end time must be after its start time.', 'errors' => ['hours' => ['Each end time must be after its start time.']]], 422, 'Validation failed, or a media UUID is invalid, expired or not yours.')]
     public function update(RecreationRidingRequest $request, Center $center, int $recreationRiding): RecreationRidingResource
     {
         $riding = $this->service->findForCenter($center, $recreationRiding);
@@ -114,15 +92,14 @@ class RecreationRidingController extends Controller
         );
     }
 
-    /**
-     * Delete a recreation riding service.
-     *
-     * Soft-deletes the service together with its price options and schedules.
-     */
-    #[Response(status: 204, description: 'Deleted; no content.')]
-    #[Response(status: 403, description: 'The token has no access to this center, or the user is not assigned to it.')]
-    #[Response(status: 404, description: 'No such service in this center.')]
-    public function destroy(Request $request, Center $center, int $recreationRiding): \Illuminate\Http\Response
+    #[Endpoint('Delete a recreation riding service', 'Soft-deletes the service with its price options and schedules.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[UrlParam('recreationRiding', 'integer', 'ID of the recreation riding service (the `id` field, not `service_id`).', example: 12)]
+    #[ApiResponse(status: 204, description: 'Deleted. Empty body.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `services.recreation_riding.manage` for this center (system users: `centers.manage_services`). Also returned when the token lacks `center-access:{center}` or the center is not active.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No such recreation riding service in this center.')]
+    public function destroy(Request $request, Center $center, int $recreationRiding): Response
     {
         Gate::forUser($request->user())->authorize('manageServices', [$center, ServiceType::RecreationRiding]);
 

@@ -3,7 +3,11 @@
 namespace Modules\Clients\Http\Requests\Client;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Knuckles\Scribe\Attributes\BodyParam;
 
+#[BodyParam('first_name', 'string', 'First name, 2-255 characters.', example: 'Noura')]
+#[BodyParam('last_name', 'string', 'Last name, 2-255 characters.', example: 'Al-Qahtani')]
+#[BodyParam('city_id', 'integer', 'Existing city ID. Omit to keep the current city; send null to remove it.', required: false, nullable: true, example: 1)]
 class UpdateProfileRequest extends FormRequest
 {
     public function authorize(): bool

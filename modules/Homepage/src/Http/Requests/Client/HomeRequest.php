@@ -3,7 +3,12 @@
 namespace Modules\Homepage\Http\Requests\Client;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Knuckles\Scribe\Attributes\QueryParam;
 
+#[QueryParam('lat', 'number', 'Your latitude; send with `lng`. Orders `top_centers` by distance and applies section radiuses.', required: false, example: 24.7)]
+#[QueryParam('lng', 'number', 'Your longitude; send with `lat`.', required: false, example: 46.68)]
+#[QueryParam('page', 'integer', 'Section endpoint only: page number (1-based).', required: false, example: 1)]
+#[QueryParam('per_page', 'integer', 'Section endpoint only: items per page, 1-100 (default: the section limit).', required: false, example: 10)]
 class HomeRequest extends FormRequest
 {
     public function authorize(): bool

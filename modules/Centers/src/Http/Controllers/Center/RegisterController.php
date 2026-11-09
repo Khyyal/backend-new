@@ -2,48 +2,34 @@
 
 namespace Modules\Centers\Http\Controllers\Center;
 
-use Dedoc\Scramble\Attributes\Group;
-use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
+use Knuckles\Scribe\Attributes\Endpoint;
+use Knuckles\Scribe\Attributes\Group;
+use Knuckles\Scribe\Attributes\Response as ApiResponse;
+use Knuckles\Scribe\Attributes\ResponseField;
+use Knuckles\Scribe\Attributes\Unauthenticated;
 use Modules\Centers\Http\Requests\Center\RegisterCenterFormRequest;
 use Modules\Centers\Http\Requests\Center\SendRegisterOtpRequest;
 use Modules\Centers\Http\Resources\Center\CenterResource;
 use Modules\Centers\Http\Resources\Center\UserResource;
 use Modules\Centers\Services\CenterRegisterService;
+use Modules\Support\Documentation\ApiExamples;
 use Modules\Support\Enums\DevicePlatform;
 use Modules\Support\Services\DeviceService;
 use Modules\Support\Services\OtpVerificationService;
 use Symfony\Component\HttpFoundation\Response as ResponseAlias;
 
-#[Group(name: 'Center / Register', description: 'Center registration')]
+#[Group('Center / Register', 'Self-service center registration. New centers start `invisible` and `pending` until approved.')]
 class RegisterController extends Controller
 {
-    /**
-     * Request a registration OTP for a new center user.
-     *
-     * Sends a one-time password (OTP) by SMS to the provided phone number. The
-     * phone must not already belong to a registered center user. The returned
-     * code is then submitted as `user.code` to `POST /centers/register`.
-     *
-     * **Request body:**
-     * - `phone` — required; string, max 32 characters, not yet registered.
-     *
-     * @param  SendRegisterOtpRequest  $request  Validated via {@see SendRegisterOtpRequest}.
-     * @return JsonResponse 200 with `message` and `expires_in_seconds`.
-     */
-    #[Response(
-        status: 200,
-        description: 'OTP generated and queued for delivery. Response includes a localized `message` and the TTL in `expires_in_seconds`.'
-    )]
-    #[Response(
-        status: 422,
-        description: 'Validation failure on `phone` (missing, too long, or already registered — error keyed under `phone`).'
-    )]
-    #[Response(
-        status: 429,
-        description: 'Too many OTP requests for this phone or this IP. Retry after the period returned in the `Retry-After` header.'
-    )]
+    #[Unauthenticated]
+    #[Endpoint('Request a registration code', 'Sends a one-time code by SMS to a phone that is not yet a center user. Submit it as `user.code` on `POST /api/v1/centers/register`.')]
+    #[ApiResponse(['message' => 'Verification code sent.', 'expires_in_seconds' => 300], 200, 'Code sent.')]
+    #[ResponseField('message', 'string', 'Localized confirmation.', example: 'Verification code sent.')]
+    #[ResponseField('expires_in_seconds', 'integer', 'Code lifetime in seconds.', example: 300)]
+    #[ApiResponse(['message' => 'The phone has already been taken.', 'errors' => ['phone' => ['The phone has already been taken.']]], 422, 'Missing phone, or it is already registered.')]
+    #[ApiResponse(ApiExamples::THROTTLED, 429, 'Too many codes for this phone (5 per 15 minutes) or this IP (10 per minute); retry after `Retry-After`.')]
     public function sendCode(
         SendRegisterOtpRequest $request,
         OtpVerificationService $verification,
@@ -59,18 +45,14 @@ class RegisterController extends Controller
         ]);
     }
 
-    #[Response(
-        status: 201,
-        description: 'Registration succeeded. Returns the created `user`, the new `center` record, and a `token` Bearer token for immediate authentication.'
-    )]
-    #[Response(
-        status: 422,
-        description: 'Validation failure on any request field, or the OTP `user.code` is invalid/expired (error keyed under `user.code`).'
-    )]
-    #[Response(
-        status: 429,
-        description: 'Too many registration attempts. Retry after the period returned in the `Retry-After` header (10 req/min per IP).'
-    )]
+    #[Unauthenticated]
+    #[Endpoint('Register a center', 'Creates the center and its owner (primary user) after checking the OTP, and returns an account-level token. Links the launched device when `device_identifier` is sent. Limited to 10 requests per minute.')]
+    #[ApiResponse(['user' => ['id' => 15, 'name' => 'Khalid Al-Harbi', 'phone' => '+966500000002'], 'center' => ['id' => 8, 'name' => 'Al Fursan Stables', 'slug' => 'al-fursan-stables', 'contact_phone' => '+966500000001', 'email' => 'info@alfursan.sa', 'social_links' => null, 'site_theme' => null, 'custom_site_enabled' => false, 'domain' => null, 'status' => 'invisible', 'state' => 'pending', 'points' => 0, 'address' => null, 'lat' => null, 'lng' => null, 'description' => null], 'token' => '31|Q2VudGVyVXNlclRva2Vu'], 201, 'Registered.')]
+    #[ResponseField('user', 'object', 'The owner (`UserResource`): id, name, phone.')]
+    #[ResponseField('center', 'object', 'The new center (`CenterResource` without relations).')]
+    #[ResponseField('token', 'string', 'Sanctum token for the account-level center routes.', example: '31|Q2VudGVyVXNlclRva2Vu')]
+    #[ApiResponse(['message' => 'Invalid or expired verification code.', 'errors' => ['user.code' => ['Invalid or expired verification code.']]], 422, 'Validation failed, or `user.code` is wrong or expired.')]
+    #[ApiResponse(ApiExamples::THROTTLED, 429, 'Too many attempts; retry after the `Retry-After` header.')]
     public function store(
         RegisterCenterFormRequest $request,
         CenterRegisterService $service,

@@ -2,37 +2,37 @@
 
 namespace Modules\Centers\Http\Controllers\Center;
 
-use Dedoc\Scramble\Attributes\Group;
-use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Gate;
+use Knuckles\Scribe\Attributes\Endpoint;
+use Knuckles\Scribe\Attributes\Group;
+use Knuckles\Scribe\Attributes\Response as ApiResponse;
+use Knuckles\Scribe\Attributes\ResponseField;
+use Knuckles\Scribe\Attributes\ResponseFromApiResource;
+use Knuckles\Scribe\Attributes\UrlParam;
 use Modules\Centers\Enums\CenterUserPermission;
 use Modules\Centers\Http\Requests\Center\StoreCenterUserRequest;
 use Modules\Centers\Http\Requests\Center\UpdateCenterUserRequest;
 use Modules\Centers\Http\Resources\Center\CenterMemberResource;
 use Modules\Centers\Models\Center;
+use Modules\Centers\Models\User;
 use Modules\Centers\Services\CenterUserManagementService;
+use Modules\Support\Documentation\ApiExamples;
 
-#[Group(name: 'Center / Users', description: 'The center\'s primary user, or a user granted `users.manage`, manages the other users of the center and their permissions. Requires a center-scoped Bearer token (see `POST /centers/{center}/access`).')]
+#[Group('Center / Users', 'The users of a center and their permissions. The primary user, or a user with `users.manage`, manages them.')]
 class CenterUserController extends Controller
 {
     public function __construct(private readonly CenterUserManagementService $userService) {}
 
-    /**
-     * List center users.
-     *
-     * Returns every user assigned to the center, primary user first, each with
-     * `id`, `name`, `phone`, `is_primary`, `status`, `joined_at`, the linked
-     * `trainer` (`null` for the primary user) and the `permissions` they hold
-     * on the center.
-     */
-    #[Response(status: 200, description: '`data`: `CenterMemberResource` collection.')]
-    #[Response(status: 401, description: 'Missing or invalid Bearer token for the `center_user` guard.')]
-    #[Response(status: 403, description: 'The token has no access to this center, or the user lacks `users.manage`.')]
+    #[Endpoint('List center users', 'Primary user first, each with status, linked trainer and permissions. Not paginated.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[ResponseFromApiResource(CenterMemberResource::class, User::class, status: 200, description: 'Center users.', collection: true)]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `users.manage` for this center. Also returned when the token lacks `center-access:{center}` or the center is not active.')]
     public function index(Request $request, Center $center): AnonymousResourceCollection
     {
         Gate::forUser($request->user())->authorize('manageUsers', $center);
@@ -40,13 +40,12 @@ class CenterUserController extends Controller
         return CenterMemberResource::collection($this->userService->list($center));
     }
 
-    /**
-     * List grantable permissions.
-     *
-     * Returns the permission names that can be granted to center users.
-     */
-    #[Response(status: 200, description: '`data`: list of permission names.')]
-    #[Response(status: 403, description: 'The token has no access to this center, or the user lacks `users.manage`.')]
+    #[Endpoint('List grantable permissions', 'The permission names that can be granted to center users.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[ApiResponse(['data' => ['services.training.manage', 'purchases.training.view', 'users.manage']], 200, 'Permission names.')]
+    #[ResponseField('data', 'string[]', 'Every center permission (`CenterUserPermission`).', example: ['services.training.manage', 'purchases.training.view'])]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `users.manage` for this center. Also returned when the token lacks `center-access:{center}` or the center is not active.')]
     public function permissions(Request $request, Center $center): JsonResponse
     {
         Gate::forUser($request->user())->authorize('manageUsers', $center);
@@ -54,19 +53,12 @@ class CenterUserController extends Controller
         return response()->json(['data' => CenterUserPermission::all()]);
     }
 
-    /**
-     * Add a center user.
-     *
-     * Assigns a user to the center with the given `permissions`. When an
-     * account with the `phone` already exists it is assigned as-is (its name is
-     * kept); otherwise a new account is created. The user signs in by OTP.
-     *
-     * `trainer_id` is required: a trainer of the center not already linked to
-     * another user of the center.
-     */
-    #[Response(status: 201, description: 'The assigned user as a `CenterMemberResource`.')]
-    #[Response(status: 403, description: 'The token has no access to this center, or the user lacks `users.manage`.')]
-    #[Response(status: 422, description: 'Validation failed, the trainer is invalid or already linked, or the phone already belongs to a user of this center.')]
+    #[Endpoint('Add a center user', 'Assigns a user to the center. An existing account with the phone is assigned as-is (its name is kept); otherwise one is created. The user signs in by OTP.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[ResponseFromApiResource(CenterMemberResource::class, User::class, status: 201, description: 'The assigned user.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `users.manage` for this center. Also returned when the token lacks `center-access:{center}` or the center is not active.')]
+    #[ApiResponse(['message' => 'The user is already assigned to this center.', 'errors' => ['phone' => ['The user is already assigned to this center.']]], 422, 'Validation failed, the trainer is invalid or already linked, the phone already belongs to a user of this center, or a permission you do not hold.')]
     public function store(StoreCenterUserRequest $request, Center $center): JsonResponse
     {
         $member = $this->userService->create($center, $request->validated(), $request->user('center_user'));
@@ -74,12 +66,13 @@ class CenterUserController extends Controller
         return CenterMemberResource::make($member)->response()->setStatusCode(201);
     }
 
-    /**
-     * Show a center user.
-     */
-    #[Response(status: 200, description: 'The user as a `CenterMemberResource`.')]
-    #[Response(status: 403, description: 'The token has no access to this center, or the user lacks `users.manage`.')]
-    #[Response(status: 404, description: 'No user with this id is assigned to the center.')]
+    #[Endpoint('Show a center user')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[UrlParam('user', 'integer', 'Center user ID (must be assigned to the center).', example: 15)]
+    #[ResponseFromApiResource(CenterMemberResource::class, User::class, status: 200, description: 'The user.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `users.manage` for this center. Also returned when the token lacks `center-access:{center}` or the center is not active.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No such user in this center.')]
     public function show(Request $request, Center $center, int $user): CenterMemberResource
     {
         Gate::forUser($request->user())->authorize('manageUsers', $center);
@@ -87,18 +80,14 @@ class CenterUserController extends Controller
         return CenterMemberResource::make($this->userService->findMember($center, $user));
     }
 
-    /**
-     * Update a center user.
-     *
-     * Partial update of `name`, `status`, `trainer_id` and `permissions` (the
-     * full list of permissions the user holds on the center). The primary user
-     * and the acting user cannot be updated here; a non-primary manager can only
-     * grant permissions they hold.
-     */
-    #[Response(status: 200, description: 'The updated user as a `CenterMemberResource`.')]
-    #[Response(status: 403, description: 'The token has no access to this center, or the user lacks `users.manage`.')]
-    #[Response(status: 404, description: 'No user with this id is assigned to the center.')]
-    #[Response(status: 422, description: 'Validation failed, or the target is the primary user.')]
+    #[Endpoint('Update a center user', 'Partial update. `permissions` is the full list. The primary user and yourself cannot be updated here; a non-primary manager only grants permissions they hold.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[UrlParam('user', 'integer', 'Center user ID (must be assigned to the center).', example: 15)]
+    #[ResponseFromApiResource(CenterMemberResource::class, User::class, status: 200, description: 'The updated user.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `users.manage` for this center. Also returned when the token lacks `center-access:{center}` or the center is not active.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No such user in this center.')]
+    #[ApiResponse(['message' => 'The center\'s primary user cannot be modified or removed.', 'errors' => ['user' => ['The center\'s primary user cannot be modified or removed.']]], 422, 'Validation failed, or the target is the primary user or yourself.')]
     public function update(UpdateCenterUserRequest $request, Center $center, int $user): CenterMemberResource
     {
         $member = $this->userService->findMember($center, $user);
@@ -106,17 +95,14 @@ class CenterUserController extends Controller
         return CenterMemberResource::make($this->userService->update($center, $member, $request->validated(), $request->user('center_user')));
     }
 
-    /**
-     * Remove a center user.
-     *
-     * Unassigns the user from the center and revokes their access to it. An
-     * account that no longer belongs to any center is deleted. The primary
-     * user cannot be removed.
-     */
-    #[Response(status: 204, description: 'The user was removed from the center.')]
-    #[Response(status: 403, description: 'The token has no access to this center, or the user lacks `users.manage`.')]
-    #[Response(status: 404, description: 'No user with this id is assigned to the center.')]
-    #[Response(status: 422, description: 'The target is the primary user.')]
+    #[Endpoint('Remove a center user', 'Unassigns the user and revokes their access to the center. An account left without centers is deleted. The primary user cannot be removed.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[UrlParam('user', 'integer', 'Center user ID (must be assigned to the center).', example: 15)]
+    #[ApiResponse(status: 204, description: 'Removed. Empty body.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `users.manage` for this center. Also returned when the token lacks `center-access:{center}` or the center is not active.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No such user in this center.')]
+    #[ApiResponse(['message' => 'The center\'s primary user cannot be modified or removed.', 'errors' => ['user' => ['The center\'s primary user cannot be modified or removed.']]], 422, 'The target is the primary user.')]
     public function destroy(Request $request, Center $center, int $user): HttpResponse
     {
         Gate::forUser($request->user())->authorize('manageUsers', $center);

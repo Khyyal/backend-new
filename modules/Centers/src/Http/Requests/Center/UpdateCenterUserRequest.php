@@ -5,10 +5,15 @@ namespace Modules\Centers\Http\Requests\Center;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
+use Knuckles\Scribe\Attributes\BodyParam;
 use Modules\Centers\Enums\CenterUserPermission;
 use Modules\Centers\Models\Center;
 use Modules\Support\Enums\ActivationStatus;
 
+#[BodyParam('name', 'string', 'Full name (max 255). Kept as-is when the phone already has an account.', required: false, example: 'Fahad Al-Otaibi')]
+#[BodyParam('trainer_id', 'integer', 'Trainer of this center (not deleted) not already linked to another user of the center.', required: false, example: 6)]
+#[BodyParam('status', 'string', 'Assignment status. Default `active`.', required: false, enum: ActivationStatus::class, example: 'active')]
+#[BodyParam('permissions', 'string[]', 'Full list of distinct center permissions (see `GET …/users/permissions`); a non-primary manager can only grant permissions they hold.', required: false, enum: CenterUserPermission::class, example: ['services.training.manage', 'purchases.training.view'])]
 class UpdateCenterUserRequest extends FormRequest
 {
     public function authorize(): bool

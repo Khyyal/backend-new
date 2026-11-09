@@ -5,9 +5,17 @@ namespace Modules\Billing\Http\Requests\Admin;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
+use Knuckles\Scribe\Attributes\QueryParam;
 use Modules\Billing\Enums\SubscriptionStatus;
 use Modules\Billing\Models\Subscription;
 
+#[QueryParam('center_id', 'integer', 'Only this center.', required: false, example: 8)]
+#[QueryParam('plan_id', 'integer', 'Only this plan.', required: false, example: 1)]
+#[QueryParam('status', 'string', 'Only this status.', required: false, enum: SubscriptionStatus::class, example: 'active')]
+#[QueryParam('from', 'string', 'Starting on or after, `Y-m-d`.', required: false, example: '2026-05-01')]
+#[QueryParam('to', 'string', 'Starting on or before, `Y-m-d`.', required: false, example: '2026-05-31')]
+#[QueryParam('per_page', 'integer', 'Items per page, 1-100. Default 25.', required: false, example: 25)]
+#[QueryParam('page', 'integer', 'Page number (1-based).', required: false, example: 1)]
 class ListSubscriptionsRequest extends FormRequest
 {
     public function authorize(): bool

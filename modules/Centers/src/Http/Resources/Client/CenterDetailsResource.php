@@ -4,6 +4,7 @@ namespace Modules\Centers\Http\Resources\Client;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Knuckles\Scribe\Attributes\ResponseField;
 use Modules\Centers\Models\Center;
 use Modules\Support\Http\Resources\CityResource;
 
@@ -15,6 +16,32 @@ use Modules\Support\Http\Resources\CityResource;
  */
 class CenterDetailsResource extends JsonResource
 {
+    #[ResponseField('id', 'integer', 'Center ID.', example: 8)]
+    #[ResponseField('slug', 'string', 'Slug; use it on `GET /api/v1/clients/centers/{slug}`.', example: 'al-fursan-stables')]
+    #[ResponseField('name', 'string', 'Center name.', example: 'Al Fursan Stables')]
+    #[ResponseField('address', 'string', 'Street address.', nullable: true, example: 'King Fahd Rd, Al Olaya')]
+    #[ResponseField('city', 'object', 'The city (`CityResource`). Present when loaded.', required: false)]
+    #[ResponseField('city.id', 'integer', 'City ID.', example: 1)]
+    #[ResponseField('city.name', 'string', 'City name in the request locale.', example: 'Riyadh')]
+    #[ResponseField('city.radius', 'integer', 'Coverage radius in km.', example: 40)]
+    #[ResponseField('description', 'string', 'Description.', nullable: true, example: 'Riding lessons and trail rides for all levels.')]
+    #[ResponseField('location', 'object', 'Map point.')]
+    #[ResponseField('location.lat', 'number', 'Latitude.', nullable: true, example: 24.7136)]
+    #[ResponseField('location.lng', 'number', 'Longitude.', nullable: true, example: 46.6753)]
+    #[ResponseField('contact_phone', 'string', 'Public contact phone.', example: '+966500000001')]
+    #[ResponseField('distance_km', 'number', 'Distance from `lat`/`lng` in km (2 decimals); null when they were not sent.', nullable: true, example: 3.42)]
+    #[ResponseField('tags', 'object[]', 'Tags of the center. Present when loaded.', required: false)]
+    #[ResponseField('tags[].id', 'integer', 'Tag ID.', example: 4)]
+    #[ResponseField('tags[].name', 'string', 'Tag name in the request locale.', example: 'Family friendly')]
+    #[ResponseField('logo', 'string', 'Logo thumbnail URL; null when none.', required: false, nullable: true, example: 'https://cdn.khyyal.com/media/40/conversions/logo-thumb.jpg')]
+    #[ResponseField('cover', 'string', 'Cover thumbnail URL; null when none.', required: false, nullable: true, example: 'https://cdn.khyyal.com/media/41/conversions/cover-cover-thumb.jpg')]
+    #[ResponseField('images', 'string[]', 'Gallery thumbnail URLs in display order.', required: false, example: ['https://cdn.khyyal.com/media/42/conversions/photo-gallery-thumb.jpg'])]
+    #[ResponseField('services', 'object[]', 'Overview of the center\'s active services.', required: false)]
+    #[ResponseField('services[].id', 'integer', 'Service ID.', example: 31)]
+    #[ResponseField('services[].slug', 'string', 'Service slug; use it on `GET /api/v1/clients/centers/{center}/services/{slug}`.', example: 'beginner-ride')]
+    #[ResponseField('services[].name', 'string', 'Service name in the request locale.', example: 'Beginner ride')]
+    #[ResponseField('services[].cover', 'string', 'Cover thumbnail URL; null when none.', nullable: true, example: 'https://cdn.khyyal.com/media/50/conversions/cover-cover-thumb.jpg')]
+    #[ResponseField('services[].start_price', 'integer', 'Lowest price option in halalas; null when none.', nullable: true, example: 15000)]
     public function toArray(Request $request): array
     {
         $center = $this->resource;
