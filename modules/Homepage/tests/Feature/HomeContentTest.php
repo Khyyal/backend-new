@@ -94,7 +94,14 @@ test('curated services show active services of visible centers', function (): vo
         ->assertJsonCount(1, 'data.0.items')
         ->assertJsonPath('data.0.items.0.id', $active->id)
         ->assertJsonPath('data.0.items.0.center.id', $center->id)
-        ->assertJsonPath('data.0.items.0.start_price', 5000);
+        ->assertJsonPath('data.0.items.0.start_price', 5000)
+        ->assertJsonPath('data.0.items.0.display_price', null);
+
+    PromotionFactory::new()->active()->forCenter($center)->percentage(2000)->create();
+
+    $this->getJson('/api/v1/clients/home')
+        ->assertJsonPath('data.0.items.0.display_price.original', 5000)
+        ->assertJsonPath('data.0.items.0.display_price.discounted', 4000);
 });
 
 test('curated promotions and campaigns show only running ones', function (): void {

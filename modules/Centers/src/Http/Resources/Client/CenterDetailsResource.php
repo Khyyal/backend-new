@@ -42,10 +42,12 @@ class CenterDetailsResource extends JsonResource
     #[ResponseField('services[].name', 'string', 'Service name in the request locale.', example: 'Beginner ride')]
     #[ResponseField('services[].cover', 'string', 'Cover thumbnail URL; null when none.', nullable: true, example: 'https://cdn.khyyal.com/media/50/conversions/cover-cover-thumb.jpg')]
     #[ResponseField('services[].start_price', 'integer', 'Lowest price option in halalas; null when none.', nullable: true, example: 15000)]
+    #[ResponseField('services[].display_price', 'object', 'Set only while an automatic offer lowers the start price: `original`, `discounted`, `discount_amount` (halalas), `badge`.', nullable: true, example: ['original' => 15000, 'discounted' => 12750, 'discount_amount' => 2250, 'badge' => '-15%'])]
     public function toArray(Request $request): array
     {
         $center = $this->resource;
         $distance = $center->getAttribute('distance_km');
+        $prices = $center->getAttribute('service_display_prices') ?? [];
 
         return [
             'id' => $center->id,
@@ -76,6 +78,7 @@ class CenterDetailsResource extends JsonResource
                 'name' => $service->name,
                 'cover' => $service->getFirstMedia('cover')?->getFullUrl('cover-thumb'),
                 'start_price' => $service->start_price !== null ? (int) $service->start_price : null,
+                'display_price' => $prices[$service->id] ?? null,
             ])->values()),
         ];
     }

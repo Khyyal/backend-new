@@ -4,6 +4,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Modules\Centers\Database\Factories\CenterFactory;
 use Modules\Centers\Enums\CenterStatus;
+use Modules\Promotions\Database\Factories\PromotionFactory;
 use Modules\Reservations\Database\Factories\ReservationFactory;
 use Modules\Services\Database\Factories\EventFactory;
 use Modules\Services\Database\Factories\HorseCareFactory;
@@ -50,6 +51,38 @@ test('returns the serviceable details of each service type', function (ServiceTy
     'training' => [ServiceType::Training, TrainingServiceFactory::class, 'trainers'],
     'membership' => [ServiceType::Membership, MembershipFactory::class, 'packages'],
 ]);
+
+test('returns start_price and the discounted display_price while an automatic offer runs', function (): void {
+    $service = ServiceFactory::new()->create(['center_id' => $this->center->id]);
+    $service->priceOptions()->create(['price' => 5000]);
+    $service->priceOptions()->create(['price' => 8000]);
+
+    $this->getJson(($this->url)($service))
+        ->assertOk()
+        ->assertJsonPath('data.start_price', 5000)
+        ->assertJsonPath('data.display_price', null);
+
+    PromotionFactory::new()->active()->forCenter($this->center)->percentage(2000)->create();
+
+    $this->getJson(($this->url)($service))
+        ->assertOk()
+        ->assertJsonPath('data.start_price', 5000)
+        ->assertJsonPath('data.display_price.original', 5000)
+        ->assertJsonPath('data.display_price.discounted', 4000)
+        ->assertJsonPath('data.display_price.discount_amount', 1000);
+});
+
+test('start_price of a resort ignores add-ons', function (): void {
+    $service = ServiceFactory::new()
+        ->forServiceable(ResortFactory::new()->create(), ServiceType::Resort)
+        ->create(['center_id' => $this->center->id]);
+    $service->priceOptions()->create(['price' => 20000, 'quantity' => 1]);
+    $service->priceOptions()->create(['price' => 500, 'quantity' => null]);
+
+    $this->getJson(($this->url)($service))
+        ->assertOk()
+        ->assertJsonPath('data.start_price', 20000);
+});
 
 test('resolves the slug within the given center', function (): void {
     $other = CenterFactory::new()->create(['status' => CenterStatus::VISIBLE]);
@@ -130,6 +163,7 @@ test('loads recreation riding details with a constant number of queries', functi
     };
 
     ReservationFactory::new()->forService($service)->at('2026-10-19', '09:00:00', '10:00:00')->create();
+    $queries(); // warms the promotions cache
     $withOne = $queries();
 
     foreach (range(1, 14) as $offset) {
@@ -165,6 +199,7 @@ test('lists training trainers with their own availability using a constant numbe
 
     ReservationFactory::new()->forService($service)->at('2026-10-19', '09:00:00', '10:00:00')
         ->create(['trainer_id' => $trainers[0]->id, 'quantity' => 2]);
+    $queries(); // warms the promotions cache
     $withOne = $queries();
 
     foreach (range(1, 14) as $offset) {

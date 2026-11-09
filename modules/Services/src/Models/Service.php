@@ -2,6 +2,7 @@
 
 namespace Modules\Services\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -49,6 +50,18 @@ class Service extends Model implements HasMedia
     public function center(): BelongsTo
     {
         return $this->belongsTo(Center::class);
+    }
+
+    /**
+     * Adds `start_price`: the lowest price option in halalas. Resort add-ons
+     * (price options without a quantity) are not counted.
+     */
+    public function scopeWithStartPrice(Builder $query): Builder
+    {
+        return $query->withMin(['priceOptions as start_price' => fn ($prices) => $prices->where(
+            fn ($scope) => $scope->whereNotNull('price_options.quantity')
+                ->orWhere('services.type', '!=', ServiceType::Resort->value)
+        )], 'price');
     }
 
     public function getActivitylogOptions(): LogOptions

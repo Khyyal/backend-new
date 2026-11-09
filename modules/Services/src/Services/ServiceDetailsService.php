@@ -3,7 +3,9 @@
 namespace Modules\Services\Services;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Modules\Promotions\Contracts\ServicePriceDisplay;
 use Modules\Services\Models\Event;
 use Modules\Services\Models\HorseCare;
 use Modules\Services\Models\HorseService;
@@ -21,6 +23,10 @@ use Modules\Support\Enums\ActivationStatus;
  */
 class ServiceDetailsService
 {
+    public function __construct(
+        private readonly ServicePriceDisplay $priceDisplay,
+    ) {}
+
     /**
      * Relations of the Service itself, per serviceable type.
      *
@@ -58,8 +64,14 @@ class ServiceDetailsService
             ->where('slug', $slug)
             ->where('status', ActivationStatus::ACTIVE)
             ->whereHas('center', fn (Builder $query) => $query->visible()->whereKey($center))
+            ->withStartPrice()
             ->with('serviceable')
             ->firstOrFail();
+
+        $service->setAttribute(
+            'display_price',
+            $this->priceDisplay->forServices(new Collection([$service]))[$service->getKey()] ?? null,
+        );
 
         $serviceable = $service->serviceable ?? throw (new ModelNotFoundException)->setModel(Service::class);
 
