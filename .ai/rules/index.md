@@ -4,6 +4,7 @@ Before planning or editing, find the row whose globs match the file's path and r
 
 | Applies to | Rule file |
 | --- | --- |
+| docs-site/** | .ai/rules/docs.md |
 | modules/Billing/** | .ai/rules/billing.md |
 | app/Http/**, routes/** | .ai/rules/boost/http-routes.md |
 | app/Models/** | .ai/rules/boost/models.md |

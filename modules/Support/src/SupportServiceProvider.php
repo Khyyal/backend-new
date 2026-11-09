@@ -101,6 +101,7 @@ class SupportServiceProvider extends ServiceProvider
             ->group(__DIR__.'/../routes/api.php');
 
         Route::middleware(['web'])->group(__DIR__.'/../routes/docs.php');
+        Route::middleware(['web'])->group(__DIR__.'/../routes/guide.php');
 
     }
 }
