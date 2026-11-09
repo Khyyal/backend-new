@@ -17,6 +17,10 @@ The owner can do everything. Other team members only see what their permissions 
 
 **Profile completion** lists what is missing (for example description, images or services). Set your center **Visible** when you want clients to find it.
 
+## Privacy policy and terms
+
+The center app links to the privacy policy and terms and conditions for centers. They open inside the app in your language.
+
 ## Main areas
 
 | Area | Page |

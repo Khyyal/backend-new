@@ -17,3 +17,7 @@ After visiting, you can **rate** a center. Ratings help other clients and influe
 ## Notifications
 
 Your notification inbox shows booking updates and offers. You can mark one or all as read. Push notifications arrive in your app's language.
+
+## Privacy policy and terms
+
+The app links to the Khyyal privacy policy and terms and conditions. They open inside the app in your language.

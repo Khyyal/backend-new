@@ -6,7 +6,7 @@ Client routes use `auth:client`, center users `auth:center_user` with `center.sc
 
 ## System users
 
-System users have roles made of **`SystemPermission`** values such as `centers.view_any`, `promotions.activate`, `fees.manage`, `payouts.manage`, `analytics.view` and `api_docs.view`.
+System users have roles made of **`SystemPermission`** values such as `centers.view_any`, `promotions.activate`, `fees.manage`, `payouts.manage`, `analytics.view`, `legal_documents.manage` and `api_docs.view`.
 
 - Add a new admin capability as a new `SystemPermission` case named `resource.action`.
 - Never edit or delete protected `SystemRole`s.

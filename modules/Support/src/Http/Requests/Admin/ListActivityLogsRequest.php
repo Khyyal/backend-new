@@ -19,7 +19,7 @@ use Spatie\Activitylog\Models\Activity;
 class ListActivityLogsRequest extends FormRequest
 {
     /** @var array<int, string> */
-    public const LOG_NAMES = ['service', 'reservation', 'client_package', 'client_membership', 'system_user', 'system_role', 'subscription'];
+    public const LOG_NAMES = ['service', 'reservation', 'client_package', 'client_membership', 'system_user', 'system_role', 'subscription', 'legal_document'];
 
     public function authorize(): bool
     {
