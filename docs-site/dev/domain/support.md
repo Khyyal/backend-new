@@ -31,6 +31,14 @@ Admin CRUD for `system-users` (with `restore`), `system-roles`, `system-permissi
 
 `admin/activity-logs` shows the audit trail (`activity_logs.view_any`). Translatable attributes are logged with every locale.
 
+## Legal documents
+
+`LegalDocument` holds the privacy policy and terms (`LegalDocumentType`: `privacy_policy`, `terms`) of each app (`LegalAudience`: `client`, `center`). The four rows are created by the migration and only updated; `content` is translatable HTML (en/ar), activity-logged as `legal_document`.
+
+- Admin: `GET admin/legal-documents`, `GET|PUT admin/legal-documents/{audience}/{type}` with `legal_documents.manage`. A `PUT` needs both `content.en` and `content.ar` (max 200,000 characters each). `LegalHtmlSanitizer` (symfony/html-sanitizer) cleans the HTML before saving: safe elements only, no scripts or event handlers, links limited to http(s)/mailto/tel, `rel="noopener noreferrer"` forced on links, and `style` reduced to `text-align`.
+- Public page: `GET /legal/{audience}/{type}?lang=en|ar` (`legal.show`, no auth, `web` group) renders `support::legal.show`, a standalone page with `dir="rtl"` for Arabic. Unknown `lang` falls back to `en`; an empty document shows a "not available yet" note. Cached by clients for 5 minutes.
+- Apps: `GET client/legal` and `GET center/legal` (no token) return `privacy_policy_url` and `terms_url` in the `Accept-Language` locale (`en`/`ar`, default `en`) for the app to open in a webview.
+
 ## Documentation access
 
 `/docs` (endpoint reference) and `/guide` (these guides) are protected by a session login at `/docs/login` for active system users with `api_docs.view`. Five failed logins in a minute return 429.

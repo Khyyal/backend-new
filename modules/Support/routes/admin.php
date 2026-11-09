@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Modules\Support\Http\Controllers\Admin\ActivityLogController;
 use Modules\Support\Http\Controllers\Admin\AuthController;
 use Modules\Support\Http\Controllers\Admin\CityController;
+use Modules\Support\Http\Controllers\Admin\LegalDocumentController;
 use Modules\Support\Http\Controllers\Admin\SystemPermissionController;
 use Modules\Support\Http\Controllers\Admin\SystemRoleController;
 use Modules\Support\Http\Controllers\Admin\SystemUserController;
@@ -42,5 +43,9 @@ Route::prefix('admin')
             Route::apiResource('system-roles', SystemRoleController::class)
                 ->parameters(['system-roles' => 'systemRole']);
             Route::get('system-permissions', SystemPermissionController::class)->name('system-permissions.index');
+
+            Route::get('legal-documents', [LegalDocumentController::class, 'index'])->name('legal-documents.index');
+            Route::get('legal-documents/{audience}/{type}', [LegalDocumentController::class, 'show'])->name('legal-documents.show');
+            Route::put('legal-documents/{audience}/{type}', [LegalDocumentController::class, 'update'])->name('legal-documents.update');
         });
     });

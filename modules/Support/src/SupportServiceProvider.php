@@ -19,12 +19,14 @@ use Modules\Support\Jobs\CleanupExpiredMedia;
 use Modules\Support\Listeners\DeleteExpiredNotificationTokens;
 use Modules\Support\Models\City;
 use Modules\Support\Models\IdempotencyKey;
+use Modules\Support\Models\LegalDocument;
 use Modules\Support\Models\SystemRole;
 use Modules\Support\Models\SystemUser;
 use Modules\Support\Notifications\Contracts\NotificationServiceContract;
 use Modules\Support\Notifications\NotificationService;
 use Modules\Support\Policies\ActivityLogPolicy;
 use Modules\Support\Policies\CityPolicy;
+use Modules\Support\Policies\LegalDocumentPolicy;
 use Modules\Support\Policies\MediaPolicy;
 use Modules\Support\Policies\SystemRolePolicy;
 use Modules\Support\Policies\SystemUserPolicy;
@@ -54,6 +56,7 @@ class SupportServiceProvider extends ServiceProvider
         Gate::policy(SystemUser::class, SystemUserPolicy::class);
         Gate::policy(SystemRole::class, SystemRolePolicy::class);
         Gate::policy(City::class, CityPolicy::class);
+        Gate::policy(LegalDocument::class, LegalDocumentPolicy::class);
         Gate::policy(Activity::class, ActivityLogPolicy::class);
         Gate::define('viewApiDocs', fn (mixed $user): bool => $user instanceof SystemUser
             && $user->isActive()
@@ -102,6 +105,7 @@ class SupportServiceProvider extends ServiceProvider
 
         Route::middleware(['web'])->group(__DIR__.'/../routes/docs.php');
         Route::middleware(['web'])->group(__DIR__.'/../routes/guide.php');
+        Route::middleware(['web'])->group(__DIR__.'/../routes/legal.php');
 
     }
 }

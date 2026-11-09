@@ -20,6 +20,10 @@ Sign in with your email and password. Inactive users cannot sign in.
 | Dashboards and spreadsheets | [Analytics and exports](./analytics) |
 | Staff accounts, roles, cities and tags | [Users and roles](./users-roles) |
 
+## Legal pages
+
+**Settings → Legal pages** holds the privacy policy and terms and conditions of the client app and of the center app, each in English and Arabic. Write them in the editor (headings, lists, links, alignment) and **Save**; both languages are required. The apps open the published page right away. Use **Open page** to see it as clients and centers do. You need the **Legal documents** permission (`legal_documents.manage`).
+
 ## Notifications
 
 The bell shows platform events (for example a new center registering). Mark one or all as read.

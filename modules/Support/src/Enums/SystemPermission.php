@@ -80,6 +80,8 @@ enum SystemPermission: string
 
     case ViewAnyActivityLogs = 'activity_logs.view_any';
 
+    case ManageLegalDocuments = 'legal_documents.manage';
+
     case ViewApiDocs = 'api_docs.view';
 
     /** @return array<string> */
