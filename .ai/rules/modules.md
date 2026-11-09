@@ -5,6 +5,9 @@ paths:
 
 # Modules
 
+## Every behaviour change must update docs-site
+Any change to business behaviour (statuses, pricing, fees, promotions, permissions, validation, limits, scheduled commands, settings) or to an API field must update the matching docs-site/dev/domain/<module>.md in the same change, plus docs-site/user/** when admins, center users or clients can see it. Look for stale statements, not only missing ones. Then run npm run docs:build and commit storage/app/docs. A change is not done until the docs match. See .ai/rules/docs.md.
+
 ## Money is integer halalas, percentages are bps
 Store and compute all amounts as integer halalas (1/100 SAR); never floats or decimals. Percentages are basis points (10000 = 100%) applied with intdiv (floor).
 

@@ -1,0 +1,19 @@
+# Clients
+
+**Clients → list** shows every client on the platform. Search by name or phone, open a client to see their details, and export the list if you have the export permission.
+
+## How clients join
+
+Clients sign in with their phone number and a one-time code, so there is no password to reset. A client who has not entered a first and last name yet is still **onboarding**.
+
+## Per-center view
+
+A center only sees its own clients: people who joined it, or who have a confirmed or completed purchase with it. Admins can open a center's client list from the center page.
+
+## Blocking
+
+A center can block a client. Blocked clients cannot book that center. Admins can see and add blocked clients from the center page.
+
+## Deleted clients
+
+Deleted clients are hidden everywhere but their history (purchases, reviews) is kept.

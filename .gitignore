@@ -37,3 +37,6 @@ graphify-out/
 /.scribe
 /resources/views/scribe
 /public/vendor/scribe
+
+# VitePress docs-site: built output in storage/app/docs is committed, the cache is not
+docs-site/.vitepress/cache
