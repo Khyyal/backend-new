@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Modules\Centers\Enums\CenterStatus;
 use Modules\Centers\Enums\CenterUserRole;
+use Modules\Centers\Events\CenterCreated;
 use Modules\Centers\Models\Center;
 use Modules\Centers\Models\User;
 use Modules\Support\Enums\ActivationStatus;
@@ -24,7 +25,7 @@ class CenterAdminService
 {
     private const ATTRIBUTES = ['city_id', 'status', 'state', 'custom_site_enabled', 'domain'];
 
-    private const CREATE_ATTRIBUTES = ['name', 'city_id', 'description', 'lat', 'lng', 'address', 'contact_phone', 'custom_site_enabled', 'domain', 'status', 'state'];
+    private const CREATE_ATTRIBUTES = ['name', 'city_id', 'description', 'lat', 'lng', 'address', 'contact_phone', 'email', 'custom_site_enabled', 'domain', 'status', 'state'];
 
     public function __construct(private readonly CenterUpdateService $updateService) {}
 
@@ -51,7 +52,8 @@ class CenterAdminService
             ->when($filters['search'] ?? null, fn (Builder $query, string $search) => $query
                 ->where(fn (Builder $inner) => $inner
                     ->where('name', 'like', "%{$search}%")
-                    ->orWhere('contact_phone', 'like', "%{$search}%")))
+                    ->orWhere('contact_phone', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")))
             ->when($filters['status'] ?? null, fn (Builder $query, string $status) => $query->where('status', $status))
             ->when($filters['state'] ?? null, fn (Builder $query, string $state) => $query->where('state', $state))
             ->when($filters['city_id'] ?? null, fn (Builder $query, int $cityId) => $query->where('city_id', $cityId))
@@ -80,6 +82,10 @@ class CenterAdminService
             ]);
 
             $this->assignPrimaryUser($center, $owner);
+
+            DB::afterCommit(static function () use ($center, $owner): void {
+                event(new CenterCreated($center, $owner));
+            });
 
             return $this->updateService->update($center, $actor, $data);
         });

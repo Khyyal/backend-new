@@ -38,11 +38,37 @@ return [
             'title' => 'تم إلغاء الحجز',
             'body' => 'قام :client بإلغاء :service يوم :date الساعة :time.',
         ],
+        'reminder' => [
+            'title' => 'تذكير بحجزك',
+            'body' => 'تذكير: حجزك لـ :service في :center يوم :date الساعة :time.',
+        ],
     ],
     'package' => [
         'activated' => [
             'title' => 'تم تفعيل الباقة',
             'body' => 'باقتك لـ :service بعدد :sessions جلسات جاهزة للاستخدام.',
+        ],
+        'expiring' => [
+            'title' => 'باقتك على وشك الانتهاء',
+            'body' => 'تنتهي باقتك لـ :service يوم :date. احجز جلساتك المتبقية قبل ذلك.',
+        ],
+        'expired' => [
+            'title' => 'انتهت الباقة',
+            'body' => 'انتهت صلاحية باقتك لـ :service.',
+        ],
+        'exhausted' => [
+            'title' => 'اكتملت جلسات الباقة',
+            'body' => 'لقد حجزت جميع جلسات باقتك لـ :service وعددها :sessions.',
+        ],
+    ],
+    'membership' => [
+        'expiring' => [
+            'title' => 'عضويتك على وشك الانتهاء',
+            'body' => 'تنتهي عضويتك في :membership يوم :date.',
+        ],
+        'expired' => [
+            'title' => 'انتهت العضوية',
+            'body' => 'انتهت صلاحية عضويتك في :membership.',
         ],
     ],
 ];

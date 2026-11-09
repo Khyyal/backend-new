@@ -39,6 +39,7 @@ class ClientPackage extends Model implements Purchasable
         'price',
         'status',
         'expires_at',
+        'expiry_reminder_sent_at',
     ];
 
     protected static function newFactory(): ClientPackageFactory
@@ -50,6 +51,7 @@ class ClientPackage extends Model implements Purchasable
     {
         return LogOptions::defaults()
             ->logFillable()
+            ->logExcept(['expiry_reminder_sent_at'])
             ->logOnlyDirty()
             ->dontLogEmptyChanges()
             ->useLogName('client_package');
@@ -63,6 +65,7 @@ class ClientPackage extends Model implements Purchasable
             'remaining_sessions' => 'integer',
             'price' => 'integer',
             'expires_at' => 'datetime',
+            'expiry_reminder_sent_at' => 'datetime',
         ];
     }
 

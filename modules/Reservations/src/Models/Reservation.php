@@ -2,6 +2,7 @@
 
 namespace Modules\Reservations\Models;
 
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -52,6 +53,7 @@ class Reservation extends Model implements Purchasable
         'cancelled_by_type',
         'cancelled_by_id',
         'cancellation_reason',
+        'reminder_sent_at',
         'notes',
         'metadata',
     ];
@@ -65,7 +67,7 @@ class Reservation extends Model implements Purchasable
     {
         return LogOptions::defaults()
             ->logFillable()
-            ->logExcept(['metadata'])
+            ->logExcept(['metadata', 'reminder_sent_at'])
             ->logOnlyDirty()
             ->dontLogEmptyChanges()
             ->useLogName('reservation');
@@ -83,6 +85,7 @@ class Reservation extends Model implements Purchasable
             'subtotal' => 'integer',
             'total_amount' => 'integer',
             'cancelled_at' => 'datetime',
+            'reminder_sent_at' => 'datetime',
             'metadata' => 'array',
         ];
     }
@@ -130,6 +133,14 @@ class Reservation extends Model implements Purchasable
     public function cancelledBy(): MorphTo
     {
         return $this->morphTo();
+    }
+
+    /**
+     * When the reservation begins; date-only reservations (events, resorts) start at midnight.
+     */
+    public function startsAt(): CarbonImmutable
+    {
+        return CarbonImmutable::parse($this->date->toDateString().' '.($this->start_time ?? '00:00:00'));
     }
 
     public function scopeOccupyingCapacity(Builder $query): Builder

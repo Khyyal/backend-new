@@ -195,13 +195,14 @@ describe('attendance', function (): void {
 });
 
 describe('reschedule', function (): void {
-    test('moves to a free slot and keeps the previous one in history', function (): void {
+    test('moves to a free slot, keeps the previous one in history and re-arms the reminder', function (): void {
         Event::fake([ReservationRescheduled::class]);
-        $reservation = ($this->reservation)();
+        $reservation = ($this->reservation)(['reminder_sent_at' => now()]);
 
         $moved = $this->state->reschedule($reservation, CarbonImmutable::parse('2026-11-02'), '09:00');
 
         expect($moved->date->toDateString())->toBe('2026-11-02')
+            ->and($moved->reminder_sent_at)->toBeNull()
             ->and($moved->start_time)->toBe('09:00:00')
             ->and($moved->end_time)->toBe('10:00:00')
             ->and($moved->metadata['reschedules'][0])->toMatchArray(['date' => '2026-10-26', 'start_time' => '10:00:00']);

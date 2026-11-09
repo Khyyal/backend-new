@@ -1,7 +1,9 @@
 <?php
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Notification;
+use Modules\Centers\Events\CenterCreated;
 use Modules\Centers\Notifications\CenterRegisteredNotification;
 use Modules\Support\Database\Factories\CityFactory;
 use Modules\Support\Database\Factories\SystemUserFactory;
@@ -10,8 +12,9 @@ use Tests\TestCase;
 
 uses(TestCase::class, RefreshDatabase::class);
 
-test('a registered center notifies active admins', function (): void {
+test('a registered center notifies active admins and announces the new center', function (): void {
     Notification::fake();
+    Event::fake([CenterCreated::class]);
     $this->app->instance(SMSService::class, Mockery::mock(SMSService::class));
     CityFactory::new()->create(['name' => ['en' => 'City', 'ar' => 'مدينة']]);
     config()->set('otp.dev.enabled', true);
@@ -39,4 +42,5 @@ test('a registered center notifies active admins', function (): void {
             && str_contains($notification->body('en'), 'Ahmad registered Phoenix Riding Center'),
     );
     Notification::assertNotSentTo($inactiveAdmin, CenterRegisteredNotification::class);
+    Event::assertDispatched(CenterCreated::class, fn (CenterCreated $event): bool => $event->center->name === 'Phoenix Riding Center');
 });

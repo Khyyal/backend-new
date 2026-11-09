@@ -13,12 +13,20 @@ class RegisterCenterFormRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        if (is_string($this->input('email'))) {
+            $this->merge(['email' => strtolower(trim($this->input('email')))]);
+        }
+    }
+
     public function rules(): array
     {
         return [
             'name' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'contact_phone' => ['required', 'string', 'max:32'],
+            'email' => ['nullable', 'string', 'email', 'max:255', Rule::unique('centers', 'email')],
             'user.name' => ['required', 'string', 'max:255'],
             'user.phone' => ['required', 'string', 'max:32'],
             'user.code' => ['required', 'string'],

@@ -7,6 +7,7 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Modules\Centers\Enums\CenterStatus;
 use Modules\Centers\Enums\CenterUserRole;
+use Modules\Centers\Events\CenterCreated;
 use Modules\Centers\Events\CenterRegistered;
 use Modules\Centers\Http\Requests\Center\RegisterCenterFormRequest;
 use Modules\Centers\Models\Center;
@@ -54,6 +55,7 @@ readonly class CenterRegisterService
                 'city_id' => $cityId,
                 'description' => $request->input('description'),
                 'contact_phone' => $request->input('contact_phone'),
+                'email' => $request->input('email'),
                 'status' => CenterStatus::INVISIBLE,
             ]);
 
@@ -72,6 +74,7 @@ readonly class CenterRegisterService
         });
 
         event(new CenterRegistered($result['center'], $result['user']));
+        event(new CenterCreated($result['center'], $result['user']));
 
         $token = $this->centerAuthService->issueAppToken($result['user'], $request);
 

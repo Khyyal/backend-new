@@ -21,6 +21,9 @@ class StoreCenterRequest extends FormRequest
         if (is_string($this->input('domain'))) {
             $this->merge(['domain' => strtolower(trim($this->input('domain')))]);
         }
+        if (is_string($this->input('email'))) {
+            $this->merge(['email' => strtolower(trim($this->input('email')))]);
+        }
     }
 
     /**
@@ -38,6 +41,7 @@ class StoreCenterRequest extends FormRequest
             'lng' => ['nullable', 'numeric', 'between:-180,180', 'required_with:lat'],
             'address' => ['nullable', 'string', 'max:255'],
             'contact_phone' => ['required', 'string', 'max:32'],
+            'email' => ['nullable', 'string', 'email', 'max:255', Rule::unique('centers', 'email')],
             'custom_site_enabled' => ['sometimes', 'boolean'],
             'domain' => ['sometimes', 'nullable', 'string', 'max:255', 'regex:/^(?!-)[a-z0-9-]{1,63}(?<!-)(\\.(?!-)[a-z0-9-]{1,63}(?<!-))+$/', Rule::unique('centers', 'domain')],
             'status' => ['sometimes', Rule::enum(CenterStatus::class)],

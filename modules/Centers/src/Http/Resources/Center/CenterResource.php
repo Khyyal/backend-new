@@ -16,6 +16,7 @@ class CenterResource extends JsonResource
             'name' => $this->name,
             'slug' => $this->slug,
             'contact_phone' => $this->contact_phone,
+            'email' => $this->email,
             'social_links' => $this->social_links,
             'site_theme' => $this->site_theme,
             'custom_site_enabled' => $this->custom_site_enabled,

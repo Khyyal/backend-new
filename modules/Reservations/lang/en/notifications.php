@@ -38,11 +38,37 @@ return [
             'title' => 'Reservation cancelled',
             'body' => ':client cancelled :service on :date at :time.',
         ],
+        'reminder' => [
+            'title' => 'Upcoming reservation',
+            'body' => 'Reminder: your :service reservation at :center is on :date at :time.',
+        ],
     ],
     'package' => [
         'activated' => [
             'title' => 'Package activated',
             'body' => 'Your :service package with :sessions sessions is ready to use.',
+        ],
+        'expiring' => [
+            'title' => 'Package expiring soon',
+            'body' => 'Your :service package expires on :date. Book your remaining sessions before then.',
+        ],
+        'expired' => [
+            'title' => 'Package expired',
+            'body' => 'Your :service package has expired.',
+        ],
+        'exhausted' => [
+            'title' => 'Package sessions used up',
+            'body' => "You've booked all :sessions sessions of your :service package.",
+        ],
+    ],
+    'membership' => [
+        'expiring' => [
+            'title' => 'Membership expiring soon',
+            'body' => 'Your :membership membership expires on :date.',
+        ],
+        'expired' => [
+            'title' => 'Membership expired',
+            'body' => 'Your :membership membership has expired.',
         ],
     ],
 ];

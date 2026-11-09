@@ -25,6 +25,7 @@ class CenterFactory extends Factory
             'lng' => fake()->longitude(),
 
             'address' => fake()->address(),
+            'email' => fake()->unique()->safeEmail(),
 
             'points' => 0,
 

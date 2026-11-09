@@ -235,3 +235,14 @@ test('a center user lists the available tags before any center is selected', fun
         ->assertJsonCount(3, 'data')
         ->assertJsonStructure(['data' => [['id', 'name']]]);
 });
+
+test('primary user updates the center email and duplicates are rejected', function (): void {
+    CenterFactory::new()->create(['email' => 'taken@center.test']);
+    $this->actingAs($this->primary, 'center_user');
+
+    $this->patchJson($this->url, ['email' => 'taken@center.test'])->assertJsonValidationErrors('email');
+    $this->patchJson($this->url, ['email' => 'bad'])->assertJsonValidationErrors('email');
+    $this->patchJson($this->url, ['email' => 'Fresh@Center.test'])->assertOk();
+
+    expect($this->center->fresh()->email)->toBe('fresh@center.test');
+});

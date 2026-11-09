@@ -2,11 +2,13 @@
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Modules\Centers\Database\Factories\CenterFactory;
 use Modules\Centers\Database\Factories\UserFactory;
 use Modules\Centers\Enums\CenterStatus;
+use Modules\Centers\Events\CenterCreated;
 use Modules\Centers\Models\Center;
 use Modules\Centers\Models\User;
 use Modules\Clients\Database\Factories\ClientFactory;
@@ -63,6 +65,7 @@ test('shows a center', function (): void {
 });
 
 test('creates a center with a primary owner and media', function (): void {
+    Event::fake([CenterCreated::class]);
     $city = CityFactory::new()->create();
     $logo = app(TemporaryMediaService::class)
         ->createTemporary(UploadedFile::fake()->image('logo.png'), $this->admin)->uuid;
@@ -82,6 +85,8 @@ test('creates a center with a primary owner and media', function (): void {
         ->and($center->media()->where('collection_name', 'logo')->count())->toBe(1);
 
     $owner = $center->users()->wherePivot('is_primary', true)->sole();
+
+    Event::assertDispatched(CenterCreated::class, fn (CenterCreated $event): bool => $event->center->is($center) && $event->owner->is($owner));
 
     expect($owner->phone)->toBe('0501112233')
         ->and($owner->name)->toBe('Owner')
@@ -250,4 +255,33 @@ test('admin updates social links and site theme through their own endpoints', fu
 
     $this->actingAs(SystemUser::factory()->create(), 'system_user')
         ->patchJson("{$this->base}/{$this->center->id}/social-links", ['social_links' => null])->assertForbidden();
+});
+
+test('creates a center with a normalized email and rejects invalid or duplicate emails', function (): void {
+    $this->actingAs($this->admin, 'system_user');
+    $city = CityFactory::new()->create();
+    $payload = fn (string $email, string $phone): array => [
+        'name' => 'Mailed', 'city_id' => $city->id, 'contact_phone' => '0555', 'email' => $email,
+        'primary_user' => ['name' => 'Owner', 'phone' => $phone, 'password' => 'password123'],
+    ];
+
+    $this->postJson($this->base, $payload('not-an-email', '0501112233'))->assertJsonValidationErrors('email');
+
+    $this->postJson($this->base, $payload('  Info@Center.TEST ', '0501112233'))
+        ->assertCreated()->assertJsonPath('data.email', 'info@center.test');
+
+    $this->postJson($this->base, $payload('info@center.test', '0501112244'))->assertJsonValidationErrors('email');
+});
+
+test('updates a center email and allows keeping its own but not another center\'s', function (): void {
+    $other = CenterFactory::new()->create(['email' => 'taken@center.test']);
+    $this->center->update(['email' => 'mine@center.test']);
+
+    $this->actingAs($this->admin, 'system_user');
+    $url = "{$this->base}/{$this->center->id}";
+
+    $this->patchJson($url, ['email' => 'mine@center.test'])->assertOk();
+    $this->patchJson($url, ['email' => 'taken@center.test'])->assertJsonValidationErrors('email');
+    $this->patchJson($url, ['email' => 'new@center.test'])->assertOk()->assertJsonPath('data.email', 'new@center.test');
+    $this->patchJson($url, ['email' => null])->assertOk()->assertJsonPath('data.email', null);
 });

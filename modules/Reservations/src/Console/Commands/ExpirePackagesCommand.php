@@ -5,12 +5,15 @@ namespace Modules\Reservations\Console\Commands;
 use Illuminate\Console\Command;
 use Modules\Reservations\Enums\ClientMembershipStatus;
 use Modules\Reservations\Enums\ClientPackageStatus;
+use Modules\Reservations\Events\ClientMembershipExpired;
+use Modules\Reservations\Events\ClientPackageExpired;
 use Modules\Reservations\Models\ClientMembership;
 use Modules\Reservations\Models\ClientPackage;
 
 /**
  * Marks active packages and memberships past their validity as expired.
- * Expired ones already refuse bookings; this keeps their status honest.
+ * Expired ones already refuse bookings; this keeps their status honest and
+ * tells their clients.
  */
 class ExpirePackagesCommand extends Command
 {
@@ -30,6 +33,7 @@ class ExpirePackagesCommand extends Command
             ->lazyById()
             ->each(function (ClientPackage $package) use (&$expired): void {
                 $package->update(['status' => ClientPackageStatus::Expired]);
+                event(new ClientPackageExpired($package));
                 $expired++;
             });
 
@@ -42,6 +46,7 @@ class ExpirePackagesCommand extends Command
             ->lazyById()
             ->each(function (ClientMembership $membership) use (&$expiredMemberships): void {
                 $membership->update(['status' => ClientMembershipStatus::Expired]);
+                event(new ClientMembershipExpired($membership));
                 $expiredMemberships++;
             });
 

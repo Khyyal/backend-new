@@ -25,7 +25,7 @@ class CentersExport extends QueuedExport
      */
     public function headings(): array
     {
-        return ['ID', 'Name', 'Slug', 'City', 'Contact phone', 'Address', 'State', 'Status', 'Custom site', 'Domain', 'Created at (UTC)'];
+        return ['ID', 'Name', 'Slug', 'City', 'Contact phone', 'Email', 'Address', 'State', 'Status', 'Custom site', 'Domain', 'Created at (UTC)'];
     }
 
     /**
@@ -40,6 +40,7 @@ class CentersExport extends QueuedExport
             $row->slug,
             $row->city?->name,
             $row->contact_phone,
+            $row->email,
             $row->address,
             $this->enumValue($row->state),
             $this->enumValue($row->status),

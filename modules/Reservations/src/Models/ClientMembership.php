@@ -36,6 +36,7 @@ class ClientMembership extends Model implements Purchasable
         'max_visits_per_day',
         'duration',
         'expires_at',
+        'expiry_reminder_sent_at',
     ];
 
     protected static function newFactory(): ClientMembershipFactory
@@ -47,6 +48,7 @@ class ClientMembership extends Model implements Purchasable
     {
         return LogOptions::defaults()
             ->logFillable()
+            ->logExcept(['expiry_reminder_sent_at'])
             ->logOnlyDirty()
             ->dontLogEmptyChanges()
             ->useLogName('client_membership');
@@ -60,6 +62,7 @@ class ClientMembership extends Model implements Purchasable
             'max_visits_per_day' => 'integer',
             'duration' => 'integer',
             'expires_at' => 'datetime',
+            'expiry_reminder_sent_at' => 'datetime',
         ];
     }
 

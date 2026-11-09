@@ -12,6 +12,8 @@ use Modules\Purchase\Events\PurchaseCancelled;
 use Modules\Purchase\Events\PurchaseConfirmed;
 use Modules\Reservations\Console\Commands\ExpirePackagesCommand;
 use Modules\Reservations\Console\Commands\ReleaseUnpaidBookingsCommand;
+use Modules\Reservations\Console\Commands\SendExpiryRemindersCommand;
+use Modules\Reservations\Console\Commands\SendReservationRemindersCommand;
 use Modules\Reservations\Listeners\ConfirmPurchasedReservations;
 use Modules\Reservations\Listeners\RefundLatePayment;
 use Modules\Reservations\Listeners\ReleaseCancelledPurchase;
@@ -60,12 +62,16 @@ class ReservationsServiceProvider extends ServiceProvider
             $this->commands([
                 ExpirePackagesCommand::class,
                 ReleaseUnpaidBookingsCommand::class,
+                SendReservationRemindersCommand::class,
+                SendExpiryRemindersCommand::class,
             ]);
         }
 
         $this->callAfterResolving(Schedule::class, function (Schedule $schedule): void {
             $schedule->command(ReleaseUnpaidBookingsCommand::class)->everyFiveMinutes()->withoutOverlapping();
             $schedule->command(ExpirePackagesCommand::class)->hourly()->withoutOverlapping();
+            $schedule->command(SendReservationRemindersCommand::class)->everyFiveMinutes()->withoutOverlapping();
+            $schedule->command(SendExpiryRemindersCommand::class)->hourly()->withoutOverlapping();
         });
     }
 }

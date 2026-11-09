@@ -362,3 +362,13 @@ test('send register code returns 422 when phone is missing', function (): void {
         ->assertStatus(422)
         ->assertJsonValidationErrors('phone');
 });
+
+test('register stores an optional email and rejects invalid ones', function () use ($validPayload): void {
+    $this->postJson('/api/v1/centers/register', [...$validPayload(), 'email' => 'nope'])
+        ->assertJsonValidationErrors('email');
+
+    $response = $this->postJson('/api/v1/centers/register', [...$validPayload(), 'email' => 'Hello@Center.test']);
+
+    $response->assertCreated();
+    expect($response->json('center.email'))->toBe('hello@center.test');
+});

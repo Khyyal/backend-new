@@ -183,6 +183,7 @@ class ReservationStateService
                 'end_time' => $quote->endTime,
                 'trainer_id' => $quote->trainerId,
                 'metadata' => $metadata,
+                'reminder_sent_at' => null,
             ])->save();
 
             DB::afterCommit(static function () use ($locked): void {
@@ -257,7 +258,7 @@ class ReservationStateService
     {
         $hours = (int) config('reservations.client_cancellation_cutoff_hours');
 
-        if (now()->addHours($hours)->gt($this->startsAt($reservation))) {
+        if (now()->addHours($hours)->gt($reservation->startsAt())) {
             throw ReservationNotAllowedException::because('cancellation_cutoff_passed', ['hours' => $hours]);
         }
     }
@@ -267,14 +268,9 @@ class ReservationStateService
      */
     private function ensureStarted(Reservation $reservation): void
     {
-        if ($this->startsAt($reservation)->isFuture()) {
+        if ($reservation->startsAt()->isFuture()) {
             throw ReservationNotAllowedException::because('not_started_yet');
         }
-    }
-
-    private function startsAt(Reservation $reservation): CarbonImmutable
-    {
-        return CarbonImmutable::parse($reservation->date->toDateString().' '.($reservation->start_time ?? '00:00:00'));
     }
 
     private function restorePackageCredit(Reservation $reservation): void

@@ -12,7 +12,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 
 class CenterUpdateService
 {
-    private const ATTRIBUTES = ['name', 'city_id', 'description', 'lat', 'lng', 'address', 'contact_phone', 'social_links', 'site_theme'];
+    private const ATTRIBUTES = ['name', 'city_id', 'description', 'lat', 'lng', 'address', 'contact_phone', 'email', 'social_links', 'site_theme'];
 
     public function __construct(
         private readonly TemporaryMediaService $temporaryMedia,

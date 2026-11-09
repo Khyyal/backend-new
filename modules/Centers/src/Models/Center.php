@@ -55,6 +55,7 @@ class Center extends Model implements Buyer, HasMedia
         'status',
         'state',
         'contact_phone',
+        'email',
         'social_links',
         'site_theme',
         'custom_site_enabled',

@@ -1,20 +1,28 @@
 <?php
 
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use Modules\Centers\Database\Factories\CenterFactory;
 use Modules\Centers\Database\Factories\UserFactory;
 use Modules\Clients\Database\Factories\ClientFactory;
+use Modules\Reservations\Actions\BookFromPackage;
+use Modules\Reservations\Database\Factories\ClientMembershipFactory;
 use Modules\Reservations\Database\Factories\ClientPackageFactory;
 use Modules\Reservations\Database\Factories\ReservationFactory;
 use Modules\Reservations\Enums\ReservationSource;
 use Modules\Reservations\Enums\ReservationStatus;
+use Modules\Reservations\Events\ClientMembershipExpired;
 use Modules\Reservations\Events\ClientPackageActivated;
+use Modules\Reservations\Events\ClientPackageExpired;
 use Modules\Reservations\Events\ReservationCreated;
+use Modules\Reservations\Notifications\ClientMembershipNotification;
 use Modules\Reservations\Notifications\ClientPackageActivatedNotification;
+use Modules\Reservations\Notifications\ClientPackageNotification;
 use Modules\Reservations\Notifications\ReservationNotification;
 use Modules\Reservations\Services\ReservationStateService;
 use Modules\Reservations\Tests\Support\BookingFixtures;
+use Modules\Services\Models\ServicePackage;
 use Modules\Support\Enums\ActivationStatus;
 use Tests\TestCase;
 
@@ -31,7 +39,7 @@ beforeEach(function (): void {
     $this->center->users()->attach($this->staff, ['status' => ActivationStatus::ACTIVE->value, 'joined_at' => now()->toDateString()]);
     $this->center->users()->attach($this->inactiveStaff, ['status' => ActivationStatus::INACTIVE->value, 'joined_at' => now()->toDateString()]);
 
-    $service = BookingFixtures::riding($this->center);
+    $service = $this->service = BookingFixtures::riding($this->center);
     $this->state = app(ReservationStateService::class);
 
     $this->reservation = fn (array $attributes = []) => ReservationFactory::new()->forService($service)
@@ -90,6 +98,45 @@ test('an activated package notifies its client', function (): void {
     event(new ClientPackageActivated($package));
 
     Notification::assertSentTo($this->client, ClientPackageActivatedNotification::class);
+});
+
+test('booking the last package session tells the client the package is used up', function (): void {
+    $servicePackage = ServicePackage::query()->create([
+        'service_id' => $this->service->id,
+        'price_option_id' => $this->service->priceOptions()->first()->id,
+        'count' => 2,
+        'price' => 90,
+        'duration' => 1,
+    ]);
+    $package = ClientPackageFactory::new()->forServicePackage($servicePackage)->create(['client_id' => $this->client->id]);
+    $book = fn (string $time) => app(BookFromPackage::class)->execute($package->fresh(), CarbonImmutable::parse('2026-10-26'), $time, ReservationSource::Client);
+
+    $book('10:00');
+    Notification::assertNotSentTo($this->client, ClientPackageNotification::class);
+
+    $book('11:00');
+    Notification::assertSentTo($this->client, ClientPackageNotification::class, fn (ClientPackageNotification $notification): bool => $notification->type() === 'client_package_exhausted');
+});
+
+test('an expired package notifies its client unless it belongs to a membership', function (): void {
+    $package = ClientPackageFactory::new()->create(['client_id' => $this->client->id]);
+    $membershipPackage = ClientPackageFactory::new()->create([
+        'client_id' => $this->client->id,
+        'client_membership_id' => ClientMembershipFactory::new()->create(['client_id' => $this->client->id])->id,
+    ]);
+
+    event(new ClientPackageExpired($package));
+    event(new ClientPackageExpired($membershipPackage));
+
+    Notification::assertSentToTimes($this->client, ClientPackageNotification::class, 1);
+    Notification::assertSentTo($this->client, ClientPackageNotification::class, fn (ClientPackageNotification $notification): bool => $notification->package->is($package)
+        && $notification->type() === 'client_package_expired');
+});
+
+test('an expired membership notifies its client', function (): void {
+    event(new ClientMembershipExpired(ClientMembershipFactory::new()->create(['client_id' => $this->client->id])));
+
+    Notification::assertSentTo($this->client, ClientMembershipNotification::class, fn (ClientMembershipNotification $notification): bool => $notification->type() === 'client_membership_expired');
 });
 
 test('reservation notification carries localized copy and deep-link data', function (): void {

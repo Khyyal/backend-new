@@ -8,6 +8,7 @@ use Modules\Reservations\Booking\BookingRequest;
 use Modules\Reservations\Enums\ClientPackageStatus;
 use Modules\Reservations\Enums\ReservationSource;
 use Modules\Reservations\Enums\ReservationStatus;
+use Modules\Reservations\Events\ClientPackageExhausted;
 use Modules\Reservations\Exceptions\ReservationNotAllowedException;
 use Modules\Reservations\Models\ClientPackage;
 use Modules\Reservations\Models\Reservation;
@@ -64,6 +65,10 @@ class BookFromPackage
 
             if ($package->remaining_sessions === 0) {
                 $package->status = ClientPackageStatus::Exhausted;
+
+                DB::afterCommit(static function () use ($package): void {
+                    event(new ClientPackageExhausted($package));
+                });
             }
 
             $package->save();
