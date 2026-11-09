@@ -46,6 +46,18 @@ it('tags operations by the actor of their URI', function () {
     expect($pathItem['tags'])->toBe(['Admin / Blocked clients']);
 });
 
+it('groups routes by actor with or without an api version prefix', function (string $uri, string $actor) {
+    expect(ScalarOpenApiGenerator::actorForUri($uri))->toBe($actor);
+})->with([
+    'versioned admin' => ['api/v1/admin/promotions', 'Admin'],
+    'unversioned admin' => ['api/admin/plans', 'Admin'],
+    'versioned center' => ['api/v1/centers/{center}/promotions', 'Center'],
+    'unversioned center' => ['api/center/subscriptions', 'Center'],
+    'client' => ['api/v1/clients/offers', 'Client'],
+    'shared media' => ['api/v1/media', 'Public'],
+    'webhooks' => ['api/v1/webhooks/moyasar', 'Public'],
+]);
+
 it('replaces the default scheme and groups tags by actor', function () {
     $root = scalarGenerator()->root(
         ['components' => ['securitySchemes' => ['default' => ['type' => 'http']]], 'security' => [['default' => []]]],

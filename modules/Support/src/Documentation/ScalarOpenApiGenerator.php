@@ -141,7 +141,8 @@ class ScalarOpenApiGenerator extends OpenApiGenerator
 
     public static function actorForUri(string $uri): string
     {
-        $segment = Str::before(Str::after(ltrim($uri, '/'), 'api/v1/'), '/');
+        // Routes live under `api/v1/…`, but some (the billing catalog and subscriptions) are mounted under `api/…` without a version.
+        $segment = Str::before((string) preg_replace('#^(api/)?(v\d+/)?#', '', ltrim($uri, '/')), '/');
 
         return match ($segment) {
             'admin' => 'Admin',
