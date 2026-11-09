@@ -2,14 +2,18 @@
 
 namespace Modules\Clients\Http\Controllers\Admin;
 
-use Dedoc\Scramble\Attributes\Group;
-use Dedoc\Scramble\Attributes\QueryParameter;
-use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Gate;
+use Knuckles\Scribe\Attributes\Endpoint;
+use Knuckles\Scribe\Attributes\Group;
+use Knuckles\Scribe\Attributes\QueryParam;
+use Knuckles\Scribe\Attributes\Response as ApiResponse;
+use Knuckles\Scribe\Attributes\ResponseField;
+use Knuckles\Scribe\Attributes\ResponseFromApiResource;
+use Knuckles\Scribe\Attributes\UrlParam;
 use Modules\Clients\Exports\AdminClientsExport;
 use Modules\Clients\Http\Requests\Admin\ExportClientsRequest;
 use Modules\Clients\Http\Requests\Admin\ListClientsRequest;
@@ -18,22 +22,19 @@ use Modules\Clients\Models\Client;
 use Modules\Clients\Services\AdminClientQuery;
 use Modules\Exports\Enums\ExportType;
 use Modules\Exports\Http\Resources\ExportResource;
+use Modules\Exports\Models\Export;
 use Modules\Exports\Services\ExportService;
+use Modules\Support\Documentation\ApiExamples;
 use Symfony\Component\HttpFoundation\Response as HttpStatus;
 
-#[Group(name: 'Admin / Clients', description: 'System user view of every client across all centers. Requires a system user Bearer token with the matching `clients.*` permission.')]
+#[Group('Admin / Clients', 'Every client across all centers. Requires the matching `clients.*` permission.')]
 class ClientController extends Controller
 {
-    /**
-     * List all clients.
-     *
-     * Global list across every center (not scoped to one center). Paginated (15 per page, `per_page` up to 100),
-     * newest first. Soft-deleted clients are excluded.
-     */
-    #[Response(status: 200, description: 'Paginated `ClientResource` collection with `centers_count`, `reservations_count`, `packages_count` and `memberships_count`.')]
-    #[Response(status: 401, description: 'Missing or invalid Bearer token.')]
-    #[Response(status: 403, description: 'Missing the `clients.view_any` permission.')]
-    #[Response(status: 422, description: 'Invalid filters.')]
+    #[Endpoint('List clients', 'All centers, newest first, paginated, with activity counts. Soft-deleted clients are excluded.')]
+    #[ResponseFromApiResource(ClientResource::class, Client::class, status: 200, description: 'Paginated clients.', paginate: 15, with: ['city'], withCount: ['centers', 'reservations', 'packages', 'memberships'])]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `clients.view_any`.')]
+    #[ApiResponse(['message' => 'The selected gender is invalid.', 'errors' => ['gender' => ['The selected gender is invalid.']]], 422, 'Invalid filters.')]
     public function index(ListClientsRequest $request, AdminClientQuery $query): AnonymousResourceCollection
     {
         $clients = $query->build($request->validated())
@@ -43,17 +44,16 @@ class ClientController extends Controller
         return ClientResource::collection($clients);
     }
 
-    /**
-     * Search clients.
-     *
-     * Lightweight lookup for pickers (e.g. campaign targets): `q` matches the full name or the phone number
-     * (every word must match). Not paginated, at most `limit` results (default 20, max 50), newest first.
-     */
-    #[QueryParameter('q', description: 'Search term, at least 2 characters.', type: 'string', required: true)]
-    #[QueryParameter('limit', description: 'Maximum results (1-50, default 20).', type: 'integer')]
-    #[Response(status: 200, description: '`{data: [{id, full_name, phone_number}]}`.')]
-    #[Response(status: 403, description: 'Missing the `clients.view_any` permission.')]
-    #[Response(status: 422, description: '`q` is missing or shorter than 2 characters.')]
+    #[Endpoint('Search clients', 'Lightweight lookup for pickers (e.g. campaign targets): `q` matches the full name or phone, every word must match. Newest first, not paginated.')]
+    #[QueryParam('q', 'string', 'Search term, 2-100 characters.', required: true, example: 'Noura')]
+    #[QueryParam('limit', 'integer', 'Maximum results, 1-50. Default 20.', required: false, example: 20)]
+    #[ApiResponse(['data' => [['id' => 77, 'full_name' => 'Noura Al-Qahtani', 'phone_number' => '+966500000003']]], 200, 'Matching clients.')]
+    #[ResponseField('data[].id', 'integer', 'Client ID.', example: 77)]
+    #[ResponseField('data[].full_name', 'string', 'Full name.', example: 'Noura Al-Qahtani')]
+    #[ResponseField('data[].phone_number', 'string', 'Phone.', example: '+966500000003')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `clients.view_any`.')]
+    #[ApiResponse(['message' => 'The q field must be at least 2 characters.', 'errors' => ['q' => ['The q field must be at least 2 characters.']]], 422, '`q` missing or shorter than 2 characters.')]
     public function search(Request $request): JsonResponse
     {
         Gate::forUser($request->user())->authorize('viewAny', Client::class);
@@ -73,12 +73,12 @@ class ClientController extends Controller
         ])->all()]);
     }
 
-    /**
-     * Show a client.
-     */
-    #[Response(status: 200, description: 'The `ClientResource` with city and activity counts.')]
-    #[Response(status: 403, description: 'Missing the `clients.view` permission.')]
-    #[Response(status: 404, description: 'Client not found.')]
+    #[Endpoint('Show a client', 'With city and activity counts.')]
+    #[UrlParam('client', 'integer', 'Client ID.', example: 77)]
+    #[ResponseFromApiResource(ClientResource::class, Client::class, status: 200, description: 'The client.', with: ['city'], withCount: ['centers', 'reservations', 'packages', 'memberships'])]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `clients.view`.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'Client not found.')]
     public function show(Request $request, Client $client): ClientResource
     {
         Gate::forUser($request->user())->authorize('view', $client);
@@ -86,17 +86,12 @@ class ClientController extends Controller
         return ClientResource::make($client->load('city')->loadCount(['centers', 'reservations', 'packages', 'memberships']));
     }
 
-    /**
-     * Export clients.
-     *
-     * Queues an `.xlsx` export of every client matching the same filters as the list (`search`, `city_id`,
-     * `gender`, `from`/`to` on the registration date). Download it from
-     * `GET /admin/exports/{export}/download` once ready.
-     */
-    #[Response(status: 202, description: 'The queued `ExportResource`; the requester is notified (`export_ready` / `export_failed`) when it finishes.')]
-    #[Response(status: 403, description: 'Missing the `clients.export` permission.')]
-    #[Response(status: 422, description: 'Invalid filters.')]
-    #[Response(status: 429, description: 'An export of this kind is already being generated.')]
+    #[Endpoint('Export clients', 'Queues an `.xlsx` export of the clients matching the list filters.')]
+    #[ResponseFromApiResource(ExportResource::class, Export::class, status: 202, description: 'The queued export; download it from `GET /api/v1/admin/exports/{export}/download` once `completed`. The requester gets an `export_ready` or `export_failed` notification.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `clients.export`.')]
+    #[ApiResponse(['message' => 'The to field must be a date after or equal to from.', 'errors' => ['to' => ['The to field must be a date after or equal to from.']]], 422, 'Invalid filters.')]
+    #[ApiResponse(['message' => 'An export of this kind is already being generated. You will be notified when it is ready.'], 429, 'An export of this kind is already being generated.')]
     public function export(ExportClientsRequest $request, ExportService $exports): JsonResponse
     {
         $export = $exports->start($request->user(), ExportType::AdminClients, new AdminClientsExport($request->validated()));

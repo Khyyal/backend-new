@@ -5,6 +5,7 @@ namespace Modules\Purchase\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
+use Knuckles\Scribe\Attributes\BodyParam;
 use Modules\Purchase\Enums\PurchaseChannel;
 use Modules\Purchase\Models\FeeRule;
 
@@ -13,6 +14,13 @@ use Modules\Purchase\Models\FeeRule;
  * platform default and the fallback), and `max_amount` is at least
  * `min_amount`. Both checks look at the rule as it will be saved.
  */
+#[BodyParam('center_id', 'integer', 'Center the rule applies to; null for the platform default. Must be sent (may be null).', required: true, nullable: true, example: 8)]
+#[BodyParam('channel', 'string', 'Channel the rule applies to; null for the fallback rule. Must be sent (may be null). One rule per center + channel.', required: true, nullable: true, enum: PurchaseChannel::class, example: 'khyyal_app')]
+#[BodyParam('percentage_bps', 'integer', 'Percentage in basis points, 0-10000.', required: false, example: 500)]
+#[BodyParam('fixed_amount', 'integer', 'Fixed fee per purchase in halalas (min 0).', required: false, example: 0)]
+#[BodyParam('min_amount', 'integer', 'Minimum fee in halalas; null for none.', required: false, nullable: true, example: 100)]
+#[BodyParam('max_amount', 'integer', 'Maximum fee in halalas; null for none.', required: false, nullable: true, example: 5000)]
+#[BodyParam('is_active', 'boolean', 'Whether it applies.', required: false, example: true)]
 class StoreFeeRuleRequest extends FormRequest
 {
     protected bool $isUpdate = false;

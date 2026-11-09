@@ -2,26 +2,28 @@
 
 namespace Modules\Support\Http\Controllers\Admin;
 
-use Dedoc\Scramble\Attributes\Group;
-use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Gate;
+use Knuckles\Scribe\Attributes\Endpoint;
+use Knuckles\Scribe\Attributes\Group;
+use Knuckles\Scribe\Attributes\Response as ApiResponse;
+use Knuckles\Scribe\Attributes\ResponseFromApiResource;
+use Knuckles\Scribe\Attributes\UrlParam;
+use Modules\Support\Documentation\ApiExamples;
 use Modules\Support\Http\Requests\Admin\ListActivityLogsRequest;
 use Modules\Support\Http\Resources\Admin\ActivityLogResource;
 use Spatie\Activitylog\Models\Activity;
 
-#[Group(name: 'Admin / Activity logs', description: 'Read-only audit trail of services, reservations, client packages and client memberships. Requires a system user Bearer token with the `activity_logs.view_any` permission.')]
+#[Group('Admin / Activity logs', 'Read-only audit trail of services, reservations, client packages and memberships, system users and roles, and subscriptions. Requires `activity_logs.view_any`.')]
 class ActivityLogController extends Controller
 {
-    /**
-     * List activity logs.
-     *
-     * Newest first, paginated (25 per page, `per_page` up to 100).
-     */
-    #[Response(status: 200, description: 'Paginated `ActivityLogResource` collection.')]
-    #[Response(status: 403, description: 'Missing the `activity_logs.view_any` permission.')]
+    #[Endpoint('List activity logs', 'Newest first, paginated (25 per page by default). Filters are query parameters.')]
+    #[ResponseFromApiResource(ActivityLogResource::class, Activity::class, status: 200, description: 'Paginated log entries.', paginate: 25)]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `activity_logs.view_any`.')]
+    #[ApiResponse(['message' => 'The to field must be a date after or equal to from.', 'errors' => ['to' => ['The to field must be a date after or equal to from.']]], 422, 'Invalid filter.')]
     public function index(ListActivityLogsRequest $request): AnonymousResourceCollection
     {
         $filters = $request->validated();
@@ -43,12 +45,12 @@ class ActivityLogController extends Controller
         return ActivityLogResource::collection($logs);
     }
 
-    /**
-     * Show an activity log.
-     */
-    #[Response(status: 200, description: '`ActivityLogResource`.')]
-    #[Response(status: 403, description: 'Missing the `activity_logs.view_any` permission.')]
-    #[Response(status: 404, description: 'Unknown activity log.')]
+    #[Endpoint('Show an activity log entry')]
+    #[UrlParam('activity', 'integer', 'Log entry ID.', example: 5012)]
+    #[ResponseFromApiResource(ActivityLogResource::class, Activity::class, status: 200, description: 'The log entry.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `activity_logs.view_any`.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'Unknown log entry.')]
     public function show(Request $request, int $activity): ActivityLogResource
     {
         Gate::forUser($request->user())->authorize('viewAny', Activity::class);

@@ -2,13 +2,16 @@
 
 namespace Modules\Centers\Http\Controllers\Center;
 
-use Dedoc\Scramble\Attributes\Group;
-use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Gate;
+use Knuckles\Scribe\Attributes\Endpoint;
+use Knuckles\Scribe\Attributes\Group;
+use Knuckles\Scribe\Attributes\Response as ApiResponse;
+use Knuckles\Scribe\Attributes\ResponseFromApiResource;
+use Knuckles\Scribe\Attributes\UrlParam;
 use Modules\Centers\Exports\CenterPurchasesExport;
 use Modules\Centers\Http\Requests\Center\ExportPurchasesRequest;
 use Modules\Centers\Http\Requests\Center\ListPurchasesRequest;
@@ -16,40 +19,28 @@ use Modules\Centers\Http\Resources\Center\PurchaseDetailsResource;
 use Modules\Centers\Http\Resources\Center\PurchaseResource;
 use Modules\Centers\Models\Center;
 use Modules\Centers\Services\CenterPurchaseQuery;
-use Modules\Clients\Models\Client;
 use Modules\Exports\Enums\ExportType;
 use Modules\Exports\Http\Resources\ExportResource;
+use Modules\Exports\Models\Export;
 use Modules\Exports\Services\ExportService;
 use Modules\Purchase\Models\Purchase;
 use Modules\Reservations\Models\ClientPackage;
 use Modules\Reservations\Models\Reservation;
+use Modules\Support\Documentation\ApiExamples;
 use Modules\Support\Models\SystemUser;
 use Symfony\Component\HttpFoundation\Response as HttpStatus;
 
-#[Group(name: 'Center / Purchases', description: 'What clients bought from the center. Requires a center-scoped Bearer token (see `POST /centers/{center}/access`).')]
+#[Group('Purchases', 'What clients bought from a center. Served on `centers/{center}/…` (center-scoped token) and `admin/centers/{center}/…` (system user). Non-primary center users only see purchases of the service types they may view (`purchases.{type}.view`), narrowed by trainer; amounts need `purchases.view_prices`. System users need `centers.manage_reservations` (and `purchases.export` to export) and always see amounts.')]
 class PurchaseController extends Controller
 {
     public function __construct(private readonly CenterPurchaseQuery $purchases) {}
 
-    /**
-     * List the center's purchases.
-     *
-     * Paginated (25 per page), newest first. Non-primary users only see
-     * purchases for the service types they may view, narrowed by trainer
-     * (own trainer, other trainers, unassigned); amounts are omitted without
-     * `purchases.view_prices`. `payment_method` and `payment_status` are those
-     * of the latest payment, or `null` when there is none.
-     *
-     * **Query** (all optional):
-     * - `status`        `pending`, `confirmed`, `cancelled` or `completed`.
-     * - `q`             part of the client's full name or phone number.
-     * - `service_id`    only purchases with a reservation or package of this service.
-     * - `from`, `to`    `Y-m-d`, inclusive range on the purchase creation date.
-     */
-    #[Response(status: 200, description: 'Paginated `PurchaseResource` collection.')]
-    #[Response(status: 401, description: 'Missing or invalid Bearer token.')]
-    #[Response(status: 403, description: 'No access to this center\'s purchases.')]
-    #[Response(status: 422, description: 'Invalid filters.')]
+    #[Endpoint('List the center\'s purchases', 'Newest first, 25 per page. `payment_method` and `payment_status` are those of the latest payment.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[ResponseFromApiResource(PurchaseResource::class, Purchase::class, status: 200, description: 'Paginated purchases.', paginate: 25)]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'No access to this center\'s purchases. Also returned when the token lacks `center-access:{center}` or the center is not active.')]
+    #[ApiResponse(['message' => 'The selected status is invalid.', 'errors' => ['status' => ['The selected status is invalid.']]], 422, 'Invalid filters.')]
     public function index(ListPurchasesRequest $request, Center $center): AnonymousResourceCollection
     {
         $purchases = $this->purchases->build($center, $request->user(), $request->validated())
@@ -59,19 +50,13 @@ class PurchaseController extends Controller
         return PurchaseResource::collection($purchases);
     }
 
-    /**
-     * Show a purchase.
-     *
-     * With its line items and payments (amounts and payments omitted without
-     * `purchases.view_prices`). Each item carries `details` of what was booked:
-     * dates, times, service, trainer and price option for a reservation; service,
-     * price option and sessions for a client package; `null` otherwise.
-     * Purchases the user may not see return 404.
-     */
-    #[Response(status: 200, description: 'The `PurchaseDetailsResource`.')]
-    #[Response(status: 401, description: 'Missing or invalid Bearer token.')]
-    #[Response(status: 403, description: 'No access to this center\'s purchases.')]
-    #[Response(status: 404, description: 'No such purchase in this center.')]
+    #[Endpoint('Show a purchase', 'With line items, discounts and payments (amounts and payments only with `purchases.view_prices`). Purchases you may not see return 404.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[UrlParam('purchase', 'integer', 'Purchase ID (must belong to the center and be visible to you).', example: 5521)]
+    #[ResponseFromApiResource(PurchaseDetailsResource::class, Purchase::class, status: 200, description: 'The purchase.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'No access to this center\'s purchases. Also returned when the token lacks `center-access:{center}` or the center is not active.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No such purchase in this center.')]
     public function show(Request $request, Center $center, int $purchase): PurchaseDetailsResource
     {
         $this->authorize($request, $center);
@@ -93,19 +78,13 @@ class PurchaseController extends Controller
         Gate::forUser($request->user())->authorize('viewPurchases', $center);
     }
 
-    /**
-     * Export the center's purchases.
-     *
-     * Queues an `.xlsx` export of the purchases the user may see, with the same filters as the list
-     * (`status`, `q`, `service_id`, `from`/`to`). Amount columns (SAR) are left out without
-     * `purchases.view_prices` (system users always get them). Center users and system users need
-     * `purchases.export`. Download it from
-     * the exports endpoints once ready.
-     */
-    #[Response(status: 202, description: 'The queued `ExportResource`; the requester is notified (`export_ready` / `export_failed`) when it finishes.')]
-    #[Response(status: 403, description: 'No permission to export this center\'s purchases.')]
-    #[Response(status: 422, description: 'Invalid filters.')]
-    #[Response(status: 429, description: 'An export of this kind is already being generated.')]
+    #[Endpoint('Export the center\'s purchases', 'Queues an `.xlsx` export of the purchases you may see, with the list filters. Amount columns need `purchases.view_prices` (system users always get them). Needs `purchases.export`.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[ResponseFromApiResource(ExportResource::class, Export::class, status: 202, description: 'The queued export; the requester gets an `export_ready` or `export_failed` notification when it finishes.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `purchases.export` for this center.')]
+    #[ApiResponse(['message' => 'The to field must be a date after or equal to from.', 'errors' => ['to' => ['The to field must be a date after or equal to from.']]], 422, 'Invalid filters.')]
+    #[ApiResponse(['message' => 'An export of this kind is already being generated. You will be notified when it is ready.'], 429, 'An export of this kind is already being generated.')]
     public function export(ExportPurchasesRequest $request, Center $center, ExportService $exports): JsonResponse
     {
         $user = $request->user();

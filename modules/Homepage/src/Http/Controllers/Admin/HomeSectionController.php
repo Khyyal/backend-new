@@ -2,9 +2,6 @@
 
 namespace Modules\Homepage\Http\Controllers\Admin;
 
-use Dedoc\Scramble\Attributes\Group;
-use Dedoc\Scramble\Attributes\QueryParameter;
-use Dedoc\Scramble\Attributes\Response as ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -12,6 +9,15 @@ use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
+use Knuckles\Scribe\Attributes\Endpoint;
+use Knuckles\Scribe\Attributes\Group;
+use Knuckles\Scribe\Attributes\QueryParam;
+use Knuckles\Scribe\Attributes\Response as ApiResponse;
+use Knuckles\Scribe\Attributes\ResponseField;
+use Knuckles\Scribe\Attributes\ResponseFromApiResource;
+use Knuckles\Scribe\Attributes\UrlParam;
+use Modules\Homepage\Enums\HomeSectionType;
+use Modules\Homepage\Enums\PublishStatus;
 use Modules\Homepage\Http\Requests\Admin\ItemCandidatesRequest;
 use Modules\Homepage\Http\Requests\Admin\ReorderHomeSectionsRequest;
 use Modules\Homepage\Http\Requests\Admin\StoreHomeSectionRequest;
@@ -21,9 +27,10 @@ use Modules\Homepage\Http\Resources\Admin\HomeSectionResource;
 use Modules\Homepage\Models\HomeSection;
 use Modules\Homepage\Services\HomeSectionService;
 use Modules\Homepage\Services\ItemCatalog;
+use Modules\Support\Documentation\ApiExamples;
 use Symfony\Component\HttpFoundation\Response as ResponseAlias;
 
-#[Group(name: 'Admin / Home page', description: 'Sections, curated items and banners of the client home page. Requires `homepage.manage`.')]
+#[Group('Admin / Home page', 'Sections, curated items and banners of the client home page. Requires `homepage.manage`.')]
 class HomeSectionController extends Controller
 {
     public function __construct(
@@ -31,12 +38,14 @@ class HomeSectionController extends Controller
         private readonly ItemCatalog $catalog,
     ) {}
 
-    /**
-     * List sections, in display order.
-     */
-    #[QueryParameter('status', description: '`draft`, `published` or `archived`.', type: 'string')]
-    #[QueryParameter('type', description: 'A section type.', type: 'string')]
-    #[ApiResponse(status: 200, description: 'Paginated `HomeSectionResource` collection (without items).')]
+    #[Endpoint('List sections', 'In display order, paginated, without items.')]
+    #[QueryParam('status', 'string', 'Only this status.', required: false, enum: PublishStatus::class, example: 'published')]
+    #[QueryParam('type', 'string', 'Only this type.', required: false, enum: HomeSectionType::class, example: 'banner_carousel')]
+    #[QueryParam('page', 'integer', 'Page number (1-based).', required: false, example: 1)]
+    #[QueryParam('per_page', 'integer', 'Items per page, 1-100. Default 15.', required: false, example: 15)]
+    #[ResponseFromApiResource(HomeSectionResource::class, HomeSection::class, status: 200, description: 'Paginated sections.', paginate: 15)]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `homepage.manage`.')]
     public function index(Request $request): AnonymousResourceCollection
     {
         Gate::forUser($request->user())->authorize('viewAny', HomeSection::class);
@@ -52,20 +61,11 @@ class HomeSectionController extends Controller
         return HomeSectionResource::collection($sections);
     }
 
-    /**
-     * Create a section.
-     *
-     * Created as a draft unless `status` is sent. `type` is fixed at creation:
-     * `banner_carousel` shows the banners attached to it; `curated_centers`,
-     * `curated_services`, `curated_promotions` and `curated_campaigns` show the
-     * items picked with the items endpoint; `top_centers` fills itself (nearest
-     * first when the client sends its position, else most popular).
-     * `config.limit` (1-50, default 10) is how many items the home page shows;
-     * `config.radius_km` (centers, services, banners, top centers) hides
-     * content farther than that from the client.
-     */
-    #[ApiResponse(status: 201, description: 'The created `HomeSectionResource`.')]
-    #[ApiResponse(status: 422, description: 'Validation failed.')]
+    #[Endpoint('Create a section', 'Draft unless `status` is sent.')]
+    #[ResponseFromApiResource(HomeSectionResource::class, HomeSection::class, status: 201, description: 'The created section.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `homepage.manage`.')]
+    #[ApiResponse(['message' => 'The key has already been taken.', 'errors' => ['key' => ['The key has already been taken.']]], 422, 'Validation failed.')]
     public function store(StoreHomeSectionRequest $request): JsonResponse
     {
         Gate::forUser($request->user())->authorize('create', HomeSection::class);
@@ -77,10 +77,12 @@ class HomeSectionController extends Controller
             ->setStatusCode(ResponseAlias::HTTP_CREATED);
     }
 
-    /**
-     * Show a section with its items.
-     */
-    #[ApiResponse(status: 200, description: 'The `HomeSectionResource`, items included with their summaries.')]
+    #[Endpoint('Show a section', 'With its items and their summaries.')]
+    #[UrlParam('section', 'integer', 'Section ID.', example: 2)]
+    #[ResponseFromApiResource(HomeSectionResource::class, HomeSection::class, status: 200, description: 'The section.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `homepage.manage`.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No such section.')]
     public function show(Request $request, HomeSection $section): HomeSectionResource
     {
         Gate::forUser($request->user())->authorize('view', $section);
@@ -88,13 +90,13 @@ class HomeSectionController extends Controller
         return $this->resource($section->load('items')->loadCount('banners'));
     }
 
-    /**
-     * Update a section.
-     *
-     * `config` keys are merged into the stored config; send a key as null to remove it.
-     */
-    #[ApiResponse(status: 200, description: 'The updated `HomeSectionResource`.')]
-    #[ApiResponse(status: 422, description: 'Validation failed.')]
+    #[Endpoint('Update a section', 'Partial update; `config` keys are merged.')]
+    #[UrlParam('section', 'integer', 'Section ID.', example: 2)]
+    #[ResponseFromApiResource(HomeSectionResource::class, HomeSection::class, status: 200, description: 'The updated section.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `homepage.manage`.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No such section.')]
+    #[ApiResponse(['message' => 'The type field is prohibited.', 'errors' => ['type' => ['The type field is prohibited.']]], 422, 'Validation failed.')]
     public function update(UpdateHomeSectionRequest $request, HomeSection $section): HomeSectionResource
     {
         Gate::forUser($request->user())->authorize('update', $section);
@@ -102,10 +104,12 @@ class HomeSectionController extends Controller
         return $this->resource($this->sections->update($section, $request->validated())->load('items'));
     }
 
-    /**
-     * Delete a section. Its banners are kept, without a section.
-     */
-    #[ApiResponse(status: 204, description: 'Deleted.')]
+    #[Endpoint('Delete a section', 'Its banners are kept, detached.')]
+    #[UrlParam('section', 'integer', 'Section ID.', example: 2)]
+    #[ApiResponse(status: 204, description: 'Deleted. Empty body.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `homepage.manage`.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No such section.')]
     public function destroy(Request $request, HomeSection $section): Response
     {
         Gate::forUser($request->user())->authorize('delete', $section);
@@ -115,14 +119,12 @@ class HomeSectionController extends Controller
         return response()->noContent();
     }
 
-    /**
-     * Reorder sections.
-     *
-     * Sets the display order to the given list of section ids. Sections not
-     * listed keep their relative order after the listed ones.
-     */
-    #[ApiResponse(status: 200, description: '`{data: {order: int[]}}`, every section id in display order.')]
-    #[ApiResponse(status: 422, description: 'Validation failed.')]
+    #[Endpoint('Reorder sections')]
+    #[ApiResponse(['data' => ['order' => [3, 1, 2]]], 200, 'Every section ID in the new display order.')]
+    #[ResponseField('data.order', 'integer[]', 'Section IDs in display order.', example: [3, 1, 2])]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `homepage.manage`.')]
+    #[ApiResponse(['message' => 'The selected order.0 is invalid.', 'errors' => ['order.0' => ['The selected order.0 is invalid.']]], 422, 'Validation failed.')]
     public function reorder(ReorderHomeSectionsRequest $request): JsonResponse
     {
         Gate::forUser($request->user())->authorize('create', HomeSection::class);
@@ -132,17 +134,13 @@ class HomeSectionController extends Controller
         return response()->json(['data' => ['order' => HomeSection::query()->orderBy('sort_order')->orderBy('id')->pluck('id')]]);
     }
 
-    /**
-     * Replace the picked items of a curated section.
-     *
-     * Every item must be of the section's `item_type` (`curated_centers` takes
-     * centers, `curated_services` services, and so on). List order is display
-     * order; each item may have its own `starts_at`/`ends_at` window. Items
-     * clients cannot see right now (hidden center, inactive service, ended
-     * promotion) are kept but skipped on the home page.
-     */
-    #[ApiResponse(status: 200, description: 'The `HomeSectionResource` with its new items.')]
-    #[ApiResponse(status: 422, description: 'Validation failed, or the section type holds no items.')]
+    #[Endpoint('Replace the items of a curated section', 'Every item must be of the section `item_type`. Items clients cannot see now (hidden center, inactive service, ended promotion) are kept but skipped on the home page.')]
+    #[UrlParam('section', 'integer', 'Section ID.', example: 2)]
+    #[ResponseFromApiResource(HomeSectionResource::class, HomeSection::class, status: 200, description: 'The section with its new items.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `homepage.manage`.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No such section.')]
+    #[ApiResponse(['message' => 'This section can only hold items of type "promotion".', 'errors' => ['items.0.type' => ['This section can only hold items of type "promotion".']]], 422, 'Validation failed, wrong item type, or the section holds no items.')]
     public function syncItems(SyncHomeSectionItemsRequest $request, HomeSection $section): HomeSectionResource
     {
         Gate::forUser($request->user())->authorize('update', $section);
@@ -150,16 +148,23 @@ class HomeSectionController extends Controller
         return $this->resource($this->sections->syncItems($section, $request->validated('items')));
     }
 
-    /**
-     * Search records to pick into a curated section.
-     *
-     * Returns records of the section's `item_type`, newest first, matched by
-     * name (any locale) or exact id. `is_available` tells whether clients can
-     * see the record right now.
-     */
-    #[QueryParameter('search', description: 'Name or id.', type: 'string')]
-    #[ApiResponse(status: 200, description: 'Paginated `{type, id, label, subtitle, thumb, is_available}` list.')]
-    #[ApiResponse(status: 422, description: 'The section type holds no items.')]
+    #[Endpoint('Search records to pick into a section', 'Records of the section `item_type`, newest first, matched by name or exact ID.')]
+    #[UrlParam('section', 'integer', 'Section ID.', example: 2)]
+    #[ApiResponse(['data' => [['type' => 'promotion', 'id' => 12, 'label' => '15% off rides', 'subtitle' => 'Al Fursan Stables', 'thumb' => null, 'is_available' => true]], 'meta' => ['current_page' => 1, 'per_page' => 15, 'total' => 1, 'last_page' => 1]], 200, 'Paginated candidates.')]
+    #[ResponseField('data[].type', 'string', 'Item kind.', example: 'promotion')]
+    #[ResponseField('data[].id', 'integer', 'Record ID.', example: 12)]
+    #[ResponseField('data[].label', 'string', 'Name.', example: '15% off rides')]
+    #[ResponseField('data[].subtitle', 'string', 'Secondary text.', nullable: true, example: 'Al Fursan Stables')]
+    #[ResponseField('data[].thumb', 'string', 'Thumbnail URL.', nullable: true, example: 'No-example')]
+    #[ResponseField('data[].is_available', 'boolean', 'Visible to clients right now.', example: true)]
+    #[ResponseField('meta.current_page', 'integer', 'Current page.', example: 1)]
+    #[ResponseField('meta.per_page', 'integer', 'Per page.', example: 15)]
+    #[ResponseField('meta.total', 'integer', 'Total matches.', example: 1)]
+    #[ResponseField('meta.last_page', 'integer', 'Last page.', example: 1)]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `homepage.manage`.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No such section.')]
+    #[ApiResponse(['message' => 'This section type does not hold hand-picked items.', 'errors' => ['section' => ['This section type does not hold hand-picked items.']]], 422, 'The section type holds no items.')]
     public function itemCandidates(ItemCandidatesRequest $request, HomeSection $section): JsonResponse
     {
         Gate::forUser($request->user())->authorize('view', $section);

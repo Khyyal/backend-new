@@ -2,40 +2,35 @@
 
 namespace Modules\Reservations\Http\Controllers\Center;
 
-use Dedoc\Scramble\Attributes\Group;
-use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Gate;
+use Knuckles\Scribe\Attributes\Endpoint;
+use Knuckles\Scribe\Attributes\Group;
+use Knuckles\Scribe\Attributes\Response as ApiResponse;
+use Knuckles\Scribe\Attributes\ResponseField;
+use Knuckles\Scribe\Attributes\ResponseFromApiResource;
+use Knuckles\Scribe\Attributes\UrlParam;
 use Modules\Centers\Models\Center;
 use Modules\Reservations\Enums\ClientPackageStatus;
 use Modules\Reservations\Http\Requests\Center\ListClientPackagesRequest;
 use Modules\Reservations\Http\Resources\CenterClientPackageDetailsResource;
 use Modules\Reservations\Http\Resources\CenterClientPackageResource;
 use Modules\Reservations\Models\ClientPackage;
+use Modules\Support\Documentation\ApiExamples;
 
-#[Group(name: 'Center / Client packages', description: 'The packages clients bought for the center\'s services. Requires a center-scoped Bearer token (see `POST /centers/{center}/access`).')]
+#[Group('Client packages', 'Session packages clients bought for a center\'s services. Unpaid (`pending`) packages are never listed or counted. Served on `centers/{center}/…` (center-scoped token) and `admin/centers/{center}/…` (system user).')]
 class PackageController extends Controller
 {
-    /**
-     * List the center's client packages.
-     *
-     * Paginated (25 per page), newest first. Unpaid (`pending`) packages are never listed.
-     *
-     * **Query:**
-     * - `active`: `1` keeps only active packages.
-     * - `not_active`: `1` keeps only the other statuses (exhausted, expired, cancelled). With both flags set, all of them are returned.
-     * - `q`: search in the client's name or phone number.
-     * - `from` / `to`: inclusive range on the purchase date (`Y-m-d`).
-     * - `service_id`: packages of one service.
-     */
-    #[Response(status: 200, description: 'Paginated `CenterClientPackageResource` collection.')]
-    #[Response(status: 401, description: 'Missing or invalid Bearer token.')]
-    #[Response(status: 403, description: 'No access to this center\'s reservations.')]
-    #[Response(status: 422, description: 'Invalid filters.')]
+    #[Endpoint('List client packages', 'Newest first, 25 per page.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[ResponseFromApiResource(CenterClientPackageResource::class, ClientPackage::class, status: 200, description: 'Paginated packages.', paginate: 25)]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'No access to this center\'s reservations (center users: `reservations.manage`; system users: `centers.manage_reservations`), or the token lacks `center-access:{center}`.')]
+    #[ApiResponse(['message' => 'The to field must be a date after or equal to from.', 'errors' => ['to' => ['The to field must be a date after or equal to from.']]], 422, 'Invalid filters.')]
     public function index(ListClientPackagesRequest $request, Center $center): AnonymousResourceCollection
     {
         $active = $request->boolean('active');
@@ -53,15 +48,13 @@ class PackageController extends Controller
         return CenterClientPackageResource::collection($packages);
     }
 
-    /**
-     * Show a client package.
-     *
-     * With its owner and the sessions booked from it (`reservations`, by date). A pending (unpaid) package is not found.
-     */
-    #[Response(status: 200, description: 'The `CenterClientPackageDetailsResource`.')]
-    #[Response(status: 401, description: 'Missing or invalid Bearer token.')]
-    #[Response(status: 403, description: 'No access to this center\'s reservations.')]
-    #[Response(status: 404, description: 'No such package in this center.')]
+    #[Endpoint('Show a client package', 'With its owner and the sessions booked from it.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[UrlParam('package', 'integer', 'Client package ID.', example: 41)]
+    #[ResponseFromApiResource(CenterClientPackageDetailsResource::class, ClientPackage::class, status: 200, description: 'The package.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'No access to this center\'s reservations (center users: `reservations.manage`; system users: `centers.manage_reservations`), or the token lacks `center-access:{center}`.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No such paid package in this center.')]
     public function show(Request $request, Center $center, int $package): CenterClientPackageDetailsResource
     {
         Gate::forUser($request->user())->authorize('manageReservations', $center);
@@ -75,16 +68,14 @@ class PackageController extends Controller
         return CenterClientPackageDetailsResource::make($clientPackage);
     }
 
-    /**
-     * Count the center's client packages.
-     *
-     * Returns how many are active and how many are not (exhausted, expired or cancelled). Unpaid
-     * (`pending`) packages are never counted. Takes the same `q`, `from`, `to` and `service_id` filters as the list.
-     */
-    #[Response(status: 200, description: '`{data: {active: int, not_active: int}}`.')]
-    #[Response(status: 401, description: 'Missing or invalid Bearer token.')]
-    #[Response(status: 403, description: 'No access to this center\'s reservations.')]
-    #[Response(status: 422, description: 'Invalid filters.')]
+    #[Endpoint('Count client packages', 'Active vs. not active (exhausted, expired, cancelled), with the list filters `q`, `from`, `to`, `service_id`.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[ApiResponse(['data' => ['active' => 12, 'not_active' => 30]], 200, 'Counts.')]
+    #[ResponseField('data.active', 'integer', 'Active ones.', example: 12)]
+    #[ResponseField('data.not_active', 'integer', 'All other paid statuses.', example: 30)]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'No access to this center\'s reservations (center users: `reservations.manage`; system users: `centers.manage_reservations`), or the token lacks `center-access:{center}`.')]
+    #[ApiResponse(['message' => 'The from field must match the format Y-m-d.', 'errors' => ['from' => ['The from field must match the format Y-m-d.']]], 422, 'Invalid filters.')]
     public function counts(ListClientPackagesRequest $request, Center $center): JsonResponse
     {
         $active = (clone $this->baseQuery($request, $center))->where('status', ClientPackageStatus::Active)->count();

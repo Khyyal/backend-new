@@ -2,17 +2,21 @@
 
 namespace Modules\Promotions\Http\Controllers\Center;
 
-use Dedoc\Scramble\Attributes\Group;
-use Dedoc\Scramble\Attributes\QueryParameter;
-use Dedoc\Scramble\Attributes\Response as ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Gate;
+use Knuckles\Scribe\Attributes\Endpoint;
+use Knuckles\Scribe\Attributes\Group;
+use Knuckles\Scribe\Attributes\QueryParam;
+use Knuckles\Scribe\Attributes\Response as ApiResponse;
+use Knuckles\Scribe\Attributes\ResponseFromApiResource;
+use Knuckles\Scribe\Attributes\UrlParam;
 use Modules\Centers\Models\Center;
 use Modules\Promotions\Enums\PromotionStatus;
+use Modules\Promotions\Enums\PromotionTrigger;
 use Modules\Promotions\Http\Requests\StorePromotionRequest;
 use Modules\Promotions\Http\Requests\SyncPromotionSchedulesRequest;
 use Modules\Promotions\Http\Requests\SyncPromotionTargetsRequest;
@@ -20,22 +24,25 @@ use Modules\Promotions\Http\Requests\UpdatePromotionRequest;
 use Modules\Promotions\Http\Resources\PromotionResource;
 use Modules\Promotions\Models\Promotion;
 use Modules\Promotions\Services\PromotionService;
+use Modules\Support\Documentation\ApiExamples;
 use Symfony\Component\HttpFoundation\Response as ResponseAlias;
 
-#[Group(name: 'Center / Promotions', description: "The center's own promotions, funded by the center. Amounts are minor units (halalas); percentage values are basis points (1250 = 12.5%). Requires `promotions.manage`.")]
+#[Group('Center / Promotions', 'The center\'s own promotions, always funded by the center. Amounts are halalas; percentage values are basis points (1250 = 12.5%). Requires the center permission `promotions.manage`.')]
 class PromotionController extends Controller
 {
     public function __construct(
         private readonly PromotionService $promotions,
     ) {}
 
-    /**
-     * List the center's promotions.
-     */
-    #[QueryParameter('status', description: '`draft`, `active`, `paused` or `archived`.', type: 'string')]
-    #[QueryParameter('trigger', description: '`automatic` or `coupon`.', type: 'string')]
-    #[ApiResponse(status: 200, description: 'Paginated `PromotionResource` collection.')]
-    #[ApiResponse(status: 403, description: 'Missing `promotions.manage`.')]
+    #[Endpoint('List the center\'s promotions', 'Newest first, paginated (`data`, `links`, `meta`).')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[QueryParam('status', 'string', 'Filter by status.', required: false, enum: PromotionStatus::class, example: 'active')]
+    #[QueryParam('trigger', 'string', 'Filter by trigger.', required: false, enum: PromotionTrigger::class, example: 'automatic')]
+    #[QueryParam('page', 'integer', 'Page number (1-based).', required: false, example: 1)]
+    #[QueryParam('per_page', 'integer', 'Items per page, 1-100. Default 15.', required: false, example: 15)]
+    #[ResponseFromApiResource(PromotionResource::class, Promotion::class, status: 200, description: 'Paginated promotions.', paginate: 15, withCount: ['coupons'])]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `promotions.manage` for this center, the token lacks `center-access:{center}`, or the center is not active.')]
     public function index(Request $request, Center $center): AnonymousResourceCollection
     {
         $this->authorizeCenter($request, $center);
@@ -51,11 +58,12 @@ class PromotionController extends Controller
         return PromotionResource::collection($promotions);
     }
 
-    /**
-     * Create a promotion. Created as a draft.
-     */
-    #[ApiResponse(status: 201, description: 'The created promotion.')]
-    #[ApiResponse(status: 422, description: 'Validation failed.')]
+    #[Endpoint('Create a promotion', 'Created as `draft`. The promotion belongs to the route center and is center-funded; `campaign_id`, `center_id`, `funded_by` and `center_share_bps` are prohibited.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[ResponseFromApiResource(PromotionResource::class, Promotion::class, status: 201, description: 'The created promotion, with targets and schedules.', with: ['targets', 'schedules'])]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `promotions.manage` for this center, the token lacks `center-access:{center}`, or the center is not active.')]
+    #[ApiResponse(['message' => 'The name.en field is required. (and 1 more error)', 'errors' => ['name.en' => ['The name.en field is required.'], 'discount_type' => ['The selected discount type is invalid.']]], 422, 'Validation failed (fields, `fixed_price` with order scope, percentage above 10000).')]
     public function store(StorePromotionRequest $request, Center $center): JsonResponse
     {
         $this->authorizeCenter($request, $center);
@@ -67,11 +75,13 @@ class PromotionController extends Controller
             ->setStatusCode(ResponseAlias::HTTP_CREATED);
     }
 
-    /**
-     * Show a promotion.
-     */
-    #[ApiResponse(status: 200, description: 'The `PromotionResource` with targets and schedules.')]
-    #[ApiResponse(status: 404, description: 'Not a promotion of this center.')]
+    #[Endpoint('Show a promotion', 'With targets, schedules, cover and coupon count.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[UrlParam('promotion', 'integer', 'Promotion ID (must belong to the center).', example: 12)]
+    #[ResponseFromApiResource(PromotionResource::class, Promotion::class, status: 200, description: 'The promotion.', with: ['targets', 'schedules'], withCount: ['coupons'])]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `promotions.manage` for this center, the token lacks `center-access:{center}`, or the center is not active.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'Promotion not found in this center.')]
     public function show(Request $request, Center $center, Promotion $promotion): PromotionResource
     {
         $this->authorizeCenter($request, $center);
@@ -79,13 +89,14 @@ class PromotionController extends Controller
         return PromotionResource::make($promotion->load(['targets', 'schedules', 'media'])->loadCount('coupons'));
     }
 
-    /**
-     * Update a promotion.
-     *
-     * Once a purchase has used it, its scope, discount type, value and cap are locked.
-     */
-    #[ApiResponse(status: 200, description: 'The updated promotion.')]
-    #[ApiResponse(status: 422, description: 'Validation failed, the promotion is archived, or a locked field changed.')]
+    #[Endpoint('Update a promotion', 'Partial update: send only the fields to change. Once a purchase has used it, `scope`, `discount_type`, `discount_value` and `max_discount_amount` are locked: archive it and create a new one instead. Archived promotions cannot change.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[UrlParam('promotion', 'integer', 'Promotion ID (must belong to the center).', example: 12)]
+    #[ResponseFromApiResource(PromotionResource::class, Promotion::class, status: 200, description: 'The updated promotion.', with: ['targets', 'schedules'])]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `promotions.manage` for this center, the token lacks `center-access:{center}`, or the center is not active.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'Promotion not found in this center.')]
+    #[ApiResponse(['message' => 'This promotion has already been used: archive it and create a new one to change its value.', 'errors' => ['discount_value' => ['This promotion has already been used: archive it and create a new one to change its value.']]], 422, 'Validation failed, the promotion is archived, or a locked field changed after use.')]
     public function update(UpdatePromotionRequest $request, Center $center, Promotion $promotion): PromotionResource
     {
         $this->authorizeCenter($request, $center);
@@ -95,10 +106,13 @@ class PromotionController extends Controller
         return PromotionResource::make($promotion->load(['targets', 'schedules', 'media']));
     }
 
-    /**
-     * Delete a promotion.
-     */
-    #[ApiResponse(status: 204, description: 'Deleted.')]
+    #[Endpoint('Delete a promotion', 'Soft delete: redemptions and purchase snapshots keep their history.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[UrlParam('promotion', 'integer', 'Promotion ID (must belong to the center).', example: 12)]
+    #[ApiResponse(status: 204, description: 'Deleted. Empty body.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `promotions.manage` for this center, the token lacks `center-access:{center}`, or the center is not active.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'Promotion not found in this center.')]
     public function destroy(Request $request, Center $center, Promotion $promotion): Response
     {
         $this->authorizeCenter($request, $center);
@@ -108,44 +122,53 @@ class PromotionController extends Controller
         return response()->noContent();
     }
 
-    /**
-     * Activate a promotion (from draft or paused).
-     */
-    #[ApiResponse(status: 200, description: 'The activated promotion.')]
-    #[ApiResponse(status: 422, description: 'Not allowed from the current status.')]
+    #[Endpoint('Activate a promotion', 'Allowed from `draft` or `paused`.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[UrlParam('promotion', 'integer', 'Promotion ID (must belong to the center).', example: 12)]
+    #[ResponseFromApiResource(PromotionResource::class, Promotion::class, status: 200, description: 'The promotion, now `active`.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `promotions.manage` for this center, the token lacks `center-access:{center}`, or the center is not active.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'Promotion not found in this center.')]
+    #[ApiResponse(['message' => 'A promotion cannot move from "archived" to "active".', 'errors' => ['status' => ['A promotion cannot move from "archived" to "active".']]], 422, 'Not allowed from the current status.')]
     public function activate(Request $request, Center $center, Promotion $promotion): PromotionResource
     {
         return $this->transition($request, $center, $promotion, PromotionStatus::Active);
     }
 
-    /**
-     * Pause an active promotion.
-     */
-    #[ApiResponse(status: 200, description: 'The paused promotion.')]
-    #[ApiResponse(status: 422, description: 'Not allowed from the current status.')]
+    #[Endpoint('Pause a promotion', 'Allowed from `active`.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[UrlParam('promotion', 'integer', 'Promotion ID (must belong to the center).', example: 12)]
+    #[ResponseFromApiResource(PromotionResource::class, Promotion::class, status: 200, description: 'The promotion, now `paused`.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `promotions.manage` for this center, the token lacks `center-access:{center}`, or the center is not active.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'Promotion not found in this center.')]
+    #[ApiResponse(['message' => 'A promotion cannot move from "archived" to "active".', 'errors' => ['status' => ['A promotion cannot move from "archived" to "active".']]], 422, 'Not allowed from the current status.')]
     public function pause(Request $request, Center $center, Promotion $promotion): PromotionResource
     {
         return $this->transition($request, $center, $promotion, PromotionStatus::Paused);
     }
 
-    /**
-     * Archive a promotion.
-     */
-    #[ApiResponse(status: 200, description: 'The archived promotion.')]
-    #[ApiResponse(status: 422, description: 'Already archived.')]
+    #[Endpoint('Archive a promotion', 'Final: archived promotions can no longer change.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[UrlParam('promotion', 'integer', 'Promotion ID (must belong to the center).', example: 12)]
+    #[ResponseFromApiResource(PromotionResource::class, Promotion::class, status: 200, description: 'The promotion, now `archived`.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `promotions.manage` for this center, the token lacks `center-access:{center}`, or the center is not active.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'Promotion not found in this center.')]
+    #[ApiResponse(['message' => 'A promotion cannot move from "archived" to "active".', 'errors' => ['status' => ['A promotion cannot move from "archived" to "active".']]], 422, 'Already archived.')]
     public function archive(Request $request, Center $center, Promotion $promotion): PromotionResource
     {
         return $this->transition($request, $center, $promotion, PromotionStatus::Archived);
     }
 
-    /**
-     * Replace the promotion's targets.
-     *
-     * Only `service` targets of this center; mode `include` (default) or
-     * `exclude`. With no include targets every service of the center applies.
-     */
-    #[ApiResponse(status: 200, description: 'The promotion with its new targets.')]
-    #[ApiResponse(status: 422, description: 'Validation failed, or the promotion was already used.')]
+    #[Endpoint('Replace the promotion\'s targets', 'Only `service` targets of this center. Mode `include` (default) or `exclude`. With no include targets the promotion applies to everything it can reach. Locked once the promotion has been used.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[UrlParam('promotion', 'integer', 'Promotion ID (must belong to the center).', example: 12)]
+    #[ResponseFromApiResource(PromotionResource::class, Promotion::class, status: 200, description: 'The promotion with its new targets and schedules.', with: ['targets', 'schedules'])]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `promotions.manage` for this center, the token lacks `center-access:{center}`, or the center is not active.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'Promotion not found in this center.')]
+    #[ApiResponse(['message' => 'The selected target is invalid.', 'errors' => ['targets.0.id' => ['The selected target is invalid.']]], 422, 'Validation failed (unknown or duplicate target), or the promotion was already used.')]
     public function syncTargets(SyncPromotionTargetsRequest $request, Center $center, Promotion $promotion): PromotionResource
     {
         $this->authorizeCenter($request, $center);
@@ -153,14 +176,14 @@ class PromotionController extends Controller
         return PromotionResource::make($this->promotions->syncTargets($promotion, $request->validated('targets'))->load('schedules'));
     }
 
-    /**
-     * Replace the promotion's weekly schedule.
-     *
-     * `day_of_week` 1 = Monday … 7 = Sunday, times `HH:MM`. An end before the
-     * start wraps past midnight.
-     */
-    #[ApiResponse(status: 200, description: 'The promotion with its new schedule.')]
-    #[ApiResponse(status: 422, description: 'Validation failed.')]
+    #[Endpoint('Replace the promotion\'s weekly schedule', '`day_of_week` 1 = Monday … 7 = Sunday, times `HH:MM` UTC. An end before the start wraps past midnight. With no windows the promotion is live for its whole date range.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[UrlParam('promotion', 'integer', 'Promotion ID (must belong to the center).', example: 12)]
+    #[ResponseFromApiResource(PromotionResource::class, Promotion::class, status: 200, description: 'The promotion with its new schedules and targets.', with: ['targets', 'schedules'])]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `promotions.manage` for this center, the token lacks `center-access:{center}`, or the center is not active.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'Promotion not found in this center.')]
+    #[ApiResponse(['message' => 'The schedules.0.end_time field and schedules.0.start_time must be different.', 'errors' => ['schedules.0.end_time' => ['The schedules.0.end_time field and schedules.0.start_time must be different.']]], 422, 'Validation failed.')]
     public function syncSchedules(SyncPromotionSchedulesRequest $request, Center $center, Promotion $promotion): PromotionResource
     {
         $this->authorizeCenter($request, $center);

@@ -5,6 +5,12 @@ namespace Modules\Centers\Http\Resources\Center;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Gate;
+use Knuckles\Scribe\Attributes\ResponseField;
+use Modules\Purchase\Enums\PaymentMethod;
+use Modules\Purchase\Enums\PaymentStatus;
+use Modules\Purchase\Enums\PurchaseChannel;
+use Modules\Purchase\Enums\PurchaseSource;
+use Modules\Purchase\Enums\PurchaseStatus;
 use Modules\Purchase\Models\Purchase;
 
 /**
@@ -22,6 +28,24 @@ class PurchaseResource extends JsonResource
     /**
      * @return array<string, mixed>
      */
+    #[ResponseField('id', 'integer', 'Purchase ID.', example: 5521)]
+    #[ResponseField('status', 'string', 'Purchase status.', enum: PurchaseStatus::class, example: 'confirmed')]
+    #[ResponseField('source', 'string', 'Who created it.', enum: PurchaseSource::class, example: 'client')]
+    #[ResponseField('channel', 'string', 'Where it was made; null when unknown.', nullable: true, enum: PurchaseChannel::class, example: 'khyyal_app')]
+    #[ResponseField('payment_method', 'string', 'Method of the latest payment; null without payments.', nullable: true, enum: PaymentMethod::class, example: 'online')]
+    #[ResponseField('payment_status', 'string', 'Status of the latest payment; null without payments.', nullable: true, enum: PaymentStatus::class, example: 'succeeded')]
+    #[ResponseField('client', 'object', 'The buyer; null when the client was deleted.', nullable: true)]
+    #[ResponseField('client.id', 'integer', 'Client ID.', example: 77)]
+    #[ResponseField('client.full_name', 'string', 'Client full name.', example: 'Noura Al-Qahtani')]
+    #[ResponseField('client.phone_number', 'string', 'Client phone.', example: '+966500000003')]
+    #[ResponseField('items_count', 'integer', 'Number of line items.', example: 1)]
+    #[ResponseField('subtotal', 'integer', 'Sum of line subtotals in halalas. Only with `purchases.view_prices` (system users always).', required: false, example: 30000)]
+    #[ResponseField('discount_amount', 'integer', 'Total discount in halalas. Only with `purchases.view_prices`.', required: false, example: 4500)]
+    #[ResponseField('tax_amount', 'integer', 'VAT in halalas. Only with `purchases.view_prices`.', required: false, example: 3825)]
+    #[ResponseField('total_amount', 'integer', 'Amount charged in halalas. Only with `purchases.view_prices`.', required: false, example: 29325)]
+    #[ResponseField('platform_fee_amount', 'integer', 'Khyyal platform fee owed on it, in halalas. Only with `purchases.view_prices`.', required: false, example: 1466)]
+    #[ResponseField('center_amount', 'integer', 'Net amount credited to the center ledger, in halalas. Only with `purchases.view_prices`.', required: false, example: 27859)]
+    #[ResponseField('created_at', 'string', 'Creation time (ISO-8601).', example: '2026-05-20T09:30:00+00:00')]
     public function toArray(Request $request): array
     {
         $purchase = $this->resource;

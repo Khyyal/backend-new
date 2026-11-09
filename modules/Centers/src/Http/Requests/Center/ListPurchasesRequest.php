@@ -5,9 +5,16 @@ namespace Modules\Centers\Http\Requests\Center;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
+use Knuckles\Scribe\Attributes\QueryParam;
 use Modules\Centers\Models\Center;
 use Modules\Purchase\Enums\PurchaseStatus;
 
+#[QueryParam('status', 'string', 'Only this purchase status.', required: false, enum: PurchaseStatus::class, example: 'confirmed')]
+#[QueryParam('q', 'string', 'Part of the client\'s full name or phone (max 100).', required: false, example: 'Noura')]
+#[QueryParam('service_id', 'integer', 'Only purchases with a reservation or package of this service.', required: false, example: 31)]
+#[QueryParam('from', 'string', 'Created on or after this day, `Y-m-d`.', required: false, example: '2026-05-01')]
+#[QueryParam('to', 'string', 'Created on or before this day, `Y-m-d`, not before `from`.', required: false, example: '2026-05-31')]
+#[QueryParam('page', 'integer', 'Page number (1-based); 25 per page.', required: false, example: 1)]
 class ListPurchasesRequest extends FormRequest
 {
     public function authorize(): bool

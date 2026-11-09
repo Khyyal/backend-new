@@ -2,13 +2,18 @@
 
 namespace Modules\Billing\Http\Controllers\Center;
 
-use Dedoc\Scramble\Attributes\Group;
-use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\ResourceCollection;
 use Illuminate\Routing\Controller;
 use Illuminate\Validation\ValidationException;
+use Knuckles\Scribe\Attributes\Endpoint;
+use Knuckles\Scribe\Attributes\Group;
+use Knuckles\Scribe\Attributes\QueryParam;
+use Knuckles\Scribe\Attributes\Response as ApiResponse;
+use Knuckles\Scribe\Attributes\ResponseField;
+use Knuckles\Scribe\Attributes\ResponseFromApiResource;
+use Knuckles\Scribe\Attributes\UrlParam;
 use Modules\Billing\Enums\PlanStatus;
 use Modules\Billing\Exceptions\SubscriptionIneligibleException;
 use Modules\Billing\Http\Requests\CancelSubscriptionRequest;
@@ -22,9 +27,10 @@ use Modules\Billing\Services\SubscriptionCheckoutService;
 use Modules\Billing\Services\SubscriptionLifecycleService;
 use Modules\Centers\Models\Center;
 use Modules\Centers\Models\User as CenterUser;
+use Modules\Support\Documentation\ApiExamples;
 use Symfony\Component\HttpFoundation\Response as ResponseAlias;
 
-#[Group(name: 'Center / Subscriptions', description: 'Authenticated center user: manage center subscriptions.')]
+#[Group('Center / Subscriptions', 'The center\'s plan subscriptions. Uses the first center the user is assigned to; the account-level token is enough (no center scope).')]
 class SubscriptionController extends Controller
 {
     public function __construct(
@@ -55,38 +61,13 @@ class SubscriptionController extends Controller
         );
     }
 
-    /**
-     * Check out a plan.
-     *
-     * **Request body:** `plan_id` (required), `payment_company` (optional, defaults to the default gateway).
-     * A paid plan opens a `pending` subscription with an online payment; `checkout.gateway` holds what is needed
-     * to pay, and the subscription becomes `active` once the payment succeeds. Unpaid checkouts are released after
-     * the hold window. Free plans and plans with a trial start right away and `checkout` is null.
-     *
-     * **`checkout.gateway`** is what the app needs to pay; its shape depends on `payment_company`
-     * (`moyasar`, `tamara`, or the default gateway; `fake` exists only in development and tests).
-     * Amounts are integer halalas. The app never decides the outcome: the status changes only
-     * after the payment provider confirms the payment to the backend.
-     *
-     * - `moyasar` (card, paid inside the app with the Moyasar SDK, no redirect from us):
-     *   `{type: "moyasar", publishable_key, amount_halalas, currency, given_id, description}`.
-     *   Create the Moyasar payment with `publishable_key`, `amount_halalas` and `currency` as given, and
-     *   send `given_id` unchanged as the payment's `given_id`: it is our payment id and links the
-     *   Moyasar payment to this checkout. `description` is the text to show. Moyasar returns a
-     *   `transaction_url` for 3-D Secure; open it when present.
-     * - `tamara` (installments, paid on Tamara's page): `{checkout_url, provider_reference, checkout_id, tamara_status}`.
-     *   Open `checkout_url` in a browser or web view. `provider_reference` is the Tamara order id,
-     *   `checkout_id` the Tamara checkout id, `tamara_status` the order status when created (`new`).
-     *   Tamara sends the customer back to the success, failure or cancel URL configured for the app.
-     * - `fake` (testing only): `{checkout_url, provider_reference}`, a placeholder that never charges.
-     *
-     * `checkout.payment.payment_company` repeats the gateway used. `checkout.gateway` is null when no
-     * online payment is needed.
-     */
-    #[Response(status: 201, description: '`{data: SubscriptionResource, checkout: SubscriptionCheckoutResource|null}`.')]
-    #[Response(status: 401, description: 'Unauthenticated.')]
-    #[Response(status: 403, description: 'No center assignment.')]
-    #[Response(status: 422, description: 'Plan not active, already subscribed, or a checkout for it is pending.')]
+    #[Endpoint('Check out a plan', 'A paid plan opens a `pending` subscription with an online payment; pay with `checkout.gateway`, and it becomes `active` once the provider confirms. Unpaid checkouts are released after the hold window. Free plans and plans with a trial start at once with `checkout` null.')]
+    #[ApiResponse(['data' => ['id' => 21, 'subscribable_type' => 'center', 'subscribable_id' => 8, 'plan_id' => 1, 'status' => 'pending', 'trial_ends_at' => null, 'starts_at' => '2026-06-01T00:00:00.000000Z', 'ends_at' => '2026-07-01T00:00:00.000000Z', 'canceled_at' => null], 'checkout' => ['purchase' => ['id' => 6001, 'status' => 'pending', 'subtotal' => 49900, 'discount_amount' => 0, 'total_amount' => 49900], 'payment' => ['id' => 901, 'status' => 'pending', 'method' => 'online', 'payment_company' => 'moyasar', 'amount' => 49900], 'gateway' => ['type' => 'moyasar', 'publishable_key' => 'pk_test_xxx', 'amount_halalas' => 49900, 'currency' => 'SAR', 'given_id' => '901', 'description' => 'Khyyal Pro plan']]], 201, 'Subscription opened.')]
+    #[ResponseField('data', 'object', 'The subscription (`SubscriptionResource`).')]
+    #[ResponseField('checkout', 'object', 'The checkout (`SubscriptionCheckoutResource`); null for free plans and plans with a trial.', nullable: true)]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(['message' => 'No center assignment found for user.'], 403, 'The user has no center assignment.')]
+    #[ApiResponse(['message' => 'The selected plan is not active.', 'errors' => ['plan_id' => ['The selected plan is not active.']]], 422, 'Plan not active, already subscribed, or a checkout for it is pending.')]
     public function store(CreateSubscriptionRequest $request): JsonResponse
     {
         $center = $this->center($request);
@@ -114,11 +95,13 @@ class SubscriptionController extends Controller
             ->setStatusCode(201);
     }
 
-    #[Response(status: 204, description: 'Subscription canceled.')]
-    #[Response(status: 401, description: 'Unauthenticated.')]
-    #[Response(status: 403, description: 'Subscription does not belong to center or no center assignment.')]
-    #[Response(status: 404, description: 'Subscription not found.')]
-    #[Response(status: 422, description: 'Subscription cannot be canceled (expired or already canceled).')]
+    #[Endpoint('Cancel a subscription', 'Only the owner center; only `active` or `trialing` subscriptions.')]
+    #[UrlParam('subscription', 'integer', 'Subscription ID.', example: 21)]
+    #[ApiResponse(status: 204, description: 'Canceled. Empty body.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(['message' => 'This subscription does not belong to your center.'], 403, 'Not your center\'s subscription, or no center assignment.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'Subscription not found.')]
+    #[ApiResponse(['message' => 'You are not eligible for this subscription at this time.', 'errors' => ['subscription_id' => ['You are not eligible for this subscription at this time.']]], 422, 'Expired or already canceled.')]
     public function destroy(CancelSubscriptionRequest $request, Subscription $subscription)
     {
         $center = $this->center($request);
@@ -137,9 +120,10 @@ class SubscriptionController extends Controller
         return response()->json(null, 204);
     }
 
-    #[Response(status: 200, description: 'Current active/trialing subscription for the center.')]
-    #[Response(status: 401, description: 'Unauthenticated.')]
-    #[Response(status: 403, description: 'No center assignment.')]
+    #[Endpoint('Get the current subscription', 'The active or trialing subscription with its plan features and limits; `data` is null when there is none.')]
+    #[ResponseFromApiResource(SubscriptionResource::class, Subscription::class, status: 200, description: 'The current subscription (or `{"data": null}`).')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(['message' => 'No center assignment found for user.'], 403, 'The user has no center assignment.')]
     public function current(Request $request)
     {
         $center = $this->center($request);
@@ -154,9 +138,11 @@ class SubscriptionController extends Controller
         return SubscriptionResource::make($current);
     }
 
-    #[Response(status: 200, description: 'All subscriptions (paginated) for the center.')]
-    #[Response(status: 401, description: 'Unauthenticated.')]
-    #[Response(status: 403, description: 'No center assignment.')]
+    #[Endpoint('List subscriptions', 'Newest start first, 25 per page.')]
+    #[QueryParam('page', 'integer', 'Page number (1-based).', required: false, example: 1)]
+    #[ResponseFromApiResource(SubscriptionResource::class, Subscription::class, status: 200, description: 'Paginated subscriptions.', paginate: 25)]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(['message' => 'No center assignment found for user.'], 403, 'The user has no center assignment.')]
     public function index(Request $request): ResourceCollection
     {
         $center = $this->center($request);

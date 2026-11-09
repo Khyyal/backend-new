@@ -4,7 +4,14 @@ namespace Modules\Support\Http\Requests\Admin;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
+use Knuckles\Scribe\Attributes\BodyParam;
 
+#[BodyParam('name', 'object', 'City name; both locales are required.', required: false, example: ['en' => 'Riyadh', 'ar' => 'الرياض'])]
+#[BodyParam('name.en', 'string', 'English name (max 255).', required: false, example: 'Riyadh')]
+#[BodyParam('name.ar', 'string', 'Arabic name (max 255).', required: false, example: 'الرياض')]
+#[BodyParam('lat', 'number', 'Latitude, -90 to 90.', required: false, example: 24.7136)]
+#[BodyParam('lng', 'number', 'Longitude, -180 to 180.', required: false, example: 46.6753)]
+#[BodyParam('radius', 'integer', 'Coverage radius in km, 1-1000.', required: false, example: 40)]
 class UpdateCityRequest extends FormRequest
 {
     public function authorize(): bool

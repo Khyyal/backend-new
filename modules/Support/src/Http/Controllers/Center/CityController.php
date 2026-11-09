@@ -3,31 +3,24 @@
 namespace Modules\Support\Http\Controllers\Center;
 
 use App\Http\Controllers\Controller;
-use Dedoc\Scramble\Attributes\Group;
-use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Knuckles\Scribe\Attributes\Endpoint;
+use Knuckles\Scribe\Attributes\Group;
+use Knuckles\Scribe\Attributes\ResponseFromApiResource;
+use Knuckles\Scribe\Attributes\Unauthenticated;
 use Modules\Support\Http\Resources\CityResource;
+use Modules\Support\Models\City;
 use Modules\Support\Services\CityService;
 
-#[Group(name: 'Center / Cities', description: 'Center protal city endpoints.')]
+#[Group('Center / Cities', 'City lookup for the center portal (registration and location pickers).')]
 class CityController extends Controller
 {
     /**
-     * List all cities.
-     *
-     * Returns every city in the system ordered alphabetically by name,
-     * regardless of whether the city has any centers. Used by the center
-     * portal for full-system city listings and location pickers.
-     *
-     * The response data is an array of `CityResource` items wrapped in a
-     * standard `data` envelope.
-     *
      * @return AnonymousResourceCollection<int, CityResource>
      */
-    #[Response(
-        status: 200,
-        description: 'Complete list of all cities, wrapped in the `data` envelope as `CityResource[]`.'
-    )]
+    #[Unauthenticated]
+    #[Endpoint('List all cities', 'Every city ordered by name, whether or not it has centers. Not paginated. Names follow `Accept-Language`.')]
+    #[ResponseFromApiResource(CityResource::class, City::class, status: 200, description: 'All cities.', collection: true)]
     public function index(CityService $cityService): AnonymousResourceCollection
     {
         return CityResource::collection($cityService->getAll());

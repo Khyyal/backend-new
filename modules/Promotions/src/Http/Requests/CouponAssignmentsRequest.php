@@ -3,7 +3,9 @@
 namespace Modules\Promotions\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Knuckles\Scribe\Attributes\BodyParam;
 
+#[BodyParam('client_ids', 'integer[]', 'Distinct existing client IDs (1-1000).', example: [77, 78])]
 class CouponAssignmentsRequest extends FormRequest
 {
     public function authorize(): bool

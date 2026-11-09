@@ -4,6 +4,7 @@ namespace Modules\Homepage\Http\Resources\Client;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Knuckles\Scribe\Attributes\ResponseField;
 use Modules\Services\Models\Service;
 
 /**
@@ -29,6 +30,14 @@ class HomeServiceResource extends JsonResource
         return $this;
     }
 
+    #[ResponseField('id', 'integer', 'Service ID.', example: 31)]
+    #[ResponseField('slug', 'string', 'Slug.', example: 'beginner-ride')]
+    #[ResponseField('name', 'string', 'Name in the request locale.', example: 'Beginner ride')]
+    #[ResponseField('type', 'string', 'Service type.', example: 'recreation_riding')]
+    #[ResponseField('center', 'object', 'Center (`id`, `name`, `slug`).', required: false, example: ['id' => 8, 'name' => 'Al Fursan Stables', 'slug' => 'al-fursan-stables'])]
+    #[ResponseField('cover', 'string', 'Cover thumbnail URL.', required: false, nullable: true, example: 'No-example')]
+    #[ResponseField('start_price', 'integer', 'Lowest price in halalas.', nullable: true, example: 15000)]
+    #[ResponseField('display_price', 'object', 'Set only while an automatic offer lowers the start price: `original`, `discounted`, `discount_amount` (halalas), `badge`.', nullable: true, example: ['original' => 15000, 'discounted' => 12750, 'discount_amount' => 2250, 'badge' => '-15%'])]
     public function toArray(Request $request): array
     {
         $service = $this->resource;

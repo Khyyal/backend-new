@@ -6,6 +6,7 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
+use Knuckles\Scribe\Attributes\BodyParam;
 use Modules\Notifications\Enums\CampaignActionType;
 use Modules\Notifications\Enums\CampaignAudience;
 use Modules\Notifications\Enums\CampaignChannel;
@@ -18,6 +19,27 @@ use Modules\Notifications\Models\WhatsAppTemplate;
 /**
  * Create (POST) or update (PUT/PATCH) a campaign. On update, missing fields keep their current value.
  */
+#[BodyParam('name', 'string', 'Internal name (max 255). Required on create.', example: 'Weekend promo')]
+#[BodyParam('channel', 'string', 'Required on create. Decides which content fields apply.', enum: CampaignChannel::class, example: 'push')]
+#[BodyParam('audience', 'string', 'Required on create.', enum: CampaignAudience::class, example: 'clients')]
+#[BodyParam('target_mode', 'string', 'Required on create. `selected` needs `target_ids`.', enum: CampaignTargetMode::class, example: 'selected')]
+#[BodyParam('target_ids', 'integer[]', 'Distinct client IDs or center IDs (by `audience`), max 5000; required for `selected`.', required: false, example: [77, 78])]
+#[BodyParam('title', 'object', 'Push only (prohibited for WhatsApp): title keyed by locale, both locales required.', required: false, example: ['en' => 'Weekend rides', 'ar' => 'ركوب نهاية الأسبوع'])]
+#[BodyParam('title.en', 'string', 'English title (max 255).', required: false, example: 'Weekend rides')]
+#[BodyParam('title.ar', 'string', 'Arabic title (max 255).', required: false, example: 'ركوب نهاية الأسبوع')]
+#[BodyParam('body', 'object', 'Push only: body keyed by locale, both locales required.', required: false, example: ['en' => '15% off this weekend.', 'ar' => 'خصم 15% هذا الأسبوع.'])]
+#[BodyParam('body.en', 'string', 'English body (max 1000).', required: false, example: '15% off this weekend.')]
+#[BodyParam('body.ar', 'string', 'Arabic body (max 1000).', required: false, example: 'خصم 15% هذا الأسبوع.')]
+#[BodyParam('action_type', 'string', 'Push only: tap action.', required: false, enum: CampaignActionType::class, example: 'center')]
+#[BodyParam('action_target_id', 'integer', 'Push only: required for `center` and `service` actions.', required: false, nullable: true, example: 8)]
+#[BodyParam('action_url', 'string', 'Push only: http(s) URL, required for `url` (max 2048).', required: false, nullable: true, example: 'No-example')]
+#[BodyParam('whatsapp_template_id', 'integer', 'WhatsApp only (prohibited for push): an active template.', required: false, example: 4)]
+#[BodyParam('template_parameters', 'object[]', 'WhatsApp only: one binding per template variable, in order.', required: false, example: [['source' => 'recipient', 'field' => 'first_name']])]
+#[BodyParam('template_parameters[].source', 'string', '`fixed` (send `value`) or `recipient` (send `field`).', enum: TemplateVariableSource::class, example: 'recipient')]
+#[BodyParam('template_parameters[].value', 'string', 'Fixed text (max 1000); required for `fixed`.', required: false, nullable: true, example: 'No-example')]
+#[BodyParam('template_parameters[].field', 'string', 'Recipient field; required for `recipient`. Clients: `first_name`, `last_name`, `full_name`, `phone`; center staff: `staff_name`, `center_name`, `phone`.', required: false, nullable: true, enum: RecipientField::class, example: 'first_name')]
+#[BodyParam('scheduled_at', 'string', 'Future send time; prohibited with `send_now`. Saved as `scheduled`.', required: false, nullable: true, example: '2026-06-05T16:00:00Z')]
+#[BodyParam('send_now', 'boolean', 'Create only: send at once instead of saving a draft.', required: false, example: false)]
 class NotificationCampaignRequest extends FormRequest
 {
     public function authorize(): bool

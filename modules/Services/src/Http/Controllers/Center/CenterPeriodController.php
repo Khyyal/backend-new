@@ -2,29 +2,30 @@
 
 namespace Modules\Services\Http\Controllers\Center;
 
-use Dedoc\Scramble\Attributes\Group;
-use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Gate;
+use Knuckles\Scribe\Attributes\Endpoint;
+use Knuckles\Scribe\Attributes\Group;
+use Knuckles\Scribe\Attributes\Response as ApiResponse;
+use Knuckles\Scribe\Attributes\ResponseFromApiResource;
+use Knuckles\Scribe\Attributes\UrlParam;
 use Modules\Centers\Models\Center;
 use Modules\Services\Http\Requests\Center\CenterPeriodRequest;
 use Modules\Services\Http\Resources\Center\CenterPeriodResource;
 use Modules\Services\Services\CenterPeriodService;
+use Modules\Support\Documentation\ApiExamples;
 
-#[Group(name: 'Center / Periods', description: 'Female and male periods of a center: the days of the week and hours reserved for each gender. Defined once per center and applied to all of its services. A center may define one, both or neither. Requires a center-scoped Bearer token (see `POST /centers/{center}/access`).')]
+#[Group('Periods', 'Female and male periods of a center: weekdays and hours reserved for each gender, applied to all its services. A center may define one, both or neither. Served on `centers/{center}/…` (center-scoped token; center users need `a `services.*.manage` permission`) and `admin/centers/{center}/…` (system users need `centers.manage_services`).')]
 class CenterPeriodController extends Controller
 {
     public function __construct(private readonly CenterPeriodService $periods) {}
 
-    /**
-     * Show the center's periods.
-     *
-     * Returns `female` and `male`, each `null` when not defined, otherwise `{days, hours}`.
-     */
-    #[Response(status: 200, description: 'The periods as a `CenterPeriodResource`.')]
-    #[Response(status: 401, description: 'Missing or invalid Bearer token.')]
-    #[Response(status: 403, description: 'The token has no access to this center, or the user is not assigned to it.')]
+    #[Endpoint('Show the periods')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[ResponseFromApiResource(CenterPeriodResource::class, Center::class, status: 200, description: 'The periods.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Not allowed to manage this center\'s services. Also returned when the token lacks `center-access:{center}` or the center is not active.')]
     public function show(Request $request, Center $center): CenterPeriodResource
     {
         Gate::forUser($request->user())->authorize('manageServices', $center);
@@ -32,18 +33,12 @@ class CenterPeriodController extends Controller
         return CenterPeriodResource::make($center->load('periods'));
     }
 
-    /**
-     * Replace the center's periods.
-     *
-     * **Request body:**
-     * - `female` / `male`  optional object or `null` (clears that gender's period).
-     * - `days`             required integer array (0-6, distinct) within a gender object.
-     * - `hours`            required flat list of `H:i` start/end pairs within a gender object, e.g. `["09:00","12:00","16:00","18:00"]`; each end is after its start.
-     */
-    #[Response(status: 200, description: 'The updated periods as a `CenterPeriodResource`.')]
-    #[Response(status: 401, description: 'Missing or invalid Bearer token.')]
-    #[Response(status: 403, description: 'The token has no access to this center, or the user is not assigned to it.')]
-    #[Response(status: 422, description: 'Validation failed.')]
+    #[Endpoint('Replace the periods', 'A gender sent as null (or omitted) is cleared.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[ResponseFromApiResource(CenterPeriodResource::class, Center::class, status: 200, description: 'The updated periods.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Not allowed to manage this center\'s services. Also returned when the token lacks `center-access:{center}` or the center is not active.')]
+    #[ApiResponse(['message' => 'The female.hours field is required when female is present.', 'errors' => ['female.hours' => ['The female.hours field is required when female is present.']]], 422, 'Validation failed.')]
     public function update(CenterPeriodRequest $request, Center $center): CenterPeriodResource
     {
         return CenterPeriodResource::make($this->periods->sync($center, $request->validated()));

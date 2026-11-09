@@ -32,3 +32,8 @@ rr
 
 graphify-out/
 
+
+# Scribe API docs: generated on deploy with `php artisan scribe:generate`
+/.scribe
+/resources/views/scribe
+/public/vendor/scribe

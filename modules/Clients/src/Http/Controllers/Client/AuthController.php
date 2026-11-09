@@ -2,21 +2,25 @@
 
 namespace Modules\Clients\Http\Controllers\Client;
 
-use Dedoc\Scramble\Attributes\Group;
-use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Validation\ValidationException;
+use Knuckles\Scribe\Attributes\Endpoint;
+use Knuckles\Scribe\Attributes\Group;
+use Knuckles\Scribe\Attributes\Response as ApiResponse;
+use Knuckles\Scribe\Attributes\ResponseField;
+use Knuckles\Scribe\Attributes\Unauthenticated;
 use Modules\Clients\Http\Requests\Client\LoginOtpRequest;
 use Modules\Clients\Http\Requests\Client\VerifyOtpRequest;
 use Modules\Clients\Http\Resources\ClientResource;
 use Modules\Clients\Services\ClientAuthService;
+use Modules\Support\Documentation\ApiExamples;
 use Modules\Support\Enums\DevicePlatform;
 use Modules\Support\Services\DeviceService;
 use Modules\Support\Services\OtpVerificationService;
 
-#[Group(name: 'Client / Auth', description: 'Client authentication via phone number + OTP.')]
+#[Group('Client / Auth', 'Client login by phone and OTP. New phones get an account on first verification.')]
 class AuthController extends Controller
 {
     public function __construct(
@@ -25,34 +29,13 @@ class AuthController extends Controller
         private readonly DeviceService $deviceService,
     ) {}
 
-    /**
-     * Request a login OTP.
-     *
-     * Sends a 6-digit one-time password (OTP) to the provided phone number via
-     * SMS. The OTP expires after `expires_in_seconds` (default 5 minutes) and
-     * must be presented to the `/verify` endpoint to complete authentication.
-     *
-     * Rate-limited to 5 send attempts per phone number every 15 minutes.
-     *
-     * **Request body:**
-     * - `phone_number` — required, international format (e.g. `+966501234567`),
-     *   6–20 digits with optional leading `+`.
-     *
-     * @param  LoginOtpRequest  $request  Validated via {@see LoginOtpRequest}.
-     * @return JsonResponse 200 with `message` and `expires_in_seconds`.
-     */
-    #[Response(
-        status: 200,
-        description: 'OTP generated and queued for delivery. Response includes a `message` and the TTL in `expires_in_seconds`.'
-    )]
-    #[Response(
-        status: 422,
-        description: 'Validation failure on `phone_number` (missing, invalid format, or too long).'
-    )]
-    #[Response(
-        status: 429,
-        description: 'Too many OTP requests for this phone number. Retry after the period returned in the `Retry-After` header.'
-    )]
+    #[Unauthenticated]
+    #[Endpoint('Request a login code', 'Sends a 4-digit code by SMS. Limited to 5 codes per phone every 15 minutes. Then call `POST /api/v1/clients/auth/verify`.')]
+    #[ApiResponse(['message' => 'messages.otp_sent', 'expires_in_seconds' => 300], 200, 'Code sent.')]
+    #[ResponseField('message', 'string', 'Confirmation message key.', example: 'messages.otp_sent')]
+    #[ResponseField('expires_in_seconds', 'integer', 'Code lifetime in seconds.', example: 300)]
+    #[ApiResponse(['message' => 'The phone number field format is invalid.', 'errors' => ['phone_number' => ['The phone number field format is invalid.']]], 422, 'Invalid phone.')]
+    #[ApiResponse(ApiExamples::THROTTLED, 429, 'Too many codes for this phone; retry after `Retry-After`.')]
     public function login(LoginOtpRequest $request): JsonResponse
     {
         $phone = (string) $request->validated()['phone_number'];
@@ -65,42 +48,17 @@ class AuthController extends Controller
     }
 
     /**
-     * Verify OTP and issue a Bearer token.
-     *
-     * Validates the 6-digit OTP sent to the phone number. When the OTP is
-     * correct, a client record is looked up (or created on the fly for new
-     * phone numbers), the device registered on `/launch` is linked when a
-     * `X-Device-Identifier` header or `device_identifier` field is provided,
-     * and a Sanctum Bearer token is minted for subsequent requests.
-     *
-     * **Request body:**
-     * - `phone_number` — required; same number used in the `/login` call.
-     * - `code`           — required; 6-digit OTP.
-     * - `device_identifier` — optional; unique device ID for push-token
-     *   registration. May also be passed via the `X-Device-Identifier` header.
-     * - `platform` — optional; `ios` or `android`, same value sent to `/launch`.
-     *
-     * **Response body:**
-     * - `token`              — Sanctum plain-text Bearer token.
-     * - `token_type`         — Always `"Bearer"`.
-     * - `needs_onboarding`   — `true` when `first_name` / `last_name` are not
-     *   yet set on the client profile.
-     * - `client`             — Client record as a `ClientResource`.
-     *
-     * @param  VerifyOtpRequest  $request  Validated via {@see VerifyOtpRequest}.
-     * @return JsonResponse 200 on success with token + client; 422 on bad input
-     *                      or invalid code.
-     *
      * @throws ValidationException When the OTP code is incorrect.
      */
-    #[Response(
-        status: 200,
-        description: 'OTP verified. Returns a Bearer `token`, `token_type`, the `needs_onboarding` flag and the `client` resource (with `city` loaded if present).'
-    )]
-    #[Response(
-        status: 422,
-        description: 'Validation error on request fields, or the OTP `code` is invalid/expired (error keyed under `code`).'
-    )]
+    #[Unauthenticated]
+    #[Endpoint('Verify the login code', 'Finds or creates the client by phone, links the launched device when `device_identifier` is sent, and issues a Sanctum token. When `needs_onboarding` is true, send the names to `PUT /api/v1/clients/profile`.')]
+    #[ApiResponse(['token' => '45|Q2xpZW50VG9rZW4', 'token_type' => 'Bearer', 'needs_onboarding' => false, 'client' => ['id' => 77, 'first_name' => 'Noura', 'last_name' => 'Al-Qahtani', 'phone_number' => '+966500000003', 'city_id' => 1, 'city' => ['id' => 1, 'name' => 'Riyadh', 'radius' => 40], 'needs_onboarding' => false]], 200, 'Logged in.')]
+    #[ResponseField('token', 'string', 'Sanctum token for the `clients/*` routes.', example: '45|Q2xpZW50VG9rZW4')]
+    #[ResponseField('token_type', 'string', 'Always `Bearer`.', example: 'Bearer')]
+    #[ResponseField('needs_onboarding', 'boolean', 'True while the first or last name is missing.', example: false)]
+    #[ResponseField('client', 'object', 'The client (`ClientResource`, with city).')]
+    #[ApiResponse(['message' => 'messages.invalid_otp', 'errors' => ['code' => ['messages.invalid_otp']]], 422, 'Validation failed, or the code is wrong or expired.')]
+    #[ApiResponse(ApiExamples::THROTTLED, 429, 'Too many wrong codes for this phone; retry after `Retry-After`.')]
     public function verify(VerifyOtpRequest $request): JsonResponse
     {
         $validated = $request->validated();

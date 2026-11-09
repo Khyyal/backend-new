@@ -4,7 +4,9 @@ namespace Modules\Notifications\Http\Requests\Admin;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
+use Knuckles\Scribe\Attributes\BodyParam;
 
+#[BodyParam('scheduled_at', 'string', 'Future send time (date-time).', example: '2026-06-05T16:00:00Z')]
 class ScheduleNotificationCampaignRequest extends FormRequest
 {
     public function authorize(): bool

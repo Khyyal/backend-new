@@ -4,10 +4,18 @@ namespace Modules\Reservations\Http\Requests\Center;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
+use Knuckles\Scribe\Attributes\QueryParam;
 
 /**
  * Filters for the center's client packages list.
  */
+#[QueryParam('active', 'boolean', 'Only active packages.', required: false, example: true)]
+#[QueryParam('not_active', 'boolean', 'Only the other statuses (exhausted, expired, cancelled). With both flags, all are returned.', required: false, example: false)]
+#[QueryParam('q', 'string', 'Client name or phone (max 100).', required: false, example: 'Noura')]
+#[QueryParam('from', 'string', 'Bought on or after, `Y-m-d`.', required: false, example: '2026-05-01')]
+#[QueryParam('to', 'string', 'Bought on or before, `Y-m-d`.', required: false, example: '2026-05-31')]
+#[QueryParam('service_id', 'integer', 'Only this service.', required: false, example: 31)]
+#[QueryParam('page', 'integer', 'Page number (1-based); 25 per page.', required: false, example: 1)]
 class ListClientPackagesRequest extends FormRequest
 {
     public function authorize(): bool

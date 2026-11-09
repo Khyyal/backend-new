@@ -3,7 +3,9 @@
 namespace Modules\Support\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Knuckles\Scribe\Attributes\BodyParam;
 
+#[BodyParam('file', 'file', 'The file (multipart/form-data). Max 10 MB (`SUPPORT_MEDIA_MAX_SIZE_KB`); JPEG, PNG, WebP or PDF, checked by content.')]
 class UploadMediaRequest extends FormRequest
 {
     public function authorize(): bool

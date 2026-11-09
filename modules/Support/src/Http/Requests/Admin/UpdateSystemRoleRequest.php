@@ -5,8 +5,12 @@ namespace Modules\Support\Http\Requests\Admin;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
+use Knuckles\Scribe\Attributes\BodyParam;
 use Modules\Support\Enums\SystemPermission;
 
+#[BodyParam('name', 'string', 'Unique snake_case name: starts with a letter, then a-z, 0-9, `_` (max 64).', required: false, example: 'support_agent')]
+#[BodyParam('description', 'string', 'Free-text description (max 255).', required: false, nullable: true, example: 'Handles client support tickets.')]
+#[BodyParam('permissions', 'string[]', 'Distinct permission names (see `GET /api/v1/admin/system-permissions`). Replaces the current set; you can only grant permissions you hold.', required: false, example: ['centers.view_any', 'centers.view'])]
 class UpdateSystemRoleRequest extends FormRequest
 {
     public function authorize(): bool

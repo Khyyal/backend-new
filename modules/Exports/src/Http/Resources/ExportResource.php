@@ -4,7 +4,9 @@ namespace Modules\Exports\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Knuckles\Scribe\Attributes\ResponseField;
 use Modules\Exports\Enums\ExportStatus;
+use Modules\Exports\Enums\ExportType;
 use Modules\Exports\Models\Export;
 use Modules\Support\Models\SystemUser;
 
@@ -16,6 +18,18 @@ class ExportResource extends JsonResource
     /**
      * @return array<string, mixed>
      */
+    #[ResponseField('id', 'integer', 'Export ID.', example: 14)]
+    #[ResponseField('type', 'string', 'What is exported.', enum: ExportType::class, example: 'center_purchases')]
+    #[ResponseField('status', 'string', '`pending` while generating, then `completed` or `failed`.', enum: ExportStatus::class, example: 'pending')]
+    #[ResponseField('center_id', 'integer', 'Center the export belongs to; null for platform-wide exports.', nullable: true, example: 8)]
+    #[ResponseField('file_name', 'string', 'Name of the `.xlsx` file once generated.', nullable: true, example: 'purchases-2026-05-20.xlsx')]
+    #[ResponseField('rows_count', 'integer', 'Exported rows once completed.', nullable: true, example: 128)]
+    #[ResponseField('filters', 'object', 'Filters the export was requested with (empty object when none).', example: ['status' => 'confirmed', 'from' => '2026-05-01'])]
+    #[ResponseField('created_at', 'string', 'Request time (ISO-8601).', example: '2026-05-20T09:30:00+00:00')]
+    #[ResponseField('completed_at', 'string', 'Completion time (ISO-8601).', nullable: true, example: 'No-example')]
+    #[ResponseField('failed_at', 'string', 'Failure time (ISO-8601).', nullable: true, example: 'No-example')]
+    #[ResponseField('expires_at', 'string', 'When the file is deleted (ISO-8601).', nullable: true, example: 'No-example')]
+    #[ResponseField('download_url', 'string', 'Authenticated download link (send your bearer token); null until completed or once expired.', nullable: true, example: 'No-example')]
     public function toArray(Request $request): array
     {
         /** @var Export $export */

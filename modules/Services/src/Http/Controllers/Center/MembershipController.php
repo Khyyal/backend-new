@@ -2,36 +2,39 @@
 
 namespace Modules\Services\Http\Controllers\Center;
 
-use Dedoc\Scramble\Attributes\Group;
-use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Gate;
+use Knuckles\Scribe\Attributes\Endpoint;
+use Knuckles\Scribe\Attributes\Group;
+use Knuckles\Scribe\Attributes\QueryParam;
+use Knuckles\Scribe\Attributes\Response as ApiResponse;
+use Knuckles\Scribe\Attributes\ResponseFromApiResource;
+use Knuckles\Scribe\Attributes\UrlParam;
 use Modules\Centers\Models\Center;
 use Modules\Services\Enums\ServiceType;
 use Modules\Services\Http\Requests\Center\MembershipRequest;
 use Modules\Services\Http\Resources\Center\MembershipResource;
 use Modules\Services\Models\Membership;
 use Modules\Services\Services\CenterMembershipService;
+use Modules\Support\Documentation\ApiExamples;
 use Symfony\Component\HttpFoundation\Response as ResponseAlias;
 
-#[Group(name: 'Center / Memberships', description: 'Manage the memberships of a center: bundles of service packages sold for one price. Requires a center-scoped Bearer token (see `POST /centers/{center}/access`).')]
+#[Group('Memberships', 'The memberships of a center. Served on `centers/{center}/…` (center-scoped token; center users need `services.membership.manage`) and `admin/centers/{center}/…` (system users need `centers.manage_services`).')]
 class MembershipController extends Controller
 {
     public function __construct(private readonly CenterMembershipService $service) {}
 
-    /**
-     * List the center's memberships.
-     *
-     * Paginated (15 per page, `?page=`), newest first. Each item is a
-     * `MembershipResource`.
-     */
-    #[Response(status: 200, description: 'Paginated `MembershipResource` collection.')]
-    #[Response(status: 401, description: 'Missing or invalid Bearer token for the `center_user` guard.')]
-    #[Response(status: 403, description: 'The token has no access to this center, or the user is not assigned to it.')]
+    #[Endpoint('List memberships', 'Newest first, 15 per page.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[QueryParam('page', 'integer', 'Page number (1-based).', required: false, example: 1)]
+    #[ResponseFromApiResource(MembershipResource::class, Membership::class, status: 200, description: 'Paginated memberships.', paginate: 15)]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `services.membership.manage` for this center (system users: `centers.manage_services`). Also returned when the token lacks `center-access:{center}` or the center is not active.')]
     public function index(Request $request, Center $center): AnonymousResourceCollection
     {
         Gate::forUser($request->user())->authorize('manageServices', [$center, ServiceType::Membership]);
@@ -45,27 +48,12 @@ class MembershipController extends Controller
         return MembershipResource::collection($memberships);
     }
 
-    /**
-     * Create a membership.
-     *
-     * **Request body:**
-     * - `name`               required object; `ar` required string, `en` optional string.
-     * - `description`        required object; `ar` required string, `en` optional string.
-     * - `price`              required integer >= 0 (minor units), the price of the whole membership.
-     * - `duration`           required integer 1-120, validity of the membership in months.
-     * - `color`              required hex color `#RRGGBB`.
-     * - `visit_service_id`   optional visit service of this center; the member gets free entries to it.
-     * - `max_visits_per_day` required with `visit_service_id`, integer >= 1: free visit entries per day.
-     * - `packages`           required array (1-20) of `{ service_package_id, trainer_id }`: service packages of this center's services. `trainer_id` is optional and only accepted on a training package, for a trainer of that training service.
-     * - `cover`              optional media id (uuid) or `null`.
-     * - `images`             optional array (max 10) of media ids, in display order.
-     *
-     * The service is created `active`.
-     */
-    #[Response(status: 201, description: 'The created membership as a `MembershipResource`.')]
-    #[Response(status: 401, description: 'Missing or invalid Bearer token.')]
-    #[Response(status: 403, description: 'The token has no access to this center, or the user is not assigned to it.')]
-    #[Response(status: 422, description: 'Validation failed, or a media id is invalid, expired or not owned by the user.')]
+    #[Endpoint('Create a membership', 'Created `active`. Media UUIDs must be your own unexpired temporary uploads.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[ResponseFromApiResource(MembershipResource::class, Membership::class, status: 201, description: 'The created membership.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `services.membership.manage` for this center (system users: `centers.manage_services`). Also returned when the token lacks `center-access:{center}` or the center is not active.')]
+    #[ApiResponse(['message' => 'The max visits per day field is required when visit service id is present.', 'errors' => ['max_visits_per_day' => ['The max visits per day field is required when visit service id is present.']]], 422, 'Validation failed, or a media UUID is invalid, expired or not yours.')]
     public function store(MembershipRequest $request, Center $center): JsonResponse
     {
         $membership = $this->service->create($center, $this->user($request), $request->validated());
@@ -73,12 +61,13 @@ class MembershipController extends Controller
         return MembershipResource::make($membership)->response()->setStatusCode(ResponseAlias::HTTP_CREATED);
     }
 
-    /**
-     * Show a membership.
-     */
-    #[Response(status: 200, description: 'The membership as a `MembershipResource`.')]
-    #[Response(status: 403, description: 'The token has no access to this center, or the user is not assigned to it.')]
-    #[Response(status: 404, description: 'No such membership in this center.')]
+    #[Endpoint('Show a membership')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[UrlParam('membership', 'integer', 'ID of the membership (the `id` field, not `service_id`).', example: 12)]
+    #[ResponseFromApiResource(MembershipResource::class, Membership::class, status: 200, description: 'The membership.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `services.membership.manage` for this center (system users: `centers.manage_services`). Also returned when the token lacks `center-access:{center}` or the center is not active.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No such membership in this center.')]
     public function show(Request $request, Center $center, int $membership): MembershipResource
     {
         Gate::forUser($request->user())->authorize('manageServices', [$center, ServiceType::Membership]);
@@ -86,18 +75,14 @@ class MembershipController extends Controller
         return MembershipResource::make($this->service->findForCenter($center, $membership));
     }
 
-    /**
-     * Update a membership.
-     *
-     * Replaces the definition with the same body as on create: `packages` is
-     * the full list of included packages. Memberships already sold keep the
-     * packages they were bought with. `cover` and `images` are optional and
-     * untouched when omitted.
-     */
-    #[Response(status: 200, description: 'The updated membership as a `MembershipResource`.')]
-    #[Response(status: 403, description: 'The token has no access to this center, or the user is not assigned to it.')]
-    #[Response(status: 404, description: 'No such membership in this center.')]
-    #[Response(status: 422, description: 'Validation failed, or a media id is invalid, expired or not owned by the user.')]
+    #[Endpoint('Update a membership', 'Replaces the definition: send the same body as on create (old price options, schedules and day prices are replaced). `cover`, `images`, `settings`, `packages` and trainer lists are left untouched when omitted.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[UrlParam('membership', 'integer', 'ID of the membership (the `id` field, not `service_id`).', example: 12)]
+    #[ResponseFromApiResource(MembershipResource::class, Membership::class, status: 200, description: 'The updated membership.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `services.membership.manage` for this center (system users: `centers.manage_services`). Also returned when the token lacks `center-access:{center}` or the center is not active.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No such membership in this center.')]
+    #[ApiResponse(['message' => 'The max visits per day field is required when visit service id is present.', 'errors' => ['max_visits_per_day' => ['The max visits per day field is required when visit service id is present.']]], 422, 'Validation failed, or a media UUID is invalid, expired or not yours.')]
     public function update(MembershipRequest $request, Center $center, int $membership): MembershipResource
     {
         $model = $this->service->findForCenter($center, $membership);
@@ -107,16 +92,14 @@ class MembershipController extends Controller
         );
     }
 
-    /**
-     * Delete a membership.
-     *
-     * Soft-deletes the membership with its service and price option. Memberships
-     * already sold are kept.
-     */
-    #[Response(status: 204, description: 'Deleted; no content.')]
-    #[Response(status: 403, description: 'The token has no access to this center, or the user is not assigned to it.')]
-    #[Response(status: 404, description: 'No such membership in this center.')]
-    public function destroy(Request $request, Center $center, int $membership): \Illuminate\Http\Response
+    #[Endpoint('Delete a membership', 'Soft-deletes the membership with its service and price option. Memberships already sold are kept.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[UrlParam('membership', 'integer', 'ID of the membership (the `id` field, not `service_id`).', example: 12)]
+    #[ApiResponse(status: 204, description: 'Deleted. Empty body.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `services.membership.manage` for this center (system users: `centers.manage_services`). Also returned when the token lacks `center-access:{center}` or the center is not active.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No such membership in this center.')]
+    public function destroy(Request $request, Center $center, int $membership): Response
     {
         Gate::forUser($request->user())->authorize('manageServices', [$center, ServiceType::Membership]);
 

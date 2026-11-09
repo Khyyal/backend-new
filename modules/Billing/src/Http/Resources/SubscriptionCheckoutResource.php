@@ -4,6 +4,7 @@ namespace Modules\Billing\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Knuckles\Scribe\Attributes\ResponseField;
 use Modules\Billing\Data\SubscriptionCheckoutResult;
 
 /**
@@ -15,6 +16,9 @@ use Modules\Billing\Data\SubscriptionCheckoutResult;
  */
 class SubscriptionCheckoutResource extends JsonResource
 {
+    #[ResponseField('purchase', 'object', 'The purchase: `id`, `status`, `subtotal`, `discount_amount`, `total_amount` (halalas).', example: ['id' => 6001, 'status' => 'pending', 'subtotal' => 49900, 'discount_amount' => 0, 'total_amount' => 49900])]
+    #[ResponseField('payment', 'object', 'The payment: `id` (Moyasar `given_id`), `status`, `method`, `payment_company`, `amount`; null when none.', nullable: true, example: ['id' => 901, 'status' => 'pending', 'method' => 'online', 'payment_company' => 'moyasar', 'amount' => 49900])]
+    #[ResponseField('gateway', 'object', 'What the app needs to pay; same shapes as the booking checkout (`moyasar`: type, publishable_key, amount_halalas, currency, given_id, description; `tamara`: checkout_url, provider_reference, checkout_id, tamara_status; `fake`: checkout_url, provider_reference).', nullable: true, example: ['type' => 'moyasar', 'publishable_key' => 'pk_test_xxx', 'amount_halalas' => 49900, 'currency' => 'SAR', 'given_id' => '901', 'description' => 'Khyyal Pro plan'])]
     public function toArray(Request $request): array
     {
         $purchase = $this->resource->purchase;

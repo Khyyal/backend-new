@@ -2,21 +2,25 @@
 
 namespace Modules\Centers\Http\Controllers\Center;
 
-use Dedoc\Scramble\Attributes\Group;
-use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
 use Illuminate\Validation\ValidationException;
+use Knuckles\Scribe\Attributes\Endpoint;
+use Knuckles\Scribe\Attributes\Group;
+use Knuckles\Scribe\Attributes\Response as ApiResponse;
+use Knuckles\Scribe\Attributes\ResponseField;
+use Knuckles\Scribe\Attributes\Unauthenticated;
 use Modules\Centers\Http\Requests\Center\SendLoginOtpRequest;
 use Modules\Centers\Http\Requests\Center\VerifyLoginOtpRequest;
 use Modules\Centers\Http\Resources\Center\UserResource;
 use Modules\Centers\Services\CenterAuthService;
+use Modules\Support\Documentation\ApiExamples;
 use Modules\Support\Enums\DevicePlatform;
 use Modules\Support\Services\DeviceService;
 use Modules\Support\Services\OtpVerificationService;
 use Symfony\Component\HttpFoundation\Response as ResponseAlias;
 
-#[Group(name: 'Center / Auth', description: 'Center user authentication via phone number + OTP (login only, registration separate).')]
+#[Group('Center / Auth', 'Center user login by phone and OTP. Registration has its own endpoints.')]
 class AuthController extends Controller
 {
     public function __construct(
@@ -25,39 +29,13 @@ class AuthController extends Controller
         private readonly DeviceService $deviceService,
     ) {}
 
-    /**
-     * Request a login OTP for an existing center user.
-     *
-     * Sends a 4-digit one-time password (OTP) to the provided phone number via
-     * SMS. The phone number must already belong to a registered center user;
-     * otherwise a validation error instructing the caller to register is
-     * returned. The OTP expires after `expires_in_seconds` (default 5 minutes)
-     * and must be presented to the `/phone/verify` endpoint to complete
-     * authentication.
-     *
-     * Rate-limited twice: once at the route level (IP-based throttle), and
-     * again internally by OtpVerificationService (5 sends per phone per 15
-     * minutes). Either limiter triggers a 429 with `Retry-After`.
-     *
-     * **Request body:**
-     * - `phone` — required; string, max 32 characters. Must match a phone
-     *   already registered in `center_users.phone`.
-     *
-     * @param  SendLoginOtpRequest  $request  Validated via {@see SendLoginOtpRequest}.
-     * @return JsonResponse 200 with `message` and `expires_in_seconds`.
-     */
-    #[Response(
-        status: 200,
-        description: 'OTP generated and queued for delivery. Response includes a localized `message` and the TTL in `expires_in_seconds`. No token or user data is returned at this stage.'
-    )]
-    #[Response(
-        status: 422,
-        description: 'Validation failure on `phone` (missing, too long, or there is no registered center user for this number — error body includes a "please register first" message keyed under `phone`).'
-    )]
-    #[Response(
-        status: 429,
-        description: 'Too many OTP requests for this phone or this IP. Retry after the period returned in the `Retry-After` header.'
-    )]
+    #[Unauthenticated]
+    #[Endpoint('Request a login code', 'Sends a one-time code by SMS to a registered center user. Then call `POST /api/v1/centers/auth/phone/verify`.')]
+    #[ApiResponse(['message' => 'Verification code sent.', 'expires_in_seconds' => 300], 200, 'Code sent.')]
+    #[ResponseField('message', 'string', 'Localized confirmation.', example: 'Verification code sent.')]
+    #[ResponseField('expires_in_seconds', 'integer', 'Code lifetime in seconds.', example: 300)]
+    #[ApiResponse(['message' => 'The selected phone is invalid.', 'errors' => ['phone' => ['The selected phone is invalid.']]], 422, 'Missing phone, or no center user has it.')]
+    #[ApiResponse(ApiExamples::THROTTLED, 429, 'Too many codes for this phone (5 per 15 minutes) or this IP (10 per minute); retry after `Retry-After`.')]
     public function login(SendLoginOtpRequest $request): JsonResponse
     {
         /** @var array{phone: string} $validated */
@@ -73,49 +51,16 @@ class AuthController extends Controller
     }
 
     /**
-     * Verify OTP and issue a Bearer token for a center user.
-     *
-     * Validates the 4-digit OTP previously sent to the phone number. When the
-     * OTP is correct, the center user record is loaded by phone,
-     * `phone_verified_at` is timestamped if not already set, and a Sanctum
-     * Bearer token is minted. The response shape matches
-     * `RegisterController::store()` but omits the `center` key (use
-     * `GET /centers` followed by `POST /centers/{center}/access` for
-     * center-scoped credentials).
-     *
-     * Too many wrong verification attempts for the same phone number surface
-     * as a 429 with `Retry-After` (distinct from a 422 wrong-code response).
-     *
-     * **Request body:**
-     * - `phone` — required; same number used in the `/phone` call.
-     * - `code`  — required; 4-digit OTP.
-     * - `device_identifier` — optional; links the device registered on
-     *   `/centers/launch`. May also be passed via the `X-Device-Identifier` header.
-     * - `platform` — optional; `ios` or `android`, same value sent to `/launch`.
-     *
-     * **Response body:**
-     * - `user`       — Authenticated `UserResource`.
-     * - `token`      — Sanctum plain-text Bearer token.
-     * - `token_type` — Always `"Bearer"`.
-     *
-     * @param  VerifyLoginOtpRequest  $request  Validated via {@see VerifyLoginOtpRequest}.
-     * @return JsonResponse 200 on success with token + user; 422 on bad input or
-     *                      invalid code; 429 when the verify limiter is exhausted.
-     *
      * @throws ValidationException When the OTP code is incorrect or expired.
      */
-    #[Response(
-        status: 200,
-        description: 'OTP verified. Returns the authenticated `user` as a `UserResource`, a Bearer `token`, and `token_type`.'
-    )]
-    #[Response(
-        status: 422,
-        description: 'Validation error on request fields, or the OTP `code` is invalid/expired (error keyed under `code`).'
-    )]
-    #[Response(
-        status: 429,
-        description: 'Too many failed OTP verification attempts for this phone number. Retry after the period returned in the `Retry-After` header.'
-    )]
+    #[Unauthenticated]
+    #[Endpoint('Verify the login code', 'Returns an account-level token: list your centers with `GET /api/v1/centers`, then call `POST /api/v1/centers/{center}/access` for a center-scoped token. Marks the phone verified and links the launched device when `device_identifier` is sent.')]
+    #[ApiResponse(['user' => ['id' => 15, 'name' => 'Khalid Al-Harbi', 'phone' => '+966500000002'], 'token' => '31|Q2VudGVyVXNlclRva2Vu', 'token_type' => 'Bearer'], 200, 'Logged in.')]
+    #[ResponseField('user', 'object', 'The center user (`UserResource`): id, name, phone.')]
+    #[ResponseField('token', 'string', 'Sanctum token for the account-level center routes.', example: '31|Q2VudGVyVXNlclRva2Vu')]
+    #[ResponseField('token_type', 'string', 'Always `Bearer`.', example: 'Bearer')]
+    #[ApiResponse(['message' => 'Invalid or expired verification code.', 'errors' => ['code' => ['Invalid or expired verification code.']]], 422, 'Validation failed, or the code is wrong or expired.')]
+    #[ApiResponse(ApiExamples::THROTTLED, 429, 'Too many wrong codes for this phone (5 per 5 minutes); retry after `Retry-After`.')]
     public function verify(VerifyLoginOtpRequest $request): JsonResponse
     {
         /** @var array{phone: string, code: string} $validated */

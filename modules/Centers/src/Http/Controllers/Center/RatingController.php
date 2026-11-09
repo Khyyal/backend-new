@@ -2,28 +2,30 @@
 
 namespace Modules\Centers\Http\Controllers\Center;
 
-use Dedoc\Scramble\Attributes\Group;
-use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Gate;
+use Knuckles\Scribe\Attributes\Endpoint;
+use Knuckles\Scribe\Attributes\Group;
+use Knuckles\Scribe\Attributes\Response as ApiResponse;
+use Knuckles\Scribe\Attributes\ResponseField;
+use Knuckles\Scribe\Attributes\UrlParam;
 use Modules\Centers\Http\Resources\Center\RatingResource;
 use Modules\Centers\Models\Center;
+use Modules\Support\Documentation\ApiExamples;
 
-#[Group(name: 'Center / Ratings', description: "View a center's own ratings. Requires a center-scoped Bearer token (see `POST /centers/{center}/access`).")]
+#[Group('Ratings', 'Ratings clients gave a center. Served on `centers/{center}/…` (center-scoped token) and `admin/centers/{center}/…` (system user). Center users need `ratings.view`; system users need `centers.view_ratings`.')]
 class RatingController extends Controller
 {
-    /**
-     * List the center's ratings.
-     *
-     * Returns a `summary` (`average` stars, `count`) and `data`: every
-     * rating, newest first, each with `id`, `client` (the rater's full
-     * name), `stars`, `comment` and `rated_at`.
-     */
-    #[Response(status: 200, description: '`summary` ({average, count}) and `data` (`RatingResource` collection: id, client, stars, comment, rated_at).')]
-    #[Response(status: 401, description: 'Missing or invalid Bearer token for the `center_user` guard.')]
-    #[Response(status: 403, description: 'The token has no access to this center, or the user is not assigned to it.')]
+    #[Endpoint('List the center\'s ratings', 'A summary plus every rating, newest first. Not paginated.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[ApiResponse(['summary' => ['average' => 4.6, 'count' => 18], 'data' => [['id' => 21, 'client' => 'Noura Al-Qahtani', 'stars' => 5, 'comment' => 'Great trainers!', 'rated_at' => '2026-05-20T09:30:00.000000Z']]], 200, 'Summary and ratings.')]
+    #[ResponseField('summary.average', 'number', 'Average stars; null without ratings.', nullable: true, example: 4.6)]
+    #[ResponseField('summary.count', 'integer', 'Number of ratings.', example: 18)]
+    #[ResponseField('data', 'object[]', 'Ratings (`RatingResource`): id, client, stars, comment, rated_at.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `ratings.view` for this center. Also returned when the token lacks `center-access:{center}` or the center is not active.')]
     public function index(Request $request, Center $center): JsonResponse
     {
         Gate::forUser($request->user())->authorize('viewRatings', $center);

@@ -3,13 +3,18 @@
 namespace Modules\Reservations\Http\Controllers\Client;
 
 use Carbon\CarbonImmutable;
-use Dedoc\Scramble\Attributes\Group;
-use Dedoc\Scramble\Attributes\HeaderParameter;
-use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Routing\Controller;
+use Knuckles\Scribe\Attributes\Endpoint;
+use Knuckles\Scribe\Attributes\Group;
+use Knuckles\Scribe\Attributes\Header;
+use Knuckles\Scribe\Attributes\QueryParam;
+use Knuckles\Scribe\Attributes\Response as ApiResponse;
+use Knuckles\Scribe\Attributes\ResponseField;
+use Knuckles\Scribe\Attributes\ResponseFromApiResource;
+use Knuckles\Scribe\Attributes\UrlParam;
 use Modules\Clients\Models\Client;
 use Modules\Purchase\Enums\PaymentMethod;
 use Modules\Purchase\Enums\PurchaseChannel;
@@ -26,9 +31,11 @@ use Modules\Reservations\Http\Resources\CheckoutResource;
 use Modules\Reservations\Http\Resources\ClientPackageResource;
 use Modules\Reservations\Http\Resources\ReservationResource;
 use Modules\Reservations\Models\ClientPackage;
+use Modules\Reservations\Models\Reservation;
 use Modules\Services\Models\ServicePackage;
+use Modules\Support\Documentation\ApiExamples;
 
-#[Group(name: 'Client / Reservations', description: 'Book, list and cancel reservations, and buy and spend service packages. Requires a client Bearer token.')]
+#[Group('Client / Reservations', 'Book, list and cancel reservations, and buy and spend packages and memberships.')]
 class PackageController extends Controller
 {
     public function __construct(
@@ -37,13 +44,10 @@ class PackageController extends Controller
         private readonly QuoteCheckout $quoteCheckout,
     ) {}
 
-    /**
-     * List my packages.
-     *
-     * Paginated (15 per page), newest first, with their remaining sessions and expiry.
-     */
-    #[Response(status: 200, description: 'Paginated `ClientPackageResource` collection.')]
-    #[Response(status: 401, description: 'Missing or invalid Bearer token.')]
+    #[Endpoint('List my packages', 'Newest first, 15 per page.')]
+    #[QueryParam('page', 'integer', 'Page number (1-based).', required: false, example: 1)]
+    #[ResponseFromApiResource(ClientPackageResource::class, ClientPackage::class, status: 200, description: 'Paginated packages.', paginate: 15)]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
     public function index(Request $request): AnonymousResourceCollection
     {
         $packages = $this->client($request)->packages()
@@ -54,43 +58,18 @@ class PackageController extends Controller
         return ClientPackageResource::collection($packages);
     }
 
-    /**
-     * Buy a package.
-     *
-     * Opens an online checkout. The package becomes active once paid, and its validity starts then.
-     *
-     * **`checkout.gateway`** is what the app needs to pay; its shape depends on `payment_company`
-     * (`moyasar`, `tamara`, or the default gateway; `fake` exists only in development and tests).
-     * Amounts are integer halalas. The app never decides the outcome: the status changes only
-     * after the payment provider confirms the payment to the backend.
-     *
-     * - `moyasar` (card, paid inside the app with the Moyasar SDK, no redirect from us):
-     *   `{type: "moyasar", publishable_key, amount_halalas, currency, given_id, description}`.
-     *   Create the Moyasar payment with `publishable_key`, `amount_halalas` and `currency` as given, and
-     *   send `given_id` unchanged as the payment's `given_id`: it is our payment id and links the
-     *   Moyasar payment to this checkout. `description` is the text to show. Moyasar returns a
-     *   `transaction_url` for 3-D Secure; open it when present.
-     * - `tamara` (installments, paid on Tamara's page): `{checkout_url, provider_reference, checkout_id, tamara_status}`.
-     *   Open `checkout_url` in a browser or web view. `provider_reference` is the Tamara order id,
-     *   `checkout_id` the Tamara checkout id, `tamara_status` the order status when created (`new`).
-     *   Tamara sends the customer back to the success, failure or cancel URL configured for the app.
-     * - `fake` (testing only): `{checkout_url, provider_reference}`, a placeholder that never charges.
-     *
-     * `checkout.payment.payment_company` repeats the gateway used. `checkout.gateway` is null when no
-     * online payment is needed.
-     *
-     * **Request body:**
-     * - `service_package_id`: required.
-     * - `payment_company`: optional.
-     * - `coupon_code`, `expected_total_amount`: optional, as when booking a reservation.
-     */
-    #[HeaderParameter('X-Channel', description: 'Where the client is buying from: `khyyal_app`, `center_app`, `khyyal_web` or `center_web`. Prices the platform fee; unknown values are ignored.', type: 'string')]
-    #[Response(status: 201, description: '`{data: ClientPackageResource, checkout: CheckoutResource}`.')]
-    #[Response(status: 401, description: 'Missing or invalid Bearer token.')]
-    #[Response(status: 422, description: 'Validation failed, or the package cannot be sold (see `reason`).')]
-    #[HeaderParameter('Idempotency-Key', description: 'Required. A unique value per operation (a UUID), reused unchanged when retrying it. A retry with the same key and body returns the stored response with `Idempotent-Replayed: true` instead of running again; the same key with a different body fails (422, `code: idempotency_key_reused`).', required: true, type: 'string')]
-    #[Response(status: 400, description: 'Missing `Idempotency-Key` header (`code: idempotency_key_required`).')]
-    #[Response(status: 409, description: 'A request with this `Idempotency-Key` is still running (`code: idempotency_request_in_progress`); retry after `Retry-After` seconds.')]
+    #[Endpoint('Buy a package', 'The package becomes active once paid; its validity starts then. Opens an online checkout; pay with `checkout.gateway`. Coupon attempts are limited to 10 per minute.')]
+    #[Header('X-Channel', 'khyyal_app')]
+    #[Header('Idempotency-Key', '7c9e6679-7425-40de-944b-e07fc1f90ae7')]
+    #[ApiResponse(['data' => ['id' => 41, 'status' => 'pending', 'service_package_id' => 5, 'total_sessions' => 8, 'remaining_sessions' => 8, 'price' => 100000, 'expires_at' => null, 'is_usable' => false], 'checkout' => ['purchase' => ['id' => 5521, 'status' => 'pending', 'subtotal' => 30000, 'discount_amount' => 4500, 'total_amount' => 25500, 'coupon_code' => 'SUMMER25'], 'payment' => ['id' => 801, 'status' => 'pending', 'method' => 'online', 'payment_company' => 'moyasar', 'amount' => 25500], 'gateway' => ['type' => 'moyasar', 'publishable_key' => 'pk_test_xxx', 'amount_halalas' => 25500, 'currency' => 'SAR', 'given_id' => '801', 'description' => 'Khyyal purchase #5521']]], 201, 'Checkout opened.')]
+    #[ResponseField('data', 'object', 'The package (`ClientPackageResource`), `pending` until paid.')]
+    #[ResponseField('checkout', 'object', 'The checkout (`CheckoutResource`: purchase, payment, gateway); null when nothing needs paying now.', nullable: true)]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(['message' => 'Packages cannot be used for this service.', 'reason' => 'package_not_supported', 'errors' => ['reservation' => ['Packages cannot be used for this service.']]], 422, 'Validation failed, the coupon was rejected, or the package cannot be sold (`reason`).')]
+    #[ApiResponse(['message' => 'The price has changed. Please review the new total.', 'code' => 'price_changed', 'data' => ['subtotal_amount' => 30000, 'discount_amount' => 0, 'total_amount' => 30000]], 409, '`expected_total_amount` differs from the current price (`code: price_changed`); `data` holds the new quote.')]
+    #[ApiResponse(ApiExamples::THROTTLED, 429, 'Too many attempts; retry after the `Retry-After` header.')]
+    #[ApiResponse(ApiExamples::IDEMPOTENCY_KEY_REQUIRED, 400, 'Missing `Idempotency-Key` header. Send a unique UUID per operation and reuse it unchanged on retries (a replay returns the stored response with `Idempotent-Replayed: true`).')]
+    #[ApiResponse(ApiExamples::IDEMPOTENCY_IN_PROGRESS, 409, 'A request with this `Idempotency-Key` is still running; retry after `Retry-After`.')]
     public function store(PurchasePackageRequest $request): JsonResponse
     {
         $servicePackage = ServicePackage::query()->with('service.serviceable', 'service.center')
@@ -115,15 +94,11 @@ class PackageController extends Controller
             ->setStatusCode(201);
     }
 
-    /**
-     * Price a package.
-     *
-     * **Request body:** `service_package_id` (required), `coupon_code` (optional).
-     * Returns the total after the running offers, without buying anything.
-     */
-    #[Response(status: 200, description: '`{data: CheckoutQuoteResource}`.')]
-    #[Response(status: 401, description: 'Missing or invalid Bearer token.')]
-    #[Response(status: 422, description: 'Validation failed.')]
+    #[Endpoint('Price a package', 'Total after running offers and the coupon; nothing is bought.')]
+    #[ResponseFromApiResource(CheckoutQuoteResource::class, Reservation::class, status: 200, description: 'The priced quote; nothing is booked.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(['message' => 'The selected service package id is invalid.', 'errors' => ['service_package_id' => ['The selected service package id is invalid.']]], 422, 'Validation failed.')]
+    #[ApiResponse(ApiExamples::THROTTLED, 429, 'Too many attempts; retry after the `Retry-After` header.')]
     public function quote(QuotePackageRequest $request): CheckoutQuoteResource
     {
         $servicePackage = ServicePackage::query()->with('service.center')->findOrFail($request->validated('service_package_id'));
@@ -135,23 +110,15 @@ class PackageController extends Controller
         ));
     }
 
-    /**
-     * Book a session from a package.
-     *
-     * Uses one credit for a single person. The reservation is confirmed at once.
-     *
-     * **Request body:**
-     * - `date`: required, `Y-m-d`.
-     * - `start_time`: required, `H:i`.
-     * - `trainer_id`: for training packages.
-     */
-    #[Response(status: 201, description: 'The confirmed `ReservationResource`.')]
-    #[Response(status: 401, description: 'Missing or invalid Bearer token.')]
-    #[Response(status: 404, description: 'No such package of this client.')]
-    #[Response(status: 422, description: 'Validation failed, or the slot cannot be booked (see `reason`).')]
-    #[HeaderParameter('Idempotency-Key', description: 'Required. A unique value per operation (a UUID), reused unchanged when retrying it. A retry with the same key and body returns the stored response with `Idempotent-Replayed: true` instead of running again; the same key with a different body fails (422, `code: idempotency_key_reused`).', required: true, type: 'string')]
-    #[Response(status: 400, description: 'Missing `Idempotency-Key` header (`code: idempotency_key_required`).')]
-    #[Response(status: 409, description: 'A request with this `Idempotency-Key` is still running (`code: idempotency_request_in_progress`); retry after `Retry-After` seconds.')]
+    #[Endpoint('Book a session from a package', 'Uses one credit for one person; confirmed at once.')]
+    #[UrlParam('package', 'integer', 'Client package ID.', example: 41)]
+    #[Header('Idempotency-Key', '7c9e6679-7425-40de-944b-e07fc1f90ae7')]
+    #[ResponseFromApiResource(ReservationResource::class, Reservation::class, status: 201, description: 'The confirmed reservation.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No such package of yours.')]
+    #[ApiResponse(['message' => 'This package has no sessions left or has expired.', 'reason' => 'package_not_usable', 'errors' => ['reservation' => ['This package has no sessions left or has expired.']]], 422, 'Validation failed, or the slot cannot be booked (`reason`: package_not_usable, package_mismatch, outside_schedule, capacity_exceeded, …).')]
+    #[ApiResponse(ApiExamples::IDEMPOTENCY_KEY_REQUIRED, 400, 'Missing `Idempotency-Key` header. Send a unique UUID per operation and reuse it unchanged on retries (a replay returns the stored response with `Idempotent-Replayed: true`).')]
+    #[ApiResponse(ApiExamples::IDEMPOTENCY_IN_PROGRESS, 409, 'A request with this `Idempotency-Key` is still running; retry after `Retry-After`.')]
     public function book(BookFromPackageRequest $request, int $package): JsonResponse
     {
         $clientPackage = $this->client($request)->packages()->findOrFail($package);

@@ -2,9 +2,6 @@
 
 namespace Modules\Homepage\Http\Controllers\Admin;
 
-use Dedoc\Scramble\Attributes\Group;
-use Dedoc\Scramble\Attributes\QueryParameter;
-use Dedoc\Scramble\Attributes\Response as ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -13,27 +10,37 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Knuckles\Scribe\Attributes\Endpoint;
+use Knuckles\Scribe\Attributes\Group;
+use Knuckles\Scribe\Attributes\QueryParam;
+use Knuckles\Scribe\Attributes\Response as ApiResponse;
+use Knuckles\Scribe\Attributes\ResponseFromApiResource;
+use Knuckles\Scribe\Attributes\UrlParam;
+use Modules\Homepage\Enums\PublishStatus;
 use Modules\Homepage\Http\Requests\Admin\StoreBannerRequest;
 use Modules\Homepage\Http\Requests\Admin\UpdateBannerRequest;
 use Modules\Homepage\Http\Resources\Admin\BannerResource;
 use Modules\Homepage\Models\Banner;
 use Modules\Homepage\Services\BannerImages;
+use Modules\Support\Documentation\ApiExamples;
 use Symfony\Component\HttpFoundation\Response as ResponseAlias;
 
-#[Group(name: 'Admin / Home page', description: 'Sections, curated items and banners of the client home page. Requires `homepage.manage`.')]
+#[Group('Admin / Home page', 'Sections, curated items and banners of the client home page. Requires `homepage.manage`.')]
 class BannerController extends Controller
 {
     public function __construct(
         private readonly BannerImages $images,
     ) {}
 
-    /**
-     * List banners.
-     */
-    #[QueryParameter('status', description: '`draft`, `published` or `archived`.', type: 'string')]
-    #[QueryParameter('home_section_id', description: 'Banners of this section.', type: 'int')]
-    #[QueryParameter('center_id', description: 'Banners tied to this center.', type: 'int')]
-    #[ApiResponse(status: 200, description: 'Paginated `BannerResource` collection.')]
+    #[Endpoint('List banners', 'Paginated.')]
+    #[QueryParam('status', 'string', 'Only this status.', required: false, enum: PublishStatus::class, example: 'published')]
+    #[QueryParam('home_section_id', 'integer', 'Banners of this section.', required: false, example: 2)]
+    #[QueryParam('center_id', 'integer', 'Banners tied to this center.', required: false, example: 8)]
+    #[QueryParam('page', 'integer', 'Page number (1-based).', required: false, example: 1)]
+    #[QueryParam('per_page', 'integer', 'Items per page, 1-100. Default 15.', required: false, example: 15)]
+    #[ResponseFromApiResource(BannerResource::class, Banner::class, status: 200, description: 'Paginated banners.', paginate: 15)]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `homepage.manage`.')]
     public function index(Request $request): AnonymousResourceCollection
     {
         Gate::forUser($request->user())->authorize('viewAny', Banner::class);
@@ -50,19 +57,11 @@ class BannerController extends Controller
         return BannerResource::collection($banners);
     }
 
-    /**
-     * Create a banner.
-     *
-     * Created as a draft unless `status` is sent. `action_type` is `none`,
-     * `url` (needs `action_url`) or `center`, `service`, `promotion`,
-     * `campaign` (need `action_target_id`). `home_section_id` must be a
-     * `banner_carousel` section. `center_id` ties the banner to a center: it is
-     * hidden when the center is hidden or outside the section radius.
-     * `images` holds one temporary media id per locale (`en`, `ar`); a locale
-     * without an image falls back to the other one.
-     */
-    #[ApiResponse(status: 201, description: 'The created `BannerResource`.')]
-    #[ApiResponse(status: 422, description: 'Validation failed, or an image id is not a usable temporary media.')]
+    #[Endpoint('Create a banner', 'Draft unless `status` is sent.')]
+    #[ResponseFromApiResource(BannerResource::class, Banner::class, status: 201, description: 'The created banner.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `homepage.manage`.')]
+    #[ApiResponse(['message' => 'A banner can only belong to a banner carousel section.', 'errors' => ['home_section_id' => ['A banner can only belong to a banner carousel section.']]], 422, 'Validation failed, not a banner section, or an image UUID is not a usable temporary upload.')]
     public function store(StoreBannerRequest $request): JsonResponse
     {
         Gate::forUser($request->user())->authorize('create', Banner::class);
@@ -81,10 +80,12 @@ class BannerController extends Controller
             ->setStatusCode(ResponseAlias::HTTP_CREATED);
     }
 
-    /**
-     * Show a banner.
-     */
-    #[ApiResponse(status: 200, description: 'The `BannerResource`.')]
+    #[Endpoint('Show a banner')]
+    #[UrlParam('banner', 'integer', 'Banner ID.', example: 5)]
+    #[ResponseFromApiResource(BannerResource::class, Banner::class, status: 200, description: 'The banner.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `homepage.manage`.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No such banner.')]
     public function show(Request $request, Banner $banner): BannerResource
     {
         Gate::forUser($request->user())->authorize('view', $banner);
@@ -92,13 +93,13 @@ class BannerController extends Controller
         return BannerResource::make($banner->load('media'));
     }
 
-    /**
-     * Update a banner.
-     *
-     * `images` keys replace that locale's image; null removes it.
-     */
-    #[ApiResponse(status: 200, description: 'The updated `BannerResource`.')]
-    #[ApiResponse(status: 422, description: 'Validation failed.')]
+    #[Endpoint('Update a banner', 'Partial update; `images` keys replace that locale\'s image (null removes it).')]
+    #[UrlParam('banner', 'integer', 'Banner ID.', example: 5)]
+    #[ResponseFromApiResource(BannerResource::class, Banner::class, status: 200, description: 'The updated banner.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `homepage.manage`.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No such banner.')]
+    #[ApiResponse(['message' => 'The action url field must be a valid URL.', 'errors' => ['action_url' => ['The action url field must be a valid URL.']]], 422, 'Validation failed.')]
     public function update(UpdateBannerRequest $request, Banner $banner): BannerResource
     {
         Gate::forUser($request->user())->authorize('update', $banner);
@@ -111,10 +112,12 @@ class BannerController extends Controller
         return BannerResource::make($banner->refresh()->load('media'));
     }
 
-    /**
-     * Delete a banner and its images.
-     */
-    #[ApiResponse(status: 204, description: 'Deleted.')]
+    #[Endpoint('Delete a banner', 'Also deletes its images.')]
+    #[UrlParam('banner', 'integer', 'Banner ID.', example: 5)]
+    #[ApiResponse(status: 204, description: 'Deleted. Empty body.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `homepage.manage`.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No such banner.')]
     public function destroy(Request $request, Banner $banner): Response
     {
         Gate::forUser($request->user())->authorize('delete', $banner);

@@ -2,9 +2,6 @@
 
 namespace Modules\Settlements\Http\Controllers\Admin;
 
-use Dedoc\Scramble\Attributes\Group;
-use Dedoc\Scramble\Attributes\QueryParameter;
-use Dedoc\Scramble\Attributes\Response as ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Routing\Controller;
@@ -12,23 +9,33 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
+use Knuckles\Scribe\Attributes\Endpoint;
+use Knuckles\Scribe\Attributes\Group;
+use Knuckles\Scribe\Attributes\QueryParam;
+use Knuckles\Scribe\Attributes\Response as ApiResponse;
+use Knuckles\Scribe\Attributes\ResponseFromApiResource;
+use Knuckles\Scribe\Attributes\UrlParam;
 use Modules\Settlements\Enums\CenterPayoutStatus;
 use Modules\Settlements\Http\Requests\MarkCenterPayoutPaidRequest;
 use Modules\Settlements\Http\Resources\CenterPayoutResource;
 use Modules\Settlements\Models\CenterPayout;
 use Modules\Settlements\Services\CenterPayoutStateService;
+use Modules\Support\Documentation\ApiExamples;
 
-#[Group(name: 'Admin / Payouts', description: 'Weekly payouts of what the platform owes centers. Every Sunday 00:00 UTC a pending payout is created per center for its ledger entries past the hold period; finance transfers it and marks it paid. Amounts are halalas. Requires `payouts.manage`.')]
+#[Group('Admin / Payouts', 'Weekly payouts of what the platform owes centers. Every Sunday 00:00 UTC a pending payout is created per center for its ledger entries past the hold period; finance transfers it and marks it paid. Amounts are halalas. Requires `payouts.manage`.')]
 class CenterPayoutController extends Controller
 {
     public function __construct(private CenterPayoutStateService $state) {}
 
-    /**
-     * List payouts.
-     */
-    #[QueryParameter('status', description: '`pending`, `paid` or `cancelled`.', type: 'string')]
-    #[QueryParameter('center_id', description: 'Only this center\'s payouts.', type: 'int')]
-    #[ApiResponse(status: 200, description: 'Paginated `CenterPayoutResource` collection, newest first.')]
+    #[Endpoint('List payouts', 'Newest first, paginated.')]
+    #[QueryParam('status', 'string', 'Only this status.', required: false, enum: CenterPayoutStatus::class, example: 'pending')]
+    #[QueryParam('center_id', 'integer', 'Only this center.', required: false, example: 8)]
+    #[QueryParam('page', 'integer', 'Page number (1-based).', required: false, example: 1)]
+    #[QueryParam('per_page', 'integer', 'Items per page, 1-100. Default 15.', required: false, example: 15)]
+    #[ResponseFromApiResource(CenterPayoutResource::class, CenterPayout::class, status: 200, description: 'Paginated payouts.', paginate: 15, with: ['center'])]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `payouts.manage`.')]
+    #[ApiResponse(['message' => 'The selected status is invalid.', 'errors' => ['status' => ['The selected status is invalid.']]], 422, 'Invalid filter.')]
     public function index(Request $request): AnonymousResourceCollection
     {
         Gate::forUser($request->user())->authorize('viewAny', CenterPayout::class);
@@ -48,10 +55,12 @@ class CenterPayoutController extends Controller
         return CenterPayoutResource::collection($payouts);
     }
 
-    /**
-     * Show a payout with its ledger entries.
-     */
-    #[ApiResponse(status: 200, description: 'The `CenterPayoutResource` with `entries`.')]
+    #[Endpoint('Show a payout', 'With its ledger entries.')]
+    #[UrlParam('payout', 'integer', 'Payout ID.', example: 17)]
+    #[ResponseFromApiResource(CenterPayoutResource::class, CenterPayout::class, status: 200, description: 'The payout.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `payouts.manage`.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No such payout.')]
     public function show(Request $request, CenterPayout $payout): CenterPayoutResource
     {
         Gate::forUser($request->user())->authorize('view', $payout);
@@ -59,11 +68,13 @@ class CenterPayoutController extends Controller
         return CenterPayoutResource::make($payout->load(['center', 'entries']));
     }
 
-    /**
-     * Mark a pending payout as transferred.
-     */
-    #[ApiResponse(status: 200, description: 'The paid payout.')]
-    #[ApiResponse(status: 422, description: 'Missing reference, or the payout is not pending.')]
+    #[Endpoint('Mark a payout as transferred', 'Only pending payouts.')]
+    #[UrlParam('payout', 'integer', 'Payout ID.', example: 17)]
+    #[ResponseFromApiResource(CenterPayoutResource::class, CenterPayout::class, status: 200, description: 'The paid payout.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `payouts.manage`.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No such payout.')]
+    #[ApiResponse(['message' => 'Cannot change a payout with status "paid". Only pending payouts can be paid or cancelled.', 'errors' => ['status' => ['Cannot change a payout with status "paid". Only pending payouts can be paid or cancelled.']]], 422, 'Missing reference, or the payout is not pending.')]
     public function markPaid(MarkCenterPayoutPaidRequest $request, CenterPayout $payout): CenterPayoutResource
     {
         Gate::forUser($request->user())->authorize('update', $payout);
@@ -73,11 +84,13 @@ class CenterPayoutController extends Controller
         )->load('center'));
     }
 
-    /**
-     * Cancel a pending payout; its entries go into the next one.
-     */
-    #[ApiResponse(status: 200, description: 'The cancelled payout.')]
-    #[ApiResponse(status: 422, description: 'The payout is not pending.')]
+    #[Endpoint('Cancel a payout', 'Only pending payouts; its entries go into the next one.')]
+    #[UrlParam('payout', 'integer', 'Payout ID.', example: 17)]
+    #[ResponseFromApiResource(CenterPayoutResource::class, CenterPayout::class, status: 200, description: 'The cancelled payout.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `payouts.manage`.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No such payout.')]
+    #[ApiResponse(['message' => 'Cannot change a payout with status "paid". Only pending payouts can be paid or cancelled.', 'errors' => ['status' => ['Cannot change a payout with status "paid". Only pending payouts can be paid or cancelled.']]], 422, 'The payout is not pending.')]
     public function cancel(Request $request, CenterPayout $payout): CenterPayoutResource
     {
         Gate::forUser($request->user())->authorize('update', $payout);

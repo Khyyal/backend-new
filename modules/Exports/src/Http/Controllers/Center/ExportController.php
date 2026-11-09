@@ -2,29 +2,34 @@
 
 namespace Modules\Exports\Http\Controllers\Center;
 
-use Dedoc\Scramble\Attributes\Group;
-use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Gate;
+use Knuckles\Scribe\Attributes\Endpoint;
+use Knuckles\Scribe\Attributes\Group;
+use Knuckles\Scribe\Attributes\QueryParam;
+use Knuckles\Scribe\Attributes\Response as ApiResponse;
+use Knuckles\Scribe\Attributes\ResponseFromApiResource;
+use Knuckles\Scribe\Attributes\UrlParam;
 use Modules\Centers\Models\Center;
 use Modules\Exports\Http\Resources\ExportResource;
 use Modules\Exports\Models\Export;
 use Modules\Exports\Services\ExportService;
+use Modules\Support\Documentation\ApiExamples;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
-#[Group(name: 'Center / Exports', description: 'Spreadsheet exports the center user requested for this center. Exports are built in the background; the requester gets an `export_ready` (or `export_failed`) notification with `export_id`, then downloads the file here. Files are kept for 7 days. Requires a center-scoped Bearer token (see `POST /centers/{center}/access`).')]
+#[Group('Center / Exports', 'Spreadsheet exports the center user requested for this center. Built in the background; the requester gets an `export_ready` (or `export_failed`) notification with `export_id`. Files are kept for 7 days.')]
 class ExportController extends Controller
 {
     public function __construct(private readonly ExportService $exports) {}
 
-    /**
-     * List my exports of this center.
-     *
-     * Paginated (25 per page), newest first.
-     */
-    #[Response(status: 200, description: 'Paginated `ExportResource` collection.')]
+    #[Endpoint('List my exports of this center', 'Newest first, 25 per page.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[QueryParam('page', 'integer', 'Page number (1-based).', required: false, example: 1)]
+    #[ResponseFromApiResource(ExportResource::class, Export::class, status: 200, description: 'Paginated exports.', paginate: 25)]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'The token lacks `center-access:{center}` or the center is not active.')]
     public function index(Request $request, Center $center): AnonymousResourceCollection
     {
         $user = $request->user();
@@ -39,12 +44,13 @@ class ExportController extends Controller
         );
     }
 
-    /**
-     * Show an export.
-     */
-    #[Response(status: 200, description: 'The `ExportResource`.')]
-    #[Response(status: 403, description: 'Requested by another user.')]
-    #[Response(status: 404, description: 'No such export in this center.')]
+    #[Endpoint('Show an export')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[UrlParam('export', 'integer', 'Export ID.', example: 14)]
+    #[ResponseFromApiResource(ExportResource::class, Export::class, status: 200, description: 'The export.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Requested by another user. Also returned when the token lacks `center-access:{center}` or the center is not active.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No such export in this center.')]
     public function show(Request $request, Center $center, Export $export): ExportResource
     {
         $this->authorize($request, $center, $export);
@@ -52,16 +58,15 @@ class ExportController extends Controller
         return ExportResource::make($export);
     }
 
-    /**
-     * Download an export.
-     *
-     * Streams the `.xlsx` file.
-     */
-    #[Response(status: 200, description: 'The spreadsheet file.')]
-    #[Response(status: 403, description: 'Requested by another user.')]
-    #[Response(status: 404, description: 'No such export in this center.')]
-    #[Response(status: 409, description: 'Still being generated, or failed.')]
-    #[Response(status: 410, description: 'Expired; request a new export.')]
+    #[Endpoint('Download an export', 'Send your bearer token; streams the file.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[UrlParam('export', 'integer', 'Export ID.', example: 14)]
+    #[ApiResponse(status: 200, description: 'The `.xlsx` file (`application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`), streamed as an attachment.')]
+    #[ApiResponse(['message' => 'This export is not ready yet.'], 409, 'Still being generated, or failed.')]
+    #[ApiResponse(['message' => 'This export has expired. Please request a new one.'], 410, 'Expired; request a new export.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Requested by another user. Also returned when the token lacks `center-access:{center}` or the center is not active.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No such export in this center.')]
     public function download(Request $request, Center $center, Export $export): StreamedResponse
     {
         $this->authorize($request, $center, $export);

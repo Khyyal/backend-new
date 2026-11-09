@@ -3,32 +3,24 @@
 namespace Modules\Support\Http\Controllers\Client;
 
 use App\Http\Controllers\Controller;
-use Dedoc\Scramble\Attributes\Group;
-use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Knuckles\Scribe\Attributes\Endpoint;
+use Knuckles\Scribe\Attributes\Group;
+use Knuckles\Scribe\Attributes\ResponseFromApiResource;
+use Knuckles\Scribe\Attributes\Unauthenticated;
 use Modules\Support\Http\Resources\CityResource;
+use Modules\Support\Models\City;
 use Modules\Support\Services\CityService;
 
-#[Group(name: 'Client / Cities', description: 'Client-facing city endpoints.')]
+#[Group('Client / Cities', 'City lookup for the client app.')]
 class CityController extends Controller
 {
     /**
-     * List cities with visible centers.
-     *
-     * Returns all cities that have at least one center with VISIBLE status,
-     * ordered alphabetically by name. Only cities that contain at least one
-     * published (`VISIBLE`) center are returned, so the client-side location
-     * picker never shows empty cities.
-     *
-     * The response data is an array of `CityResource` items wrapped in a
-     * standard `data` envelope.
-     *
      * @return AnonymousResourceCollection<int, CityResource>
      */
-    #[Response(
-        status: 200,
-        description: 'List of cities that have at least one visible center, wrapped in the `data` envelope as `CityResource[]`.'
-    )]
+    #[Unauthenticated]
+    #[Endpoint('List cities with visible centers', 'Cities having at least one published (visible) center, ordered by name, so the location picker never shows empty cities. Not paginated.')]
+    #[ResponseFromApiResource(CityResource::class, City::class, status: 200, description: 'Cities with visible centers.', collection: true)]
     public function index(CityService $cityService): AnonymousResourceCollection
     {
         return CityResource::collection($cityService->getWithCenters());

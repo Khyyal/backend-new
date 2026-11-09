@@ -5,9 +5,15 @@ namespace Modules\Homepage\Http\Requests\Admin;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Knuckles\Scribe\Attributes\BodyParam;
 use Modules\Homepage\Enums\ItemableType;
 use Modules\Homepage\Models\HomeSection;
 
+#[BodyParam('items', 'object[]', 'Full replacement list in display order (max 200); send [] to clear.', example: [['type' => 'promotion', 'id' => 12]])]
+#[BodyParam('items[].type', 'string', 'Must match the section `item_type`.', enum: ItemableType::class, example: 'promotion')]
+#[BodyParam('items[].id', 'integer', 'Record ID (min 1).', example: 12)]
+#[BodyParam('items[].starts_at', 'string', 'Item window start (date-time).', required: false, nullable: true, example: 'No-example')]
+#[BodyParam('items[].ends_at', 'string', 'Item window end (date-time).', required: false, nullable: true, example: 'No-example')]
 class SyncHomeSectionItemsRequest extends FormRequest
 {
     public function authorize(): bool

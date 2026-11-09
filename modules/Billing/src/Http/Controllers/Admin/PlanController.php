@@ -2,8 +2,6 @@
 
 namespace Modules\Billing\Http\Controllers\Admin;
 
-use Dedoc\Scramble\Attributes\Group;
-use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -12,6 +10,14 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
+use Knuckles\Scribe\Attributes\Endpoint;
+use Knuckles\Scribe\Attributes\Group;
+use Knuckles\Scribe\Attributes\QueryParam;
+use Knuckles\Scribe\Attributes\Response as ApiResponse;
+use Knuckles\Scribe\Attributes\ResponseField;
+use Knuckles\Scribe\Attributes\ResponseFromApiResource;
+use Knuckles\Scribe\Attributes\UrlParam;
+use Modules\Billing\Enums\BillingInterval;
 use Modules\Billing\Enums\PlanStatus;
 use Modules\Billing\Events\PlanCreated;
 use Modules\Billing\Http\Requests\AttachFeaturesRequest;
@@ -26,13 +32,18 @@ use Modules\Billing\Models\Limit;
 use Modules\Billing\Models\Plan;
 use Modules\Billing\Models\PlanFeature;
 use Modules\Billing\Models\PlanLimit;
+use Modules\Support\Documentation\ApiExamples;
 
-#[Group(name: 'Admin / Plans', description: 'Platform admin: manage subscription plans, features, and limits.')]
+#[Group('Admin / Plans', 'Subscription plans and the features and limits attached to them. Requires the matching `plans.*` permission.')]
 class PlanController extends Controller
 {
-    #[Response(status: 200, description: 'Paginated list of plans with feature, limit, and subscription counts.')]
-    #[Response(status: 401, description: 'Missing or invalid system user Bearer token.')]
-    #[Response(status: 403, description: 'Missing the required plans.* permission.')]
+    #[Endpoint('List plans', 'Newest first, 25 per page, with feature, limit and subscription counts.')]
+    #[QueryParam('status', 'string', 'Only this status.', required: false, enum: PlanStatus::class, example: 'active')]
+    #[QueryParam('billing_interval', 'string', 'Only this interval.', required: false, enum: BillingInterval::class, example: 'monthly')]
+    #[QueryParam('page', 'integer', 'Page number (1-based).', required: false, example: 1)]
+    #[ResponseFromApiResource(PlanResource::class, Plan::class, status: 200, description: 'Paginated plans.', paginate: 25, withCount: ['features', 'limits', 'subscriptions'])]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `plans.view_any`.')]
     public function index(Request $request): ResourceCollection
     {
         $query = Plan::query()
@@ -43,10 +54,11 @@ class PlanController extends Controller
         return PlanCollection::make($query->latest()->paginate(25));
     }
 
-    #[Response(status: 201, description: 'Plan created successfully.')]
-    #[Response(status: 401, description: 'Missing or invalid system user Bearer token.')]
-    #[Response(status: 403, description: 'Missing the required plans.* permission.')]
-    #[Response(status: 422, description: 'Invalid payload.')]
+    #[Endpoint('Create a plan', 'Status defaults to `active`, trial to 0 days.')]
+    #[ResponseFromApiResource(PlanResource::class, Plan::class, status: 201, description: 'The created plan.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `plans.create`.')]
+    #[ApiResponse(['message' => 'The name.en field is required.', 'errors' => ['name.en' => ['The name.en field is required.']]], 422, 'Validation failed.')]
     public function store(StorePlanRequest $request)
     {
         $validated = $request->validated();
@@ -70,10 +82,12 @@ class PlanController extends Controller
         return PlanResource::make($plan)->response()->setStatusCode(201);
     }
 
-    #[Response(status: 200, description: 'Plan detail with features, limits, and counts.')]
-    #[Response(status: 401, description: 'Missing or invalid system user Bearer token.')]
-    #[Response(status: 403, description: 'Missing the required plans.* permission.')]
-    #[Response(status: 404, description: 'Plan not found.')]
+    #[Endpoint('Show a plan', 'With features, limits and counts.')]
+    #[UrlParam('plan', 'integer', 'Plan ID.', example: 1)]
+    #[ResponseFromApiResource(PlanResource::class, Plan::class, status: 200, description: 'The plan.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `plans.view_any`.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'Plan not found.')]
     public function show(Plan $plan): PlanResource
     {
         $plan->load(['features', 'limits']);
@@ -82,11 +96,13 @@ class PlanController extends Controller
         return PlanResource::make($plan);
     }
 
-    #[Response(status: 200, description: 'Plan updated.')]
-    #[Response(status: 401, description: 'Missing or invalid system user Bearer token.')]
-    #[Response(status: 403, description: 'Missing the required plans.* permission.')]
-    #[Response(status: 404, description: 'Plan not found.')]
-    #[Response(status: 422, description: 'Invalid payload.')]
+    #[Endpoint('Update a plan', 'Partial update.')]
+    #[UrlParam('plan', 'integer', 'Plan ID.', example: 1)]
+    #[ResponseFromApiResource(PlanResource::class, Plan::class, status: 200, description: 'The updated plan.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `plans.update`.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'Plan not found.')]
+    #[ApiResponse(['message' => 'The name.en field is required.', 'errors' => ['name.en' => ['The name.en field is required.']]], 422, 'Validation failed.')]
     public function update(UpdatePlanRequest $request, Plan $plan): PlanResource
     {
         $validated = $request->validated();
@@ -101,11 +117,13 @@ class PlanController extends Controller
         return PlanResource::make($plan);
     }
 
-    #[Response(status: 204, description: 'Plan deleted.')]
-    #[Response(status: 401, description: 'Missing or invalid system user Bearer token.')]
-    #[Response(status: 403, description: 'Missing the required plans.* permission.')]
-    #[Response(status: 404, description: 'Plan not found.')]
-    #[Response(status: 422, description: 'Plan has subscriptions and cannot be deleted.')]
+    #[Endpoint('Delete a plan', 'Refused while the plan has subscriptions; deactivate it instead.')]
+    #[UrlParam('plan', 'integer', 'Plan ID.', example: 1)]
+    #[ApiResponse(status: 204, description: 'Deleted. Empty body.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `plans.delete`.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'Plan not found.')]
+    #[ApiResponse(['message' => 'This plan cannot be deleted because it has active subscriptions.', 'errors' => ['plan_id' => ['This plan cannot be deleted because it has active subscriptions.']]], 422, 'The plan has subscriptions.')]
     public function destroy(Plan $plan): JsonResponse
     {
         if ($plan->subscriptions()->exists()) {
@@ -119,10 +137,13 @@ class PlanController extends Controller
         return response()->json(null, 204);
     }
 
-    #[Response(status: 200, description: 'Plan status updated.')]
-    #[Response(status: 401, description: 'Missing or invalid system user Bearer token.')]
-    #[Response(status: 403, description: 'Missing the required plans.* permission.')]
-    #[Response(status: 422, description: 'Invalid status value.')]
+    #[Endpoint('Change a plan status')]
+    #[UrlParam('plan', 'integer', 'Plan ID.', example: 1)]
+    #[ResponseFromApiResource(PlanResource::class, Plan::class, status: 200, description: 'The updated plan.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `plans.update`.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'Plan not found.')]
+    #[ApiResponse(['message' => 'The selected status is invalid.', 'errors' => ['status' => ['The selected status is invalid.']]], 422, 'Invalid status.')]
     public function updateStatus(UpdatePlanStatusRequest $request, Plan $plan): PlanResource
     {
         $plan->update(['status' => $request->validated()['status']]);
@@ -133,9 +154,16 @@ class PlanController extends Controller
 
     // ---------- Nested Plan Features ----------
 
-    #[Group(name: 'Admin / Plan Features')]
-    #[Response(status: 201, description: 'Plan features attached (idempotent upsert).')]
-    #[Response(status: 422, description: 'Invalid feature IDs.')]
+    #[Group('Admin / Plan features', 'Features attached to a plan. Requires `plans.update`.')]
+    #[Endpoint('Attach features to a plan', 'Idempotent upsert: existing ones get the new `enabled` value.')]
+    #[UrlParam('plan', 'integer', 'Plan ID.', example: 1)]
+    #[ApiResponse(['attached' => 2, 'feature_count' => 4], 201, 'Attached.')]
+    #[ResponseField('attached', 'integer', 'Items processed.', example: 2)]
+    #[ResponseField('feature_count', 'integer', 'Features now on the plan.', example: 4)]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `plans.update`.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'Plan not found.')]
+    #[ApiResponse(['message' => 'The selected items.0.feature_id is invalid.', 'errors' => ['items.0.feature_id' => ['The selected items.0.feature_id is invalid.']]], 422, 'Unknown feature IDs.')]
     public function attachFeatures(AttachFeaturesRequest $request, Plan $plan): JsonResponse
     {
         $items = $request->validated()['items'];
@@ -166,9 +194,14 @@ class PlanController extends Controller
         ], 201);
     }
 
-    #[Group(name: 'Admin / Plan Features')]
-    #[Response(status: 204, description: 'Plan feature detached.')]
-    #[Response(status: 404, description: 'Feature is not attached to the plan.')]
+    #[Group('Admin / Plan features', 'Features attached to a plan. Requires `plans.update`.')]
+    #[Endpoint('Detach a feature from a plan')]
+    #[UrlParam('plan', 'integer', 'Plan ID.', example: 1)]
+    #[UrlParam('feature', 'integer', 'Feature ID.', example: 3)]
+    #[ApiResponse(status: 204, description: 'Detached. Empty body.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `plans.update`.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'Plan or feature not found, or the feature is not attached.')]
     public function detachFeature(Plan $plan, Feature $feature): JsonResponse
     {
         $detached = PlanFeature::query()
@@ -185,9 +218,16 @@ class PlanController extends Controller
 
     // ---------- Nested Plan Limits ----------
 
-    #[Group(name: 'Admin / Plan Limits')]
-    #[Response(status: 201, description: 'Plan limits attached (idempotent upsert).')]
-    #[Response(status: 422, description: 'Invalid limit IDs or missing values.')]
+    #[Group('Admin / Plan limits', 'Limits attached to a plan. Requires `plans.update`.')]
+    #[Endpoint('Attach limits to a plan', 'Idempotent upsert: existing ones get the new `value`.')]
+    #[UrlParam('plan', 'integer', 'Plan ID.', example: 1)]
+    #[ApiResponse(['attached' => 1, 'limit_count' => 2], 201, 'Attached.')]
+    #[ResponseField('attached', 'integer', 'Items processed.', example: 1)]
+    #[ResponseField('limit_count', 'integer', 'Limits now on the plan.', example: 2)]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `plans.update`.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'Plan not found.')]
+    #[ApiResponse(['message' => 'The items.0.value field is required.', 'errors' => ['items.0.value' => ['The items.0.value field is required.']]], 422, 'Unknown limit IDs or missing values.')]
     public function attachLimits(AttachLimitsRequest $request, Plan $plan): JsonResponse
     {
         $items = $request->validated()['items'];
@@ -218,9 +258,14 @@ class PlanController extends Controller
         ], 201);
     }
 
-    #[Group(name: 'Admin / Plan Limits')]
-    #[Response(status: 204, description: 'Plan limit detached.')]
-    #[Response(status: 404, description: 'Limit is not attached to the plan.')]
+    #[Group('Admin / Plan limits', 'Limits attached to a plan. Requires `plans.update`.')]
+    #[Endpoint('Detach a limit from a plan')]
+    #[UrlParam('plan', 'integer', 'Plan ID.', example: 1)]
+    #[UrlParam('limit', 'integer', 'Limit ID.', example: 2)]
+    #[ApiResponse(status: 204, description: 'Detached. Empty body.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `plans.update`.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'Plan or limit not found, or the limit is not attached.')]
     public function detachLimit(Plan $plan, Limit $limit): JsonResponse
     {
         $detached = PlanLimit::query()

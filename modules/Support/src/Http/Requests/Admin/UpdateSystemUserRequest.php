@@ -6,9 +6,16 @@ use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
+use Knuckles\Scribe\Attributes\BodyParam;
 use Modules\Support\Enums\ActivationStatus;
 use Modules\Support\Models\SystemUser;
 
+#[BodyParam('name', 'string', 'Display name (max 255).', required: false, example: 'Sara Admin')]
+#[BodyParam('email', 'string', 'Unique login email (max 255).', required: false, example: 'sara@khyyal.com')]
+#[BodyParam('password', 'string', 'New password, min 8 characters. Revokes the user\'s tokens.', required: false, example: 'new-secret-password')]
+#[BodyParam('password_confirmation', 'string', 'Required with `password`; must equal it.', required: false, example: 'new-secret-password')]
+#[BodyParam('status', 'string', '`inactive` revokes the user\'s tokens. You cannot change your own status.', required: false, enum: ActivationStatus::class, example: 'inactive')]
+#[BodyParam('roles', 'string[]', 'Replaces the user\'s roles. Requires `system_users.assign_roles`; you cannot change your own roles.', required: false, example: ['support_agent'])]
 class UpdateSystemUserRequest extends FormRequest
 {
     /**

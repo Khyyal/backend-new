@@ -2,36 +2,39 @@
 
 namespace Modules\Centers\Http\Controllers\Center;
 
-use Dedoc\Scramble\Attributes\Group;
-use Dedoc\Scramble\Attributes\Response;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Knuckles\Scribe\Attributes\Endpoint;
+use Knuckles\Scribe\Attributes\Group;
+use Knuckles\Scribe\Attributes\Response as ApiResponse;
+use Knuckles\Scribe\Attributes\ResponseField;
+use Knuckles\Scribe\Attributes\UrlParam;
 use Modules\Centers\Models\Center;
 use Modules\Centers\Models\User;
 use Modules\Centers\Services\CenterProfileCompletion;
+use Modules\Support\Documentation\ApiExamples;
 
-#[Group(name: 'Center / Profile', description: 'Whether the center profile is complete and what is left to do. Requires a center-scoped Bearer token (see `POST /centers/{center}/access`).')]
+#[Group('Center / Profile', 'How complete the center profile is and what is left to do.')]
 class ProfileCompletionController extends Controller
 {
     public function __construct(private readonly CenterProfileCompletion $completion) {}
 
-    /**
-     * Show the center profile completion.
-     *
-     * Every step with its `done` flag, the `fields` to send and the `action`
-     * (HTTP method and path) that completes it. Steps, in order: `city`,
-     * `description`, `address`, `location` (lat and lng), `logo`, `cover`,
-     * `images` (at least one), `tags` (at least one) and `service` (at least
-     * one active service; create it through the service endpoints listed by
-     * `GET centers/{center}/service-types`).
-     *
-     * `missing` lists the keys of the steps still to do; `is_complete` is true
-     * when none is left. Any user assigned to the center can read it.
-     */
-    #[Response(status: 200, description: '`{data: {is_complete, completed_steps, total_steps, percentage, missing, steps: [{key, done, fields, action: {method, path}}]}}`.')]
-    #[Response(status: 401, description: 'Missing or invalid Bearer token.')]
-    #[Response(status: 403, description: 'The user is not assigned to this center, or the token is not scoped to it.')]
+    #[Endpoint('Show the profile completion', 'Steps in order: `city`, `description`, `address`, `location` (lat and lng), `logo`, `cover`, `images` (at least one), `tags` (at least one) and `service` (at least one active service). Any user assigned to the center can read it.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[ApiResponse(['data' => ['is_complete' => false, 'completed_steps' => 7, 'total_steps' => 9, 'percentage' => 78, 'missing' => ['images', 'service'], 'steps' => [['key' => 'city', 'done' => true, 'fields' => ['city_id'], 'action' => ['method' => 'PATCH', 'path' => '/api/v1/centers/8']], ['key' => 'images', 'done' => false, 'fields' => ['images'], 'action' => ['method' => 'PATCH', 'path' => '/api/v1/centers/8']]]]], 200, 'Completion state.')]
+    #[ResponseField('data.is_complete', 'boolean', 'True when no step is left.', example: false)]
+    #[ResponseField('data.completed_steps', 'integer', 'Steps done.', example: 7)]
+    #[ResponseField('data.total_steps', 'integer', 'All steps.', example: 9)]
+    #[ResponseField('data.percentage', 'integer', 'Completion percent (0-100).', example: 78)]
+    #[ResponseField('data.missing', 'string[]', 'Keys of the steps still to do.', example: ['images', 'service'])]
+    #[ResponseField('data.steps', 'object[]', 'Every step.')]
+    #[ResponseField('data.steps[].key', 'string', 'Step key.', enum: ['city', 'description', 'address', 'location', 'logo', 'cover', 'images', 'tags', 'service'], example: 'city')]
+    #[ResponseField('data.steps[].done', 'boolean', 'Whether the step is complete.', example: true)]
+    #[ResponseField('data.steps[].fields', 'string[]', 'Request fields that complete it.', example: ['city_id'])]
+    #[ResponseField('data.steps[].action', 'object', 'Endpoint that completes it: `method` and `path`.', example: ['method' => 'PATCH', 'path' => '/api/v1/centers/8'])]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Not assigned to this center, or the token lacks `center-access:{center}`.')]
     public function __invoke(Request $request, Center $center): JsonResponse
     {
         /** @var User $user */
