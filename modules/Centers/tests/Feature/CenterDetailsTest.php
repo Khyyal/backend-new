@@ -4,6 +4,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Centers\Database\Factories\CenterFactory;
 use Modules\Centers\Database\Factories\TagFactory;
 use Modules\Centers\Models\Center;
+use Modules\Promotions\Database\Factories\PromotionFactory;
 use Modules\Services\Database\Factories\PriceOptionFactory;
 use Modules\Services\Enums\ServiceType;
 use Modules\Services\Models\Resort;
@@ -61,6 +62,25 @@ test('resort start_price ignores add-ons', function (): void {
     $this->getJson("/api/v1/clients/centers/{$center->slug}")
         ->assertOk()
         ->assertJsonPath('data.services.0.start_price', 20000);
+});
+
+test('services show the discounted display_price while an automatic offer runs', function (): void {
+    $center = CenterFactory::new()->create(['status' => 'visible']);
+    $service = createCenterService($center, ActivationStatus::ACTIVE, [5000]);
+
+    $this->getJson("/api/v1/clients/centers/{$center->slug}")
+        ->assertOk()
+        ->assertJsonPath('data.services.0.display_price', null);
+
+    PromotionFactory::new()->active()->forCenter($center)->percentage(2000)->create();
+
+    $this->getJson("/api/v1/clients/centers/{$center->slug}")
+        ->assertOk()
+        ->assertJsonPath('data.services.0.id', $service->id)
+        ->assertJsonPath('data.services.0.start_price', 5000)
+        ->assertJsonPath('data.services.0.display_price.original', 5000)
+        ->assertJsonPath('data.services.0.display_price.discounted', 4000)
+        ->assertJsonPath('data.services.0.display_price.discount_amount', 1000);
 });
 
 test('returns distance_km when lat and lng are given', function (): void {

@@ -4,12 +4,16 @@ namespace Modules\Centers\Services;
 
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Modules\Centers\Models\Center;
-use Modules\Services\Enums\ServiceType;
+use Modules\Promotions\Contracts\ServicePriceDisplay;
 use Modules\Support\Enums\ActivationStatus;
 use Modules\Support\Support\Haversine;
 
 class CenterDetailsService
 {
+    public function __construct(
+        private readonly ServicePriceDisplay $priceDisplay,
+    ) {}
+
     /**
      * Find a visible center by slug with its active services overview.
      * Resort `start_price` is the minimum day price (add-ons excluded).
@@ -29,11 +33,7 @@ class CenterDetailsService
                 'media',
                 'services' => fn ($services) => $services
                     ->where('status', ActivationStatus::ACTIVE->value)
-                    ->withMin(['priceOptions as start_price' => fn ($prices) => $prices->where(
-                        fn ($scope) => $scope->whereNotNull('price_options.quantity')
-                            ->orWhere('services.type', '!=', ServiceType::Resort->value)
-                    ),
-                    ], 'price')
+                    ->withStartPrice()
                     ->with('media')
                     ->orderBy('id'),
             ]);
@@ -45,6 +45,10 @@ class CenterDetailsService
             );
         }
 
-        return $query->firstOrFail();
+        $center = $query->firstOrFail();
+
+        $center->setAttribute('service_display_prices', $this->priceDisplay->forServices($center->services));
+
+        return $center;
     }
 }
