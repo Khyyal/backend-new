@@ -26,7 +26,7 @@ Sign in with your email and password. Inactive users cannot sign in.
 
 ## Notifications
 
-The bell shows platform events (for example a new center registering). Mark one or all as read.
+The bell shows platform events (for example a new center registering). Mark one or all as read. Allow browser notifications when the panel asks to also get them as pop-ups while the panel is closed or in the background; signing out stops them on that browser.
 
 ## Lists
 

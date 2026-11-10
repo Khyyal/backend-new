@@ -29,6 +29,8 @@ Works only when `otp.dev.enabled` is on, the environment is `local`, `testing` o
 
 Register devices through `DeviceService::launch()` and link them on login with `attachTo()`. A device is unique per `(owner, identifier, platform)`. Invalid FCM tokens are **nulled, not deleted**.
 
+Platforms are `ios`, `android` and `web`. Admins (browsers in the panel) register with `POST admin/devices` (`launch()` with the system user as owner, idempotent) and remove one with `DELETE admin/devices/{deviceIdentifier}`. `POST admin/auth/logout` revokes the current token and, when `X-Device-Identifier` (or `device_identifier`) is sent, removes that device too, so pushes to `SystemUser::notifiableAdmins()` stop reaching a signed-out browser.
+
 ## Media
 
 Uploads go to `POST /api/v1/media` (the only endpoint that accepts several guards) and become **temporary uploads**. Attach client-supplied media only through `TemporaryMediaService::promote()` or `promoteMany()` (owner, expiry, lock, single use; `promoteMany` is all-or-nothing). Every media failure is reported as one 422 `InvalidTemporaryMediaException`. `DELETE media/{uuid}` removes an upload.

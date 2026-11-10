@@ -5,8 +5,10 @@ namespace Modules\Support\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Knuckles\Scribe\Attributes\Endpoint;
 use Knuckles\Scribe\Attributes\Group;
+use Knuckles\Scribe\Attributes\Header;
 use Knuckles\Scribe\Attributes\Response as ApiResponse;
 use Knuckles\Scribe\Attributes\ResponseField;
 use Knuckles\Scribe\Attributes\ResponseFromApiResource;
@@ -14,12 +16,16 @@ use Knuckles\Scribe\Attributes\Unauthenticated;
 use Modules\Support\Documentation\ApiExamples;
 use Modules\Support\Http\Requests\Admin\LoginRequest;
 use Modules\Support\Http\Resources\Admin\SystemUserResource;
+use Modules\Support\Services\DeviceService;
 use Modules\Support\Services\SystemUserAuthService;
 
 #[Group('Admin / Auth', 'System user (admin panel) authentication with email and password.')]
 class AuthController extends Controller
 {
-    public function __construct(private readonly SystemUserAuthService $authService) {}
+    public function __construct(
+        private readonly SystemUserAuthService $authService,
+        private readonly DeviceService $deviceService,
+    ) {}
 
     #[Unauthenticated]
     #[Endpoint('Log in a system user', 'Checks email and password and issues a Sanctum bearer token for the `admin/*` routes. Inactive accounts cannot log in. Limited to 10 attempts per minute.')]
@@ -49,5 +55,23 @@ class AuthController extends Controller
     public function me(Request $request): SystemUserResource
     {
         return new SystemUserResource($request->user());
+    }
+
+    #[Endpoint('Log out the system user', 'Revokes the bearer token used for this request. When a device identifier is sent (header or body), that device is removed too so it stops receiving push notifications.')]
+    #[Header('X-Device-Identifier', 'Optional device ID registered via `POST /api/v1/admin/devices`.', example: 'b3f1c2d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6')]
+    #[ApiResponse(status: 204, description: 'Logged out. Empty body.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    public function logout(Request $request): Response
+    {
+        $user = $request->user();
+        $deviceIdentifier = $this->deviceService->extractDeviceIdentifier($request);
+
+        if ($deviceIdentifier !== null) {
+            $this->deviceService->unregister($user, $deviceIdentifier);
+        }
+
+        $user->currentAccessToken()->delete();
+
+        return response()->noContent();
     }
 }

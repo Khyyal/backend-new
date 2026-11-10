@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Modules\Support\Http\Controllers\Admin\ActivityLogController;
 use Modules\Support\Http\Controllers\Admin\AuthController;
 use Modules\Support\Http\Controllers\Admin\CityController;
+use Modules\Support\Http\Controllers\Admin\DeviceController;
 use Modules\Support\Http\Controllers\Admin\LegalDocumentController;
 use Modules\Support\Http\Controllers\Admin\SystemPermissionController;
 use Modules\Support\Http\Controllers\Admin\SystemRoleController;
@@ -22,7 +23,19 @@ Route::prefix('admin')
                 Route::get('/me', [AuthController::class, 'me'])
                     ->middleware('auth:system_user')
                     ->name('me');
+
+                Route::post('/logout', [AuthController::class, 'logout'])
+                    ->middleware('auth:system_user')
+                    ->name('logout');
             });
+
+        Route::middleware('auth:system_user')->group(function () {
+            Route::post('devices', [DeviceController::class, 'store'])
+                ->middleware('throttle:30,1')
+                ->name('devices.store');
+            Route::delete('devices/{deviceIdentifier}', [DeviceController::class, 'destroy'])
+                ->name('devices.destroy');
+        });
 
         Route::middleware('auth:system_user')
             ->apiResource('cities', CityController::class);

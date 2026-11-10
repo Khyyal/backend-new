@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Centers\Models\User;
 use Modules\Support\Database\Seeders\SystemRolePermissionSeeder;
+use Modules\Support\Models\Device;
 use Modules\Support\Models\SystemUser;
 use Tests\TestCase;
 
@@ -76,4 +77,23 @@ test('a center user token cannot access me', function () {
     $token = $centerUser->createToken('test')->plainTextToken;
 
     $this->withToken($token)->getJson('/api/v1/admin/auth/me')->assertUnauthorized();
+});
+
+test('logout revokes the current token and removes the sent device', function () {
+    $user = SystemUser::factory()->create();
+    $token = $user->createToken('test')->plainTextToken;
+    Device::factory()->ownedBy($user)->create(['device_identifier' => 'browser-1']);
+    $keptDevice = Device::factory()->ownedBy($user)->create(['device_identifier' => 'browser-2']);
+
+    $this->withToken($token)
+        ->withHeader('X-Device-Identifier', 'browser-1')
+        ->postJson('/api/v1/admin/auth/logout')
+        ->assertNoContent();
+
+    expect($user->tokens()->count())->toBe(0)
+        ->and($user->devices()->pluck('id')->all())->toBe([$keptDevice->id]);
+});
+
+test('logout requires authentication', function () {
+    $this->postJson('/api/v1/admin/auth/logout')->assertUnauthorized();
 });
