@@ -12,6 +12,7 @@ use Modules\Purchase\Enums\PurchaseChannel;
 use Modules\Purchase\Enums\PurchaseSource;
 use Modules\Purchase\Enums\PurchaseStatus;
 use Modules\Purchase\Models\Purchase;
+use Modules\Purchase\Services\AdminPurchaseQuery;
 
 #[QueryParam('center_id', 'integer', 'Only this center.', required: false, example: 8)]
 #[QueryParam('client_id', 'integer', 'Only this client.', required: false, example: 77)]
@@ -24,6 +25,7 @@ use Modules\Purchase\Models\Purchase;
 #[QueryParam('service_id', 'integer', 'Purchases with a reservation or package of this service.', required: false, example: 31)]
 #[QueryParam('from', 'string', 'Created on or after, `Y-m-d`.', required: false, example: '2026-05-01')]
 #[QueryParam('to', 'string', 'Created on or before, `Y-m-d`.', required: false, example: '2026-05-31')]
+#[QueryParam('sort', 'string', 'Sort column; prefix `-` for descending. Default newest first.', required: false, enum: AdminPurchaseQuery::SORTS, example: '-total_amount')]
 #[QueryParam('per_page', 'integer', 'Items per page, 1-100. Default 25.', required: false, example: 25)]
 #[QueryParam('page', 'integer', 'Page number (1-based).', required: false, example: 1)]
 class ListPurchasesRequest extends FormRequest
@@ -55,6 +57,7 @@ class ListPurchasesRequest extends FormRequest
             /** Inclusive range on the purchase creation date (`Y-m-d`). */
             'from' => ['sometimes', 'date_format:Y-m-d'],
             'to' => ['sometimes', 'date_format:Y-m-d', 'after_or_equal:from'],
+            'sort' => ['sometimes', 'nullable', Rule::in(AdminPurchaseQuery::SORTS)],
             'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
         ];
     }

@@ -14,6 +14,7 @@ use Modules\Centers\Events\CenterCreated;
 use Modules\Centers\Models\Center;
 use Modules\Centers\Models\User;
 use Modules\Support\Enums\ActivationStatus;
+use Modules\Support\Support\ListSort;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
 
@@ -64,26 +65,7 @@ class CenterAdminService
             ->when($filters['city_id'] ?? null, fn (Builder $query, int $cityId) => $query->where('city_id', $cityId))
             ->when($filters['from'] ?? null, fn (Builder $query, string $date) => $query->whereDate('created_at', '>=', $date))
             ->when($filters['to'] ?? null, fn (Builder $query, string $date) => $query->whereDate('created_at', '<=', $date))
-            ->tap(fn (Builder $query) => $this->applySort($query, $filters['sort'] ?? null));
-    }
-
-    /**
-     * Orders by one of SORTS, with id as a tiebreaker in the same direction so
-     * pages stay stable; newest first when no sort is given.
-     *
-     * @param  Builder<Center>  $query
-     */
-    private function applySort(Builder $query, ?string $sort): void
-    {
-        if ($sort === null || $sort === '') {
-            $query->latest('id');
-
-            return;
-        }
-
-        $direction = str_starts_with($sort, '-') ? 'desc' : 'asc';
-
-        $query->orderBy(ltrim($sort, '-'), $direction)->orderBy('id', $direction);
+            ->tap(fn (Builder $query) => ListSort::apply($query, $filters['sort'] ?? null, ['name' => 'name', 'created_at' => 'created_at', 'points' => 'points'], fn (Builder $query) => $query->latest('id')));
     }
 
     /**

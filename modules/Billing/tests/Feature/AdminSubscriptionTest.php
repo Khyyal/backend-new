@@ -141,3 +141,17 @@ test('invalid changes are rejected', function (): void {
     $this->postJson($url, ['plan_id' => $current->id, 'payment_mode' => 'required'])->assertUnprocessable()->assertJsonValidationErrors('plan_id');
     $this->postJson($url, ['plan_id' => $current->id, 'payment_mode' => 'bogus'])->assertUnprocessable()->assertJsonValidationErrors('payment_mode');
 });
+
+test('admin sorts subscriptions by start or end date and rejects unknown sorts', function (): void {
+    $endsLate = SubscriptionFactory::new()->forCenter($this->center)->active()->create(['starts_at' => '2026-01-01 00:00:00', 'ends_at' => '2026-12-01 00:00:00']);
+    $endsSoon = SubscriptionFactory::new()->forCenter(CenterFactory::new()->create())->active()->create(['starts_at' => '2026-02-01 00:00:00', 'ends_at' => '2026-03-01 00:00:00']);
+
+    $this->actingAs($this->admin, 'system_user');
+    $ids = fn (string $sort): array => collect($this->getJson("/api/v1/admin/subscriptions?sort={$sort}")->assertOk()->json('data'))->pluck('id')->all();
+
+    expect($ids('ends_at'))->toBe([$endsSoon->id, $endsLate->id])
+        ->and($ids('-ends_at'))->toBe([$endsLate->id, $endsSoon->id])
+        ->and($ids('starts_at'))->toBe([$endsLate->id, $endsSoon->id]);
+
+    $this->getJson('/api/v1/admin/subscriptions?sort=status')->assertUnprocessable()->assertJsonValidationErrors('sort');
+});

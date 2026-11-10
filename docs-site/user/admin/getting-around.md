@@ -32,6 +32,8 @@ The bell shows platform events (for example a new center registering). Mark one 
 
 Lists are paged and can be searched and filtered. Large lists can be exported to a spreadsheet; see [Analytics and exports](./analytics).
 
+On the centers, clients, purchases, subscriptions, payouts and center ledger lists, a column header with arrows can be clicked to sort by it: once for ascending, again for descending, and a third time to go back to newest first. The sort stays when you change filters, and exports keep the same order.
+
 ## The documentation
 
 Staff with the **API docs** permission can also open these guides and the technical endpoint reference. Use **Sign out** in the top bar when you are done.

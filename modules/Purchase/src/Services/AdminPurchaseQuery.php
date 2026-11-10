@@ -8,6 +8,7 @@ use Modules\Clients\Models\Client;
 use Modules\Purchase\Models\Purchase;
 use Modules\Reservations\Models\ClientPackage;
 use Modules\Reservations\Models\Reservation;
+use Modules\Support\Support\ListSort;
 
 /**
  * Platform-wide client purchases filtered like the admin purchase list, shared
@@ -16,9 +17,14 @@ use Modules\Reservations\Models\Reservation;
 class AdminPurchaseQuery
 {
     /**
-     * Newest first, with a unique tie-breaker so exports can page through it.
+     * Accepted `sort` values; a `-` prefix means descending.
+     */
+    public const SORTS = ['created_at', '-created_at', 'total_amount', '-total_amount'];
+
+    /**
+     * Newest first unless `sort` is given, always with a unique tie-breaker so exports can page through it.
      *
-     * @param  array{center_id?: int, client_id?: int, q?: string|null, status?: string, source?: string, channel?: string, payment_method?: string, payment_status?: string, service_id?: int, from?: string, to?: string}  $filters
+     * @param  array{center_id?: int, client_id?: int, q?: string|null, status?: string, source?: string, channel?: string, payment_method?: string, payment_status?: string, service_id?: int, from?: string, to?: string, sort?: string|null}  $filters
      * @return Builder<Purchase>
      */
     public function build(array $filters): Builder
@@ -47,7 +53,9 @@ class AdminPurchaseQuery
             ->when($filters['to'] ?? null, fn (Builder $query, string $date) => $query->whereDate('created_at', '<=', $date))
             ->with(['buyer', 'merchant', 'latestPayment', 'fee'])
             ->withCount('items')
-            ->latest()
-            ->latest('id');
+            ->tap(fn (Builder $query) => ListSort::apply($query, $filters['sort'] ?? null, [
+                'created_at' => 'created_at',
+                'total_amount' => 'total_amount',
+            ], fn (Builder $query) => $query->latest()->latest('id')));
     }
 }

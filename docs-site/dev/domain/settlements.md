@@ -40,3 +40,5 @@ A system user with `payouts.manage` marks a payout paid or cancels it. `CenterPa
 |---|---|
 | Center | `centers/{center}/balance`, `payout-account` (set by the primary user), `payouts`, `payouts/{payout}`, ledger-related exports |
 | Admin | `admin/payouts`, `admin/payouts/{payout}`, `payouts/{payout}/mark-paid`, `payouts/{payout}/cancel`, `admin/centers/{center}/ledger`, `ledger/export` |
+
+Admin lists take `sort`, `-` for descending, newest first without it ([List sorting](../conventions/coding#list-sorting)): `admin/payouts` accepts `CenterPayoutController::SORTS` (`created_at`, `amount`, `period_end`, `entries_count`); the ledger and its export accept `CenterLedgerQuery::SORTS` (`created_at`, `amount`, `available_at`).

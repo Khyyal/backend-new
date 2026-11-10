@@ -21,15 +21,22 @@ use Modules\Settlements\Http\Resources\CenterPayoutResource;
 use Modules\Settlements\Models\CenterPayout;
 use Modules\Settlements\Services\CenterPayoutStateService;
 use Modules\Support\Documentation\ApiExamples;
+use Modules\Support\Support\ListSort;
 
 #[Group('Admin / Payouts', 'Weekly payouts of what the platform owes centers. Every Sunday 00:00 UTC a pending payout is created per center for its ledger entries past the hold period; finance transfers it and marks it paid. Amounts are halalas. Requires `payouts.manage`.')]
 class CenterPayoutController extends Controller
 {
+    /**
+     * Accepted `sort` values of the payout list; a `-` prefix means descending.
+     */
+    public const SORTS = ['created_at', '-created_at', 'amount', '-amount', 'period_end', '-period_end', 'entries_count', '-entries_count'];
+
     public function __construct(private CenterPayoutStateService $state) {}
 
-    #[Endpoint('List payouts', 'Newest first, paginated.')]
+    #[Endpoint('List payouts', 'Newest first unless `sort` is given, paginated.')]
     #[QueryParam('status', 'string', 'Only this status.', required: false, enum: CenterPayoutStatus::class, example: 'pending')]
     #[QueryParam('center_id', 'integer', 'Only this center.', required: false, example: 8)]
+    #[QueryParam('sort', 'string', 'Sort column; prefix `-` for descending. Default newest first.', required: false, enum: self::SORTS, example: '-amount')]
     #[QueryParam('page', 'integer', 'Page number (1-based).', required: false, example: 1)]
     #[QueryParam('per_page', 'integer', 'Items per page, 1-100. Default 15.', required: false, example: 15)]
     #[ResponseFromApiResource(CenterPayoutResource::class, CenterPayout::class, status: 200, description: 'Paginated payouts.', paginate: 15, with: ['center'])]
@@ -43,13 +50,19 @@ class CenterPayoutController extends Controller
         $validated = $request->validate([
             'status' => ['sometimes', Rule::enum(CenterPayoutStatus::class)],
             'center_id' => ['sometimes', 'integer'],
+            'sort' => ['sometimes', 'nullable', Rule::in(self::SORTS)],
         ]);
 
         $payouts = CenterPayout::query()
             ->with('center')
             ->when(isset($validated['status']), fn ($query) => $query->where('status', $validated['status']))
             ->when(isset($validated['center_id']), fn ($query) => $query->where('center_id', $validated['center_id']))
-            ->latest('id')
+            ->tap(fn ($query) => ListSort::apply($query, $validated['sort'] ?? null, [
+                'created_at' => 'created_at',
+                'amount' => 'amount',
+                'period_end' => 'period_end',
+                'entries_count' => 'entries_count',
+            ], fn ($query) => $query->latest('id')))
             ->paginate(min(100, max(1, $request->integer('per_page', 15))));
 
         return CenterPayoutResource::collection($payouts);

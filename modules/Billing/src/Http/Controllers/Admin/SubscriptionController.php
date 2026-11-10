@@ -29,7 +29,7 @@ use Modules\Support\Documentation\ApiExamples;
 #[Group('Admin / Subscriptions', 'Center subscriptions across the platform. Requires `subscriptions.view_any` (view) or `subscriptions.change` (change).')]
 class SubscriptionController extends Controller
 {
-    #[Endpoint('List subscriptions', 'Newest first, paginated, each with its plan and center.')]
+    #[Endpoint('List subscriptions', 'Newest first unless `sort` is given, paginated, each with its plan and center.')]
     #[ResponseFromApiResource(AdminSubscriptionResource::class, Subscription::class, status: 200, description: 'Paginated subscriptions.', paginate: 25)]
     #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
     #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `subscriptions.view_any`.')]

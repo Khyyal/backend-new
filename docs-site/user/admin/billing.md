@@ -10,7 +10,7 @@ Create and edit plans under **Plans**, switch a plan on or off, and attach **fea
 
 ## Subscriptions
 
-**Subscriptions** lists every center's subscription. You can also change a center's subscription from its page. Centers can subscribe and cancel on their own from the dashboard (see [Center overview](../center/overview)).
+**Subscriptions** lists every center's subscription; sort it by **Starts** or **Ends**. You can also change a center's subscription from its page. Centers can subscribe and cancel on their own from the dashboard (see [Center overview](../center/overview)).
 
 | Status | Meaning |
 |---|---|

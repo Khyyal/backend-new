@@ -70,3 +70,5 @@ Client requests take the channel from the `X-Channel` header and may not send `c
 ## Admin and center views
 
 `admin/purchases` and `centers/{center}/purchases` list and show purchases and export them. Admins also get `admin/purchases/{purchase}/financials`. Center users see purchases according to their [permissions](../conventions/permissions).
+
+`admin/purchases` and its export take `sort` (`AdminPurchaseQuery::SORTS`): `created_at` or `total_amount`, `-` for descending; newest first without it. See [List sorting](../conventions/coding#list-sorting).

@@ -30,7 +30,7 @@ use Symfony\Component\HttpFoundation\Response as HttpStatus;
 #[Group('Admin / Clients', 'Every client across all centers. Requires the matching `clients.*` permission.')]
 class ClientController extends Controller
 {
-    #[Endpoint('List clients', 'All centers, newest first, paginated, with activity counts. Soft-deleted clients are excluded.')]
+    #[Endpoint('List clients', 'All centers, newest first unless `sort` is given, paginated, with activity counts. Soft-deleted clients are excluded.')]
     #[ResponseFromApiResource(ClientResource::class, Client::class, status: 200, description: 'Paginated clients.', paginate: 15, with: ['city'], withCount: ['centers', 'reservations', 'packages', 'memberships'])]
     #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
     #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `clients.view_any`.')]

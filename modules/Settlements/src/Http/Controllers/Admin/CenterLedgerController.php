@@ -34,7 +34,7 @@ use Symfony\Component\HttpFoundation\Response as HttpStatus;
 #[Group('Admin / Payouts', 'Center ledgers and purchase money splits. Requires `payouts.manage` (`payouts.export` to export).')]
 class CenterLedgerController extends Controller
 {
-    #[Endpoint('Show a center ledger', 'Every movement of the center balance, newest first, paginated, with the balance summary in `meta.balance`.')]
+    #[Endpoint('Show a center ledger', 'Every movement of the center balance, newest first unless `sort` is given, paginated, with the balance summary in `meta.balance`.')]
     #[UrlParam('center', 'integer', 'Center ID.', example: 8)]
     #[ResponseFromApiResource(CenterLedgerEntryResource::class, CenterLedgerEntry::class, status: 200, description: 'Paginated entries; `meta.balance` has the summary.', paginate: 25)]
     #[ResponseField('meta.balance.available', 'integer', 'Goes into the next weekly payout, in halalas (negative carries forward).', example: 812500)]
