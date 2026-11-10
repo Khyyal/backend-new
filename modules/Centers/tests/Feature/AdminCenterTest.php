@@ -59,6 +59,28 @@ test('lists centers with filters', function (): void {
         ->assertOk()->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $this->center->id);
 });
 
+test('sorts centers by the requested column and direction', function (): void {
+    $alpha = CenterFactory::new()->create(['name' => 'Alpha stable', 'points' => 50]);
+    $zulu = CenterFactory::new()->create(['name' => 'Zulu stable', 'points' => 10]);
+
+    $this->actingAs($this->admin, 'system_user')->getJson($this->base)
+        ->assertOk()->assertJsonPath('data.0.id', $zulu->id);
+
+    $this->actingAs($this->admin, 'system_user')->getJson("{$this->base}?sort=name")
+        ->assertOk()->assertJsonPath('data.0.id', $alpha->id)->assertJsonPath('data.2.id', $zulu->id);
+
+    $this->actingAs($this->admin, 'system_user')->getJson("{$this->base}?sort=-name")
+        ->assertOk()->assertJsonPath('data.0.id', $zulu->id)->assertJsonPath('data.2.id', $alpha->id);
+
+    $this->actingAs($this->admin, 'system_user')->getJson("{$this->base}?sort=-points")
+        ->assertOk()->assertJsonPath('data.0.id', $alpha->id);
+});
+
+test('rejects an unknown sort', function (): void {
+    $this->actingAs($this->admin, 'system_user')->getJson("{$this->base}?sort=email")
+        ->assertUnprocessable()->assertJsonValidationErrors('sort');
+});
+
 test('shows a center', function (): void {
     $this->actingAs($this->admin, 'system_user')->getJson("{$this->base}/{$this->center->id}")
         ->assertOk()->assertJsonPath('data.id', $this->center->id);

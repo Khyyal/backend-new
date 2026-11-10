@@ -35,7 +35,7 @@ class CenterController extends Controller
 {
     public function __construct(private readonly CenterAdminService $service) {}
 
-    #[Endpoint('List centers', 'Newest first, paginated. Filters are query parameters.')]
+    #[Endpoint('List centers', 'Paginated, newest first unless `sort` is given. Filters and sort are query parameters.')]
     #[ResponseFromApiResource(CenterResource::class, Center::class, status: 200, description: 'Paginated centers.', paginate: 15, with: ['city'])]
     #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
     #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `centers.view_any`.')]

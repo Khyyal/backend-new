@@ -22,6 +22,14 @@ Changing `state`, `status`, custom site or domain is admin-only. Clients only se
 
 See [Roles and permissions](../conventions/permissions).
 
+## Admin center list
+
+`GET admin/centers` (`centers.view_any`) is built by `CenterAdminService::query()`, which `POST admin/centers/export` reuses, so both take the same filters (`search` on name, contact phone and email; `status`, `state`, `city_id`, `from`/`to` on the creation date) and the same `sort`.
+
+- `sort` is one of `CenterAdminService::SORTS`: `name`, `created_at` or `points`, with a `-` prefix for descending (`-points`). Ties are broken by `id` in the same direction.
+- Without `sort` the list is newest first (`id` descending). Any other value is a 422.
+- `CenterResource` includes `created_at` (ISO-8601) so the panel can show and sort by the creation date.
+
 ## Client-facing endpoints
 
 | Endpoint | Notes |

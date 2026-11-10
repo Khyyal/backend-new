@@ -8,6 +8,7 @@ use Knuckles\Scribe\Attributes\BodyParam;
 use Modules\Centers\Enums\CenterState;
 use Modules\Centers\Enums\CenterStatus;
 use Modules\Centers\Models\Center;
+use Modules\Centers\Services\CenterAdminService;
 
 /**
  * Same filters as the admin center list.
@@ -18,6 +19,7 @@ use Modules\Centers\Models\Center;
 #[BodyParam('city_id', 'integer', 'Only centers of this city.', required: false, example: 1)]
 #[BodyParam('from', 'string', 'Created on or after this day, `Y-m-d`.', required: false, example: '2026-05-01')]
 #[BodyParam('to', 'string', 'Created on or before this day, `Y-m-d`, not before `from`.', required: false, example: '2026-05-31')]
+#[BodyParam('sort', 'string', 'Row order, as in the list; prefix `-` for descending. Default newest first.', required: false, enum: CenterAdminService::SORTS, example: 'name')]
 class ExportCentersRequest extends ListCentersRequest
 {
     public function authorize(): bool

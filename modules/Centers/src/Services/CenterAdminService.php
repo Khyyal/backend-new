@@ -25,12 +25,17 @@ class CenterAdminService
 {
     private const ATTRIBUTES = ['city_id', 'status', 'state', 'custom_site_enabled', 'domain'];
 
+    /**
+     * Accepted `sort` values for the admin list and export; a `-` prefix means descending.
+     */
+    public const SORTS = ['name', '-name', 'created_at', '-created_at', 'points', '-points'];
+
     private const CREATE_ATTRIBUTES = ['name', 'city_id', 'description', 'lat', 'lng', 'address', 'contact_phone', 'email', 'custom_site_enabled', 'domain', 'status', 'state'];
 
     public function __construct(private readonly CenterUpdateService $updateService) {}
 
     /**
-     * @param  array{search?: ?string, status?: ?string, state?: ?string, city_id?: ?int}  $filters
+     * @param  array{search?: ?string, status?: ?string, state?: ?string, city_id?: ?int, sort?: ?string}  $filters
      */
     public function paginate(array $filters, int $perPage = 15): LengthAwarePaginator
     {
@@ -40,10 +45,10 @@ class CenterAdminService
     }
 
     /**
-     * Centers filtered like the admin center list, newest first. Shared by the
-     * list endpoint and the centers export.
+     * Centers filtered and sorted like the admin center list (newest first when
+     * no `sort` is given). Shared by the list endpoint and the centers export.
      *
-     * @param  array{search?: string|null, status?: string|null, state?: string|null, city_id?: int|null, from?: string, to?: string}  $filters
+     * @param  array{search?: string|null, status?: string|null, state?: string|null, city_id?: int|null, from?: string, to?: string, sort?: string|null}  $filters
      * @return Builder<Center>
      */
     public function query(array $filters): Builder
@@ -59,7 +64,26 @@ class CenterAdminService
             ->when($filters['city_id'] ?? null, fn (Builder $query, int $cityId) => $query->where('city_id', $cityId))
             ->when($filters['from'] ?? null, fn (Builder $query, string $date) => $query->whereDate('created_at', '>=', $date))
             ->when($filters['to'] ?? null, fn (Builder $query, string $date) => $query->whereDate('created_at', '<=', $date))
-            ->latest('id');
+            ->tap(fn (Builder $query) => $this->applySort($query, $filters['sort'] ?? null));
+    }
+
+    /**
+     * Orders by one of SORTS, with id as a tiebreaker in the same direction so
+     * pages stay stable; newest first when no sort is given.
+     *
+     * @param  Builder<Center>  $query
+     */
+    private function applySort(Builder $query, ?string $sort): void
+    {
+        if ($sort === null || $sort === '') {
+            $query->latest('id');
+
+            return;
+        }
+
+        $direction = str_starts_with($sort, '-') ? 'desc' : 'asc';
+
+        $query->orderBy(ltrim($sort, '-'), $direction)->orderBy('id', $direction);
     }
 
     /**
