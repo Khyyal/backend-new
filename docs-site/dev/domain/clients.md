@@ -28,3 +28,5 @@ A client **needs onboarding** while `first_name` or `last_name` is null. `PUT cl
 ## Admin
 
 `admin/clients` (list, show, search, export) with `clients.view_any`, `clients.view` and `clients.export`.
+
+`POST admin/clients/{client}/otp` with `otps.create` issues a login code for the client and returns it once, without an SMS. See [Support: OTP](./support#admin-issued-codes).

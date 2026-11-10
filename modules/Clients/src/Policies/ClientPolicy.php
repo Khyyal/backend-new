@@ -30,4 +30,12 @@ class ClientPolicy
     {
         return $user->hasPermissionTo(SystemPermission::ViewClient);
     }
+
+    /**
+     * Issue a login OTP for the client (shown to the admin, no SMS).
+     */
+    public function createOtp(SystemUser $user, Client $client): bool
+    {
+        return $user->hasPermissionTo(SystemPermission::CreateOtp);
+    }
 }

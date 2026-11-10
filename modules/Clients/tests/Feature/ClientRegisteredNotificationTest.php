@@ -17,13 +17,13 @@ beforeEach(function (): void {
     $this->devPhone = '+966500000999';
     config()->set('otp.dev.enabled', true);
     config()->set('otp.dev.phones', [$this->devPhone]);
-    config()->set('otp.dev.code', '123456');
+    config()->set('otp.dev.code', '1234');
 
     $this->admin = SystemUserFactory::new()->create();
     $this->inactiveAdmin = SystemUserFactory::new()->inactive()->create();
     $this->verify = fn () => $this->postJson('/api/v1/clients/auth/verify', [
         'phone_number' => $this->devPhone,
-        'code' => '123456',
+        'code' => '1234',
     ])->assertOk();
 });
 

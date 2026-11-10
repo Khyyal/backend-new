@@ -26,6 +26,10 @@ From a center you can open (and, with the right permission, edit) the same thing
 - **Ratings**
 - **Subscription**, social links and site theme
 
+## Generating a login code for a center user
+
+If someone on a center's team is not receiving the SMS, open the center, choose **Generate OTP**, and pick the user. You get a new 4-digit code to read to them. No SMS is sent, the code is shown only once, and it expires after 5 minutes. This needs the **otps.create** permission.
+
 ## Cities and tags
 
 Manage the **cities** (with their coverage radius) and **tags** that centers choose from, under **Cities** and **Tags**.

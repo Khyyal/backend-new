@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Modules\Centers\Http\Controllers\Admin\CenterController;
+use Modules\Centers\Http\Controllers\Admin\CenterUserController;
 use Modules\Centers\Http\Controllers\Admin\TagController;
 use Modules\Centers\Http\Controllers\Center\BlockedClientController;
 use Modules\Centers\Http\Controllers\Center\PurchaseController;
@@ -19,6 +20,12 @@ Route::prefix('admin/centers')
         Route::match(['put', 'patch'], '/{center}/social-links', [CenterController::class, 'updateSocialLinks'])->name('social-links.update');
         Route::match(['put', 'patch'], '/{center}/site-theme', [CenterController::class, 'updateSiteTheme'])->name('site-theme.update');
         Route::delete('/{center}', [CenterController::class, 'destroy'])->name('destroy');
+
+        Route::get('/{center}/users', [CenterUserController::class, 'index'])->name('users.index');
+        Route::post('/{center}/users/{user}/otp', [CenterUserController::class, 'issueOtp'])
+            ->name('users.otp.store')
+            ->whereNumber('user')
+            ->middleware('throttle:10,1');
 
         Route::get('/{center}/ratings', [RatingController::class, 'index'])->name('ratings');
 

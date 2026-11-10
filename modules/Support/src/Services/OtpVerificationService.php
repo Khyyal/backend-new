@@ -2,6 +2,7 @@
 
 namespace Modules\Support\Services;
 
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Modules\Support\Models\OTP;
@@ -12,15 +13,16 @@ class OtpVerificationService
     public const DEFAULT_TTL_SECONDS = 300;
 
     private const SEND_MAX_ATTEMPTS = 5;
+
     private const SEND_DECAY_SECONDS = 900; // 15 minutes
 
     private const VERIFY_MAX_ATTEMPTS = 5;
+
     private const VERIFY_DECAY_SECONDS = 300; // 5 minutes
 
     public function __construct(
         private readonly SMSService $smsService,
-    ) {
-    }
+    ) {}
 
     /**
      * Generate and send an OTP.
@@ -61,6 +63,38 @@ class OtpVerificationService
             $phoneNumber,
             $code,
         );
+    }
+
+    /**
+     * Issue an OTP on behalf of a system user and return the plain code.
+     *
+     * Used by support staff to hand a code to a user who cannot receive the
+     * SMS: the code is stored hashed like any other, older unused codes are
+     * invalidated, and no SMS is sent. The user-facing send limiter is not
+     * applied (the admin route is throttled instead). A row is created even
+     * for development phones so the issued code is accepted by verify().
+     *
+     * @return array{code: string, expires_at: CarbonImmutable}
+     */
+    public function issue(
+        string $phoneNumber,
+        int $ttl = self::DEFAULT_TTL_SECONDS,
+    ): array {
+        $this->invalidatePreviousOtps($phoneNumber);
+
+        $code = $this->generateCode();
+        $expiresAt = CarbonImmutable::now()->addSeconds($ttl);
+
+        OTP::create([
+            'phone_number' => $phoneNumber,
+            'code' => Hash::make($code),
+            'expires_at' => $expiresAt,
+        ]);
+
+        return [
+            'code' => $code,
+            'expires_at' => $expiresAt,
+        ];
     }
 
     /**
@@ -116,7 +150,7 @@ class OtpVerificationService
     private function generateCode(): string
     {
         return str_pad(
-            (string) random_int(0, 999999),
+            (string) random_int(0, 9999),
             4,
             '0',
             STR_PAD_LEFT
@@ -226,7 +260,7 @@ class OtpVerificationService
      */
     private function sendRateLimitKey(string $phoneNumber): string
     {
-        return 'otp:send:' . $phoneNumber;
+        return 'otp:send:'.$phoneNumber;
     }
 
     /**
@@ -234,6 +268,6 @@ class OtpVerificationService
      */
     private function verifyRateLimitKey(string $phoneNumber): string
     {
-        return 'otp:verify:' . $phoneNumber;
+        return 'otp:verify:'.$phoneNumber;
     }
 }

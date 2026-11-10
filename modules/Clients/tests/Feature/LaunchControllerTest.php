@@ -13,7 +13,7 @@ beforeEach(function (): void {
     $this->app->instance(SMSService::class, Mockery::mock(SMSService::class));
 
     $this->devPhone = '+966500000999';
-    $this->devCode = '123456';
+    $this->devCode = '1234';
     config()->set('otp.dev.enabled', true);
     config()->set('otp.dev.phones', [$this->devPhone]);
     config()->set('otp.dev.code', $this->devCode);

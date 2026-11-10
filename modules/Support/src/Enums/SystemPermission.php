@@ -60,6 +60,8 @@ enum SystemPermission: string
     case ViewClient = 'clients.view';
     case ExportClients = 'clients.export';
 
+    case CreateOtp = 'otps.create';
+
     case ViewAnyPurchases = 'purchases.view_any';
     case ExportPurchases = 'purchases.export';
 

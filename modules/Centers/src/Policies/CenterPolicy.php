@@ -162,6 +162,15 @@ class CenterPolicy
     }
 
     /**
+     * Issue a login OTP for one of the center's users (shown to the admin,
+     * no SMS). System users only.
+     */
+    public function createOtp(User|SystemUser $user, Center $center): bool
+    {
+        return $this->systemUserCan($user, SystemPermission::CreateOtp);
+    }
+
+    /**
      * Center users: the primary user, or a user granted `promotions.manage`.
      * System users: denied; they manage promotions through the admin API.
      */
