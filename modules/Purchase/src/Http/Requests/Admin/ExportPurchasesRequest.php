@@ -11,6 +11,7 @@ use Modules\Purchase\Enums\PurchaseChannel;
 use Modules\Purchase\Enums\PurchaseSource;
 use Modules\Purchase\Enums\PurchaseStatus;
 use Modules\Purchase\Models\Purchase;
+use Modules\Purchase\Services\AdminPurchaseQuery;
 
 /**
  * Same filters as the admin purchase list.
@@ -26,6 +27,7 @@ use Modules\Purchase\Models\Purchase;
 #[BodyParam('service_id', 'integer', 'Purchases with a reservation or package of this service.', required: false, example: 31)]
 #[BodyParam('from', 'string', 'Created on or after, `Y-m-d`.', required: false, example: '2026-05-01')]
 #[BodyParam('to', 'string', 'Created on or before, `Y-m-d`.', required: false, example: '2026-05-31')]
+#[BodyParam('sort', 'string', 'Row order, as in the list; prefix `-` for descending. Default newest first.', required: false, enum: AdminPurchaseQuery::SORTS, example: '-total_amount')]
 class ExportPurchasesRequest extends ListPurchasesRequest
 {
     public function authorize(): bool

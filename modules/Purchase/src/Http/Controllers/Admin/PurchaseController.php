@@ -33,7 +33,7 @@ use Symfony\Component\HttpFoundation\Response as HttpStatus;
 #[Group('Admin / Purchases', 'Everything clients bought from centers. Purchases a center makes from the platform (subscriptions) are never listed. Requires `purchases.view_any`.')]
 class PurchaseController extends Controller
 {
-    #[Endpoint('List client purchases', 'Newest first, paginated (25 by default). `payment_method` and `payment_status` are those of the latest payment.')]
+    #[Endpoint('List client purchases', 'Newest first unless `sort` is given, paginated (25 by default). `payment_method` and `payment_status` are those of the latest payment.')]
     #[ResponseFromApiResource(PurchaseResource::class, Purchase::class, status: 200, description: 'Paginated purchases.', paginate: 25)]
     #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
     #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `purchases.view_any`.')]

@@ -29,4 +29,6 @@ A client **needs onboarding** while `first_name` or `last_name` is null. `PUT cl
 
 `admin/clients` (list, show, search, export) with `clients.view_any`, `clients.view` and `clients.export`.
 
+The list and export take `sort` (`AdminClientQuery::SORTS`): `name` (first, then last name), `created_at`, `centers_count` or `reservations_count`, `-` for descending; newest first without it. See [List sorting](../conventions/coding#list-sorting).
+
 `POST admin/clients/{client}/otp` with `otps.create` issues a login code for the client and returns it once, without an SMS. See [Support: OTP](./support#admin-issued-codes).

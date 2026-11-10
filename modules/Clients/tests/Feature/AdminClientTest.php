@@ -78,3 +78,17 @@ test('search finds clients by full name or phone number', function (): void {
     $this->getJson('/api/v1/admin/clients/search?q=a')->assertUnprocessable();
     $this->getJson('/api/v1/admin/clients?search=Aisha Salem')->assertOk()->assertJsonCount(1, 'data');
 });
+
+test('admin sorts clients by name or registration date and rejects unknown sorts', function (): void {
+    $omar = ClientFactory::new()->create(['first_name' => 'Omar', 'last_name' => 'Ali', 'created_at' => '2026-01-10 10:00:00']);
+    $aisha = ClientFactory::new()->create(['first_name' => 'Aisha', 'last_name' => 'Noor', 'created_at' => '2026-03-10 10:00:00']);
+
+    $this->actingAs($this->admin, 'system_user');
+    $ids = fn (string $sort): array => collect($this->getJson("/api/v1/admin/clients?sort={$sort}")->assertOk()->json('data'))->pluck('id')->all();
+
+    expect($ids('name'))->toBe([$aisha->id, $omar->id])
+        ->and($ids('-name'))->toBe([$omar->id, $aisha->id])
+        ->and($ids('created_at'))->toBe([$omar->id, $aisha->id]);
+
+    $this->getJson('/api/v1/admin/clients?sort=phone_number')->assertUnprocessable()->assertJsonValidationErrors('sort');
+});

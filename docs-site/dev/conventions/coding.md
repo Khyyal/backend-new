@@ -45,6 +45,10 @@ Each transition locks the row, re-checks the current status, and fires its event
 
 Attach client-supplied media only through `TemporaryMediaService::promote()` or `promoteMany()`. Never pass client ids to `MediaService::attach()`.
 
+## List sorting
+
+Admin lists that can be sorted take one `sort` query parameter: a key for ascending, `-key` for descending (`?sort=-amount`). Each list keeps its accepted values in a `SORTS` constant (validated with `Rule::in`) and applies them with `Modules\Support\Support\ListSort::apply()`, which maps keys to columns, adds the primary key in the same direction as a tiebreaker, and falls back to the list's default order (newest first) when `sort` is absent. A list and its export share one query, so the export follows the same sort.
+
 ## API documentation attributes
 
 Controllers and resources carry Scribe attributes (`#[Endpoint]`, `#[ResponseField]`, `#[ResponseFromApiResource]`). Update them when a response changes so the endpoint reference stays correct.

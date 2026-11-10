@@ -210,3 +210,23 @@ test('the primary user sets the payout account with a valid IBAN', function (): 
         ->assertOk()
         ->assertJsonPath('data.iban', 'SA4420000001234567891234');
 });
+
+test('admins sort payouts and ledger entries and unknown sorts are rejected', function (): void {
+    $smallPayout = CenterPayoutFactory::new()->create(['center_id' => $this->center->id, 'amount' => 1000, 'period_end' => '2026-11-01 00:00:00']);
+    $largePayout = CenterPayoutFactory::new()->create(['center_id' => $this->center->id, 'amount' => 50000]);
+    $credit = ($this->entry)(8000, '2026-11-01 00:00:00');
+    $debit = ($this->entry)(-500, '2026-11-05 00:00:00');
+
+    $this->actingAs($this->admin, 'system_user');
+    $ids = fn (string $url): array => collect($this->getJson($url)->assertOk()->json('data'))->pluck('id')->all();
+    $ledger = "/api/v1/admin/centers/{$this->center->id}/ledger";
+
+    expect($ids('/api/v1/admin/payouts?sort=-amount'))->toBe([$largePayout->id, $smallPayout->id])
+        ->and($ids('/api/v1/admin/payouts?sort=amount'))->toBe([$smallPayout->id, $largePayout->id])
+        ->and($ids("{$ledger}?sort=amount"))->toBe([$debit->id, $credit->id])
+        ->and($ids("{$ledger}?sort=-available_at"))->toBe([$debit->id, $credit->id])
+        ->and($ids("{$ledger}?sort=available_at"))->toBe([$credit->id, $debit->id]);
+
+    $this->getJson('/api/v1/admin/payouts?sort=status')->assertUnprocessable()->assertJsonValidationErrors('sort');
+    $this->getJson("{$ledger}?sort=type")->assertUnprocessable()->assertJsonValidationErrors('sort');
+});

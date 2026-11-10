@@ -1,6 +1,6 @@
 # Clients
 
-**Clients → list** shows every client on the platform. Search by name or phone, open a client to see their details, and export the list if you have the export permission.
+**Clients → list** shows every client on the platform. Search by name or phone, open a client to see their details, and export the list if you have the export permission. You can sort it by **Client** (name), **Centers**, **Reservations** or **Joined**; see [Lists](./getting-around#lists).
 
 ## How clients join
 

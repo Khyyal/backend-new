@@ -140,3 +140,19 @@ test('shows a client purchase with items and payments but hides center-to-platfo
 
     $this->getJson("{$this->url}/{$subscription->id}")->assertNotFound();
 });
+
+test('sorts by total or creation date and rejects unknown sorts', function (): void {
+    $center = CenterFactory::new()->create();
+    $client = ClientFactory::new()->create();
+    $small = centerPurchase($center, $client, ['total_amount' => 5000, 'created_at' => '2026-03-10 10:00:00']);
+    $large = centerPurchase($center, $client, ['total_amount' => 90000, 'created_at' => '2026-01-10 10:00:00']);
+
+    $this->actingAs($this->admin, 'system_user');
+    $ids = fn (string $sort): array => collect($this->getJson("{$this->url}?sort={$sort}")->assertOk()->json('data'))->pluck('id')->all();
+
+    expect($ids('-total_amount'))->toBe([$large->id, $small->id])
+        ->and($ids('total_amount'))->toBe([$small->id, $large->id])
+        ->and($ids('created_at'))->toBe([$large->id, $small->id]);
+
+    $this->getJson("{$this->url}?sort=status")->assertUnprocessable()->assertJsonValidationErrors('sort');
+});

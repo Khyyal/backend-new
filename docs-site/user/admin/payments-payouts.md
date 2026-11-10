@@ -2,7 +2,7 @@
 
 ## Purchases
 
-**Purchases** lists everything clients bought, across all centers. Open one to see its items, payments, discounts and **financials** (fee, platform subsidy and what the center earns). You can export the list.
+**Purchases** lists everything clients bought, across all centers. Open one to see its items, payments, discounts and **financials** (fee, platform subsidy and what the center earns). You can sort it by **Total** or **Date** and export the list.
 
 | Purchase status | Meaning |
 |---|---|
@@ -27,4 +27,4 @@ Every online payment adds to the center's **ledger**. After a hold period it bec
 
 Once a week (Sunday, 00:00 UTC) the platform creates one **pending payout** per center for its available balance. A center is skipped when its balance is zero or negative, or when it has **no bank account** set; its balance carries to the next run.
 
-Under **Payouts** you can open a payout, **mark it paid** after transferring the money (the center is notified), or **cancel** it. You can export a center's ledger from the center page.
+Under **Payouts** you can open a payout, **mark it paid** after transferring the money (the center is notified), or **cancel** it. You can sort payouts by **Amount**, **Entries** or **Period end**, and a center's ledger by **Amount** or **Payable from**. You can export a center's ledger from the center page.

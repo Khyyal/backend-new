@@ -5,6 +5,7 @@ namespace Modules\Settlements\Services;
 use Illuminate\Database\Eloquent\Builder;
 use Modules\Centers\Models\Center;
 use Modules\Settlements\Models\CenterLedgerEntry;
+use Modules\Support\Support\ListSort;
 
 /**
  * A center's ledger entries filtered like the admin ledger list. Shared by the
@@ -13,9 +14,14 @@ use Modules\Settlements\Models\CenterLedgerEntry;
 class CenterLedgerQuery
 {
     /**
-     * Newest first.
+     * Accepted `sort` values; a `-` prefix means descending.
+     */
+    public const SORTS = ['created_at', '-created_at', 'amount', '-amount', 'available_at', '-available_at'];
+
+    /**
+     * Newest first unless `sort` is given.
      *
-     * @param  array{type?: string, paid_out?: bool|string, from?: string, to?: string}  $filters
+     * @param  array{type?: string, paid_out?: bool|string, from?: string, to?: string, sort?: string|null}  $filters
      * @return Builder<CenterLedgerEntry>
      */
     public function build(Center $center, array $filters = []): Builder
@@ -28,6 +34,10 @@ class CenterLedgerQuery
                 : $query->whereNull('payout_id'))
             ->when($filters['from'] ?? null, fn (Builder $query, string $date) => $query->whereDate('created_at', '>=', $date))
             ->when($filters['to'] ?? null, fn (Builder $query, string $date) => $query->whereDate('created_at', '<=', $date))
-            ->latest('id');
+            ->tap(fn (Builder $query) => ListSort::apply($query, $filters['sort'] ?? null, [
+                'created_at' => 'created_at',
+                'amount' => 'amount',
+                'available_at' => 'available_at',
+            ], fn (Builder $query) => $query->latest('id')));
     }
 }
