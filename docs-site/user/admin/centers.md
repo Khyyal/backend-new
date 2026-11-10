@@ -15,6 +15,8 @@ Centers register themselves, or you can create one from **Centers → New**. Eac
 
 Only admins can change state, status, custom site and domain.
 
+The centers list shows the newest centers first. Click the **Center**, **Points** or **Created** column header to sort by it; click again to reverse the order, and a third time to go back to newest first. Filters and the sort are kept when you export the list.
+
 ## What you can open for a center
 
 From a center you can open (and, with the right permission, edit) the same things its team uses:
