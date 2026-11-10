@@ -33,7 +33,7 @@ return [
      * The disk on which to store added files and derived images by default. Choose
      * one or more of the disks you've configured in config/filesystems.php.
      */
-    'disk_name' => env('MEDIA_DISK', 'public'),
+    'disk_name' => env('MEDIA_DISK', 's3'),
 
     /*
      * The disk on which to store conversions (thumbnails, etc.) and responsive images
@@ -44,7 +44,7 @@ return [
      * This is useful when the originals live on a remote disk (e.g. S3) but the
      * generated derivatives should stay local for faster access and lower egress.
      */
-    'conversions_disk_name' => env('MEDIA_CONVERSIONS_DISK', null),
+    'conversions_disk_name' => env('MEDIA_CONVERSIONS_DISK', 's3'),
 
     /*
      * The maximum file size of an item in bytes.

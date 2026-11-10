@@ -2,15 +2,20 @@
 
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use Modules\Centers\Enums\CenterState;
 use Modules\Centers\Enums\CenterStatus;
 use Modules\Centers\Enums\CenterUserPermission;
 use Modules\Centers\Models\Center;
 use Modules\Centers\Models\User;
 use Spatie\Permission\PermissionRegistrar;
+
+require_once __DIR__.'/LegacySchema.php';
 
 uses(RefreshDatabase::class);
 
@@ -53,6 +58,16 @@ beforeEach(function (): void {
         $table->timestamps();
     });
 
+    $schema->create('images', function (Blueprint $table): void {
+        $table->id();
+        $table->string('filename');
+        $table->string('imageable_type')->nullable();
+        $table->unsignedBigInteger('imageable_id')->nullable();
+        $table->string('blur_hash')->nullable();
+        $table->integer('order')->default(0);
+        $table->timestamps();
+    });
+
     $schema->create('barn_managers', function (Blueprint $table): void {
         $table->id();
         $table->string('full_name');
@@ -85,19 +100,41 @@ beforeEach(function (): void {
         $table->timestamps();
     });
 
+    createLegacyServiceTables();
+
     $legacy = DB::connection('legacy');
     $at = '2024-10-01 10:00:00';
 
     $legacy->table('cities')->insert(['id' => 21, 'name_ar' => 'الرياض', 'name_en' => 'Riyadh', 'lat' => 24.77, 'lng' => 46.73, 'radius' => 150, 'created_at' => $at, 'updated_at' => $at]);
 
     $legacy->table('barns')->insert([
-        ['id' => 6, 'slug' => 'najd', 'name' => 'Najd', 'description' => null, 'city_id' => 21, 'location' => '{"lat":24.8260078,"lng":46.6575602}', 'zone' => 'Yasmin', 'active' => true, 'image' => null, 'contact_number' => '+966548791026', 'points' => 5, 'created_at' => $at, 'updated_at' => $at],
-        ['id' => 7, 'slug' => 'rf-stud', 'name' => 'R&F', 'description' => null, 'city_id' => 99, 'location' => null, 'zone' => '', 'active' => false, 'image' => null, 'contact_number' => null, 'points' => 0, 'created_at' => $at, 'updated_at' => $at],
+        ['id' => 6, 'slug' => 'najd', 'name' => 'Najd', 'description' => null, 'city_id' => 21, 'location' => '{"lat":24.8260078,"lng":46.6575602}', 'zone' => 'Yasmin', 'active' => true, 'image' => '/storage/images/logo.png', 'contact_number' => '+966548791026', 'points' => 5, 'created_at' => $at, 'updated_at' => $at],
+        ['id' => 7, 'slug' => 'rf-stud', 'name' => 'R&F', 'description' => null, 'city_id' => 99, 'location' => null, 'zone' => '', 'active' => false, 'image' => '/storage/images/gone.png', 'contact_number' => null, 'points' => 0, 'created_at' => $at, 'updated_at' => $at],
     ]);
 
     $legacy->table('barn_social_links')->insert([
         ['barn_id' => 6, 'type' => 'instagram', 'url' => 'https://instagram.com/najd', 'created_at' => $at, 'updated_at' => $at],
         ['barn_id' => 6, 'type' => 'myspace', 'url' => 'https://myspace.com/najd', 'created_at' => $at, 'updated_at' => $at],
+    ]);
+
+    Storage::fake('public');
+    Storage::fake('s3');
+
+    Http::preventStrayRequests();
+    Http::fake([
+        'https://app.khyyal.sa/storage/images/logo.png' => Http::response(UploadedFile::fake()->image('logo.png')->getContent()),
+        'https://app.khyyal.sa/storage/images/gone.png' => Http::response('Not Found', 404),
+    ]);
+
+    foreach (['first.jpg', 'second.jpg', 'service.jpg'] as $filename) {
+        Storage::disk('s3')->put("images/{$filename}", UploadedFile::fake()->image($filename)->getContent());
+    }
+
+    $legacy->table('images')->insert([
+        ['id' => 11, 'filename' => 'second.jpg', 'imageable_type' => 'App\\Models\\Barn', 'imageable_id' => 6, 'blur_hash' => 'hash-2', 'order' => 2],
+        ['id' => 12, 'filename' => 'first.jpg', 'imageable_type' => 'App\\Models\\Barn', 'imageable_id' => 6, 'blur_hash' => 'hash-1', 'order' => 1],
+        ['id' => 13, 'filename' => 'missing.jpg', 'imageable_type' => 'App\\Models\\Barn', 'imageable_id' => 6, 'blur_hash' => null, 'order' => 3],
+        ['id' => 14, 'filename' => 'service.jpg', 'imageable_type' => 'App\\Models\\Service', 'imageable_id' => 6, 'blur_hash' => null, 'order' => 0],
     ]);
 
     $legacy->table('barn_managers')->insert([
@@ -206,5 +243,65 @@ test('a dry run writes nothing', function (): void {
     $this->artisan('migrator:run', ['--dry-run' => true])->assertSuccessful();
 
     expect(DB::table('centers')->count())->toBe(0)
-        ->and(DB::table('center_users')->count())->toBe(0);
+        ->and(DB::table('center_users')->count())->toBe(0)
+        ->and(DB::table('media')->count())->toBe(0)
+        ->and(Storage::disk('public')->allFiles())->toBe([])
+        ->and(Storage::disk('s3')->allFiles())->toEqualCanonicalizing(['images/first.jpg', 'images/second.jpg', 'images/service.jpg']);
+});
+
+test('barn gallery images become center images in their legacy order', function (): void {
+    $this->artisan('migrator:centers')->assertSuccessful();
+
+    $images = Center::query()->findOrFail(6)->getMedia('images');
+
+    expect($images->map(fn ($media): array => [$media->file_name, $media->getCustomProperty('legacy_image_id'), $media->getCustomProperty('blur_hash')])->all())
+        ->toBe([['first.jpg', 12, 'hash-1'], ['second.jpg', 11, 'hash-2']])
+        ->and(Storage::disk('s3')->exists('images/first.jpg'))->toBeTrue()
+        ->and(Storage::disk('s3')->exists('images/second.jpg'))->toBeTrue()
+        ->and($images->pluck('disk')->unique()->all())->toBe(['s3']);
+});
+
+test('a missing gallery file is reported and the others still attach', function (): void {
+    $this->artisan('migrator:centers')
+        ->expectsOutputToContain('image #13 (images/missing.jpg) not found')
+        ->assertSuccessful();
+
+    expect(Center::query()->findOrFail(6)->getMedia('images'))->toHaveCount(2);
+});
+
+test('re-running does not duplicate gallery images', function (): void {
+    $this->artisan('migrator:centers')->assertSuccessful();
+    $this->artisan('migrator:centers')->assertSuccessful();
+
+    expect(Center::query()->findOrFail(6)->getMedia('images'))->toHaveCount(2);
+});
+
+test('barn logos are downloaded from the old server to s3 as the center logo', function (): void {
+    $this->artisan('migrator:centers')->assertSuccessful();
+
+    $logos = Center::query()->findOrFail(6)->getMedia('logo');
+    $logo = $logos->first();
+
+    expect($logos)->toHaveCount(1)
+        ->and($logo->disk)->toBe('s3')
+        ->and($logo->getCustomProperty('legacy_path'))->toBe('/storage/images/logo.png')
+        ->and($logo->file_name)->toBe('logo.png')
+        ->and(Storage::disk('s3')->exists($logo->getPathRelativeToRoot()))->toBeTrue();
+
+    Http::assertSent(fn ($request): bool => $request->url() === 'https://app.khyyal.sa/storage/images/logo.png');
+});
+
+test('a missing logo file is reported and the center keeps no logo', function (): void {
+    $this->artisan('migrator:centers')
+        ->expectsOutputToContain('logo https://app.khyyal.sa/storage/images/gone.png could not be downloaded (HTTP 404)')
+        ->assertSuccessful();
+
+    expect(Center::query()->findOrFail(7)->getMedia('logo'))->toBeEmpty();
+});
+
+test('re-running does not upload the logo again', function (): void {
+    $this->artisan('migrator:centers')->assertSuccessful();
+    $this->artisan('migrator:centers')->assertSuccessful();
+
+    expect(DB::table('media')->where(['model_id' => 6, 'collection_name' => 'logo'])->count())->toBe(1);
 });

@@ -3,6 +3,7 @@
 namespace Modules\Services\Concerns;
 
 use Illuminate\Contracts\Validation\Validator;
+use Modules\Support\Enums\ActivationStatus;
 
 /**
  * Package validation for a serviceable model. Packages hang off the service's price
@@ -25,6 +26,7 @@ trait HasPackages
             'packages.*.count' => ['required', 'integer', 'min:1'],
             'packages.*.price' => ['required', 'integer', 'min:0'],
             'packages.*.duration' => ['required', 'integer', 'min:1', 'max:120'],
+            'packages.*.status' => ['sometimes', 'string', 'in:'.ActivationStatus::ACTIVE->value.','.ActivationStatus::INACTIVE->value],
         ];
     }
 

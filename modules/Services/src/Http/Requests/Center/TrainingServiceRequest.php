@@ -31,6 +31,7 @@ use Modules\Services\Models\TrainingService;
 #[BodyParam('packages[].count', 'integer', 'Sessions in the package (min 1).', example: 8)]
 #[BodyParam('packages[].price', 'integer', 'Package price in halalas (min 0).', example: 100000)]
 #[BodyParam('packages[].duration', 'integer', 'Validity in months (1-120).', example: 3)]
+#[BodyParam('packages[].status', 'string', 'Inactive packages stay listed for the center but are hidden from clients and cannot be bought. Omitted: an existing package keeps its status, a new one is active.', required: false, enum: ['active', 'inactive'], example: 'active')]
 #[BodyParam('trainer_ids', 'integer[]', 'Full list of distinct trainer IDs of this center; omit to leave untouched.', required: false, example: [6, 7])]
 #[BodyParam('cover', 'string', 'UUID of a temporary upload (`POST /api/v1/media`) or the current cover; null removes it; omit to keep it.', required: false, nullable: true, example: '9b1d5f0e-3c1a-4b8e-a0f2-5b7c3e2d1a90')]
 #[BodyParam('images', 'string[]', 'Full gallery in display order (max 10 distinct UUIDs): existing ones are kept, new temporary uploads attached, omitted ones removed. Omit to keep the gallery.', required: false, example: ['2d3e4f5a-6b7c-4d8e-9f0a-1b2c3d4e5f6a'])]

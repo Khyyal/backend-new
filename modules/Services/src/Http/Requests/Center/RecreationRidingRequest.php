@@ -31,6 +31,7 @@ use Modules\Services\Models\Schedule;
 #[BodyParam('packages[].count', 'integer', 'Sessions in the package (min 1).', example: 8)]
 #[BodyParam('packages[].price', 'integer', 'Package price in halalas (min 0).', example: 100000)]
 #[BodyParam('packages[].duration', 'integer', 'Validity in months (1-120).', example: 3)]
+#[BodyParam('packages[].status', 'string', 'Inactive packages stay listed for the center but are hidden from clients and cannot be bought. Omitted: an existing package keeps its status, a new one is active.', required: false, enum: ['active', 'inactive'], example: 'active')]
 #[BodyParam('days', 'integer[]', 'Distinct weekdays (1-7 items), Carbon numbering 0 = Sunday … 6 = Saturday.', example: [0, 1, 2, 3, 4])]
 #[BodyParam('hours', 'string[]', 'Flat list of `HH:mm` start/end pairs (2-48 items) applied to every day in `days`; each end after its start.', required: true, example: ['09:00', '12:00', '16:00', '20:00'])]
 #[BodyParam('cover', 'string', 'UUID of a temporary upload (`POST /api/v1/media`) or the current cover; null removes it; omit to keep it.', required: false, nullable: true, example: '9b1d5f0e-3c1a-4b8e-a0f2-5b7c3e2d1a90')]

@@ -7,10 +7,12 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Modules\Services\Database\Factories\ServicePackageFactory;
+use Modules\Support\Enums\ActivationStatus;
 
 /**
  * A bundle of `count` sessions for `price`, valid for `duration` months, sold
- * on one price option of a service (at most one package per option).
+ * on one price option of a service (at most one package per option). Only
+ * ACTIVE packages are shown to clients and can be bought.
  */
 class ServicePackage extends Model
 {
@@ -24,6 +26,7 @@ class ServicePackage extends Model
         'count',
         'price',
         'duration',
+        'status',
     ];
 
     protected function casts(): array
@@ -32,12 +35,21 @@ class ServicePackage extends Model
             'count' => 'integer',
             'price' => 'integer',
             'duration' => 'integer',
+            'status' => ActivationStatus::class,
         ];
     }
 
     protected static function newFactory(): ServicePackageFactory
     {
         return ServicePackageFactory::new();
+    }
+
+    /**
+     * Whether clients can see and buy the package: active and not deleted.
+     */
+    public function isSellable(): bool
+    {
+        return $this->status === ActivationStatus::ACTIVE && ! $this->trashed();
     }
 
     public function service(): BelongsTo

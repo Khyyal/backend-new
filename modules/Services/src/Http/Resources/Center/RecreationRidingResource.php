@@ -37,6 +37,7 @@ class RecreationRidingResource extends JsonResource
     #[ResponseField('price_options[].package.count', 'integer', 'Sessions in the package.', example: 8)]
     #[ResponseField('price_options[].package.price', 'integer', 'Package price in halalas.', example: 100000)]
     #[ResponseField('price_options[].package.duration', 'integer', 'Validity in months.', example: 3)]
+    #[ResponseField('price_options[].package.status', 'string', 'Inactive packages are hidden from clients and cannot be bought.', enum: ['active', 'inactive'], example: 'active')]
     #[ResponseField('days', 'integer[]', 'Weekdays it runs, Carbon numbering (0 = Sunday … 6 = Saturday).', example: [0, 1, 2, 3, 4])]
     #[ResponseField('hours', 'string[]', 'Flat list of `HH:MM` start/end pairs applied to every day in `days`.', example: ['09:00', '12:00', '16:00', '20:00'])]
     #[ResponseField('cover', 'object', 'Cover image (`MediaResource`); null when none.', required: false, nullable: true)]
@@ -78,6 +79,7 @@ class RecreationRidingResource extends JsonResource
                     'count' => $option->package->count,
                     'price' => $option->package->price,
                     'duration' => $option->package->duration,
+                    'status' => $option->package->status,
                 ],
             ])->values(),
             'days' => $schedules->pluck('day_of_week')->unique()->values(),

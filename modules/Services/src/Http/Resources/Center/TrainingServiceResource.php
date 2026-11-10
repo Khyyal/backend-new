@@ -36,6 +36,7 @@ class TrainingServiceResource extends JsonResource
     #[ResponseField('price_options[].package.count', 'integer', 'Sessions in the package.', example: 8)]
     #[ResponseField('price_options[].package.price', 'integer', 'Package price in halalas.', example: 100000)]
     #[ResponseField('price_options[].package.duration', 'integer', 'Validity in months.', example: 3)]
+    #[ResponseField('price_options[].package.status', 'string', 'Inactive packages are hidden from clients and cannot be bought.', enum: ['active', 'inactive'], example: 'active')]
     #[ResponseField('trainers', 'object[]', 'Trainers teaching it.')]
     #[ResponseField('trainers[].id', 'integer', 'Trainer ID.', example: 6)]
     #[ResponseField('trainers[].name', 'string', 'Trainer name.', example: 'Fahad')]
@@ -75,6 +76,7 @@ class TrainingServiceResource extends JsonResource
                     'count' => $option->package->count,
                     'price' => $option->package->price,
                     'duration' => $option->package->duration,
+                    'status' => $option->package->status,
                 ],
             ])->values(),
             'trainers' => $this->resource->trainers

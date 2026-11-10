@@ -18,6 +18,7 @@ Changing `state`, `status`, custom site or domain is admin-only. Clients only se
 - Removing a user revokes their center tokens. A user with no centers left is soft-deleted.
 - Center login uses a phone OTP (`centers/auth/phone`, `centers/auth/phone/verify`); `POST centers/{center}/access` issues the center-scoped token and asks the primary user for their password again.
 - Admins list a center's users with `GET admin/centers/{center}/users` (`centers.view`), primary user first. With `otps.create`, `POST admin/centers/{center}/users/{user}/otp` issues a login code for one of them. See [Support: OTP](./support#admin-issued-codes).
+- Admins manage a center's users under `admin/centers/{center}/users` through `CenterUserManagementService::createByAdmin()`, `updateByAdmin()` and `removeByAdmin()`. Listing, showing and `GET …/users/permissions` need `centers.view`; adding, updating and removing need `centers.update` (`CenterPolicy::manageUsersAsAdmin`). Admins may grant any permission and may change a user's phone (unique across center users). A changed phone clears `phone_verified_at` and revokes every token of the account, which may serve other centers too. For the primary user admins can change only `name` and `phone`; it still cannot be removed.
 
 See [Roles and permissions](../conventions/permissions).
 

@@ -6,6 +6,7 @@ A **package** is a bundle of sessions for one service, bought once at a lower pr
 
 - Buy it from the service. It is **pending** until payment succeeds, then **active**.
 - Packages are always paid online, never on arrival.
+- A center can pause a package. A paused package is not shown and cannot be bought, but packages you already own keep working.
 - Book a session from your package. It is **confirmed immediately** and costs nothing more. Each booking uses one session.
 - When the sessions run out the package is **exhausted**. It also **expires** after its validity period, counted from when it became active.
 - A package linked to a trainer can only be used with that trainer.

@@ -100,14 +100,14 @@ class PurchaseMembership
     }
 
     /**
-     * Every included package is still sold, on an active service.
+     * Every included package is still sold (active, not deleted), on an active service.
      *
      * @throws ReservationNotAllowedException
      */
     private function ensurePackagesAvailable(Membership $membership): void
     {
         $unavailable = $membership->packages->isEmpty() || $membership->packages->contains(
-            fn (MembershipPackage $package): bool => $package->servicePackage->trashed()
+            fn (MembershipPackage $package): bool => ! $package->servicePackage->isSellable()
                 || $package->servicePackage->service?->status !== ActivationStatus::ACTIVE
         );
 

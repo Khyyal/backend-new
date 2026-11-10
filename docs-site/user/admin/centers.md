@@ -26,6 +26,16 @@ From a center you can open (and, with the right permission, edit) the same thing
 - **Ratings**
 - **Subscription**, social links and site theme
 
+## Managing a center's users
+
+The **Users** tab of a center lists its team: the primary user (the owner) first, then each staff member with their status, linked trainer and permissions. With the **centers.update** permission you can:
+
+- **Add** a user with a name, phone, linked trainer, status and any permissions. If the phone already has an account, that account is added and keeps its name.
+- **Edit** a user's name, phone, trainer, status and permissions. A new phone must be verified again and the user is signed out on every device.
+- **Remove** a user. They lose access to the center; an account left without any center is deleted.
+
+For the primary user you can only change the name and phone. The primary user always has every permission and cannot be removed.
+
 ## Generating a login code for a center user
 
 If someone on a center's team is not receiving the SMS, open the center, choose **Generate OTP**, and pick the user. You get a new 4-digit code to read to them. No SMS is sent, the code is shown only once, and it expires after 5 minutes. This needs the **otps.create** permission.

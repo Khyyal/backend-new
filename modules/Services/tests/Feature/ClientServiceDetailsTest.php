@@ -13,6 +13,7 @@ use Modules\Services\Database\Factories\MembershipFactory;
 use Modules\Services\Database\Factories\RecreationalRidingFactory;
 use Modules\Services\Database\Factories\ResortFactory;
 use Modules\Services\Database\Factories\ServiceFactory;
+use Modules\Services\Database\Factories\ServicePackageFactory;
 use Modules\Services\Database\Factories\TrainerFactory;
 use Modules\Services\Database\Factories\TrainingServiceFactory;
 use Modules\Services\Database\Factories\VisitFactory;
@@ -245,4 +246,19 @@ test('includes the event days in event details', function (): void {
             ['day' => '2026-10-25', 'available' => true, 'available_tickets' => 3, 'max_tickets' => 5],
             ['day' => '2026-10-26', 'available' => true, 'available_tickets' => 5, 'max_tickets' => 5],
         ]);
+});
+
+test('inactive packages are hidden from clients', function (): void {
+    $service = ServiceFactory::new()
+        ->forServiceable(RecreationalRidingFactory::new()->create(), ServiceType::RecreationRiding)
+        ->create(['center_id' => $this->center->id]);
+    $active = $service->priceOptions()->create(['quantity' => 30, 'price' => 100, 'unit' => 'minute']);
+    $inactive = $service->priceOptions()->create(['quantity' => 60, 'price' => 180, 'unit' => 'minute']);
+    ServicePackageFactory::new()->create(['price_option_id' => $active->id]);
+    ServicePackageFactory::new()->inactive()->create(['price_option_id' => $inactive->id]);
+
+    $options = collect($this->getJson(($this->url)($service))->assertOk()->json('data.details.price_options'))->keyBy('id');
+
+    expect($options[$active->id]['package'])->not->toBeNull()
+        ->and($options[$inactive->id]['package'])->toBeNull();
 });
