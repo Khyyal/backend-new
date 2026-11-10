@@ -16,6 +16,7 @@
         "laravel/octane": "^2.22",
         "laravel/sanctum": "^4.3",
         "laravel/tinker": "^3.0",
+        "league/flysystem-aws-s3-v3": "^3.35",
         "maatwebsite/excel": "^4.0",
         "spatie/laravel-activitylog": "^5.1",
         "spatie/laravel-medialibrary": "^11.23",
