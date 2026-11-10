@@ -17,6 +17,7 @@ Changing `state`, `status`, custom site or domain is admin-only. Clients only se
 - Other users get a list of `CenterUserPermission` values. A manager can only grant permissions they hold and cannot modify themselves.
 - Removing a user revokes their center tokens. A user with no centers left is soft-deleted.
 - Center login uses a phone OTP (`centers/auth/phone`, `centers/auth/phone/verify`); `POST centers/{center}/access` issues the center-scoped token and asks the primary user for their password again.
+- Admins list a center's users with `GET admin/centers/{center}/users` (`centers.view`), primary user first. With `otps.create`, `POST admin/centers/{center}/users/{user}/otp` issues a login code for one of them. See [Support: OTP](./support#admin-issued-codes).
 
 See [Roles and permissions](../conventions/permissions).
 

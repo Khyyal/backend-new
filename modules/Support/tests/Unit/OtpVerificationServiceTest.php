@@ -80,7 +80,7 @@ describe('send', function () {
 
     test('hits send rate limiter', function () {
         $phone = '+966500000001';
-        $key = 'otp:send:' . $phone;
+        $key = 'otp:send:'.$phone;
 
         $this->smsService->shouldReceive('sendOTP')->times(3);
 
@@ -95,7 +95,7 @@ describe('send', function () {
 
     test('throws TooManyRequestsHttpException after max send attempts', function () {
         $phone = '+966500000001';
-        $key = 'otp:send:' . $phone;
+        $key = 'otp:send:'.$phone;
 
         $this->smsService->shouldReceive('sendOTP')->times(5);
 
@@ -163,6 +163,7 @@ describe('send', function () {
             ->once()
             ->with($phone, Mockery::on(function ($code) use (&$capturedCode) {
                 $capturedCode = $code;
+
                 return true;
             }));
 
@@ -181,6 +182,7 @@ describe('send', function () {
             ->once()
             ->with($phone, Mockery::on(function ($code) use (&$capturedCode) {
                 $capturedCode = $code;
+
                 return true;
             }));
 
@@ -216,7 +218,7 @@ describe('verify', function () {
     test('clears verify rate limiter on successful verify', function () {
         $phone = '+966500000001';
         $code = '4321';
-        $key = 'otp:verify:' . $phone;
+        $key = 'otp:verify:'.$phone;
 
         OTP::create([
             'phone_number' => $phone,
@@ -254,7 +256,7 @@ describe('verify', function () {
 
     test('hits verify rate limiter on failed verification', function () {
         $phone = '+966500000001';
-        $key = 'otp:verify:' . $phone;
+        $key = 'otp:verify:'.$phone;
 
         OTP::create([
             'phone_number' => $phone,
@@ -356,7 +358,7 @@ describe('verify', function () {
     test('clears verify rate limiter on successful dev otp verify', function () {
         $devPhone = '+966500000999';
         $devCode = '123456';
-        $key = 'otp:verify:' . $devPhone;
+        $key = 'otp:verify:'.$devPhone;
 
         config()->set('otp.dev.enabled', true);
         config()->set('otp.dev.phones', [$devPhone]);
@@ -415,7 +417,7 @@ describe('verify', function () {
 
     test('ensure can verify blocks with TooManyRequestsHttpException after max attempts', function () {
         $phone = '+966500000001';
-        $key = 'otp:verify:' . $phone;
+        $key = 'otp:verify:'.$phone;
 
         for ($i = 0; $i < 10; $i++) {
             RateLimiter::hit($key, 300);
@@ -430,6 +432,58 @@ describe('verify', function () {
 
         $this->expectException(TooManyRequestsHttpException::class);
         $this->service->verify($phone, '4321');
+    });
+
+});
+
+describe('issue', function () {
+
+    test('creates a hashed 4-digit otp without sending an sms', function () {
+        $phone = '+966500000001';
+
+        $this->smsService->shouldNotReceive('sendOTP');
+
+        $issued = $this->service->issue($phone);
+
+        expect($issued['code'])->toMatch('/^\d{4}$/');
+        expect($issued['expires_at']->timestamp)->toBeGreaterThanOrEqual(
+            now()->addSeconds(OtpVerificationService::DEFAULT_TTL_SECONDS - 1)->timestamp
+        );
+
+        $otp = OTP::where('phone_number', $phone)->sole();
+        expect($otp->code)->not->toBe($issued['code']);
+        expect(Hash::check($issued['code'], $otp->code))->toBeTrue();
+    });
+
+    test('invalidates older codes and the issued code verifies', function () {
+        $phone = '+966500000001';
+        $this->smsService->shouldReceive('sendOTP')->once();
+        $this->service->send($phone);
+
+        $issued = $this->service->issue($phone);
+
+        expect(OTP::where('phone_number', $phone)->whereNull('verified_at')->count())->toBe(1);
+        expect($this->service->verify($phone, $issued['code']))->toBeTrue();
+    });
+
+    test('ignores the user-facing send limit', function () {
+        $phone = '+966500000001';
+        $this->smsService->shouldReceive('sendOTP')->times(5);
+        foreach (range(1, 5) as $attempt) {
+            $this->service->send($phone);
+        }
+
+        expect($this->service->issue($phone)['code'])->toMatch('/^\d{4}$/');
+    });
+
+    test('issued codes work for development phones too', function () {
+        config()->set('otp.dev.enabled', true);
+        config()->set('otp.dev.phones', ['0555555555']);
+        config()->set('otp.dev.code', '123456');
+
+        $issued = $this->service->issue('0555555555');
+
+        expect($this->service->verify('0555555555', $issued['code']))->toBeTrue();
     });
 
 });

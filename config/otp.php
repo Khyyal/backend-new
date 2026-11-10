@@ -7,7 +7,7 @@ return [
     'dev' => [
         'enabled' => env('OTP_DEV_ENABLED', false),
 
-        'code' => env('OTP_DEV_CODE', '123456'),
+        'code' => env('OTP_DEV_CODE', '1234'),
 
         'phones' => array_filter(
             array_map(

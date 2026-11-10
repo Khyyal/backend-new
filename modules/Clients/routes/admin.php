@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Modules\Clients\Http\Controllers\Admin\ClientController;
+use Modules\Clients\Http\Controllers\Admin\ClientOtpController;
 
 Route::prefix('admin/centers/{center}/clients')
     ->name('admin.centers.clients.')
@@ -18,4 +19,8 @@ Route::prefix('admin/clients')
         Route::post('/export', [ClientController::class, 'export'])->name('export');
         Route::get('/search', [ClientController::class, 'search'])->name('search');
         Route::get('/{client}', [ClientController::class, 'show'])->name('show')->whereNumber('client');
+        Route::post('/{client}/otp', [ClientOtpController::class, 'store'])
+            ->name('otp.store')
+            ->whereNumber('client')
+            ->middleware('throttle:10,1');
     });

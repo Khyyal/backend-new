@@ -10,6 +10,16 @@ All phone sign-in goes through `OtpVerificationService`.
 - A new send invalidates older unused codes. A successful verify consumes the code.
 - Limits: **5 sends per phone per 15 minutes**, **5 failed verifies per 5 minutes**.
 - Use the same phone string for send, verify and account lookup.
+- Codes are always **4 digits** (the client verify request requires `digits:4`).
+
+### Admin-issued codes
+
+`issue()` creates a code for support staff to read to a user who is not receiving the SMS. It stores the code hashed like any other, invalidates older unused codes for the phone and returns the plain code once. It sends **no SMS** and skips the user-facing send limit; the admin routes are throttled to 10 per minute instead. It always writes a row, so the issued code also works for development phones.
+
+Endpoints, both behind `otps.create`:
+
+- `POST admin/clients/{client}/otp`, for the client's `phone_number`
+- `POST admin/centers/{center}/users/{user}/otp`, for the center user's `phone`. The user must belong to the center, otherwise it returns 404.
 
 ### Development bypass
 
