@@ -54,6 +54,99 @@ class CenterUserManagementService
     {
         $this->ensureCanGrant($center, $actor, $data['permissions']);
 
+        return $this->assign($center, $data);
+    }
+
+    /**
+     * Assigns a user to the center on behalf of a system user, who may grant
+     * any permission.
+     *
+     * @param  array{name: string, phone: string, trainer_id: int, status?: string, permissions: array<string>}  $data
+     *
+     * @throws ValidationException When the phone already belongs to a user of this center.
+     */
+    public function createByAdmin(Center $center, array $data): User
+    {
+        return $this->assign($center, $data);
+    }
+
+    /**
+     * @param  array{name?: string, trainer_id?: int, status?: string, permissions?: array<string>}  $data
+     *
+     * @throws ValidationException When the user is the center's primary user or the actor,
+     *                             or the actor grants a permission they lack.
+     */
+    public function update(Center $center, User $user, array $data, User $actor): User
+    {
+        $this->ensureNotPrimary($user);
+        $this->ensureNotSelf($actor, $user);
+        $this->ensureCanGrant($center, $actor, $data['permissions'] ?? []);
+
+        $this->applyChanges($center, $user, $data);
+
+        return $this->findMember($center, $user->id);
+    }
+
+    /**
+     * Updates a center user on behalf of a system user, who may grant any
+     * permission and may change the phone. The primary user only accepts
+     * `name` and `phone`. A new phone must be verified again and signs the
+     * account out everywhere, since the account may serve several centers.
+     *
+     * @param  array{name?: string, phone?: string, trainer_id?: int, status?: string, permissions?: array<string>}  $data
+     *
+     * @throws ValidationException When changing anything but name or phone of the primary user.
+     */
+    public function updateByAdmin(Center $center, User $user, array $data): User
+    {
+        if ($user->pivot?->is_primary && array_diff_key($data, array_flip(['name', 'phone'])) !== []) {
+            throw ValidationException::withMessages([
+                'user' => [__('centers::validation.primary_user_identity_only')],
+            ]);
+        }
+
+        $this->applyChanges($center, $user, $data);
+
+        return $this->findMember($center, $user->id);
+    }
+
+    /**
+     * Removes the user from the center: drops their permissions on it and
+     * revokes their center-scoped tokens. An account left without any center
+     * is signed out everywhere and soft-deleted.
+     *
+     * @throws ValidationException When the user is the center's primary user or the actor.
+     */
+    public function remove(Center $center, User $user, User $actor): void
+    {
+        $this->ensureNotPrimary($user);
+        $this->ensureNotSelf($actor, $user);
+
+        $this->detach($center, $user);
+    }
+
+    /**
+     * Removes the user from the center on behalf of a system user.
+     *
+     * @throws ValidationException When the user is the center's primary user.
+     */
+    public function removeByAdmin(Center $center, User $user): void
+    {
+        $this->ensureNotPrimary($user);
+
+        $this->detach($center, $user);
+    }
+
+    /**
+     * Assigns a user to the center. An existing account with the same phone is
+     * reused (and restored when soft-deleted) without changing its name.
+     *
+     * @param  array{name: string, phone: string, trainer_id: int, status?: string, permissions: array<string>}  $data
+     *
+     * @throws ValidationException When the phone already belongs to a user of this center.
+     */
+    private function assign(Center $center, array $data): User
+    {
         $user = DB::transaction(function () use ($center, $data): User {
             /** @var User|null $user */
             $user = User::withTrashed()->where('phone', $data['phone'])->first();
@@ -89,21 +182,23 @@ class CenterUserManagementService
     }
 
     /**
-     * @param  array{name?: string, trainer_id?: int, status?: string, permissions?: array<string>}  $data
+     * Writes the user's name and phone, their assignment's status and trainer,
+     * and their permissions on the center. A changed phone clears its
+     * verification and revokes every token of the account.
      *
-     * @throws ValidationException When the user is the center's primary user or the actor,
-     *                             or the actor grants a permission they lack.
+     * @param  array{name?: string, phone?: string, trainer_id?: int, status?: string, permissions?: array<string>}  $data
      */
-    public function update(Center $center, User $user, array $data, User $actor): User
+    private function applyChanges(Center $center, User $user, array $data): void
     {
-        $this->ensureNotPrimary($user);
-        $this->ensureNotSelf($actor, $user);
-        $this->ensureCanGrant($center, $actor, $data['permissions'] ?? []);
-
         DB::transaction(function () use ($center, $user, $data): void {
-            if (array_key_exists('name', $data)) {
-                $user->update(['name' => $data['name']]);
+            $user->fill(array_intersect_key($data, array_flip(['name', 'phone'])));
+
+            if ($user->isDirty('phone')) {
+                $user->phone_verified_at = null;
+                $user->tokens()->delete();
             }
+
+            $user->save();
 
             $pivotChanges = array_intersect_key($data, array_flip(['status', 'trainer_id']));
 
@@ -115,22 +210,15 @@ class CenterUserManagementService
                 $user->syncCenterPermissions($center, $data['permissions']);
             }
         });
-
-        return $this->findMember($center, $user->id);
     }
 
     /**
-     * Removes the user from the center: drops their permissions on it and
-     * revokes their center-scoped tokens. An account left without any center
-     * is signed out everywhere and soft-deleted.
-     *
-     * @throws ValidationException When the user is the center's primary user or the actor.
+     * Drops the user's permissions on the center and revokes their
+     * center-scoped tokens. An account left without any center is signed out
+     * everywhere and soft-deleted.
      */
-    public function remove(Center $center, User $user, User $actor): void
+    private function detach(Center $center, User $user): void
     {
-        $this->ensureNotPrimary($user);
-        $this->ensureNotSelf($actor, $user);
-
         DB::transaction(function () use ($center, $user): void {
             $user->syncCenterPermissions($center, []);
             $center->users()->detach($user->id);

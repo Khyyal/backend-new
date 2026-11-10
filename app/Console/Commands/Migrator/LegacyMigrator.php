@@ -5,8 +5,12 @@ namespace App\Console\Commands\Migrator;
 use Closure;
 use Illuminate\Console\Command;
 use Illuminate\Database\Connection;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Throwable;
 
 /**
@@ -16,6 +20,16 @@ use Throwable;
  */
 abstract class LegacyMigrator extends Command
 {
+    /**
+     * Signature options shared by migrators that copy legacy gallery images
+     * (legacy `images` table, files on S3) into media collections.
+     */
+    public const MEDIA_OPTIONS = '
+    {--images-disk=s3 : Disk holding the legacy gallery files (images table)}
+    {--images-prefix=images : Folder on that disk; files are read from <prefix>/<filename>}
+    {--media-disk=s3 : Disk the migrated media is stored on}
+    {--skip-media : Migrate the rows only, without media}';
+
     /** @var array<int, string> */
     protected array $warnings = [];
 
@@ -88,6 +102,74 @@ abstract class LegacyMigrator extends Command
             ->where('entity', $entity)
             ->where('legacy_id', $legacyId)
             ->value('new_id') ?? $legacyId);
+    }
+
+    /**
+     * Copies legacy gallery rows (`images` table: id, filename, blur_hash) to
+     * the model's collection, in the given order. Originals stay on the source
+     * disk; images already copied (by `legacy_image_id`) are skipped.
+     *
+     * @param  Collection<int, object>  $images
+     */
+    protected function copyLegacyImages(HasMedia&Model $model, Collection $images, string $collection, string $label): void
+    {
+        $sourceDisk = (string) $this->option('images-disk');
+        $disk = Storage::disk($sourceDisk);
+        $prefix = trim((string) $this->option('images-prefix'), '/');
+
+        $attached = $model->getMedia($collection)
+            ->map(fn (Media $media): mixed => $media->getCustomProperty('legacy_image_id'))
+            ->filter()
+            ->flip();
+
+        foreach ($images as $image) {
+            if ($attached->has($image->id)) {
+                $this->tally('images already present');
+
+                continue;
+            }
+
+            $key = ltrim($prefix.'/'.$image->filename, '/');
+
+            if (! $disk->exists($key)) {
+                $this->addWarning("{$label}: image #{$image->id} ({$key}) not found on disk '{$sourceDisk}'; skipped.");
+                $this->tally('images missing');
+
+                continue;
+            }
+
+            try {
+                $model->addMediaFromDisk($key, $sourceDisk)
+                    ->preservingOriginal()
+                    ->withCustomProperties(['legacy_image_id' => $image->id, 'blur_hash' => $image->blur_hash])
+                    ->toMediaCollection($collection, (string) $this->option('media-disk'));
+
+                $this->tally('images attached');
+            } catch (Throwable $exception) {
+                $this->addWarning("{$label}: image #{$image->id} not attached ({$exception->getMessage()}).");
+            }
+        }
+    }
+
+    /**
+     * Legacy money (SAR as double/decimal) in integer halalas.
+     */
+    protected function halalas(mixed $amount): int
+    {
+        return max(0, (int) round(((float) $amount) * 100));
+    }
+
+    /**
+     * The new id recorded for a legacy id, or null when it was never mapped.
+     */
+    protected function mappedId(string $entity, int $legacyId): ?int
+    {
+        $id = DB::table('legacy_id_maps')
+            ->where('entity', $entity)
+            ->where('legacy_id', $legacyId)
+            ->value('new_id');
+
+        return $id === null ? null : (int) $id;
     }
 
     protected function addWarning(string $message): void

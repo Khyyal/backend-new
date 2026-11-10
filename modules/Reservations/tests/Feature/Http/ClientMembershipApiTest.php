@@ -23,6 +23,7 @@ use Modules\Services\Models\ServicePackage;
 use Modules\Services\Models\Trainer;
 use Modules\Services\Models\TrainingService;
 use Modules\Services\Models\Visit;
+use Modules\Support\Enums\ActivationStatus;
 use Tests\TestCase;
 
 uses(TestCase::class, RefreshDatabase::class);
@@ -138,6 +139,15 @@ test('a membership with a deleted package cannot be bought', function (): void {
         ->assertJsonPath('reason', 'membership_package_unavailable');
 
     expect(ClientMembership::count())->toBe(0);
+});
+
+test('a membership with an inactive package cannot be bought', function (): void {
+    $this->ridingPackage->update(['status' => ActivationStatus::INACTIVE]);
+
+    $this->actingAs($this->client, 'client')
+        ->postJson('/api/v1/clients/memberships', ['membership_id' => $this->membership->id])
+        ->assertUnprocessable()
+        ->assertJsonPath('reason', 'membership_package_unavailable');
 });
 
 test('quotes a membership', function (): void {

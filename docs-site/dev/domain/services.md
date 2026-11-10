@@ -23,6 +23,7 @@ Only riding, visit, event, resort and training are bookable through reservations
 - **Authorization by type.** `Gate::authorize('manageServices', [$center, ServiceType::X])`. Trainers fall under Training. Center-wide blocks and gender periods need `manageAllServices`.
 - **Writes lock and keep identity.** Create and update inside `DB::transaction` with `lockForUpdate` on the Service. New services start `ACTIVE`. `type`, `center_id` and `slug` never change on update.
 - **Price options update in place.** Update duration price options by id so sold packages survive. Options missing from the payload are soft-deleted together with their package. There is one `ServicePackage` per price option; revive a trashed package instead of duplicating.
+- **Package status.** A `ServicePackage` has a `status` (`ActivationStatus`, default `active`). `packages.*.status` is optional: when omitted, a live package keeps its status and a new or revived one is active. Inactive packages stay in the center resources but clients get `package: null` for them, and `ServicePackage::isSellable()` (active and not trashed) gates package purchases and membership availability.
 - **Settings** are boolean rows unique per `(service_id, key)`, limited to the model's `SETTINGS_KEYS` (for example `enable_cash_on_arrival`, `enable_single_session_booking`, `enable_package_booking`).
 - **Deletion** soft-deletes the service, its serviceable and its price options. History and analytics read `withTrashed()`.
 - **Visibility.** Clients only see `ACTIVE` services of visible, active centers.

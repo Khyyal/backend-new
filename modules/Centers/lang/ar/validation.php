@@ -14,4 +14,6 @@ return [
     'trainer_already_linked' => 'المدرب المحدد مرتبط بالفعل بمستخدم آخر.',
     'cannot_modify_self' => 'لا يمكنك تعديل أو حذف حسابك.',
     'cannot_grant_permission' => 'لا يمكنك منح صلاحية لا تملكها.',
+    'primary_user_identity_only' => 'لا يمكن تغيير سوى اسم ورقم جوال المستخدم الرئيسي للمركز.',
+    'phone_taken' => 'رقم الجوال هذا مستخدم في حساب آخر.',
 ];

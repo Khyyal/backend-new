@@ -47,7 +47,7 @@ class TrainingServiceResource extends JsonResource
     #[ResponseField('price_options[].id', 'integer', 'Price option ID (used when booking).', example: 70)]
     #[ResponseField('price_options[].duration', 'integer', 'Session length in minutes.', example: 60)]
     #[ResponseField('price_options[].price', 'integer', 'Price in halalas.', example: 15000)]
-    #[ResponseField('price_options[].package', 'object', 'Session package sold for this option; null when none.', nullable: true)]
+    #[ResponseField('price_options[].package', 'object', 'Active session package sold for this option; null when none (or when the center made it inactive).', nullable: true)]
     #[ResponseField('price_options[].package.id', 'integer', 'Service package ID (used by memberships and package purchases).', example: 5)]
     #[ResponseField('price_options[].package.count', 'integer', 'Sessions in the package.', example: 8)]
     #[ResponseField('price_options[].package.price', 'integer', 'Package price in halalas.', example: 100000)]
@@ -92,7 +92,7 @@ class TrainingServiceResource extends JsonResource
                 'id' => $option->id,
                 'duration' => $option->quantity,
                 'price' => $option->price,
-                'package' => $option->package === null ? null : [
+                'package' => $option->package?->isSellable() !== true ? null : [
                     'id' => $option->package->id,
                     'count' => $option->package->count,
                     'price' => $option->package->price,

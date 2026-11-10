@@ -8,6 +8,7 @@ use Modules\Services\Enums\PriceOptionUnit;
 use Modules\Services\Models\PriceOption;
 use Modules\Services\Models\Service;
 use Modules\Services\Models\ServicePackage;
+use Modules\Support\Enums\ActivationStatus;
 
 /**
  * Keeps the duration price options (minutes) of a service and the packages
@@ -22,8 +23,8 @@ class DurationOptionService
 {
     /**
      * @param  array<int, array{id?: int, duration: int, price: int}>  $options
-     * @param  array<int, array{price_option: int, count: int, price: int, duration: int}>|null  $packages
-     *                                                                                                      `null` leaves the existing packages untouched; an array replaces them.
+     * @param  array<int, array{price_option: int, count: int, price: int, duration: int, status?: string}>|null  $packages
+     *                                                                                                                       `null` leaves the existing packages untouched; an array replaces them.
      *
      * @throws ValidationException
      */
@@ -87,9 +88,11 @@ class DurationOptionService
             }
 
             // A previously removed (soft-deleted) package of this option is revived,
-            // since price_option_id stays unique across trashed rows.
+            // since price_option_id stays unique across trashed rows. Without a
+            // `status`, a live package keeps its own and a new/revived one is active.
             $model = ServicePackage::withTrashed()->firstOrNew(['price_option_id' => $option->getKey()]);
-            $model->fill([...Arr::only($package, ['count', 'price', 'duration']), 'service_id' => $service->getKey()]);
+            $status = $package['status'] ?? ($model->exists && ! $model->trashed() ? $model->status : ActivationStatus::ACTIVE);
+            $model->fill([...Arr::only($package, ['count', 'price', 'duration']), 'status' => $status, 'service_id' => $service->getKey()]);
             $model->deleted_at = null;
             $model->save();
 

@@ -191,6 +191,15 @@ class CenterPolicy
     }
 
     /**
+     * System users managing a center's users through the admin API: by
+     * `centers.update`. Center users: denied; they use `manageUsers`.
+     */
+    public function manageUsersAsAdmin(User|SystemUser $user, Center $center): bool
+    {
+        return $this->systemUserCan($user, SystemPermission::UpdateCenter);
+    }
+
+    /**
      * @param  array<CenterUserPermission>  $centerPermissions  Any one of them grants access.
      */
     private function canAccessCenter(User|SystemUser $user, Center $center, array $centerPermissions, SystemPermission $systemPermission): bool

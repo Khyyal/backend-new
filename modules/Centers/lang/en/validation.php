@@ -14,4 +14,6 @@ return [
     'trainer_already_linked' => 'The selected trainer is already linked to another user.',
     'cannot_modify_self' => 'You cannot modify or remove your own account.',
     'cannot_grant_permission' => 'You cannot grant a permission you do not have.',
+    'primary_user_identity_only' => 'Only the name and phone of the center\'s primary user can be changed.',
+    'phone_taken' => 'This phone number already belongs to another account.',
 ];

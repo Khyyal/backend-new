@@ -8,6 +8,7 @@ use Modules\Purchase\Services\PaymentStateService;
 use Modules\Reservations\Database\Factories\ClientPackageFactory;
 use Modules\Reservations\Tests\Support\BookingFixtures;
 use Modules\Services\Models\ServicePackage;
+use Modules\Support\Enums\ActivationStatus;
 use Tests\TestCase;
 
 uses(TestCase::class, RefreshDatabase::class);
@@ -50,6 +51,20 @@ test('buys a package that activates once paid', function (): void {
 test('an unknown package is a validation error', function (): void {
     $this->actingAs($this->client, 'client')
         ->postJson('/api/v1/clients/packages', ['service_package_id' => 999_999])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('service_package_id');
+});
+
+test('an inactive package cannot be bought or quoted', function (): void {
+    $this->servicePackage->update(['status' => ActivationStatus::INACTIVE]);
+
+    $this->actingAs($this->client, 'client')
+        ->postJson('/api/v1/clients/packages', ['service_package_id' => $this->servicePackage->id])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('service_package_id');
+
+    $this->actingAs($this->client, 'client')
+        ->postJson('/api/v1/clients/packages/quote', ['service_package_id' => $this->servicePackage->id])
         ->assertUnprocessable()
         ->assertJsonValidationErrors('service_package_id');
 });

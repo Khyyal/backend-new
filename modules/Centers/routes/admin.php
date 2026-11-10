@@ -22,6 +22,11 @@ Route::prefix('admin/centers')
         Route::delete('/{center}', [CenterController::class, 'destroy'])->name('destroy');
 
         Route::get('/{center}/users', [CenterUserController::class, 'index'])->name('users.index');
+        Route::get('/{center}/users/permissions', [CenterUserController::class, 'permissions'])->name('users.permissions');
+        Route::post('/{center}/users', [CenterUserController::class, 'store'])->name('users.store');
+        Route::get('/{center}/users/{user}', [CenterUserController::class, 'show'])->name('users.show')->whereNumber('user');
+        Route::match(['put', 'patch'], '/{center}/users/{user}', [CenterUserController::class, 'update'])->name('users.update')->whereNumber('user');
+        Route::delete('/{center}/users/{user}', [CenterUserController::class, 'destroy'])->name('users.destroy')->whereNumber('user');
         Route::post('/{center}/users/{user}/otp', [CenterUserController::class, 'issueOtp'])
             ->name('users.otp.store')
             ->whereNumber('user')

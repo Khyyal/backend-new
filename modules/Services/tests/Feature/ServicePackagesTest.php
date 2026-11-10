@@ -176,6 +176,40 @@ it('rejects a price option id from another service', function (string $uri): voi
     expect($other->json('data.price_options'))->toHaveCount(2);
 })->with($types);
 
+it('stores a package status and keeps it when an update omits it', function (string $uri): void {
+    $created = ($this->post)($uri, ['packages' => [
+        ['price_option' => 0, 'count' => 4, 'price' => 100, 'duration' => 1, 'status' => 'inactive'],
+    ]])->assertCreated()
+        ->assertJsonPath('data.price_options.0.package.status', 'inactive');
+
+    $options = collect($created->json('data.price_options'))
+        ->map(fn (array $option): array => ['id' => $option['id'], 'duration' => $option['duration'], 'price' => $option['price']])
+        ->all();
+
+    ($this->put)($uri, $created->json('data.id'), [
+        'price_options' => $options,
+        'packages' => [['price_option' => 0, 'count' => 6, 'price' => 150, 'duration' => 2]],
+    ])->assertOk()
+        ->assertJsonPath('data.price_options.0.package.status', 'inactive')
+        ->assertJsonPath('data.price_options.0.package.count', 6);
+
+    ($this->put)($uri, $created->json('data.id'), [
+        'price_options' => $options,
+        'packages' => [['price_option' => 0, 'count' => 6, 'price' => 150, 'duration' => 2, 'status' => 'active']],
+    ])->assertOk()
+        ->assertJsonPath('data.price_options.0.package.status', 'active');
+})->with($types);
+
+it('creates packages as active by default and rejects an unknown status', function (string $uri): void {
+    ($this->post)($uri, ['packages' => [['price_option' => 0, 'count' => 4, 'price' => 100, 'duration' => 1]]])
+        ->assertCreated()
+        ->assertJsonPath('data.price_options.0.package.status', 'active');
+
+    ($this->post)($uri, ['packages' => [['price_option' => 0, 'count' => 4, 'price' => 100, 'duration' => 1, 'status' => 'paused']]])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('packages.0.status');
+})->with($types);
+
 it('enforces one package per price option in the database', function (): void {
     $optionId = ($this->post)('training-services')->assertCreated()->json('data.price_options.0.id');
     ServicePackage::factory()->create(['price_option_id' => $optionId]);

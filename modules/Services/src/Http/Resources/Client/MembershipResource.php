@@ -41,7 +41,7 @@ class MembershipResource extends JsonResource
     #[ResponseField('packages[].duration', 'integer', 'Package validity in months.', example: 3)]
     #[ResponseField('packages[].price', 'integer', 'Stand-alone package price in halalas.', example: 100000)]
     #[ResponseField('packages[].trainer', 'object', 'Trainer fixed for a training package; null otherwise.', nullable: true, example: ['id' => 6, 'name' => 'Fahad'])]
-    #[ResponseField('packages[].available', 'boolean', 'False when the package or its service was deleted.', example: true)]
+    #[ResponseField('packages[].available', 'boolean', 'False when the package was deleted or made inactive, or its service was deleted; such a membership cannot be bought.', example: true)]
     #[ResponseField('cover', 'object', 'Cover image (`MediaResource`); null when none.', required: false, nullable: true)]
     #[ResponseField('cover.id', 'string', 'Media UUID.', example: '9b1d5f0e-3c1a-4b8e-a0f2-5b7c3e2d1a90')]
     #[ResponseField('cover.status', 'string', 'Media lifecycle state.', enum: ['temporary', 'attached'], example: 'attached')]
@@ -110,7 +110,7 @@ class MembershipResource extends JsonResource
                 'id' => $package->trainer->id,
                 'name' => $package->trainer->name,
             ],
-            'available' => ! $servicePackage->trashed() && $packageService !== null,
+            'available' => $servicePackage->isSellable() && $packageService !== null,
         ];
     }
 

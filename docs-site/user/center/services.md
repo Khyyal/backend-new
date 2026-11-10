@@ -27,6 +27,7 @@ Each service has **price options** (for example 30, 60 or 90 minutes, each with 
 
 - Editing a price option keeps packages that were already sold. Removing an option removes its package from sale.
 - **Packages** let clients pay once for several sessions. Each price option can have one package.
+- Set a package to **inactive** to stop selling it without deleting it. Clients no longer see it, and memberships that include it cannot be bought until it is active again. Packages already sold keep working.
 - The **lowest price** is shown to clients as the starting price ("from"). For resorts, extras are not counted.
 - While one of your [promotions](./promotions) is running, clients also see the **discounted price**.
 

@@ -62,6 +62,7 @@ Re-runs the full booking rules with `ignoreReservationId`, keeps the same servic
 
 - `BookFromPackage` locks the `ClientPackage`, enforces a trainer-bound package's trainer, creates the reservation **Confirmed at price 0**, and decrements `remaining_sessions` (0 means `exhausted`).
 - Membership visits need a usable membership before `expires_at` and a daily count (under lock) within `max_visits_per_day`. They are free and Confirmed.
+- Only **sellable** packages (active and not deleted) can be bought or quoted: `service_package_id` must exist with `status = active`. A membership whose included package is not sellable fails with `membership_package_unavailable`.
 - Packages and memberships are **never sold as cash on arrival**. They are created `pending` (membership packages at price 0) and activate on `PurchaseConfirmed`, with `expires_at` counted from activation (`servicePackage.duration` or the membership duration in months). Listeners are idempotent and only touch records still pending.
 
 ## Checkout

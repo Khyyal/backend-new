@@ -4,8 +4,12 @@ namespace App\Console\Commands\Migrator;
 
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Modules\Centers\Enums\CenterState;
 use Modules\Centers\Enums\CenterStatus;
@@ -15,8 +19,9 @@ use Throwable;
 
 #[Signature('migrator:centers
     {--dry-run : Run inside a transaction and roll it back}
-    {--media-base= : Base URL or local directory the legacy image paths (e.g. /storage/images/x.png) are resolved against; logos are skipped without it}')]
-#[Description('Copy legacy barns into the centers table, keeping their ids')]
+    {--logos-url=https://app.khyyal.sa : Old server the legacy logo paths (barns.image, e.g. /storage/images/x.png) are downloaded from}'
+    .LegacyMigrator::MEDIA_OPTIONS)]
+#[Description('Copy legacy barns into the centers table (keeping their ids), uploading their logos (old server) and gallery images (s3) to the media disk')]
 class MigrateCentersCommand extends LegacyMigrator
 {
     /** @var array<string, string> Legacy social link types that map to a different platform. */
@@ -26,8 +31,14 @@ class MigrateCentersCommand extends LegacyMigrator
         'web' => 'website',
     ];
 
+    /** Polymorphic type of barn rows in the legacy `images` table. */
+    private const LEGACY_BARN_TYPE = 'App\\Models\\Barn';
+
     /** @var array<int, string> Legacy image path per center id, attached as logos after commit. */
-    private array $images = [];
+    private array $logos = [];
+
+    /** @var array<int, int> Ids of the centers migrated in this run. */
+    private array $migratedIds = [];
 
     protected function migrate(): void
     {
@@ -69,7 +80,7 @@ class MigrateCentersCommand extends LegacyMigrator
                 }
 
                 if (filled($barn->image)) {
-                    $this->images[$barn->id] = $barn->image;
+                    $this->logos[$barn->id] = $barn->image;
                 }
 
                 $links = $socialLinks->get($barn->id);
@@ -102,6 +113,7 @@ class MigrateCentersCommand extends LegacyMigrator
                 'contact_phone', 'social_links', 'points', 'status', 'state', 'updated_at',
             ]);
 
+            array_push($this->migratedIds, ...array_column($rows, 'id'));
             $this->tally('centers', count($rows));
         });
     }
@@ -110,20 +122,60 @@ class MigrateCentersCommand extends LegacyMigrator
     {
         Center::flushSearchCache();
 
-        $base = $this->option('media-base');
+        $skipMedia = $dryRun || (bool) $this->option('skip-media');
 
-        if ($dryRun || blank($base)) {
-            $this->tally('logos skipped (no --media-base or dry run)', count($this->images));
+        $this->migrateLogos($skipMedia);
+        $this->migrateGalleryImages($skipMedia);
+    }
+
+    /**
+     * Uploads the barns' logos (legacy `barns.image`, served by the old app) to
+     * the media disk as each center's `logo`.
+     */
+    private function migrateLogos(bool $skipMedia): void
+    {
+        if ($skipMedia) {
+            $this->tally('logos pending (dry run or --skip-media)', count($this->logos));
 
             return;
         }
 
-        foreach ($this->images as $centerId => $path) {
-            $this->attachLogo($centerId, rtrim($base, '/').'/'.ltrim($path, '/'));
+        foreach ($this->logos as $centerId => $path) {
+            $this->attachLogo($centerId, $path);
         }
     }
 
-    private function attachLogo(int $centerId, string $source): void
+    /**
+     * Copies the barns' gallery files (legacy `images` table, stored on S3)
+     * into each center's `images` collection, in their legacy order. The
+     * legacy image id is kept as a custom property so re-runs skip it.
+     */
+    private function migrateGalleryImages(bool $skipMedia): void
+    {
+        $imagesByCenter = $this->legacy()->table('images')
+            ->where('imageable_type', self::LEGACY_BARN_TYPE)
+            ->whereIn('imageable_id', $this->migratedIds)
+            ->orderBy('order')
+            ->orderBy('id')
+            ->get()
+            ->groupBy('imageable_id');
+
+        if ($skipMedia) {
+            $this->tally('images pending (dry run or --skip-media)', $imagesByCenter->flatten(1)->count());
+
+            return;
+        }
+
+        foreach ($imagesByCenter as $centerId => $images) {
+            $this->copyLegacyImages(Center::query()->findOrFail($centerId), $images, 'images', "Center #{$centerId}");
+        }
+    }
+
+    /**
+     * Downloads the logo from the old server (`<logos-url>/storage/images/x.png`)
+     * and stores it on the media disk.
+     */
+    private function attachLogo(int $centerId, string $legacyPath): void
     {
         $center = Center::query()->find($centerId);
 
@@ -133,14 +185,32 @@ class MigrateCentersCommand extends LegacyMigrator
             return;
         }
 
+        $url = rtrim((string) $this->option('logos-url'), '/').'/'.ltrim($legacyPath, '/');
+
         try {
-            Str::startsWith($source, ['http://', 'https://'])
-                ? $center->addMediaFromUrl($source)->toMediaCollection('logo')
-                : $center->addMedia($source)->preservingOriginal()->toMediaCollection('logo');
+            $response = Http::timeout(30)
+                ->retry(2, 500, fn (Throwable $exception): bool => $exception instanceof ConnectionException
+                    || ($exception instanceof RequestException && $exception->response->serverError()), throw: false)
+                ->get($url);
+
+            if (! $response->successful()) {
+                $this->addWarning("Center #{$centerId}: logo {$url} could not be downloaded (HTTP {$response->status()}); skipped.");
+                $this->tally('logos missing');
+
+                return;
+            }
+
+            $fileName = basename((string) parse_url($url, PHP_URL_PATH));
+
+            $center->addMediaFromString($response->body())
+                ->usingFileName($fileName)
+                ->usingName(pathinfo($fileName, PATHINFO_FILENAME))
+                ->withCustomProperties(['legacy_path' => $legacyPath])
+                ->toMediaCollection('logo', $this->option('media-disk'));
 
             $this->tally('logos attached');
         } catch (Throwable $exception) {
-            $this->addWarning("Center #{$centerId}: logo {$source} not attached ({$exception->getMessage()}).");
+            $this->addWarning("Center #{$centerId}: logo {$url} not attached ({$exception->getMessage()}).");
         }
     }
 
