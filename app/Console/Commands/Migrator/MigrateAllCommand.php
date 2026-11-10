@@ -19,10 +19,13 @@ class MigrateAllCommand extends LegacyMigrator
     private const MIGRATORS = [
         'migrator:cities',
         'migrator:centers',
+        'migrator:tags',
         'migrator:center-users',
         'migrator:trainers',
         'migrator:services',
         'migrator:center-settings',
+        'migrator:plans',
+        'migrator:subscriptions',
     ];
 
     /** @var array<int, string> Migrators that copy media and accept --skip-media. */
