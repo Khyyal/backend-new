@@ -137,7 +137,7 @@ class MembershipController extends Controller
             ReservationSource::Client,
         );
 
-        return ReservationResource::make($reservation->load(['service', 'trainer', 'lines.priceOption']))
+        return ReservationResource::make($reservation->load(['service', 'trainer', 'priceOption', 'lines.priceOption']))
             ->response()
             ->setStatusCode(201);
     }

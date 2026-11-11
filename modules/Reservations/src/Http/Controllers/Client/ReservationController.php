@@ -37,7 +37,7 @@ use Modules\Support\Documentation\ApiExamples;
 #[Group('Client / Reservations', 'Book, list and cancel reservations, and buy and spend packages and memberships.')]
 class ReservationController extends Controller
 {
-    private const array RELATIONS = ['service', 'trainer', 'lines.priceOption'];
+    private const array RELATIONS = ['service', 'trainer', 'priceOption', 'lines.priceOption'];
 
     public function __construct(
         private readonly BookAndCheckout $bookAndCheckout,

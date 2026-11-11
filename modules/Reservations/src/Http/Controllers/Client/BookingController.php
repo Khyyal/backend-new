@@ -47,7 +47,7 @@ class BookingController extends Controller
 
     private const string KIND_MEMBERSHIP = 'membership';
 
-    private const array RESERVATION_RELATIONS = ['service', 'trainer', 'lines.priceOption'];
+    private const array RESERVATION_RELATIONS = ['service', 'trainer', 'priceOption', 'lines.priceOption'];
 
     private const array PACKAGE_RELATIONS = ['service', 'priceOption'];
 

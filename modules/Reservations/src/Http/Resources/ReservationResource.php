@@ -25,6 +25,7 @@ class ReservationResource extends JsonResource
     #[ResponseField('service', 'object', 'The service (`id`, `type`, `name` by locale). Present when loaded.', required: false, example: ['id' => 31, 'type' => 'recreation_riding', 'name' => ['ar' => 'ركوب للمبتدئين', 'en' => 'Beginner ride']])]
     #[ResponseField('trainer', 'object', 'Trainer (`id`, `name`) for training; null otherwise. Present when loaded.', required: false, nullable: true, example: ['id' => 6, 'name' => 'Fahad'])]
     #[ResponseField('price_option_id', 'integer', 'Chosen duration option (riding, training); null otherwise.', nullable: true, example: 70)]
+    #[ResponseField('price_option', 'object', 'The chosen option (`id`, `name`, `price` in halalas, `quantity`, `unit`); null when none. Present when loaded.', required: false, nullable: true, example: ['id' => 70, 'name' => '1 hour', 'price' => 15000, 'quantity' => 60, 'unit' => 'minute'])]
     #[ResponseField('client_package_id', 'integer', 'Package the session was drawn from; null otherwise.', nullable: true, example: 'No-example')]
     #[ResponseField('client_membership_id', 'integer', 'Membership the free visit was drawn from; null otherwise.', nullable: true, example: 'No-example')]
     #[ResponseField('date', 'string', 'Day, `Y-m-d` (first night for resorts).', example: '2026-06-05')]
@@ -66,6 +67,13 @@ class ReservationResource extends JsonResource
                 'name' => $reservation->trainer->name,
             ]),
             'price_option_id' => $reservation->price_option_id,
+            'price_option' => $this->whenLoaded('priceOption', fn (): ?array => $reservation->priceOption === null ? null : [
+                'id' => $reservation->priceOption->id,
+                'name' => $reservation->priceOption->name,
+                'price' => $reservation->priceOption->price,
+                'quantity' => $reservation->priceOption->quantity,
+                'unit' => $reservation->priceOption->unit->value,
+            ]),
             'client_package_id' => $reservation->client_package_id,
             'client_membership_id' => $reservation->client_membership_id,
             'date' => $reservation->date->toDateString(),

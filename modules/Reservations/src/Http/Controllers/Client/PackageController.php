@@ -131,7 +131,7 @@ class PackageController extends Controller
             $request->filled('trainer_id') ? (int) $request->validated('trainer_id') : null,
         );
 
-        return ReservationResource::make($reservation->load(['service', 'trainer', 'lines.priceOption']))
+        return ReservationResource::make($reservation->load(['service', 'trainer', 'priceOption', 'lines.priceOption']))
             ->response()
             ->setStatusCode(201);
     }
