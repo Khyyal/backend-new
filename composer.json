@@ -77,6 +77,7 @@
             "Modules\\Analytics\\": "modules/Analytics/src/",
             "Modules\\Exports\\": "modules/Exports/src/",
             "Modules\\Exports\\Database\\Factories\\": "modules/Exports/database/factories/",
+            "Modules\\Search\\": "modules/Search/src/",
 
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/"

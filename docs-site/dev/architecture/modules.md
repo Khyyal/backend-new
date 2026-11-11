@@ -17,6 +17,7 @@ All modules live in `modules/`. Each one registers itself through its `*ServiceP
 | **Notifications** | In-app and push notifications, campaigns, WhatsApp templates | [Notifications](../domain/notifications) |
 | **Analytics** | Admin dashboards and center analytics | [Analytics](../domain/analytics) |
 | **Exports** | Asynchronous exports and downloads | [Exports](../domain/exports) |
+| **Search** | Admin global search across centers, clients, reservations, purchases, packages, memberships and services | [Search](../domain/search) |
 
 ## Structure of a module
 
@@ -33,6 +34,6 @@ modules/Services/
 
 ## Dependencies
 
-The main direction of dependency is: Support → Clients and Centers → Services → Reservations → Purchase, with Promotions, Settlements, Billing, Homepage, Notifications, Analytics and Exports reading from the modules above them. Where a lower module needs data from a higher one, it uses a contract or an event.
+The main direction of dependency is: Support → Clients and Centers → Services → Reservations → Purchase, with Promotions, Settlements, Billing, Homepage, Notifications, Analytics, Exports and Search reading from the modules above them. Where a lower module needs data from a higher one, it uses a contract or an event.
 
 Reservations and Billing both create purchases; the payment gateways in Purchase must not reference Reservation or Subscription.

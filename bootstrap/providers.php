@@ -11,6 +11,7 @@ use Modules\Notifications\NotificationsServiceProvider;
 use Modules\Promotions\PromotionsServiceProvider;
 use Modules\Purchase\PurchaseServiceProvider;
 use Modules\Reservations\ReservationsServiceProvider;
+use Modules\Search\SearchServiceProvider;
 use Modules\Services\ServicesServiceProvider;
 use Modules\Settlements\SettlementsServiceProvider;
 use Modules\Support\SupportServiceProvider;
@@ -30,4 +31,5 @@ return [
     HomepageServiceProvider::class,
     AnalyticsServiceProvider::class,
     ExportsServiceProvider::class,
+    SearchServiceProvider::class,
 ];

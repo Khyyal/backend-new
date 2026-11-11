@@ -23,6 +23,7 @@
             <directory>modules/Homepage/tests</directory>
             <directory>modules/Analytics/tests</directory>
             <directory>modules/Exports/tests</directory>
+            <directory>modules/Search/tests</directory>
         </testsuite>
     </testsuites>
     <source>

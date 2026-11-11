@@ -28,6 +28,10 @@ Sign in with your email and password. Inactive users cannot sign in.
 
 The bell shows platform events (for example a new center registering). Mark one or all as read. Allow browser notifications when the panel asks to also get them as pop-ups while the panel is closed or in the background; signing out stops them on that browser.
 
+## Search
+
+The search box in the top bar finds a record anywhere in the panel. Click it, or press **⌘K** (Mac) or **Ctrl+K**, and type at least two characters: a center name, phone or email; a client's name or phone; a service name; or the 6-character code of a reservation or purchase. Results are grouped into centers, clients, reservations, purchases, client packages, client memberships and services, with up to five per group. Pick one to open it. You only see the groups your role allows.
+
 ## Lists
 
 Lists are paged and can be searched and filtered. Large lists can be exported to a spreadsheet; see [Analytics and exports](./analytics).

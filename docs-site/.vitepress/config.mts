@@ -46,6 +46,7 @@ const devGroups: Group[] = [
             ['notifications', 'Notifications'],
             ['analytics', 'Analytics'],
             ['exports', 'Exports'],
+            ['search', 'Global search'],
             ['support', 'Support: OTP, devices and media'],
         ],
     },
