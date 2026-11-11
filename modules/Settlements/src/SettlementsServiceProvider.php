@@ -36,6 +36,7 @@ class SettlementsServiceProvider extends ServiceProvider
     {
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
         $this->loadTranslationsFrom(__DIR__.'/../lang', 'settlements');
+        $this->loadViewsFrom(__DIR__.'/../resources/views', 'settlements');
 
         $this->registerRelations();
 
