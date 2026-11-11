@@ -70,12 +70,49 @@ class MigrateCenterUsersCommand extends LegacyMigrator
 
         $canonical = $this->migrateUsers($managers);
         $this->migrateAssignments($assignments, $managers, $canonical);
+        $this->migrateDevices($managers, $canonical);
     }
 
     protected function afterCommit(bool $dryRun): void
     {
         app(PermissionRegistrar::class)->setPermissionsTeamId(null);
         app(PermissionRegistrar::class)->forgetCachedPermissions();
+    }
+
+    /**
+     * Legacy push tokens (`barn_managers.fcm_token` and `manager_fcm_tokens`)
+     * → devices of the canonical center user.
+     *
+     * @param  Collection<int, object>  $managers
+     * @param  array<int, int>  $canonical
+     */
+    private function migrateDevices(Collection $managers, array $canonical): void
+    {
+        $entries = $managers
+            ->filter(fn (object $manager): bool => isset($canonical[$manager->id]))
+            ->map(fn (object $manager): array => [
+                'owner_id' => $canonical[$manager->id],
+                'token' => $manager->fcm_token ?? null,
+                'identifier' => null,
+                'locale' => $manager->lang ?? null,
+                'seen_at' => $manager->updated_at,
+            ]);
+
+        $this->legacy()->table('manager_fcm_tokens')
+            ->whereIn('manager_id', array_keys($canonical))
+            ->orderBy('id')
+            ->get()
+            ->each(function (object $token) use ($entries, $managers, $canonical): void {
+                $entries->push([
+                    'owner_id' => $canonical[$token->manager_id],
+                    'token' => $token->fcm_token,
+                    'identifier' => null,
+                    'locale' => $managers->get($token->manager_id)->lang ?? null,
+                    'seen_at' => $token->updated_at,
+                ]);
+            });
+
+        $this->attachDevices((new User)->getMorphClass(), $entries->values());
     }
 
     /**

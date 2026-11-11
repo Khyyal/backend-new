@@ -73,6 +73,8 @@ beforeEach(function (): void {
         $table->string('full_name');
         $table->string('phone_number');
         $table->string('password');
+        $table->string('fcm_token')->nullable();
+        $table->string('lang')->default('ar');
         $table->timestamps();
         $table->softDeletes();
     });
@@ -102,6 +104,7 @@ beforeEach(function (): void {
 
     createLegacyServiceTables();
     createLegacyBillingTables();
+    createLegacyClientTables();
 
     $legacy = DB::connection('legacy');
     $at = '2024-10-01 10:00:00';
@@ -305,4 +308,21 @@ test('re-running does not upload the logo again', function (): void {
     $this->artisan('migrator:centers')->assertSuccessful();
 
     expect(DB::table('media')->where(['model_id' => 6, 'collection_name' => 'logo'])->count())->toBe(1);
+});
+
+test('manager push tokens from both legacy sources become devices of the kept center user', function (): void {
+    $legacy = DB::connection('legacy');
+    $legacy->table('barn_managers')->where('id', 4)->update(['fcm_token' => 'token-a']);
+    $legacy->table('barn_managers')->where('id', 5)->update(['lang' => 'en']);
+    $legacy->table('manager_fcm_tokens')->insert([
+        ['manager_id' => 5, 'fcm_token' => 'token-a', 'updated_at' => '2025-01-01 00:00:00'],
+        ['manager_id' => 5, 'fcm_token' => 'token-b', 'updated_at' => '2025-01-01 00:00:00'],
+        ['manager_id' => 5, 'fcm_token' => null, 'updated_at' => '2025-01-01 00:00:00'],
+    ]);
+
+    $this->artisan('migrator:run')->assertSuccessful();
+    $this->artisan('migrator:center-users')->assertSuccessful();
+
+    expect(User::query()->findOrFail(5)->fcmTokensByLocale())->toEqualCanonicalizing(['en' => ['token-a', 'token-b']])
+        ->and(DB::table('devices')->count())->toBe(2);
 });
