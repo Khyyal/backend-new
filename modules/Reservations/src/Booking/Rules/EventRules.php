@@ -61,7 +61,9 @@ class EventRules implements ReservationRules
             ?? throw ReservationNotAllowedException::because('invalid_price_option');
 
         $reserved = $this->guard->reservedQuantity($request->service, $request->date, ignoreReservationId: $request->ignoreReservationId);
-        $this->guard->ensureCapacity($event->max_tickets_per_day, $reserved, $quantity);
+        if (! $request->ignoreCapacity) {
+            $this->guard->ensureCapacity($event->max_tickets_per_day, $reserved, $quantity);
+        }
 
         $unitPrice = (int) $option->price;
         $subtotal = $unitPrice * $quantity;

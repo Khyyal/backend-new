@@ -19,6 +19,7 @@ final readonly class BookingRequest
      * @param  array<int, array{price_option_id: int, quantity: int}>  $lines  event ticket / resort addons
      * @param  int|null  $ignoreReservationId  reservation being rescheduled, left out of capacity counts
      * @param  ClientMembership|null  $clientMembership  membership granting a free visit
+     * @param  bool  $ignoreCapacity  forced reschedule: places left are not checked
      */
     public function __construct(
         public Service $service,
@@ -33,6 +34,7 @@ final readonly class BookingRequest
         public ?ClientPackage $clientPackage = null,
         public ?int $ignoreReservationId = null,
         public ?ClientMembership $clientMembership = null,
+        public bool $ignoreCapacity = false,
     ) {}
 
     public function usesPackage(): bool

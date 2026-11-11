@@ -14,6 +14,7 @@ use Modules\Reservations\Http\Requests\Concerns\HasBookingRules;
 #[BodyParam('start_time', 'string', 'New start `H:i` (timed services).', required: false, nullable: true, example: '17:00')]
 #[BodyParam('end_date', 'string', 'New last day of a resort stay.', required: false, nullable: true, example: 'No-example')]
 #[BodyParam('trainer_id', 'integer', 'New trainer (training).', required: false, nullable: true, example: 'No-example')]
+#[BodyParam('force', 'boolean', 'Move it even when the new slot has too few places left: the capacity check is skipped (every other rule still applies). Default false.', required: false, example: false)]
 class RescheduleReservationRequest extends FormRequest
 {
     use HasBookingRules;
@@ -25,6 +26,9 @@ class RescheduleReservationRequest extends FormRequest
 
     public function rules(): array
     {
-        return $this->slotRules();
+        return [
+            ...$this->slotRules(),
+            'force' => ['sometimes', 'boolean'],
+        ];
     }
 }

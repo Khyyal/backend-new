@@ -24,6 +24,7 @@ You need the reservations permission.
 - **Cancel** a booking.
 - **Complete** or mark **no-show**, but only after the slot has started.
 - **Reschedule** a pending or confirmed booking to another slot. The price must stay the same; if it would change, cancel and rebook.
+  If the new slot is full you are told there are not enough places; confirm the move to book it anyway (this overbooks the slot). Other rules, such as opening hours, still apply.
 
 ## Cancelling and refunds
 

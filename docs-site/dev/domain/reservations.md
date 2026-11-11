@@ -60,7 +60,7 @@ Only **client** cancellers are bound by `reservations.client_cancellation_cutoff
 
 ## Reschedule
 
-Re-runs the full booking rules with `ignoreReservationId`, keeps the same service, and must not change the subtotal (`reschedule_price_changed`). A different price means cancel and rebook. The previous slot is appended to `metadata.reschedules`.
+Re-runs the full booking rules with `ignoreReservationId`, keeps the same service, and must not change the subtotal (`reschedule_price_changed`). A different price means cancel and rebook. The previous slot is appended to `metadata.reschedules`. When the new slot has too few places (`capacity_exceeded`, or `resort_unavailable` for resorts) the reschedule answers **409** with that `reason` and `available`, and moves nothing; every other rule failure stays a 422. `force=true` sets `BookingRequest::ignoreCapacity` and skips only the capacity checks (hourly, visit, event and resort overlap), so the booking can overbook the slot; schedule, blocks, past dates, state and the unchanged-price rule still apply. Create, quote and checkout keep answering 422 for capacity.
 
 ## Packages and memberships
 

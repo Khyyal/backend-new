@@ -13,9 +13,14 @@ use Throwable;
 class ReservationNotAllowedException extends RuntimeException
 {
     /**
+     * HTTP status of the rendered error; a few rules answer 409 instead of 422.
+     */
+    public int $status = 422;
+
+    /**
      * @param  array<string, mixed>  $replace
      */
-    public function __construct(public readonly string $reason, array $replace = [], ?Throwable $previous = null)
+    public function __construct(public readonly string $reason, public readonly array $replace = [], ?Throwable $previous = null)
     {
         parent::__construct(__('reservations::booking.'.$reason, $replace), previous: $previous);
     }
@@ -29,8 +34,16 @@ class ReservationNotAllowedException extends RuntimeException
         return response()->json([
             'message' => $this->getMessage(),
             'reason' => $this->reason,
+            ...(isset($this->replace['available']) ? ['available' => $this->replace['available']] : []),
             'errors' => ['reservation' => [$this->getMessage()]],
-        ], 422);
+        ], $this->status);
+    }
+
+    public function withStatus(int $status): static
+    {
+        $this->status = $status;
+
+        return $this;
     }
 
     /**

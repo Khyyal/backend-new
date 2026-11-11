@@ -57,7 +57,9 @@ class ResortRules implements ReservationRules
             $daysTotal += (int) $price->price;
         }
 
-        $this->ensureFree($request, $startDate, $endDate);
+        if (! $request->ignoreCapacity) {
+            $this->ensureFree($request, $startDate, $endDate);
+        }
 
         $lines = $this->addonLines($request, $resort);
         $addonsTotal = array_sum(array_column($lines, 'subtotal'));

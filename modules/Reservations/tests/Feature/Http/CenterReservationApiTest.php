@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Modules\Centers\Database\Factories\CenterFactory;
 use Modules\Centers\Database\Factories\UserFactory;
 use Modules\Centers\Enums\CenterUserPermission;
@@ -243,4 +244,58 @@ test('a reservation of another center is not found by code', function (): void {
     $this->actingAs($this->user, 'center_user')
         ->getJson("{$this->url}/code/{$other->code}")
         ->assertNotFound();
+});
+
+describe('rescheduling into a full slot', function (): void {
+    beforeEach(function (): void {
+        $this->moving = ($this->reservation)();
+        ($this->reservation)(['date' => '2026-11-02', 'start_time' => '11:00:00', 'end_time' => '12:00:00', 'quantity' => 4]);
+        $this->rescheduleUrl = "{$this->url}/{$this->moving->id}/reschedule";
+        $this->body = ['date' => '2026-11-02', 'start_time' => '11:00'];
+    });
+
+    test('answers 409 with the places left and moves nothing', function (): void {
+        $this->actingAs($this->user, 'center_user')
+            ->patchJson($this->rescheduleUrl, $this->body)
+            ->assertStatus(409)
+            ->assertJsonPath('reason', 'capacity_exceeded')
+            ->assertJsonPath('available', 0)
+            ->assertJsonStructure(['message', 'errors' => ['reservation']]);
+
+        expect($this->moving->fresh()->date->toDateString())->toBe('2026-10-26');
+    });
+
+    test('force moves it anyway and keeps the history', function (): void {
+        $this->actingAs($this->user, 'center_user')
+            ->patchJson($this->rescheduleUrl, [...$this->body, 'force' => true])
+            ->assertOk()
+            ->assertJsonPath('data.date', '2026-11-02')
+            ->assertJsonPath('data.start_time', '11:00')
+            ->assertJsonPath('data.reschedules.0.date', '2026-10-26');
+    });
+
+    test('force skips only the capacity check', function (): void {
+        $this->actingAs($this->user, 'center_user')
+            ->patchJson($this->rescheduleUrl, ['date' => '2026-11-03', 'start_time' => '11:00', 'force' => true])
+            ->assertUnprocessable()
+            ->assertJsonPath('reason', 'outside_schedule');
+
+        $this->actingAs($this->user, 'center_user')
+            ->patchJson($this->rescheduleUrl, [...$this->body, 'force' => 'maybe'])
+            ->assertJsonValidationErrors('force');
+    });
+
+    test('a normal booking into the same slot is still a 422', function (): void {
+        $this->actingAs($this->user, 'center_user')
+            ->postJson("/api/v1/centers/{$this->center->id}/reservations", [
+                'client_id' => $this->client->id,
+                'service_id' => $this->service->id,
+                'date' => '2026-11-02',
+                'start_time' => '11:00',
+                'price_option_id' => $this->service->priceOptions()->first()->id,
+                'payment_method' => 'manual',
+            ], ['Idempotency-Key' => (string) Str::uuid()])
+            ->assertUnprocessable()
+            ->assertJsonPath('reason', 'capacity_exceeded');
+    });
 });

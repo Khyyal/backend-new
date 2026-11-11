@@ -44,7 +44,9 @@ class VisitRules implements ReservationRules
         $this->guard->ensureNotBlocked($request->service, $request->date, $startTime, $endTime);
 
         $reserved = $this->guard->reservedQuantity($request->service, $request->date, ignoreReservationId: $request->ignoreReservationId);
-        $this->guard->ensureCapacity($visit->max_tickets_per_day, $reserved, $request->quantity);
+        if (! $request->ignoreCapacity) {
+            $this->guard->ensureCapacity($visit->max_tickets_per_day, $reserved, $request->quantity);
+        }
 
         $option = $request->service->priceOptions()->first();
         $unitPrice = $request->usesMembership() ? 0 : ($option?->price ?? 0);

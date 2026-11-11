@@ -215,7 +215,7 @@ class ReservationController extends Controller
         ));
     }
 
-    #[Endpoint('Reschedule a reservation', 'Moves it to another free slot of the same service at the same price (`reason`: reschedule_price_changed otherwise).')]
+    #[Endpoint('Reschedule a reservation', 'Moves it to another slot of the same service at the same price (`reason`: reschedule_price_changed otherwise). A slot without enough places answers 409 (`reason`: capacity_exceeded, resort_unavailable); send `force=true` to move it anyway (only the capacity check is skipped).')]
     #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
     #[UrlParam('reservation', 'integer', 'Reservation ID (of this center).', example: 311)]
     #[Header('Idempotency-Key', '7c9e6679-7425-40de-944b-e07fc1f90ae7')]
@@ -224,6 +224,7 @@ class ReservationController extends Controller
     #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `reservations.edit` for this center (system users: `centers.manage_reservations`), or the token lacks `center-access:{center}`.')]
     #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No such reservation in this center.')]
     #[ApiResponse(['message' => 'Not enough places left: 1 available.', 'reason' => 'capacity_exceeded', 'errors' => ['reservation' => ['Not enough places left: 1 available.']]], 422, 'Validation failed, the coupon was rejected (`code: coupon_rejected`), or a booking rule failed; `reason` is one of: service_inactive, service_type_not_bookable, client_blocked, bookings_closed, single_session_booking_disabled, package_booking_disabled, date_in_past, invalid_date_range, start_time_required, price_option_required, invalid_price_option, trainer_required, invalid_trainer, outside_schedule, slot_blocked, capacity_exceeded, outside_event_dates, event_booking_closed, single_ticket_option, day_not_priced, resort_quantity, resort_unavailable, invalid_quantity, cash_on_arrival_disabled.')]
+    #[ApiResponse(['message' => 'Not enough places left: 1 available.', 'reason' => 'capacity_exceeded', 'available' => 1, 'errors' => ['reservation' => ['Not enough places left: 1 available.']]], 409, 'Not enough places left in the new slot (`reason`: capacity_exceeded, resort_unavailable); resend with `force=true` to move it anyway. A request with the same `Idempotency-Key` still running also answers 409 (see below).')]
     #[ApiResponse(ApiExamples::IDEMPOTENCY_KEY_REQUIRED, 400, 'Missing `Idempotency-Key` header. Send a unique UUID per operation and reuse it unchanged on retries (a replay returns the stored response with `Idempotent-Replayed: true`).')]
     #[ApiResponse(ApiExamples::IDEMPOTENCY_IN_PROGRESS, 409, 'A request with this `Idempotency-Key` is still running; retry after `Retry-After`.')]
     public function reschedule(RescheduleReservationRequest $request, Center $center, int $reservation): CenterReservationResource
@@ -236,6 +237,7 @@ class ReservationController extends Controller
             $request->validated('start_time'),
             $endDate !== null ? CarbonImmutable::parse($endDate) : null,
             $request->filled('trainer_id') ? (int) $request->validated('trainer_id') : null,
+            $request->boolean('force'),
         );
 
         return CenterReservationResource::make($moved->load(self::RELATIONS));

@@ -82,7 +82,9 @@ abstract class HourlySlotRules implements ReservationRules
             $request->ignoreReservationId,
         );
 
-        $this->guard->ensureCapacity($this->hourlyCapacity($owner, $request->date), $reserved, $request->quantity);
+        if (! $request->ignoreCapacity) {
+            $this->guard->ensureCapacity($this->hourlyCapacity($owner, $request->date), $reserved, $request->quantity);
+        }
 
         $unitPrice = $request->usesPackage() ? 0 : (int) $option->price;
 

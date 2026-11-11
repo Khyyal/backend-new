@@ -135,30 +135,38 @@ class ReservationStateService
         ?string $startTime = null,
         ?CarbonImmutable $endDate = null,
         ?int $trainerId = null,
+        bool $force = false,
     ): Reservation {
-        return DB::transaction(function () use ($reservation, $date, $startTime, $endDate, $trainerId): Reservation {
+        return DB::transaction(function () use ($reservation, $date, $startTime, $endDate, $trainerId, $force): Reservation {
             $locked = $this->lock($reservation);
             $this->ensureStatus($locked, [ReservationStatus::Pending, ReservationStatus::Confirmed], 'rescheduled');
 
             $trainerId ??= $locked->trainer_id;
             $this->capacityLock->acquire($locked->service, $trainerId);
 
-            $quote = $this->rules->quote(new BookingRequest(
-                service: $locked->service,
-                client: $locked->client,
-                date: $date,
-                startTime: $startTime,
-                endDate: $endDate,
-                quantity: $locked->quantity,
-                priceOptionId: $locked->price_option_id,
-                trainerId: $trainerId,
-                lines: $locked->lines->map(fn (ReservationLine $line): array => [
-                    'price_option_id' => $line->price_option_id,
-                    'quantity' => $line->quantity,
-                ])->all(),
-                clientPackage: $locked->clientPackage,
-                ignoreReservationId: $locked->getKey(),
-            ));
+            try {
+                $quote = $this->rules->quote(new BookingRequest(
+                    service: $locked->service,
+                    client: $locked->client,
+                    date: $date,
+                    startTime: $startTime,
+                    endDate: $endDate,
+                    quantity: $locked->quantity,
+                    priceOptionId: $locked->price_option_id,
+                    trainerId: $trainerId,
+                    lines: $locked->lines->map(fn (ReservationLine $line): array => [
+                        'price_option_id' => $line->price_option_id,
+                        'quantity' => $line->quantity,
+                    ])->all(),
+                    clientPackage: $locked->clientPackage,
+                    ignoreReservationId: $locked->getKey(),
+                    ignoreCapacity: $force,
+                ));
+            } catch (ReservationNotAllowedException $exception) {
+                throw in_array($exception->reason, ['capacity_exceeded', 'resort_unavailable'], true)
+                    ? $exception->withStatus(409)
+                    : $exception;
+            }
 
             if ($quote->subtotal !== $locked->subtotal) {
                 throw ReservationNotAllowedException::because('reschedule_price_changed');
