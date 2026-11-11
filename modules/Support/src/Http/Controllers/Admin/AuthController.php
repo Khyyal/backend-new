@@ -58,7 +58,7 @@ class AuthController extends Controller
     }
 
     #[Endpoint('Log out the system user', 'Revokes the bearer token used for this request. When a device identifier is sent (header or body), that device is removed too so it stops receiving push notifications.')]
-    #[Header('X-Device-Identifier', 'Optional device ID registered via `POST /api/v1/admin/devices`.', example: 'b3f1c2d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6')]
+    #[Header('X-Device-Identifier', 'b3f1c2d4-5e6f-7a8b-9c0d-e1f2a3b4c5d6')]
     #[ApiResponse(status: 204, description: 'Logged out. Empty body.')]
     #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
     public function logout(Request $request): Response
