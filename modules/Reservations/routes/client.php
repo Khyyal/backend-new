@@ -34,6 +34,7 @@ Route::middleware(['set.locale.from.accept.language', 'track.client.session', 'a
                 Route::get('/', [PackageController::class, 'index'])->name('index');
                 Route::post('/', [PackageController::class, 'store'])->middleware(['throttle:coupon', 'idempotent'])->name('store');
                 Route::post('/quote', [PackageController::class, 'quote'])->middleware('throttle:coupon')->name('quote');
+                Route::patch('/{package}', [PackageController::class, 'update'])->name('update');
                 Route::post('/{package}/reservations', [PackageController::class, 'book'])->middleware('idempotent')->name('reservations.store');
             });
 

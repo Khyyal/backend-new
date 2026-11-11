@@ -9,3 +9,4 @@ use Modules\Reservations\Http\Controllers\Center\PackageController;
 Route::get('/', [PackageController::class, 'index'])->name('index');
 Route::get('/counts', [PackageController::class, 'counts'])->name('counts');
 Route::get('/{package}', [PackageController::class, 'show'])->name('show');
+Route::patch('/{package}', [PackageController::class, 'update'])->name('update');

@@ -10,6 +10,7 @@ A **package** is a bundle of sessions for one service, bought once at a lower pr
 - Book a session from your package. It is **confirmed immediately** and costs nothing more. Each booking uses one session.
 - When the sessions run out the package is **exhausted**. It also **expires** after its validity period, counted from when it became active.
 - A package linked to a trainer can only be used with that trainer.
+- You can give a package a **knight name** of your own and change it any time. The center can mark a package as **controlled**; you cannot change that.
 - Cancelling a session booked with a package gives the session back.
 
 ## Memberships

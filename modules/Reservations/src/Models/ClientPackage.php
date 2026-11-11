@@ -40,6 +40,8 @@ class ClientPackage extends Model implements Purchasable
         'status',
         'expires_at',
         'expiry_reminder_sent_at',
+        'knight_name',
+        'controlled',
     ];
 
     protected static function newFactory(): ClientPackageFactory
@@ -64,6 +66,7 @@ class ClientPackage extends Model implements Purchasable
             'total_sessions' => 'integer',
             'remaining_sessions' => 'integer',
             'price' => 'integer',
+            'controlled' => 'boolean',
             'expires_at' => 'datetime',
             'expiry_reminder_sent_at' => 'datetime',
         ];

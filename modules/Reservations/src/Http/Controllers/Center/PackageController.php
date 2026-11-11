@@ -17,6 +17,7 @@ use Knuckles\Scribe\Attributes\UrlParam;
 use Modules\Centers\Models\Center;
 use Modules\Reservations\Enums\ClientPackageStatus;
 use Modules\Reservations\Http\Requests\Center\ListClientPackagesRequest;
+use Modules\Reservations\Http\Requests\Center\UpdateClientPackageRequest;
 use Modules\Reservations\Http\Resources\CenterClientPackageDetailsResource;
 use Modules\Reservations\Http\Resources\CenterClientPackageResource;
 use Modules\Reservations\Models\ClientPackage;
@@ -68,6 +69,26 @@ class PackageController extends Controller
         return CenterClientPackageDetailsResource::make($clientPackage);
     }
 
+    #[Endpoint('Update a client package', 'Marks the package as `controlled` (or not) by the center.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[UrlParam('package', 'integer', 'Client package ID.', example: 41)]
+    #[ResponseFromApiResource(CenterClientPackageDetailsResource::class, ClientPackage::class, status: 200, description: 'The updated package.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'No access to this center\'s reservations (center users: `reservations.manage`; system users: `centers.manage_reservations`), or the token lacks `center-access:{center}`.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No such paid package in this center.')]
+    #[ApiResponse(['message' => 'The controlled field is required.', 'errors' => ['controlled' => ['The controlled field is required.']]], 422, 'Validation failed.')]
+    public function update(UpdateClientPackageRequest $request, Center $center, int $package): CenterClientPackageDetailsResource
+    {
+        $clientPackage = $this->paidPackages($center)->findOrFail($package);
+
+        $clientPackage->update(['controlled' => $request->boolean('controlled')]);
+
+        return CenterClientPackageDetailsResource::make($clientPackage->load([
+            'client', 'service', 'priceOption',
+            'reservations' => fn ($query) => $query->orderBy('date')->orderBy('start_time'),
+        ]));
+    }
+
     #[Endpoint('Count client packages', 'Active vs. not active (exhausted, expired, cancelled), with the list filters `q`, `from`, `to`, `service_id`.')]
     #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
     #[ApiResponse(['data' => ['active' => 12, 'not_active' => 30]], 200, 'Counts.')]
@@ -82,6 +103,16 @@ class PackageController extends Controller
         $total = $this->baseQuery($request, $center)->count();
 
         return response()->json(['data' => ['active' => $active, 'not_active' => $total - $active]]);
+    }
+
+    /**
+     * @return Builder<ClientPackage>
+     */
+    private function paidPackages(Center $center): Builder
+    {
+        return ClientPackage::query()
+            ->whereHas('service', fn (Builder $query) => $query->where('center_id', $center->getKey()))
+            ->where('status', '!=', ClientPackageStatus::Pending);
     }
 
     /**

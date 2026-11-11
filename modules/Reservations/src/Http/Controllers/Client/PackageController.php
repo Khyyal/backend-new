@@ -26,6 +26,7 @@ use Modules\Reservations\Enums\ReservationSource;
 use Modules\Reservations\Http\Requests\Client\BookFromPackageRequest;
 use Modules\Reservations\Http\Requests\Client\PurchasePackageRequest;
 use Modules\Reservations\Http\Requests\Client\QuotePackageRequest;
+use Modules\Reservations\Http\Requests\Client\UpdatePackageRequest;
 use Modules\Reservations\Http\Resources\CheckoutQuoteResource;
 use Modules\Reservations\Http\Resources\CheckoutResource;
 use Modules\Reservations\Http\Resources\ClientPackageResource;
@@ -56,6 +57,21 @@ class PackageController extends Controller
             ->paginate(15);
 
         return ClientPackageResource::collection($packages);
+    }
+
+    #[Endpoint('Name a package', 'Sets or clears the `knight_name` of one of your packages.')]
+    #[UrlParam('package', 'integer', 'Client package ID.', example: 41)]
+    #[ResponseFromApiResource(ClientPackageResource::class, ClientPackage::class, status: 200, description: 'The updated package.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No such package of yours.')]
+    #[ApiResponse(['message' => 'The knight name field must be present.', 'errors' => ['knight_name' => ['The knight name field must be present.']]], 422, 'Validation failed.')]
+    public function update(UpdatePackageRequest $request, int $package): ClientPackageResource
+    {
+        $clientPackage = $this->client($request)->packages()->findOrFail($package);
+
+        $clientPackage->update(['knight_name' => $request->validated('knight_name')]);
+
+        return ClientPackageResource::make($clientPackage->load(['service', 'priceOption']));
     }
 
     #[Endpoint('Buy a package', 'The package becomes active once paid; its validity starts then. Opens an online checkout; pay with `checkout.gateway`. Coupon attempts are limited to 10 per minute.')]

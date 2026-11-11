@@ -98,3 +98,28 @@ test('another client\'s package is not found', function (): void {
         ->postJson("/api/v1/clients/packages/{$package->id}/reservations", ['date' => '2026-10-26', 'start_time' => '09:00'])
         ->assertNotFound();
 });
+
+test('a client names and clears their own package', function (): void {
+    $package = ClientPackageFactory::new()->create(['client_id' => $this->client->id]);
+
+    $this->actingAs($this->client, 'client')
+        ->patchJson("/api/v1/clients/packages/{$package->id}", ['knight_name' => 'Thunder', 'controlled' => true])
+        ->assertOk()
+        ->assertJsonPath('data.knight_name', 'Thunder')
+        ->assertJsonPath('data.controlled', false);
+
+    $this->actingAs($this->client, 'client')
+        ->patchJson("/api/v1/clients/packages/{$package->id}", ['knight_name' => null])
+        ->assertOk()
+        ->assertJsonPath('data.knight_name', null);
+});
+
+test('a client cannot name the package of another client', function (): void {
+    $package = ClientPackageFactory::new()->create();
+
+    $this->actingAs($this->client, 'client')
+        ->patchJson("/api/v1/clients/packages/{$package->id}", ['knight_name' => 'Thunder'])
+        ->assertNotFound();
+
+    expect($package->fresh()->knight_name)->toBeNull();
+});

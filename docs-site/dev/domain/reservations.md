@@ -68,6 +68,7 @@ Re-runs the full booking rules with `ignoreReservationId`, keeps the same servic
 - Membership visits need a usable membership before `expires_at` and a daily count (under lock) within `max_visits_per_day`. They are free and Confirmed.
 - Only **sellable** packages (active and not deleted) can be bought or quoted: `service_package_id` must exist with `status = active`. A membership whose included package is not sellable fails with `membership_package_unavailable`.
 - Packages and memberships are **never sold as cash on arrival**. They are created `pending` (membership packages at price 0) and activate on `PurchaseConfirmed`, with `expires_at` counted from activation (`servicePackage.duration` or the membership duration in months). Listeners are idempotent and only touch records still pending.
+- `ClientPackage.knight_name` (nullable string, max 255) is set only by the owning client (`PATCH clients/packages/{package}`); `controlled` (bool, default false) is set only by center staff or admins (`PATCH centers/{center}/packages/{package}`, `reservations.manage`, paid packages of that center only). Both appear in every package resource.
 
 ## Checkout
 
@@ -84,7 +85,7 @@ Checkout accepts only `pending`, non-package reservations with total > 0, of **o
 
 ## Client endpoints
 
-`reservations` (list, show, show by `code/{code}`, create, `quote`, `cancel`), `purchases/code/{code}` (one of the client's purchases, `ClientPurchaseResource`), `bookings`, `packages` and `memberships` (list, `quote`, buy), `packages/{package}/reservations`, `memberships/{membership}/visits`.
+`reservations` (list, show, show by `code/{code}`, create, `quote`, `cancel`), `purchases/code/{code}` (one of the client's purchases, `ClientPurchaseResource`), `bookings`, `packages` and `memberships` (list, `quote`, buy), `PATCH packages/{package}` (set `knight_name`), `packages/{package}/reservations`, `memberships/{membership}/visits`.
 
 ## Center endpoints
 
