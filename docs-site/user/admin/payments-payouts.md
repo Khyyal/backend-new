@@ -25,7 +25,7 @@ The fee is recorded once per sale and **reversed** if the purchase is cancelled 
 
 Every online payment adds to the center's **ledger**. After a hold period it becomes available. Fees, refunds and discounts funded by the platform adjust the balance. **Cash and manual payments stay with the center** and are not paid out.
 
-Once a week (Sunday, 00:00 UTC) the platform creates one **pending payout** per center for its available balance. A center is skipped when its balance is zero or negative, or when it has **no bank account** set; its balance carries to the next run.
+Once a week (Sunday, 00:00 UTC) the platform creates one **pending payout** per center for its available balance. A center is skipped when its balance is zero or negative; its balance carries to the next run. A center with **no bank account** set still gets a payout, with empty bank details, so get the account from the center before transferring.
 
 Under **Payouts** you can open a payout, **mark it paid** after transferring the money (the center is notified), or **cancel** it. You can sort payouts by **Amount**, **Entries** or **Period end**, and a center's ledger by **Amount** or **Payable from**. You can export a center's ledger from the center page.
 

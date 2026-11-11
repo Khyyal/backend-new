@@ -29,7 +29,7 @@ The **Settlements** module tracks what the platform owes each center and pays it
 
 - Debits net against credits.
 - A center whose net is zero or negative keeps its entries for the next run.
-- A center with **no bank account** (`payout_iban`) is skipped with a warning and keeps its entries.
+- The bank account is **optional**: a center without `payout_iban` still gets its payout, and the payout's `iban`, `account_name` and `bank_name` are null (copied as they were at creation). Finance must obtain the account before transferring.
 - A center already paid out for the same cutoff is skipped.
 
 A system user with `payouts.manage` marks a payout paid or cancels it. `CenterPayoutPaid` fires an event that notifies the center.

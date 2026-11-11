@@ -5,7 +5,6 @@ namespace Modules\Settlements\Actions;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Modules\Centers\Models\Center;
 use Modules\Settlements\Enums\CenterPayoutStatus;
 use Modules\Settlements\Models\CenterLedgerEntry;
@@ -14,8 +13,8 @@ use Modules\Settlements\Models\CenterPayout;
 /**
  * Creates one pending payout per center for its unpaid ledger entries
  * available at `$cutoff`. Debits net against credits; a center whose net is
- * zero or negative, or that has no bank account, keeps its entries for the
- * next run. A center already paid out for this cutoff is skipped.
+ * zero or negative keeps its entries for the next run. The bank account is
+ * optional and is copied as is, so it may be null. A center already paid out for this cutoff is skipped.
  */
 class GenerateCenterPayouts
 {
@@ -53,12 +52,6 @@ class GenerateCenterPayouts
             $amount = (int) $entries->sum('amount');
 
             if ($amount <= 0) {
-                return null;
-            }
-
-            if (blank($center->payout_iban)) {
-                Log::warning('Center payout skipped: no bank account.', ['center_id' => $centerId, 'amount' => $amount]);
-
                 return null;
             }
 
