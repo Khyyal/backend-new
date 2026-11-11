@@ -22,7 +22,7 @@ use Modules\Settlements\Actions\SyncPurchaseLedger;
 use Throwable;
 
 #[Signature('migrator:purchases {--dry-run : Run inside a transaction and roll it back} {--skip-ledger : Do not sync the center ledger or rebuild analytics afterwards}')]
-#[Description('Copy legacy purchases with one item, a payment and a fee row each, then sync the center ledger and rebuild analytics')]
+#[Description('Copy legacy purchases with one item, a payment and a fee row each, then sync the center ledger, rebuild analytics and leave each center awaiting a financial baseline')]
 class MigratePurchasesCommand extends LegacyMigrator
 {
     public const ENTITY = 'purchase';
@@ -32,6 +32,9 @@ class MigratePurchasesCommand extends LegacyMigrator
 
     /** @var array<int, int> */
     private array $migratedIds = [];
+
+    /** @var array<int, true> Centers that received a migrated purchase in this run. */
+    private array $migratedCenterIds = [];
 
     private ?string $earliestDate = null;
 
@@ -85,7 +88,13 @@ class MigratePurchasesCommand extends LegacyMigrator
 
     protected function afterCommit(bool $dryRun): void
     {
-        if ($dryRun || $this->option('skip-ledger') || $this->migratedIds === []) {
+        if ($dryRun || $this->migratedIds === []) {
+            return;
+        }
+
+        $this->requireFinancialBaselines();
+
+        if ($this->option('skip-ledger')) {
             return;
         }
 
@@ -105,6 +114,22 @@ class MigratePurchasesCommand extends LegacyMigrator
         if ($from < now()->toDateString()) {
             $this->call('analytics:build', ['--from' => $from]);
         }
+    }
+
+    /**
+     * Legacy payouts are not migrated, so a center's migrated balance is not
+     * what it is really owed. A pending baseline blocks its payouts until
+     * finance confirms the true figures; an existing one is left as it is.
+     */
+    private function requireFinancialBaselines(): void
+    {
+        $rows = array_map(fn (int $centerId): array => [
+            'center_id' => $centerId,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ], array_keys($this->migratedCenterIds));
+
+        $this->tally('centers awaiting a financial baseline', DB::table('center_financial_baselines')->insertOrIgnore($rows));
     }
 
     /**
@@ -186,6 +211,7 @@ class MigratePurchasesCommand extends LegacyMigrator
         ]);
 
         $this->migratedIds[] = $purchase->id;
+        $this->migratedCenterIds[$target['center_id']] = true;
         $this->earliestDate = min($this->earliestDate ?? (string) $purchase->created_at, (string) $purchase->created_at);
         $this->tally("purchases ({$status->value})");
         $this->tally($snapshot !== null ? 'fee rows from legacy snapshots' : 'zero fee rows');

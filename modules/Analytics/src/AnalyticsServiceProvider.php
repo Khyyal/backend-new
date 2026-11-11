@@ -5,13 +5,16 @@ namespace Modules\Analytics;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Modules\Analytics\Console\BuildAnalyticsCommand;
+use Modules\Analytics\Listeners\RebuildBaselineCutoffDay;
 use Modules\Analytics\Models\DailyPlatformStat;
 use Modules\Analytics\Policies\AnalyticsPolicy;
+use Modules\Settlements\Events\CenterFinancialBaselineConfirmed;
 
 /**
  * Platform analytics: nightly rollups of the transactional modules and the
@@ -30,6 +33,8 @@ class AnalyticsServiceProvider extends ServiceProvider
         $this->loadTranslationsFrom(__DIR__.'/../lang', 'analytics');
 
         Gate::policy(DailyPlatformStat::class, AnalyticsPolicy::class);
+
+        Event::listen(CenterFinancialBaselineConfirmed::class, RebuildBaselineCutoffDay::class);
 
         if ($this->app->runningInConsole()) {
             $this->commands([

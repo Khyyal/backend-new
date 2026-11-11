@@ -68,6 +68,7 @@ enum SystemPermission: string
     case ManageFees = 'fees.manage';
     case ManagePayouts = 'payouts.manage';
     case ExportCenterLedgers = 'payouts.export';
+    case ManageFinancialBaselines = 'payouts.baseline';
 
     case ViewAnalytics = 'analytics.view';
 

@@ -20,6 +20,10 @@ Requires `analytics.view`. Sections (`AnalyticsSection`): overview, revenue, boo
 | `admin/analytics/home-content` | [Homepage](./homepage) content events |
 | `admin/analytics/export` | Export |
 
+### Financial baseline corrections
+
+`BuildDailyCenterStats` adds each **confirmed** [financial baseline](./settlements#financial-baselines) to the day of its `cutoff_at`: `net_fee`, `gmv` and `refunds` move by `target - migrated` for every target finance gave. The whole correction lands on that one day (it can be negative), so totals over a range that includes it match finance. `baseline_adjustment` ledger entries are not revenue and are ignored. `RebuildBaselineCutoffDay` rebuilds the cutoff day when a baseline is confirmed, unless it is today.
+
 ## Center analytics
 
 `GET centers/{center}/analytics` (permission `analytics.view`) shows the center's own numbers.

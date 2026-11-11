@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Modules\Settlements\Http\Controllers\Admin\CenterFinancialBaselineController;
 use Modules\Settlements\Http\Controllers\Admin\CenterLedgerController;
 use Modules\Settlements\Http\Controllers\Admin\CenterPayoutController;
 use Modules\Settlements\Http\Controllers\Admin\PayoutInvoiceController;
@@ -21,5 +22,7 @@ Route::prefix('admin')
 
         Route::get('centers/{center}/ledger', [CenterLedgerController::class, 'index'])->name('centers.ledger');
         Route::post('centers/{center}/ledger/export', [CenterLedgerController::class, 'export'])->name('centers.ledger.export');
+        Route::get('centers/{center}/financial-baseline', [CenterFinancialBaselineController::class, 'show'])->name('centers.financial-baseline.show');
+        Route::put('centers/{center}/financial-baseline', [CenterFinancialBaselineController::class, 'update'])->name('centers.financial-baseline.update');
         Route::get('purchases/{purchase}/financials', [CenterLedgerController::class, 'financials'])->name('purchases.financials');
     });

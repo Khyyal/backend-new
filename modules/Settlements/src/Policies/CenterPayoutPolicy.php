@@ -48,6 +48,14 @@ class CenterPayoutPolicy
         return $this->manages($user);
     }
 
+    /**
+     * Set a center's financial baseline, which moves its balance.
+     */
+    public function manageBaseline(SystemUser $user): bool
+    {
+        return $user->hasPermissionTo(SystemPermission::ManageFinancialBaselines);
+    }
+
     private function manages(SystemUser $user): bool
     {
         return $user->hasPermissionTo(SystemPermission::ManagePayouts);

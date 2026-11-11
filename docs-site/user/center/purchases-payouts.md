@@ -15,6 +15,7 @@ The platform charges a **fee** on each sale. It is taken from your earnings and 
 - **Online payments** are added after a short hold period.
 - Fees, refunds and discounts paid for by the platform adjust the balance.
 - **Cash and manual payments** you collected yourself are not part of it.
+- If your center was moved from the old system, a **baseline adjustment** line brings the balance in line with what was already paid to you before the move. Until the platform has confirmed it, no payouts are created.
 
 ## Payouts
 

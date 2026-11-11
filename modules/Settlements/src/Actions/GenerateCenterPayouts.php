@@ -7,6 +7,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Modules\Centers\Models\Center;
 use Modules\Settlements\Enums\CenterPayoutStatus;
+use Modules\Settlements\Models\CenterFinancialBaseline;
 use Modules\Settlements\Models\CenterLedgerEntry;
 use Modules\Settlements\Models\CenterPayout;
 
@@ -14,7 +15,9 @@ use Modules\Settlements\Models\CenterPayout;
  * Creates one pending payout per center for its unpaid ledger entries
  * available at `$cutoff`. Debits net against credits; a center whose net is
  * zero or negative keeps its entries for the next run. The bank account is
- * optional and is copied as is, so it may be null. A center already paid out for this cutoff is skipped.
+ * optional and is copied as is, so it may be null. A center already paid out
+ * for this cutoff is skipped, and so is a migrated center whose financial
+ * baseline is not confirmed yet.
  */
 class GenerateCenterPayouts
 {
@@ -40,6 +43,10 @@ class GenerateCenterPayouts
             $center = Center::query()->whereKey($centerId)->lockForUpdate()->first();
 
             if ($center === null || CenterPayout::query()->where('center_id', $centerId)->where('period_end', $cutoff)->exists()) {
+                return null;
+            }
+
+            if (CenterFinancialBaseline::query()->where('center_id', $centerId)->whereNull('confirmed_at')->exists()) {
                 return null;
             }
 
