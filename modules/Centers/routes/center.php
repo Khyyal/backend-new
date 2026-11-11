@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Modules\Centers\Http\Controllers\Center\AccountController;
 use Modules\Centers\Http\Controllers\Center\AnalyticsController;
 use Modules\Centers\Http\Controllers\Center\AuthController;
 use Modules\Centers\Http\Controllers\Center\BlockedClientController;
@@ -73,6 +74,12 @@ Route::middleware(['api'])
 
                         Route::match(['put', 'patch'], '/{center}', [CenterController::class, 'update'])
                             ->name('update');
+
+                        Route::delete('/{center}', [AccountController::class, 'destroy'])
+                            ->name('destroy');
+
+                        Route::match(['put', 'patch'], '/{center}/profile', [AccountController::class, 'updateProfile'])
+                            ->name('profile.update');
 
                         Route::match(['put', 'patch'], '/{center}/social-links', [CenterController::class, 'updateSocialLinks'])
                             ->name('social-links.update');

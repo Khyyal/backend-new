@@ -33,7 +33,10 @@ class CenterAdminService
 
     private const CREATE_ATTRIBUTES = ['name', 'city_id', 'description', 'lat', 'lng', 'address', 'contact_phone', 'email', 'custom_site_enabled', 'domain', 'status', 'state'];
 
-    public function __construct(private readonly CenterUpdateService $updateService) {}
+    public function __construct(
+        private readonly CenterUpdateService $updateService,
+        private readonly CenterUserManagementService $userService,
+    ) {}
 
     /**
      * @param  array{search?: ?string, status?: ?string, state?: ?string, city_id?: ?int, sort?: ?string}  $filters
@@ -111,7 +114,11 @@ class CenterAdminService
 
     public function delete(Center $center): void
     {
-        $center->delete();
+        DB::transaction(function () use ($center): void {
+            $this->userService->detachAll($center);
+
+            $center->delete();
+        });
     }
 
     public function find(Center $center): Center

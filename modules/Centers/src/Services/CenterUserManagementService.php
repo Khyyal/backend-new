@@ -213,6 +213,18 @@ class CenterUserManagementService
     }
 
     /**
+     * Detaches every user from the center, primary included.
+     */
+    public function detachAll(Center $center): void
+    {
+        DB::transaction(function () use ($center): void {
+            foreach ($center->users()->get() as $user) {
+                $this->detach($center, $user);
+            }
+        });
+    }
+
+    /**
      * Drops the user's permissions on the center and revokes their
      * center-scoped tokens. An account left without any center is signed out
      * everywhere and soft-deleted.

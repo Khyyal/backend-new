@@ -48,6 +48,14 @@ class CenterPolicy
         return $user->isPrimaryOf($center);
     }
 
+    /**
+     * A center's own primary user deleting their account.
+     */
+    public function deleteOwn(User|SystemUser $user, Center $center): bool
+    {
+        return $user instanceof User && $user->isPrimaryOf($center);
+    }
+
     public function delete(User|SystemUser $user, Center $center): bool
     {
         return $this->systemUserCan($user, SystemPermission::DeleteCenter);

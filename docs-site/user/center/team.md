@@ -27,3 +27,13 @@ You need the **users** permission to manage the team.
 ## Removing someone
 
 Removing a team member signs them out of the dashboard immediately. If they belong to no other center, their account is removed.
+
+## Your own profile
+
+The owner can change their name and dashboard password. To change a password that is already set, enter the current one first. The phone number cannot be changed here.
+
+## Deleting the center account
+
+Only the owner can delete the account. This removes the center and signs out its whole team; team members who belong to no other center have their accounts removed.
+
+You cannot delete the account while there are upcoming pending or confirmed reservations, or a pending payout or unsettled balance. Cancel the reservations and settle the payout first.
