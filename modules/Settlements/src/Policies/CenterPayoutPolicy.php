@@ -40,6 +40,14 @@ class CenterPayoutPolicy
         return $this->manages($user);
     }
 
+    /**
+     * Edit and preview the layout of printed payout invoices.
+     */
+    public function manageInvoiceTemplate(SystemUser $user): bool
+    {
+        return $this->manages($user);
+    }
+
     private function manages(SystemUser $user): bool
     {
         return $user->hasPermissionTo(SystemPermission::ManagePayouts);

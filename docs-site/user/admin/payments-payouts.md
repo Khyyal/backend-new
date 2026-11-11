@@ -28,3 +28,9 @@ Every online payment adds to the center's **ledger**. After a hold period it bec
 Once a week (Sunday, 00:00 UTC) the platform creates one **pending payout** per center for its available balance. A center is skipped when its balance is zero or negative, or when it has **no bank account** set; its balance carries to the next run.
 
 Under **Payouts** you can open a payout, **mark it paid** after transferring the money (the center is notified), or **cancel** it. You can sort payouts by **Amount**, **Entries** or **Period end**, and a center's ledger by **Amount** or **Payable from**. You can export a center's ledger from the center page.
+
+## Payout invoices
+
+On a payout's page, **Print invoice** opens a PDF of the payout in **Arabic** or **English**. It shows the invoice number (`PO-` and the payout number), the dates, the status, the center, its bank details as they were when the payout was created, totals per entry type, every ledger entry, and the total to transfer in SAR. You can print a payout in any status; a cancelled payout is marked **CANCELLED** across the page.
+
+**Payouts → Invoice template** controls how every invoice looks: the logo (JPEG or PNG), the company name and address in both languages, the VAT and CR numbers, contact email and phone, the accent color, a note above and below the figures, and whether to show the bank details, the summary, the entry list and the signature lines. The preview beside the form updates as you edit, in either language, using sample figures. Nothing changes until you save, and the figures always come from the payout itself. You need the payouts permission.

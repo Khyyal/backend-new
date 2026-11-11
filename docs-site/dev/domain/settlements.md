@@ -34,11 +34,23 @@ The **Settlements** module tracks what the platform owes each center and pays it
 
 A system user with `payouts.manage` marks a payout paid or cancels it. `CenterPayoutPaid` fires an event that notifies the center.
 
+## Payout invoices
+
+`GET admin/payouts/{payout}/invoice?locale=ar|en` (default `ar`) streams a PDF that `PayoutInvoiceRenderer` builds from the Blade view `settlements::invoices.payout` with **mPDF**. mPDF handles Arabic shaping and right-to-left layout, and a new instance is created for each render (Octane). The invoice number is `PO-` plus the zero-padded payout id. Money is formatted from halalas without floats, and dates are in UTC. A cancelled payout gets a watermark. Labels come from `lang/{en,ar}/invoice.php`.
+
+The layout is the singleton `PayoutInvoiceTemplate` (one row created by its migration; read it with `current()`):
+- en/ar translatable company name, address, `header_note` and `footer_note`.
+- Tax and CR numbers, email, phone and `accent_color` (`#RRGGBB`).
+- Four `show_*` section flags.
+- A `logo` media collection (single JPEG/PNG file).
+
+Notes are cleaned with `LegalHtmlSanitizer`. Saving goes through `PayoutInvoiceTemplateService`, and `applyAttributes()` replaces each translatable field's locales so a cleared locale is removed. The logo is a temporary upload promoted with `TemporaryMediaService`; `null` removes it. `POST admin/payout-invoice-template/preview` renders the unsaved body (plus `locale` and an optional `payout_id`, otherwise in-memory sample data) and saves nothing. The template endpoints authorize `CenterPayoutPolicy::manageInvoiceTemplate` (`payouts.manage`).
+
 ## Endpoints
 
 | Surface | Endpoints |
 |---|---|
 | Center | `centers/{center}/balance`, `payout-account` (set by the primary user), `payouts`, `payouts/{payout}`, ledger-related exports |
-| Admin | `admin/payouts`, `admin/payouts/{payout}`, `payouts/{payout}/mark-paid`, `payouts/{payout}/cancel`, `admin/centers/{center}/ledger`, `ledger/export` |
+| Admin | `admin/payouts`, `admin/payouts/{payout}`, `payouts/{payout}/mark-paid`, `payouts/{payout}/cancel`, `payouts/{payout}/invoice`, `admin/payout-invoice-template` (show, update, `preview`), `admin/centers/{center}/ledger`, `ledger/export` |
 
 Admin lists take `sort`, `-` for descending, newest first without it ([List sorting](../conventions/coding#list-sorting)): `admin/payouts` accepts `CenterPayoutController::SORTS` (`created_at`, `amount`, `period_end`, `entries_count`); the ledger and its export accept `CenterLedgerQuery::SORTS` (`created_at`, `amount`, `available_at`).
