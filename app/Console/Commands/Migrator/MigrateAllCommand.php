@@ -27,6 +27,12 @@ class MigrateAllCommand extends LegacyMigrator
         'migrator:center-settings',
         'migrator:plans',
         'migrator:subscriptions',
+        'migrator:client-memberships',
+        'migrator:client-packages',
+        'migrator:reservations',
+        'migrator:event-reservations',
+        'migrator:resort-reservations',
+        'migrator:purchases',
     ];
 
     /** @var array<int, string> Migrators that copy media and accept --skip-media. */
@@ -38,9 +44,15 @@ class MigrateAllCommand extends LegacyMigrator
     protected function migrate(): void
     {
         foreach (self::MIGRATORS as $migrator) {
-            $arguments = in_array($migrator, self::MEDIA_MIGRATORS, true) && $this->option('dry-run')
-                ? ['--skip-media' => true]
-                : [];
+            $arguments = [];
+
+            if ($this->option('dry-run') && in_array($migrator, self::MEDIA_MIGRATORS, true)) {
+                $arguments['--skip-media'] = true;
+            }
+
+            if ($this->option('dry-run') && $migrator === 'migrator:purchases') {
+                $arguments['--skip-ledger'] = true;
+            }
 
             $this->call($migrator, $arguments);
             $this->tally('migrators run');
