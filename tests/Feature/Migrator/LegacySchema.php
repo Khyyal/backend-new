@@ -17,6 +17,7 @@ function useLegacyServiceSchema(): void
     createLegacyServiceTables();
     createLegacyBillingTables();
     createLegacyClientTables();
+    createLegacyBookingTables();
 }
 
 /**
@@ -315,5 +316,120 @@ function createLegacyClientTables(): void
             $table->string('fcm_token')->nullable();
             $table->timestamps();
         });
+    }
+}
+
+/**
+ * Creates the legacy booking and purchase tables on the current `legacy`
+ * connection, skipping any table that already exists.
+ */
+function createLegacyBookingTables(): void
+{
+    $schema = Schema::connection('legacy');
+    $tables = [
+        'purchases' => function (Blueprint $table): void {
+            $table->id();
+            $table->string('status')->default('pending');
+            $table->boolean('pay_when_arrived')->default(false);
+            $table->string('source_type');
+            $table->unsignedBigInteger('source_id');
+            $table->string('order_id')->nullable();
+            $table->string('coupon_code')->nullable();
+            $table->decimal('discount', 10, 2)->nullable();
+            $table->decimal('price_after_discount', 10, 2)->nullable();
+            $table->decimal('total_price_tax_added', 10, 2)->nullable();
+            $table->decimal('tax_amount', 10, 2)->nullable();
+            $table->string('service_type')->nullable();
+            $table->string('name')->nullable();
+            $table->double('total_price')->nullable();
+            $table->string('code');
+            $table->unsignedBigInteger('client_id')->nullable();
+            $table->string('purchasable_type')->nullable();
+            $table->unsignedBigInteger('purchasable_id')->nullable();
+            $table->text('note')->nullable();
+            $table->unsignedBigInteger('barn_id')->nullable();
+            $table->string('card_type')->nullable();
+            $table->text('cancel_note')->nullable();
+            $table->string('created_by_type')->nullable();
+            $table->timestamp('refunded_at')->nullable();
+            $table->string('refund_note')->nullable();
+            $table->text('payment_information')->nullable();
+            $table->timestamp('canceled_at')->nullable();
+            $table->string('channel')->default('mobile');
+            $table->timestamps();
+        },
+        'reservations' => function (Blueprint $table): void {
+            $table->id();
+            $table->string('code');
+            $table->date('day');
+            $table->time('time')->nullable();
+            $table->integer('tickets_booked')->default(1);
+            $table->string('status')->default('active');
+            $table->integer('duration')->nullable();
+            $table->double('ticket_price')->nullable();
+            $table->string('service_type')->nullable();
+            $table->unsignedBigInteger('clients_sessions_id')->nullable();
+            $table->unsignedBigInteger('service_id')->nullable();
+            $table->unsignedBigInteger('trainer_id')->nullable();
+            $table->unsignedBigInteger('purchase_id')->nullable();
+            $table->timestamps();
+        },
+        'clients_sessions' => function (Blueprint $table): void {
+            $table->id();
+            $table->unsignedBigInteger('session_id');
+            $table->integer('count');
+            $table->dateTime('end_date')->nullable();
+            $table->integer('duration')->nullable();
+            $table->unsignedBigInteger('trainer_id')->nullable();
+            $table->integer('reserved_count')->default(0);
+            $table->string('status')->nullable();
+            $table->unsignedBigInteger('membership_reservation_id')->nullable();
+            $table->unsignedBigInteger('purchase_id')->nullable();
+            $table->string('knight_name')->nullable();
+            $table->boolean('controlled')->default(false);
+            $table->timestamps();
+        },
+        'event_reservations' => function (Blueprint $table): void {
+            $table->id();
+            $table->text('category');
+            $table->integer('tickets');
+            $table->date('date')->nullable();
+            $table->unsignedBigInteger('event_id');
+            $table->string('status')->nullable();
+            $table->timestamps();
+        },
+        'resort_reservations' => function (Blueprint $table): void {
+            $table->id();
+            $table->unsignedBigInteger('service_id');
+            $table->date('start_date');
+            $table->date('end_date');
+            $table->text('additional_services')->nullable();
+            $table->string('status')->default('pending');
+            $table->timestamps();
+        },
+        'membership_reservations' => function (Blueprint $table): void {
+            $table->id();
+            $table->unsignedBigInteger('membership_id');
+            $table->string('status')->default('pending');
+            $table->date('end_date');
+            $table->integer('daily_invitation_limit');
+            $table->timestamps();
+        },
+        'purchase_financial_snapshots' => function (Blueprint $table): void {
+            $table->id();
+            $table->unsignedBigInteger('purchase_id');
+            $table->decimal('purchase_amount', 12, 2);
+            $table->decimal('gateway_fee', 12, 2);
+            $table->decimal('platform_commission_percentage', 5, 2);
+            $table->decimal('platform_share', 12, 2);
+            $table->decimal('barn_share', 12, 2);
+            $table->timestamps();
+        },
+    ];
+
+    foreach ($tables as $name => $callback) {
+        if (! $schema->hasTable($name)) {
+            $schema->create($name, $callback);
+        }
     }
 }

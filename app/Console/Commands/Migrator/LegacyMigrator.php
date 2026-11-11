@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Modules\Reservations\Models\Reservation;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
 use Throwable;
@@ -35,6 +36,15 @@ abstract class LegacyMigrator extends Command
 
     /** @var array<string, int> */
     protected array $stats = [];
+
+    /** @var array<string, array<string, true>> Codes taken per table, including those handed out in this run. */
+    private array $usedCodes = [];
+
+    /** @var array<int, int>|null */
+    private ?array $clientIdMap = null;
+
+    /** @var array<int, int>|null */
+    private ?array $clientIds = null;
 
     /**
      * Copies the legacy rows into the new tables.
@@ -215,6 +225,57 @@ abstract class LegacyMigrator extends Command
         }
 
         $this->tally('devices', count($rows));
+    }
+
+    /**
+     * Every legacy id → new id recorded for an entity.
+     *
+     * @return array<int, int>
+     */
+    protected function idMap(string $entity): array
+    {
+        return DB::table('legacy_id_maps')->where('entity', $entity)->pluck('new_id', 'legacy_id')
+            ->map(fn (mixed $id): int => (int) $id)
+            ->all();
+    }
+
+    /**
+     * The migrated client for a legacy client id (following phone merges),
+     * or null when that client was not migrated.
+     */
+    protected function migratedClientId(?int $legacyClientId): ?int
+    {
+        if ($legacyClientId === null) {
+            return null;
+        }
+
+        $this->clientIdMap ??= $this->idMap(MigrateClientsCommand::ENTITY);
+        $this->clientIds ??= DB::table('clients')->pluck('id')->flip()->all();
+        $id = $this->clientIdMap[$legacyClientId] ?? $legacyClientId;
+
+        return isset($this->clientIds[$id]) ? $id : null;
+    }
+
+    /**
+     * A new public code (the `HasUniqueCode` shape) not used in $table nor
+     * handed out earlier in this run.
+     */
+    protected function uniqueCode(string $table): string
+    {
+        $this->usedCodes[$table] ??= DB::table($table)->pluck('code')->flip()->all();
+        $alphabet = Reservation::CODE_ALPHABET;
+
+        do {
+            $code = '';
+
+            for ($i = 0; $i < Reservation::CODE_LENGTH; $i++) {
+                $code .= $alphabet[random_int(0, strlen($alphabet) - 1)];
+            }
+        } while (isset($this->usedCodes[$table][$code]));
+
+        $this->usedCodes[$table][$code] = true;
+
+        return $code;
     }
 
     /**
