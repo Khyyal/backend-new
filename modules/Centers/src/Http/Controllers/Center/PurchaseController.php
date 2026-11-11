@@ -2,6 +2,7 @@
 
 namespace Modules\Centers\Http\Controllers\Center;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -61,7 +62,31 @@ class PurchaseController extends Controller
     {
         $this->authorize($request, $center);
 
-        $purchase = $this->purchases->visible($center, $request->user())->with(['buyer', 'items', 'payments', 'latestPayment', 'adjustments', 'fee', 'ledgerEntries'])->withCount('items')->findOrFail($purchase);
+        return $this->details($this->purchases->visible($center, $request->user())->whereKey($purchase));
+    }
+
+    #[Endpoint('Show a purchase by code', 'Looks the purchase up by its public 6-character `code` (case-insensitive). Same response and visibility rules as showing it by ID.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[UrlParam('code', 'string', 'Purchase code (must belong to the center and be visible to you).', example: 'K7QX2M')]
+    #[ResponseFromApiResource(PurchaseDetailsResource::class, Purchase::class, status: 200, description: 'The purchase.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'No access to this center\'s purchases. Also returned when the token lacks `center-access:{center}` or the center is not active.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No purchase with this code in this center.')]
+    public function showByCode(Request $request, Center $center, string $code): PurchaseDetailsResource
+    {
+        $this->authorize($request, $center);
+
+        return $this->details($this->purchases->visible($center, $request->user())->whereCode($code));
+    }
+
+    /**
+     * The single purchase the query matches, with everything the details resource shows.
+     *
+     * @param  Builder<Purchase>  $query
+     */
+    private function details(Builder $query): PurchaseDetailsResource
+    {
+        $purchase = $query->with(['buyer', 'items', 'payments', 'latestPayment', 'adjustments', 'fee', 'ledgerEntries'])->withCount('items')->firstOrFail();
 
         $purchase->items
             ->whereIn('purchasable_type', [(new Reservation)->getMorphClass(), (new ClientPackage)->getMorphClass()])

@@ -23,6 +23,7 @@ class CheckoutResource extends JsonResource
 {
     #[ResponseField('purchase', 'object', 'The purchase.')]
     #[ResponseField('purchase.id', 'integer', 'Purchase ID.', example: 5521)]
+    #[ResponseField('purchase.code', 'string', 'Public 6-character purchase code, unique; use it to look the purchase up.', example: 'K7QX2M')]
     #[ResponseField('purchase.status', 'string', 'Purchase status.', enum: PurchaseStatus::class, example: 'pending')]
     #[ResponseField('purchase.subtotal', 'integer', 'Before discounts, in halalas.', example: 30000)]
     #[ResponseField('purchase.discount_amount', 'integer', 'Discount in halalas.', example: 4500)]
@@ -43,6 +44,7 @@ class CheckoutResource extends JsonResource
         return [
             'purchase' => [
                 'id' => $purchase->id,
+                'code' => $purchase->code,
                 'status' => $purchase->status->value,
                 'subtotal' => $purchase->subtotal,
                 'discount_amount' => $purchase->discount_amount,

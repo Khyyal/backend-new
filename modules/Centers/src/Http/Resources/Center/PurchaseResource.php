@@ -29,6 +29,7 @@ class PurchaseResource extends JsonResource
      * @return array<string, mixed>
      */
     #[ResponseField('id', 'integer', 'Purchase ID.', example: 5521)]
+    #[ResponseField('code', 'string', 'Public 6-character purchase code, unique; use it to look the purchase up.', example: 'K7QX2M')]
     #[ResponseField('status', 'string', 'Purchase status.', enum: PurchaseStatus::class, example: 'confirmed')]
     #[ResponseField('source', 'string', 'Who created it.', enum: PurchaseSource::class, example: 'client')]
     #[ResponseField('channel', 'string', 'Where it was made; null when unknown.', nullable: true, enum: PurchaseChannel::class, example: 'khyyal_app')]
@@ -52,6 +53,7 @@ class PurchaseResource extends JsonResource
 
         return [
             'id' => $purchase->id,
+            'code' => $purchase->code,
             'status' => $purchase->status->value,
             'source' => $purchase->source->value,
             'channel' => $purchase->channel?->value,

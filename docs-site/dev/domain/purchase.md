@@ -6,7 +6,7 @@ The **Purchase** module records what a client buys and how it is paid. It also c
 
 | Concept | Notes |
 |---|---|
-| **Purchase** | One checkout. Status `pending`, `confirmed`, `cancelled`, `completed`. Has items. |
+| **Purchase** | One checkout. Status `pending`, `confirmed`, `cancelled`, `completed`. Has items. Gets a unique 6-character `code` on insert (`HasUniqueCode`, same format as the [reservation code](./reservations#reservation-code)). |
 | **Purchase item** | `total = unit_price × quantity − discount + tax`. |
 | **Payment** | One **attempt**. Status `pending`, `processing`, `succeeded`, `failed`, `cancelled`, `expired`, `refunded`. |
 | **Adjustment** | A promotion or coupon discount applied to a purchase. See [Promotions](./promotions). |
@@ -69,6 +69,6 @@ Client requests take the channel from the `X-Channel` header and may not send `c
 
 ## Admin and center views
 
-`admin/purchases` and `centers/{center}/purchases` list and show purchases and export them. Admins also get `admin/purchases/{purchase}/financials`. Center users see purchases according to their [permissions](../conventions/permissions).
+`admin/purchases` and `centers/{center}/purchases` list and show purchases and export them. Every purchase resource includes `code`. `centers/{center}/purchases/code/{code}` (also under `admin/centers/{center}/…`) shows a purchase by its code with the same visibility rules as showing it by ID; clients look up their own with `clients/purchases/code/{code}`. Admins also get `admin/purchases/{purchase}/financials`. Center users see purchases according to their [permissions](../conventions/permissions).
 
 `admin/purchases` and its export take `sort` (`AdminPurchaseQuery::SORTS`): `created_at` or `total_amount`, `-` for descending; newest first without it. See [List sorting](../conventions/coding#list-sorting).

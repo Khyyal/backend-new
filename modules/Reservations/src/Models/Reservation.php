@@ -20,6 +20,7 @@ use Modules\Reservations\Enums\ReservationStatus;
 use Modules\Services\Models\PriceOption;
 use Modules\Services\Models\Service;
 use Modules\Services\Models\Trainer;
+use Modules\Support\Concerns\HasUniqueCode;
 use Spatie\Activitylog\Models\Concerns\LogsActivity;
 use Spatie\Activitylog\Support\LogOptions;
 
@@ -29,7 +30,7 @@ use Spatie\Activitylog\Support\LogOptions;
  */
 class Reservation extends Model implements Purchasable
 {
-    use HasFactory, IsPurchasable, LogsActivity, SoftDeletes;
+    use HasFactory, HasUniqueCode, IsPurchasable, LogsActivity, SoftDeletes;
 
     protected $fillable = [
         'center_id',

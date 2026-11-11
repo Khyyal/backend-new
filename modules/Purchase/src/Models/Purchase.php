@@ -12,10 +12,12 @@ use Modules\Purchase\Database\Factories\PurchaseFactory;
 use Modules\Purchase\Enums\PurchaseChannel;
 use Modules\Purchase\Enums\PurchaseSource;
 use Modules\Purchase\Enums\PurchaseStatus;
+use Modules\Support\Concerns\HasUniqueCode;
 
 class Purchase extends Model
 {
     use HasFactory;
+    use HasUniqueCode;
     use SoftDeletes;
 
     protected $fillable = [

@@ -200,3 +200,21 @@ test('searches by client name or phone number', function (): void {
         ->and($ids('0000002'))->toBe([$omarPurchase->id])
         ->and($ids('nobody'))->toBe([]);
 });
+
+test('shows a purchase by its code, ignoring case', function (): void {
+    $purchase = ($this->purchase)();
+
+    $this->actingAs($this->user, 'center_user')
+        ->getJson("{$this->url}/code/".strtolower($purchase->code))
+        ->assertOk()
+        ->assertJsonPath('data.id', $purchase->id)
+        ->assertJsonPath('data.code', $purchase->code);
+});
+
+test('a purchase of another center is not found by code', function (): void {
+    $other = ($this->purchase)([], CenterFactory::new()->create());
+
+    $this->actingAs($this->user, 'center_user')
+        ->getJson("{$this->url}/code/{$other->code}")
+        ->assertNotFound();
+});
