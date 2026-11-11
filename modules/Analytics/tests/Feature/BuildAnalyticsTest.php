@@ -16,6 +16,7 @@ use Modules\Purchase\Enums\PurchaseStatus;
 use Modules\Reservations\Database\Factories\ReservationFactory;
 use Modules\Reservations\Enums\ReservationStatus;
 use Modules\Services\Database\Factories\ServiceFactory;
+use Modules\Settlements\Database\Factories\CenterFinancialBaselineFactory;
 use Modules\Settlements\Database\Factories\CenterLedgerEntryFactory;
 use Modules\Settlements\Enums\CenterLedgerEntryType;
 use Tests\TestCase;
@@ -225,4 +226,46 @@ test('the command restates the configured window and refuses today', function ()
         ->toBe(['2026-10-18', '2026-10-19', '2026-10-20']);
 
     $this->artisan('analytics:build', ['--to' => '2026-10-21'])->assertFailed();
+});
+
+test('a confirmed financial baseline corrects fees, GMV and refunds on its cutoff day only', function (): void {
+    $center = CenterFactory::new()->create();
+    AnalyticsFixtures::purchase($center, attributes: ['total_amount' => 10000, 'created_at' => '2026-10-19 10:00:00']);
+    CenterFinancialBaselineFactory::new()->confirmed()->create([
+        'center_id' => $center->id,
+        'cutoff_at' => '2026-10-19 21:00:00',
+        'target_platform_fees' => 1500,
+        'migrated_platform_fees' => 1000,
+        'target_gross_sales' => 9000,
+        'migrated_gross_sales' => 10000,
+        'target_refunds' => null,
+        'migrated_refunds' => 700,
+    ]);
+    CenterLedgerEntryFactory::new()->create([
+        'center_id' => $center->id, 'purchase_id' => null, 'type' => CenterLedgerEntryType::BaselineAdjustment, 'amount' => -4000, 'created_at' => '2026-10-20 10:00:00',
+    ]);
+
+    app(BuildDailyCenterStats::class)->execute(CarbonImmutable::parse('2026-10-19'));
+    app(BuildDailyCenterStats::class)->execute(CarbonImmutable::parse('2026-10-20'));
+
+    $cutoffDay = analyticsCenterStats('2026-10-19', $center->id);
+
+    expect((int) $cutoffDay->net_fee)->toBe(500)
+        ->and((int) $cutoffDay->gmv)->toBe(9000)
+        ->and((int) $cutoffDay->refunds)->toBe(0)
+        ->and(analyticsCenterStats('2026-10-20', $center->id))->toBeNull();
+});
+
+test('a pending financial baseline corrects nothing', function (): void {
+    $center = CenterFactory::new()->create();
+    CenterFinancialBaselineFactory::new()->create([
+        'center_id' => $center->id,
+        'cutoff_at' => '2026-10-19 21:00:00',
+        'target_platform_fees' => 1500,
+        'migrated_platform_fees' => 1000,
+    ]);
+
+    app(BuildDailyCenterStats::class)->execute(CarbonImmutable::parse('2026-10-19'));
+
+    expect(analyticsCenterStats('2026-10-19', $center->id))->toBeNull();
 });

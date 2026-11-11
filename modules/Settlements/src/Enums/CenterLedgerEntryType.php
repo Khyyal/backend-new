@@ -27,6 +27,12 @@ enum CenterLedgerEntryType: string
     case Refund = 'refund';
 
     /**
+     * A correction that moves a migrated center's balance to the figure
+     * finance confirmed. It belongs to no purchase and is not revenue.
+     */
+    case BaselineAdjustment = 'baseline_adjustment';
+
+    /**
      * @return array<self>
      */
     public static function feeTypes(): array

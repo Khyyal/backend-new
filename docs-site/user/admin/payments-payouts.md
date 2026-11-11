@@ -29,6 +29,18 @@ Once a week (Sunday, 00:00 UTC) the platform creates one **pending payout** per 
 
 Under **Payouts** you can open a payout, **mark it paid** after transferring the money (the center is notified), or **cancel** it. You can sort payouts by **Amount**, **Entries** or **Period end**, and a center's ledger by **Amount** or **Payable from**. You can export a center's ledger from the center page.
 
+## Financial baselines for migrated centers
+
+Centers moved from the old system arrive with their whole sales history but without the payouts already made to them, so their balance is too high. Until finance confirms the real figures, such a center is marked **baseline pending** and gets **no payouts**.
+
+On the center's **Financial baseline** page you see what the migrated data says and enter what finance holds, as of a cutoff date:
+
+- **Balance owed** (required): what the platform still owed the center at the cutoff. Use a negative amount if the center owed the platform.
+- **Already paid out**, **platform fees**, **gross sales** and **refunds** (optional): the true totals up to the cutoff. Leave one empty to keep the migrated figure.
+- A **note** saying where the figures come from.
+
+Saving adds one **baseline adjustment** line to the center's ledger for the difference, so the balance becomes the figure you entered, and payouts start with the next weekly run. Fee, sales and refund corrections appear in analytics on the cutoff date. You can save again later to correct a figure; only the change in the balance is added, and the cutoff date can no longer be changed. You need the **`payouts.baseline`** permission, which is separate from the payouts permission.
+
 ## Payout invoices
 
 On a payout's page, **Print invoice** opens a PDF of the payout in **Arabic** or **English**. It shows the invoice number (`PO-` and the payout number), the dates, the status, the center, its bank details as they were when the payout was created, totals per entry type, every ledger entry, and the total to transfer in SAR. You can print a payout in any status; a cancelled payout is marked **CANCELLED** across the page.

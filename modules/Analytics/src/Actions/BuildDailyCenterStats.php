@@ -26,7 +26,8 @@ use Modules\Settlements\Enums\CenterLedgerEntryType;
  * Dating: purchases, payments, discounts and promotions by their
  * `created_at`; fees, subsidies and refunds by the ledger entry's
  * `created_at`; provider fees by `paid_at`; reservation outcomes by the
- * reservation's service `date`, bookings made by its `created_at`.
+ * reservation's service `date`, bookings made by its `created_at`; financial
+ * baseline corrections by the baseline's `cutoff_at`.
  */
 class BuildDailyCenterStats
 {
@@ -50,6 +51,7 @@ class BuildDailyCenterStats
         $this->purchases();
         $this->discounts();
         $this->ledger();
+        $this->baselines();
         $this->providerFees();
         $this->newBuyers();
         $this->payments();
@@ -122,6 +124,28 @@ class BuildDailyCenterStats
 
             if ($column !== null) {
                 $this->add((int) $row->center_id, $column, $column === 'subsidy' ? $total : -$total);
+            }
+        }
+    }
+
+    /**
+     * A confirmed financial baseline corrects a migrated center's totals to
+     * the figures finance holds. The whole correction lands on the cutoff day.
+     */
+    private function baselines(): void
+    {
+        $rows = DB::table('center_financial_baselines')
+            ->whereNotNull('confirmed_at')
+            ->whereBetween('cutoff_at', [$this->start, $this->end])
+            ->get();
+
+        foreach ($rows as $row) {
+            foreach (['net_fee' => 'platform_fees', 'gmv' => 'gross_sales', 'refunds' => 'refunds'] as $column => $figure) {
+                $target = $row->{"target_{$figure}"};
+
+                if ($target !== null) {
+                    $this->add((int) $row->center_id, $column, (int) $target - (int) $row->{"migrated_{$figure}"});
+                }
             }
         }
     }

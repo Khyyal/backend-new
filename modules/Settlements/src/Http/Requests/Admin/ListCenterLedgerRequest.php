@@ -10,7 +10,7 @@ use Modules\Settlements\Enums\CenterLedgerEntryType;
 use Modules\Settlements\Models\CenterPayout;
 use Modules\Settlements\Services\CenterLedgerQuery;
 
-#[QueryParam('type', 'string', 'Only this entry type.', required: false, enum: ['payment', 'platform_subsidy', 'subsidy_reversal', 'platform_fee', 'fee_reversal', 'refund'], example: 'payment')]
+#[QueryParam('type', 'string', 'Only this entry type.', required: false, enum: ['payment', 'platform_subsidy', 'subsidy_reversal', 'platform_fee', 'fee_reversal', 'refund', 'baseline_adjustment'], example: 'payment')]
 #[QueryParam('paid_out', 'boolean', '`1` only entries already in a payout, `0` only unpaid ones.', required: false, example: false)]
 #[QueryParam('from', 'string', 'Entries on or after, `Y-m-d`.', required: false, example: '2026-05-01')]
 #[QueryParam('to', 'string', 'Entries on or before, `Y-m-d`.', required: false, example: '2026-05-31')]

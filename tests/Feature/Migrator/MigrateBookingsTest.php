@@ -246,10 +246,30 @@ test('re-running creates nothing new', function (): void {
         ->and(DB::table('center_ledger_entries')->count())->toBe(4);
 });
 
+test('a center that received purchases awaits a financial baseline, and a confirmed one survives a re-run', function (): void {
+    runBookingMigrators($this);
+
+    $baseline = DB::table('center_financial_baselines')->sole();
+    expect($baseline->center_id)->toBe(6)
+        ->and($baseline->confirmed_at)->toBeNull();
+
+    DB::table('center_financial_baselines')->update(['confirmed_at' => '2026-11-11 08:00:00', 'target_balance' => 2500]);
+    foreach (['center_ledger_entries', 'payments', 'purchase_fees', 'purchase_items'] as $table) {
+        DB::table($table)->where('purchase_id', 1)->delete();
+    }
+    DB::table('purchases')->where('id', 1)->delete();
+    runBookingMigrators($this);
+
+    $baseline = DB::table('center_financial_baselines')->sole();
+    expect($baseline->confirmed_at)->toBe('2026-11-11 08:00:00')
+        ->and($baseline->target_balance)->toBe(2500);
+});
+
 test('a dry run writes nothing', function (): void {
     runBookingMigrators($this, ['--dry-run' => true]);
 
     expect(DB::table('reservations')->count())->toBe(0)
         ->and(DB::table('purchases')->count())->toBe(0)
-        ->and(DB::table('center_ledger_entries')->count())->toBe(0);
+        ->and(DB::table('center_ledger_entries')->count())->toBe(0)
+        ->and(DB::table('center_financial_baselines')->count())->toBe(0);
 });
