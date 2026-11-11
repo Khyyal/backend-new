@@ -23,6 +23,8 @@ class ClientPackageResource extends JsonResource
     #[ResponseField('price', 'integer', 'Price paid in halalas.', example: 100000)]
     #[ResponseField('expires_at', 'string', 'Expiry (ISO-8601); null until paid.', nullable: true, example: '2026-09-01T00:00:00+00:00')]
     #[ResponseField('is_usable', 'boolean', 'Active, not expired and with sessions left.', example: true)]
+    #[ResponseField('knight_name', 'string', 'Name the client gave the package; null until set.', nullable: true, example: 'Thunder')]
+    #[ResponseField('controlled', 'boolean', 'Whether the center controls this package; set by the center.', example: false)]
     #[ResponseField('created_at', 'string', 'Purchase time (ISO-8601).', example: '2026-05-20T09:30:00+00:00')]
     public function toArray(Request $request): array
     {
@@ -43,6 +45,8 @@ class ClientPackageResource extends JsonResource
             'price' => $package->price,
             'expires_at' => $package->expires_at?->toIso8601String(),
             'is_usable' => $package->isUsable(),
+            'knight_name' => $package->knight_name,
+            'controlled' => $package->controlled,
             'created_at' => $package->created_at?->toIso8601String(),
         ];
     }

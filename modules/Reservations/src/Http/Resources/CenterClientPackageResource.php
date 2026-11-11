@@ -21,6 +21,8 @@ class CenterClientPackageResource extends ClientPackageResource
     #[ResponseField('price', 'integer', 'Price paid in halalas.', example: 100000)]
     #[ResponseField('expires_at', 'string', 'Expiry (ISO-8601); null until paid.', nullable: true, example: '2026-09-01T00:00:00+00:00')]
     #[ResponseField('is_usable', 'boolean', 'Active, not expired and with sessions left.', example: true)]
+    #[ResponseField('knight_name', 'string', 'Name the client gave the package; null until set.', nullable: true, example: 'Thunder')]
+    #[ResponseField('controlled', 'boolean', 'Whether the center controls this package; set by the center.', example: false)]
     #[ResponseField('created_at', 'string', 'Purchase time (ISO-8601).', example: '2026-05-20T09:30:00+00:00')]
     #[ResponseField('client', 'object', 'The client (`id`, `full_name`, `phone_number`). Present when loaded.', required: false, example: ['id' => 77, 'full_name' => 'Noura Al-Qahtani', 'phone_number' => '+966500000003'])]
     public function toArray(Request $request): array

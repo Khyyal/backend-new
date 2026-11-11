@@ -183,3 +183,38 @@ test('a pending, foreign or forbidden package cannot be shown', function (): voi
         ->getJson("{$this->url}/{$own->id}")
         ->assertForbidden();
 });
+
+test('center staff mark a package as controlled', function (): void {
+    $package = ($this->package)(['knight_name' => 'Thunder']);
+
+    $this->actingAs($this->user, 'center_user')
+        ->patchJson("{$this->url}/{$package->id}", ['controlled' => true, 'knight_name' => 'Hacked'])
+        ->assertOk()
+        ->assertJsonPath('data.controlled', true)
+        ->assertJsonPath('data.knight_name', 'Thunder');
+
+    expect($package->fresh()->controlled)->toBeTrue();
+});
+
+test('updating a package needs the permission, a paid package of this center and a boolean', function (): void {
+    $package = ($this->package)();
+    $pending = ($this->package)(['status' => ClientPackageStatus::Pending]);
+    $foreign = ClientPackageFactory::new()->create();
+
+    $this->actingAs(UserFactory::new()->create(), 'center_user')
+        ->patchJson("{$this->url}/{$package->id}", ['controlled' => true])
+        ->assertForbidden();
+
+    $this->actingAs($this->user, 'center_user')
+        ->patchJson("{$this->url}/{$pending->id}", ['controlled' => true])
+        ->assertNotFound();
+
+    $this->actingAs($this->user, 'center_user')
+        ->patchJson("{$this->url}/{$foreign->id}", ['controlled' => true])
+        ->assertNotFound();
+
+    $this->actingAs($this->user, 'center_user')
+        ->patchJson("{$this->url}/{$package->id}", ['controlled' => 'maybe'])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('controlled');
+});
