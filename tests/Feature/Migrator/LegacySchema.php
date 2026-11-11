@@ -16,6 +16,7 @@ function useLegacyServiceSchema(): void
 
     createLegacyServiceTables();
     createLegacyBillingTables();
+    createLegacyClientTables();
 }
 
 /**
@@ -275,6 +276,44 @@ function createLegacyBillingTables(): void
             $table->timestamps();
             $table->timestamp('cancelled_at')->nullable();
             $table->string('billing_cycle');
+        });
+    }
+}
+
+/**
+ * Creates the legacy client and manager push-token tables on the current
+ * `legacy` connection, skipping any table that already exists.
+ */
+function createLegacyClientTables(): void
+{
+    $schema = Schema::connection('legacy');
+
+    if (! $schema->hasTable('clients')) {
+        $schema->create('clients', function (Blueprint $table): void {
+            $table->id();
+            $table->string('first_name')->nullable();
+            $table->string('last_name')->nullable();
+            $table->string('email')->nullable();
+            $table->string('phone_number')->nullable();
+            $table->string('sub')->nullable();
+            $table->string('gender')->nullable()->default('unknown');
+            $table->string('image')->nullable();
+            $table->string('fcm_token')->nullable();
+            $table->string('device_token')->nullable();
+            $table->string('lang')->default('ar');
+            $table->unsignedBigInteger('city_id')->nullable();
+            $table->unsignedBigInteger('registered_barn_id')->nullable();
+            $table->timestamps();
+            $table->softDeletes();
+        });
+    }
+
+    if (! $schema->hasTable('manager_fcm_tokens')) {
+        $schema->create('manager_fcm_tokens', function (Blueprint $table): void {
+            $table->id();
+            $table->unsignedBigInteger('manager_id');
+            $table->string('fcm_token')->nullable();
+            $table->timestamps();
         });
     }
 }

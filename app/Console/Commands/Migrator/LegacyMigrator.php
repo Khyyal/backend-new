@@ -152,6 +152,72 @@ abstract class LegacyMigrator extends Command
     }
 
     /**
+     * Legacy push tokens (stored on user rows) → `devices` rows of $type. A
+     * token belongs to one app install, so a token found on several owners
+     * goes to the one that used it last. Without a legacy device id the
+     * identifier is derived from the token, so re-runs find the same device.
+     *
+     * @param  Collection<int, array{owner_id: int, token: ?string, identifier: ?string, locale: ?string, seen_at: mixed}>  $entries
+     */
+    protected function attachDevices(string $type, Collection $entries): void
+    {
+        $existing = DB::table('devices')
+            ->where('deviceable_type', $type)
+            ->get(['deviceable_id', 'device_identifier'])
+            ->map(fn (object $device): string => "{$device->deviceable_id}|{$device->device_identifier}")
+            ->flip();
+
+        $usable = $entries->filter(function (array $entry): bool {
+            $token = trim((string) $entry['token']);
+
+            if ($token === '' || $token === 'new-fcm-token') {
+                $this->tally('device tokens skipped (blank or test)');
+
+                return false;
+            }
+
+            return true;
+        });
+
+        $rows = [];
+
+        foreach ($usable->groupBy(fn (array $entry): string => trim((string) $entry['token'])) as $token => $uses) {
+            $latest = $uses->sortByDesc(fn (array $entry): string => (string) $entry['seen_at'])->first();
+
+            if ($uses->pluck('owner_id')->unique()->count() > 1) {
+                $this->tally('device tokens shared by several users (kept on the latest)');
+            }
+
+            $identifier = filled($latest['identifier']) ? trim((string) $latest['identifier']) : 'legacy-'.md5((string) $token);
+            $key = "{$latest['owner_id']}|{$identifier}";
+
+            if ($existing->has($key) || isset($rows[$key])) {
+                $this->tally('devices already present');
+
+                continue;
+            }
+
+            $rows[$key] = [
+                'device_identifier' => $identifier,
+                'fcm_token' => $token,
+                'platform' => null,
+                'locale' => filled($latest['locale']) ? $latest['locale'] : null,
+                'last_seen_at' => $latest['seen_at'],
+                'deviceable_id' => $latest['owner_id'],
+                'deviceable_type' => $type,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+        }
+
+        foreach (array_chunk(array_values($rows), 500) as $chunk) {
+            DB::table('devices')->insert($chunk);
+        }
+
+        $this->tally('devices', count($rows));
+    }
+
+    /**
      * Legacy money (SAR as double/decimal) in integer halalas.
      */
     protected function halalas(mixed $amount): int
