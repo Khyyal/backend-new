@@ -19,6 +19,7 @@ use Modules\Services\Models\Schedule;
 class ReservationResource extends JsonResource
 {
     #[ResponseField('id', 'integer', 'Reservation ID.', example: 311)]
+    #[ResponseField('code', 'string', 'Public 6-character reservation code, unique; use it to look the reservation up.', example: 'K7QX2M')]
     #[ResponseField('status', 'string', '`pending` until paid (online), `confirmed`, then `completed` or `no_show`; or `cancelled`.', enum: ReservationStatus::class, example: 'confirmed')]
     #[ResponseField('source', 'string', 'Who booked it: the client, or the center (walk-in).', enum: ReservationSource::class, example: 'client')]
     #[ResponseField('center_id', 'integer', 'Center ID.', example: 8)]
@@ -54,6 +55,7 @@ class ReservationResource extends JsonResource
 
         return [
             'id' => $reservation->id,
+            'code' => $reservation->code,
             'status' => $reservation->status->value,
             'source' => $reservation->source->value,
             'center_id' => $reservation->center_id,

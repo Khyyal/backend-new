@@ -206,3 +206,32 @@ test('a free booking is confirmed without a checkout', function (): void {
         ->assertJsonPath('data.status', 'confirmed')
         ->assertJsonPath('checkout', null);
 });
+
+test('a new reservation gets a unique 6-character code', function (): void {
+    $reservations = ReservationFactory::new()->forService($this->service)->count(5)->create();
+
+    expect($reservations->pluck('code')->unique())->toHaveCount(5)
+        ->each->toMatch('/^[A-HJKMNP-Z2-9]{6}$/');
+});
+
+test('shows my reservation by its code, ignoring case', function (): void {
+    $reservation = ReservationFactory::new()->forService($this->service)->create(['client_id' => $this->client->id]);
+
+    $this->actingAs($this->client, 'client')
+        ->getJson('/api/v1/clients/reservations/code/'.strtolower($reservation->code))
+        ->assertOk()
+        ->assertJsonPath('data.id', $reservation->id)
+        ->assertJsonPath('data.code', $reservation->code);
+});
+
+test('another client\'s reservation or an unknown code is not found by code', function (): void {
+    $other = ReservationFactory::new()->forService($this->service)->create();
+
+    $this->actingAs($this->client, 'client')
+        ->getJson("/api/v1/clients/reservations/code/{$other->code}")
+        ->assertNotFound();
+
+    $this->actingAs($this->client, 'client')
+        ->getJson('/api/v1/clients/reservations/code/ZZZZZZ')
+        ->assertNotFound();
+});

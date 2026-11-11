@@ -79,6 +79,18 @@ class ReservationController extends Controller
         return ReservationResource::make($this->find($request, $reservation)->load(self::RELATIONS));
     }
 
+    #[Endpoint('Show my reservation by code', 'Looks one of your reservations up by its public 6-character `code` (case-insensitive).')]
+    #[UrlParam('code', 'string', 'Reservation code.', example: 'K7QX2M')]
+    #[ResponseFromApiResource(ReservationResource::class, Reservation::class, status: 200, description: 'The reservation.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No reservation of yours with this code.')]
+    public function showByCode(Request $request, string $code): ReservationResource
+    {
+        $reservation = $this->client($request)->reservations()->whereCode($code)->firstOrFail();
+
+        return ReservationResource::make($reservation->load(self::RELATIONS));
+    }
+
     #[Endpoint('Book a reservation', 'Books one slot and opens its checkout. Online: `pending` until paid with `checkout.gateway`. Cash on arrival: `confirmed` at once when the service allows it. Free: confirmed with `checkout` null. Coupon attempts are limited to 10 per minute.')]
     #[Header('X-Channel', 'khyyal_app')]
     #[Header('Idempotency-Key', '7c9e6679-7425-40de-944b-e07fc1f90ae7')]

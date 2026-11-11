@@ -68,6 +68,8 @@ test('only purchases of viewable service types are listed', function (): void {
 
     $this->actingAs($this->user, 'center_user')->getJson("{$this->url}/{$visit->id}")->assertNotFound();
     $this->actingAs($this->user, 'center_user')->getJson("{$this->url}/{$training->id}")->assertOk();
+    $this->actingAs($this->user, 'center_user')->getJson("{$this->url}/code/{$visit->code}")->assertNotFound();
+    $this->actingAs($this->user, 'center_user')->getJson("{$this->url}/code/{$training->code}")->assertOk();
 });
 
 test('trainer rules narrow the listed purchases', function (): void {

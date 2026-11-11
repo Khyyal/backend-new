@@ -2,6 +2,8 @@
 
 **Reservations** lists every booking at your center. Filter by date, status or service, or use the **calendar**.
 
+Every booking has a 6-character **code** (for example `K7QX2M`). A client can show it at the desk and you can look the booking up by it.
+
 ## Statuses
 
 | Status | Meaning |

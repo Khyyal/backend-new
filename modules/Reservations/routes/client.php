@@ -5,6 +5,7 @@ use Modules\Reservations\Http\Controllers\Client\AvailabilityController;
 use Modules\Reservations\Http\Controllers\Client\BookingController;
 use Modules\Reservations\Http\Controllers\Client\MembershipController;
 use Modules\Reservations\Http\Controllers\Client\PackageController;
+use Modules\Reservations\Http\Controllers\Client\PurchaseController;
 use Modules\Reservations\Http\Controllers\Client\ReservationController;
 
 Route::middleware(['set.locale.from.accept.language', 'track.client.session', 'auth:client'])
@@ -22,6 +23,7 @@ Route::middleware(['set.locale.from.accept.language', 'track.client.session', 'a
                 Route::get('/', [ReservationController::class, 'index'])->name('index');
                 Route::post('/', [ReservationController::class, 'store'])->middleware(['throttle:coupon', 'idempotent'])->name('store');
                 Route::post('/quote', [ReservationController::class, 'quote'])->middleware('throttle:coupon')->name('quote');
+                Route::get('/code/{code}', [ReservationController::class, 'showByCode'])->name('show-by-code');
                 Route::get('/{reservation}', [ReservationController::class, 'show'])->name('show');
                 Route::post('/{reservation}/cancel', [ReservationController::class, 'cancel'])->middleware('idempotent')->name('cancel');
             });
@@ -34,6 +36,8 @@ Route::middleware(['set.locale.from.accept.language', 'track.client.session', 'a
                 Route::post('/quote', [PackageController::class, 'quote'])->middleware('throttle:coupon')->name('quote');
                 Route::post('/{package}/reservations', [PackageController::class, 'book'])->middleware('idempotent')->name('reservations.store');
             });
+
+        Route::get('/purchases/code/{code}', [PurchaseController::class, 'showByCode'])->name('purchases.show-by-code');
 
         Route::prefix('memberships')
             ->name('memberships.')

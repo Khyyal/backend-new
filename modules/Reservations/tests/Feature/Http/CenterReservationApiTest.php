@@ -225,3 +225,22 @@ test('calendar returns every day of the range with its reservation count', funct
         ->getJson("{$this->url}/calendar?from=2026-10-25&to=2026-10-29")
         ->assertForbidden();
 });
+
+test('shows a reservation by its code', function (): void {
+    $reservation = ($this->reservation)();
+
+    $this->actingAs($this->user, 'center_user')
+        ->getJson("{$this->url}/code/{$reservation->code}")
+        ->assertOk()
+        ->assertJsonPath('data.id', $reservation->id)
+        ->assertJsonPath('data.code', $reservation->code)
+        ->assertJsonPath('data.client.id', $this->client->id);
+});
+
+test('a reservation of another center is not found by code', function (): void {
+    $other = ReservationFactory::new()->forService(BookingFixtures::riding(CenterFactory::new()->create()))->create();
+
+    $this->actingAs($this->user, 'center_user')
+        ->getJson("{$this->url}/code/{$other->code}")
+        ->assertNotFound();
+});

@@ -2,7 +2,7 @@
 
 ## Purchases
 
-**Purchases** lists everything clients bought, across all centers. Open one to see its items, payments, discounts and **financials** (fee, platform subsidy and what the center earns). You can sort it by **Total** or **Date** and export the list.
+**Purchases** lists everything clients bought, across all centers. Open one to see its items, payments, discounts and **financials** (fee, platform subsidy and what the center earns). You can sort it by **Total** or **Date** and export the list. Each purchase shows its 6-character **code**, the one the client and the center see.
 
 | Purchase status | Meaning |
 |---|---|

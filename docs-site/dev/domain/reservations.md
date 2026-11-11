@@ -2,6 +2,10 @@
 
 The **Reservations** module books slots, enforces capacity and runs the reservation lifecycle, including packages and memberships.
 
+## Reservation code
+
+Every reservation gets a unique public `code` on insert (`HasUniqueCode` in `modules/Support/src/Concerns`): 6 characters from `A-Z` and `2-9` without `I`, `L`, `O`, `0` and `1`, e.g. `K7QX2M`. It is never fillable; a unique index on `reservations.code` is the final guard. Lookups by code ignore case and surrounding spaces (`whereCode()`). The code is in every reservation resource.
+
 ## Status lifecycle
 
 ```
@@ -80,4 +84,8 @@ Checkout accepts only `pending`, non-package reservations with total > 0, of **o
 
 ## Client endpoints
 
-`reservations` (list, show, create, `quote`, `cancel`), `bookings`, `packages` and `memberships` (list, `quote`, buy), `packages/{package}/reservations`, `memberships/{membership}/visits`.
+`reservations` (list, show, show by `code/{code}`, create, `quote`, `cancel`), `purchases/code/{code}` (one of the client's purchases, `ClientPurchaseResource`), `bookings`, `packages` and `memberships` (list, `quote`, buy), `packages/{package}/reservations`, `memberships/{membership}/visits`.
+
+## Center endpoints
+
+`centers/{center}/reservations` (and the same under `admin/centers/{center}/reservations`): list, `calendar`, show, show by `code/{code}` (404 for another center's code), create, `quote`, `reschedule`, `cancel`, `complete`, `no-show`.

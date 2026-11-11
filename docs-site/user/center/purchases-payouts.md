@@ -2,7 +2,7 @@
 
 ## Purchases
 
-**Purchases** shows what clients bought from you. Which ones you see depends on your permissions: you need the view permission for each service type, and separate permissions to see other trainers' sales, sales not linked to a trainer, and prices. The owner sees everything. You can export purchases if you have the permission.
+**Purchases** shows what clients bought from you. Which ones you see depends on your permissions: you need the view permission for each service type, and separate permissions to see other trainers' sales, sales not linked to a trainer, and prices. The owner sees everything. You can export purchases if you have the permission. Every purchase has a 6-character **code** you can look it up by.
 
 ## Fees
 

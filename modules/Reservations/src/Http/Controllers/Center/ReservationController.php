@@ -45,7 +45,7 @@ use Spatie\QueryBuilder\QueryBuilder;
 #[Group('Reservations', 'A center\'s reservations: list, book walk-ins, reschedule, cancel and record attendance. Served on `centers/{center}/…` (center-scoped token) and `admin/centers/{center}/…` (system user).')]
 class ReservationController extends Controller
 {
-    private const array RELATIONS = ['service', 'trainer', 'client','priceOption', 'lines.priceOption'];
+    private const array RELATIONS = ['service', 'trainer', 'client', 'priceOption', 'lines.priceOption'];
 
     public function __construct(
         private readonly BookAndCheckout $bookAndCheckout,
@@ -143,6 +143,22 @@ class ReservationController extends Controller
         $this->authorize($request, $center);
 
         return CenterReservationResource::make($this->find($center, $reservation)->load(self::RELATIONS));
+    }
+
+    #[Endpoint('Show a reservation by code', 'Looks the reservation up by its public 6-character `code` (case-insensitive), e.g. the one a client shows at the desk.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[UrlParam('code', 'string', 'Reservation code (of this center).', example: 'K7QX2M')]
+    #[ResponseFromApiResource(CenterReservationResource::class, Reservation::class, status: 200, description: 'The reservation.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'No access to this center\'s reservations (center users: `reservations.manage`; system users: `centers.manage_reservations`), or the token lacks `center-access:{center}`.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No reservation with this code in this center.')]
+    public function showByCode(Request $request, Center $center, string $code): CenterReservationResource
+    {
+        $this->authorize($request, $center);
+
+        $reservation = Reservation::query()->where('center_id', $center->getKey())->whereCode($code)->firstOrFail();
+
+        return CenterReservationResource::make($reservation->load(self::RELATIONS));
     }
 
     #[Endpoint('Book a walk-in reservation', 'Same booking fields as the client endpoint plus `client_id`, `payment_method` (`manual` = paid at the desk, confirmed at once) and `notes`.')]

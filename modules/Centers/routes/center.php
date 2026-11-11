@@ -101,6 +101,9 @@ Route::middleware(['api'])
                         Route::post('/{center}/purchases/export', [PurchaseController::class, 'export'])
                             ->name('purchases.export');
 
+                        Route::get('/{center}/purchases/code/{code}', [PurchaseController::class, 'showByCode'])
+                            ->name('purchases.show-by-code');
+
                         Route::get('/{center}/purchases/{purchase}', [PurchaseController::class, 'show'])
                             ->name('purchases.show');
 
