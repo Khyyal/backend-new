@@ -20,6 +20,7 @@ use Modules\Reservations\Http\Requests\Center\ListClientPackagesRequest;
 use Modules\Reservations\Http\Requests\Center\UpdateClientPackageRequest;
 use Modules\Reservations\Http\Resources\CenterClientPackageDetailsResource;
 use Modules\Reservations\Http\Resources\CenterClientPackageResource;
+use Modules\Reservations\Http\Resources\PurchaseSummaryResource;
 use Modules\Reservations\Models\ClientPackage;
 use Modules\Support\Documentation\ApiExamples;
 
@@ -40,7 +41,7 @@ class PackageController extends Controller
         $packages = $this->baseQuery($request, $center)
             ->when($active && ! $notActive, fn (Builder $query) => $query->where('status', ClientPackageStatus::Active))
             ->when($notActive && ! $active, fn (Builder $query) => $query->where('status', '!=', ClientPackageStatus::Active))
-            ->with(['client', 'service', 'priceOption'])
+            ->with(['client', 'service', 'priceOption', ...PurchaseSummaryResource::RELATIONS])
             ->latest()
             ->latest('id')
             ->paginate(25)
@@ -63,7 +64,7 @@ class PackageController extends Controller
         $clientPackage = ClientPackage::query()
             ->whereHas('service', fn (Builder $query) => $query->where('center_id', $center->getKey()))
             ->where('status', '!=', ClientPackageStatus::Pending)
-            ->with(['client', 'service', 'priceOption', 'reservations' => fn ($query) => $query->orderBy('date')->orderBy('start_time')])
+            ->with(['client', 'service', 'priceOption', ...PurchaseSummaryResource::RELATIONS, 'reservations' => fn ($query) => $query->orderBy('date')->orderBy('start_time')])
             ->findOrFail($package);
 
         return CenterClientPackageDetailsResource::make($clientPackage);
@@ -84,7 +85,7 @@ class PackageController extends Controller
         $clientPackage->update(['controlled' => $request->boolean('controlled')]);
 
         return CenterClientPackageDetailsResource::make($clientPackage->load([
-            'client', 'service', 'priceOption',
+            'client', 'service', 'priceOption', ...PurchaseSummaryResource::RELATIONS,
             'reservations' => fn ($query) => $query->orderBy('date')->orderBy('start_time'),
         ]));
     }

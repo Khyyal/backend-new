@@ -83,6 +83,8 @@ test('buying a membership sells all its packages in one purchase item', function
         ->assertJsonPath('data.price', 1000)
         ->assertJsonPath('data.max_visits_per_day', 2)
         ->assertJsonCount(2, 'data.packages')
+        ->assertJsonPath('data.purchase.total_amount', 1000)
+        ->assertJsonPath('data.purchase.center.id', $this->center->id)
         ->assertJsonPath('checkout.purchase.total_amount', 1000);
 
     $clientMembership = ClientMembership::sole();

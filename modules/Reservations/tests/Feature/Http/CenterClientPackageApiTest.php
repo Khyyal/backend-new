@@ -5,6 +5,8 @@ use Modules\Centers\Database\Factories\CenterFactory;
 use Modules\Centers\Database\Factories\UserFactory;
 use Modules\Centers\Enums\CenterUserPermission;
 use Modules\Clients\Database\Factories\ClientFactory;
+use Modules\Purchase\Database\Factories\PurchaseFactory;
+use Modules\Purchase\Models\PurchaseItem;
 use Modules\Reservations\Database\Factories\ClientPackageFactory;
 use Modules\Reservations\Database\Factories\ReservationFactory;
 use Modules\Reservations\Enums\ClientPackageStatus;
@@ -217,4 +219,22 @@ test('updating a package needs the permission, a paid package of this center and
         ->patchJson("{$this->url}/{$package->id}", ['controlled' => 'maybe'])
         ->assertUnprocessable()
         ->assertJsonValidationErrors('controlled');
+});
+
+test('center package resources carry the purchase of the package', function (): void {
+    $package = ($this->package)();
+    $purchase = PurchaseFactory::new()->create(['buyer_type' => $package->client->getMorphClass(), 'buyer_id' => $package->client_id, 'merchant_type' => $this->center->getMorphClass(), 'merchant_id' => $this->center->id]);
+    PurchaseItem::query()->create(['purchase_id' => $purchase->id, 'purchasable_type' => $package->getMorphClass(), 'purchasable_id' => $package->id, 'name' => 'Package', 'quantity' => 1, 'unit_price' => 350, 'subtotal' => 350, 'total_amount' => 350]);
+
+    $this->actingAs($this->user, 'center_user')
+        ->getJson($this->url)
+        ->assertOk()
+        ->assertJsonPath('data.0.purchase.code', $purchase->code)
+        ->assertJsonPath('data.0.purchase.client.id', $package->client_id)
+        ->assertJsonPath('data.0.purchase.center.id', $this->center->id);
+
+    $this->actingAs($this->user, 'center_user')
+        ->getJson("{$this->url}/{$package->id}")
+        ->assertOk()
+        ->assertJsonPath('data.purchase.id', $purchase->id);
 });

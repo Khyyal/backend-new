@@ -34,6 +34,7 @@ use Modules\Reservations\Http\Requests\Center\StoreReservationRequest;
 use Modules\Reservations\Http\Resources\CenterReservationResource;
 use Modules\Reservations\Http\Resources\CheckoutQuoteResource;
 use Modules\Reservations\Http\Resources\CheckoutResource;
+use Modules\Reservations\Http\Resources\PurchaseSummaryResource;
 use Modules\Reservations\Models\Reservation;
 use Modules\Reservations\Services\ReservationStateService;
 use Modules\Support\Documentation\ApiExamples;
@@ -45,7 +46,7 @@ use Spatie\QueryBuilder\QueryBuilder;
 #[Group('Reservations', 'A center\'s reservations: list, book walk-ins, reschedule, cancel and record attendance. Served on `centers/{center}/…` (center-scoped token) and `admin/centers/{center}/…` (system user).')]
 class ReservationController extends Controller
 {
-    private const array RELATIONS = ['service', 'trainer', 'client', 'priceOption', 'lines.priceOption'];
+    private const array RELATIONS = ['service', 'trainer', 'client', 'priceOption', 'lines.priceOption', ...PurchaseSummaryResource::RELATIONS];
 
     public function __construct(
         private readonly BookAndCheckout $bookAndCheckout,

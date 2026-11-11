@@ -30,6 +30,7 @@ use Modules\Reservations\Http\Requests\Client\UpdatePackageRequest;
 use Modules\Reservations\Http\Resources\CheckoutQuoteResource;
 use Modules\Reservations\Http\Resources\CheckoutResource;
 use Modules\Reservations\Http\Resources\ClientPackageResource;
+use Modules\Reservations\Http\Resources\PurchaseSummaryResource;
 use Modules\Reservations\Http\Resources\ReservationResource;
 use Modules\Reservations\Models\ClientPackage;
 use Modules\Reservations\Models\Reservation;
@@ -52,7 +53,7 @@ class PackageController extends Controller
     public function index(Request $request): AnonymousResourceCollection
     {
         $packages = $this->client($request)->packages()
-            ->with(['service', 'priceOption'])
+            ->with(['service', 'priceOption', ...PurchaseSummaryResource::RELATIONS])
             ->latest()
             ->paginate(15);
 
@@ -71,7 +72,7 @@ class PackageController extends Controller
 
         $clientPackage->update(['knight_name' => $request->validated('knight_name')]);
 
-        return ClientPackageResource::make($clientPackage->load(['service', 'priceOption']));
+        return ClientPackageResource::make($clientPackage->load(['service', 'priceOption', ...PurchaseSummaryResource::RELATIONS]));
     }
 
     #[Endpoint('Buy a package', 'The package becomes active once paid; its validity starts then. Opens an online checkout; pay with `checkout.gateway`. Coupon attempts are limited to 10 per minute.')]
@@ -104,7 +105,7 @@ class PackageController extends Controller
         /** @var ClientPackage $package */
         $package = $checkout->purchase->items->first()->purchasable;
 
-        return ClientPackageResource::make($package->load(['service', 'priceOption']))
+        return ClientPackageResource::make($package->load(['service', 'priceOption', ...PurchaseSummaryResource::RELATIONS]))
             ->additional(['checkout' => CheckoutResource::make($checkout)])
             ->response()
             ->setStatusCode(201);
@@ -147,7 +148,7 @@ class PackageController extends Controller
             $request->filled('trainer_id') ? (int) $request->validated('trainer_id') : null,
         );
 
-        return ReservationResource::make($reservation->load(['service', 'trainer', 'priceOption', 'lines.priceOption']))
+        return ReservationResource::make($reservation->load(['service', 'trainer', 'priceOption', 'lines.priceOption', ...PurchaseSummaryResource::RELATIONS]))
             ->response()
             ->setStatusCode(201);
     }

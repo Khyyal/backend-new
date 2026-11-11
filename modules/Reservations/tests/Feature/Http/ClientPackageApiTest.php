@@ -123,3 +123,24 @@ test('a client cannot name the package of another client', function (): void {
 
     expect($package->fresh()->knight_name)->toBeNull();
 });
+
+test('a package carries its purchase, and a session drawn from it has none', function (): void {
+    $this->actingAs($this->client, 'client')
+        ->postJson('/api/v1/clients/packages', ['service_package_id' => $this->servicePackage->id])
+        ->assertCreated()
+        ->assertJsonPath('data.purchase.status', 'pending')
+        ->assertJsonPath('data.purchase.total_amount', 350);
+
+    $this->actingAs($this->client, 'client')
+        ->getJson('/api/v1/clients/packages')
+        ->assertOk()
+        ->assertJsonPath('data.0.purchase.client.id', $this->client->id)
+        ->assertJsonStructure(['data' => [['purchase' => ['code', 'channel', 'center' => ['city', 'lat', 'lng', 'contact_phone']]]]]);
+
+    $unsold = ClientPackageFactory::new()->create(['client_id' => $this->client->id]);
+
+    $this->actingAs($this->client, 'client')
+        ->patchJson("/api/v1/clients/packages/{$unsold->id}", ['knight_name' => null])
+        ->assertOk()
+        ->assertJsonPath('data.purchase', null);
+});

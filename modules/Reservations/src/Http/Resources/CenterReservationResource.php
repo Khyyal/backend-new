@@ -43,6 +43,7 @@ class CenterReservationResource extends ReservationResource
     #[ResponseField('cancellation_reason', 'string', 'Reason given when cancelling.', nullable: true, example: 'No-example')]
     #[ResponseField('refund', 'object', 'Refund of a cancelled paid reservation: `amount` (halalas), `payment_id`, `method`, `status` (`refunded`, or `manual_required` for manual payments). Null otherwise.', nullable: true, example: 'No-example')]
     #[ResponseField('created_at', 'string', 'Booking time (ISO-8601).', example: '2026-05-20T09:30:00+00:00')]
+    #[ResponseField('purchase', 'object', 'Short info of the purchase that sold it (`PurchaseSummaryResource`); null when it was not sold through a purchase. Present when loaded.', required: false, nullable: true)]
     #[ResponseField('client', 'object', 'The client (`id`, `full_name`, `phone_number`). Present when loaded.', required: false, example: ['id' => 77, 'full_name' => 'Noura Al-Qahtani', 'phone_number' => '+966500000003'])]
     #[ResponseField('notes', 'string', 'Staff notes (walk-ins).', nullable: true, example: 'Prefers a calm horse.')]
     #[ResponseField('reschedules', 'object[]', 'Previous slots, oldest first: `date`, `end_date`, `start_time`, `end_time`, `trainer_id`, `rescheduled_at`.', example: [])]

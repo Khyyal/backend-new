@@ -26,6 +26,7 @@ class CenterClientPackageDetailsResource extends CenterClientPackageResource
     #[ResponseField('knight_name', 'string', 'Name the client gave the package; null until set.', nullable: true, example: 'Thunder')]
     #[ResponseField('controlled', 'boolean', 'Whether the center controls this package; set by the center.', example: false)]
     #[ResponseField('created_at', 'string', 'Purchase time (ISO-8601).', example: '2026-05-20T09:30:00+00:00')]
+    #[ResponseField('purchase', 'object', 'Short info of the purchase that sold it (`PurchaseSummaryResource`); null when it was not sold through a purchase. Present when loaded.', required: false, nullable: true)]
     #[ResponseField('client', 'object', 'The client (`id`, `full_name`, `phone_number`). Present when loaded.', required: false, example: ['id' => 77, 'full_name' => 'Noura Al-Qahtani', 'phone_number' => '+966500000003'])]
     #[ResponseField('reservations', 'object[]', 'Sessions booked from it, by date: `id`, `status`, `date`, `start_time`, `end_time`.', example: [['id' => 311, 'status' => 'completed', 'date' => '2026-06-05', 'start_time' => '16:00', 'end_time' => '17:00']])]
     public function toArray(Request $request): array

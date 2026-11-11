@@ -27,7 +27,7 @@ You can pay for several bookings together, but only from the **same center**.
 
 **My bookings** is one list of your reservations, packages and memberships, newest first. Unpaid packages and memberships are not listed.
 
-Each reservation and each purchase has a 6-character **code** (for example `K7QX2M`). Show it at the center so staff can find your booking quickly.
+Each reservation and each purchase has a 6-character **code** (for example `K7QX2M`). Show it at the center so staff can find your booking quickly. Bookings, packages and memberships also show a short summary of their purchase: code, status, total, discount, payment and the center's address and contact.
 
 ## Cancelling
 

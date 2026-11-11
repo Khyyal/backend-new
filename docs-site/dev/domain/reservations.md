@@ -83,6 +83,10 @@ Checkout accepts only `pending`, non-package reservations with total > 0, of **o
 
 `reservations:release-unpaid` cancels pending online purchases older than `unpaid_hold_minutes`, but only if, re-checked under lock, they have no `processing`, `succeeded` or `refunded` payment. Pending payments stay open. A payment that succeeds on an already-cancelled purchase is **refunded automatically**.
 
+## Purchase summary on resources
+
+`ReservationResource`, `ClientPackageResource`, `ClientMembershipResource` and their center variants embed `purchase` (`PurchaseSummaryResource`): `id`, `code`, `status`, `channel`, `total_amount`, `discount_amount`, `coupon_code`, `payment_method`, `payment_status`, `created_at`, plus `client` (`id`, `full_name`, `phone_number`) and `center` (`id`, `name`, `city`, `address`, `lat`, `lng`, `contact_phone`). It comes from the record's latest `purchaseItem` and is `null` when the record was not sold through a purchase (a session drawn from a package or membership, packages included in a membership). It is only present when the controller loads `PurchaseSummaryResource::RELATIONS`, so nested resources (a membership's `packages`) omit it.
+
 ## Client endpoints
 
 `reservations` (list, show, show by `code/{code}`, create, `quote`, `cancel`), `purchases/code/{code}` (one of the client's purchases, `ClientPurchaseResource`), `bookings`, `packages` and `memberships` (list, `quote`, buy), `PATCH packages/{package}` (set `knight_name`), `packages/{package}/reservations`, `memberships/{membership}/visits`.

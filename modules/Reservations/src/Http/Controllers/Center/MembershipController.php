@@ -21,6 +21,7 @@ use Modules\Reservations\Enums\ClientMembershipStatus;
 use Modules\Reservations\Http\Requests\Center\ListClientMembershipsRequest;
 use Modules\Reservations\Http\Resources\CenterClientMembershipDetailsResource;
 use Modules\Reservations\Http\Resources\CenterClientMembershipResource;
+use Modules\Reservations\Http\Resources\PurchaseSummaryResource;
 use Modules\Reservations\Models\ClientMembership;
 use Modules\Support\Documentation\ApiExamples;
 
@@ -43,7 +44,7 @@ class MembershipController extends Controller
         $memberships = $this->baseQuery($request, $center)
             ->when($active && ! $notActive, fn (Builder $query) => $query->where('status', ClientMembershipStatus::Active))
             ->when($notActive && ! $active, fn (Builder $query) => $query->where('status', '!=', ClientMembershipStatus::Active))
-            ->with(['client', 'service', 'membership', 'visitService'])
+            ->with(['client', 'service', 'membership', 'visitService', ...PurchaseSummaryResource::RELATIONS])
             ->latest()
             ->latest('id')
             ->paginate(25)
@@ -71,6 +72,7 @@ class MembershipController extends Controller
                 'service',
                 'membership',
                 'visitService',
+                ...PurchaseSummaryResource::RELATIONS,
                 'packages.service',
                 'packages.priceOption',
                 'reservations' => fn ($query) => $query->orderBy('date')->orderBy('start_time'),

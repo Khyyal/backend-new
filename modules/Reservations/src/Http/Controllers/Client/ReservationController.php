@@ -28,6 +28,7 @@ use Modules\Reservations\Http\Requests\Client\QuoteReservationRequest;
 use Modules\Reservations\Http\Requests\Client\StoreReservationRequest;
 use Modules\Reservations\Http\Resources\CheckoutQuoteResource;
 use Modules\Reservations\Http\Resources\CheckoutResource;
+use Modules\Reservations\Http\Resources\PurchaseSummaryResource;
 use Modules\Reservations\Http\Resources\ReservationResource;
 use Modules\Reservations\Models\Reservation;
 use Modules\Reservations\Services\ReservationStateService;
@@ -37,7 +38,7 @@ use Modules\Support\Documentation\ApiExamples;
 #[Group('Client / Reservations', 'Book, list and cancel reservations, and buy and spend packages and memberships.')]
 class ReservationController extends Controller
 {
-    private const array RELATIONS = ['service', 'trainer', 'priceOption', 'lines.priceOption'];
+    private const array RELATIONS = ['service', 'trainer', 'priceOption', 'lines.priceOption', ...PurchaseSummaryResource::RELATIONS];
 
     public function __construct(
         private readonly BookAndCheckout $bookAndCheckout,

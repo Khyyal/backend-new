@@ -29,6 +29,7 @@ use Modules\Reservations\Http\Requests\Client\QuoteMembershipRequest;
 use Modules\Reservations\Http\Resources\CheckoutQuoteResource;
 use Modules\Reservations\Http\Resources\CheckoutResource;
 use Modules\Reservations\Http\Resources\ClientMembershipResource;
+use Modules\Reservations\Http\Resources\PurchaseSummaryResource;
 use Modules\Reservations\Http\Resources\ReservationResource;
 use Modules\Reservations\Models\ClientMembership;
 use Modules\Reservations\Models\Reservation;
@@ -38,7 +39,7 @@ use Modules\Support\Documentation\ApiExamples;
 #[Group('Client / Reservations', 'Book, list and cancel reservations, and buy and spend packages and memberships.')]
 class MembershipController extends Controller
 {
-    private const RELATIONS = ['service', 'membership', 'visitService', 'packages.service', 'packages.priceOption'];
+    private const RELATIONS = ['service', 'membership', 'visitService', 'packages.service', 'packages.priceOption', ...PurchaseSummaryResource::RELATIONS];
 
     public function __construct(
         private readonly PurchaseMembership $purchaseMembership,
@@ -137,7 +138,7 @@ class MembershipController extends Controller
             ReservationSource::Client,
         );
 
-        return ReservationResource::make($reservation->load(['service', 'trainer', 'priceOption', 'lines.priceOption']))
+        return ReservationResource::make($reservation->load(['service', 'trainer', 'priceOption', 'lines.priceOption', ...PurchaseSummaryResource::RELATIONS]))
             ->response()
             ->setStatusCode(201);
     }

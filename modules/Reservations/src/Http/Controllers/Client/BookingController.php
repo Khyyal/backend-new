@@ -23,6 +23,7 @@ use Modules\Reservations\Enums\ClientMembershipStatus;
 use Modules\Reservations\Enums\ClientPackageStatus;
 use Modules\Reservations\Enums\ReservationStatus;
 use Modules\Reservations\Http\Resources\ClientBookingResource;
+use Modules\Reservations\Http\Resources\PurchaseSummaryResource;
 use Modules\Reservations\Models\ClientMembership;
 use Modules\Reservations\Models\ClientPackage;
 use Modules\Reservations\Models\Reservation;
@@ -47,11 +48,11 @@ class BookingController extends Controller
 
     private const string KIND_MEMBERSHIP = 'membership';
 
-    private const array RESERVATION_RELATIONS = ['service', 'trainer', 'priceOption', 'lines.priceOption'];
+    private const array RESERVATION_RELATIONS = ['service', 'trainer', 'priceOption', 'lines.priceOption', ...PurchaseSummaryResource::RELATIONS];
 
-    private const array PACKAGE_RELATIONS = ['service', 'priceOption'];
+    private const array PACKAGE_RELATIONS = ['service', 'priceOption', ...PurchaseSummaryResource::RELATIONS];
 
-    private const array MEMBERSHIP_RELATIONS = ['service', 'membership', 'visitService', 'packages.service', 'packages.priceOption'];
+    private const array MEMBERSHIP_RELATIONS = ['service', 'membership', 'visitService', 'packages.service', 'packages.priceOption', ...PurchaseSummaryResource::RELATIONS];
 
     public function __construct(private readonly BookVisitFromMembership $bookVisit) {}
 

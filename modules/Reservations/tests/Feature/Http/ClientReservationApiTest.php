@@ -235,3 +235,24 @@ test('another client\'s reservation or an unknown code is not found by code', fu
         ->getJson('/api/v1/clients/reservations/code/ZZZZZZ')
         ->assertNotFound();
 });
+
+test('a reservation carries the short info of its purchase', function (): void {
+    $id = $this->actingAs($this->client, 'client')
+        ->postJson('/api/v1/clients/reservations', ($this->body)(['quantity' => 2]))
+        ->assertCreated()
+        ->json('data.id');
+
+    $this->actingAs($this->client, 'client')
+        ->getJson("/api/v1/clients/reservations/{$id}")
+        ->assertOk()
+        ->assertJsonPath('data.purchase.status', 'pending')
+        ->assertJsonPath('data.purchase.total_amount', 200)
+        ->assertJsonPath('data.purchase.payment_method', 'online')
+        ->assertJsonPath('data.purchase.client.id', $this->client->id)
+        ->assertJsonPath('data.purchase.center.id', $this->service->center_id)
+        ->assertJsonStructure(['data' => ['purchase' => [
+            'id', 'code', 'channel', 'discount_amount', 'coupon_code', 'payment_status', 'created_at',
+            'client' => ['full_name', 'phone_number'],
+            'center' => ['name', 'city', 'address', 'lat', 'lng', 'contact_phone'],
+        ]]]);
+});
