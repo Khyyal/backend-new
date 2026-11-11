@@ -172,3 +172,46 @@ test('a pending, foreign or forbidden membership cannot be shown', function (): 
         ->getJson("{$this->url}/{$own->id}")
         ->assertForbidden();
 });
+
+test('extends the expiry of a membership and revives an expired one', function (): void {
+    $membership = ($this->membership)(['status' => ClientMembershipStatus::Expired, 'expires_at' => now()->subDay(), 'expiry_reminder_sent_at' => now()->subDays(3)]);
+    $url = "{$this->url}/{$membership->id}";
+
+    $this->actingAs($this->user, 'center_user')
+        ->patchJson($url, ['expires_at' => now()->addDays(30)->toIso8601String()])
+        ->assertOk()
+        ->assertJsonPath('data.status', 'active')
+        ->assertJsonPath('data.is_usable', true);
+
+    expect($membership->fresh()->expiry_reminder_sent_at)->toBeNull();
+
+    $this->actingAs($this->user, 'center_user')
+        ->patchJson($url, ['expires_at' => now()->addDays(10)->toIso8601String()])
+        ->assertUnprocessable()
+        ->assertJsonPath('reason', 'invalid_expiry');
+
+    $this->actingAs($this->user, 'center_user')
+        ->patchJson($url, ['expires_at' => now()->subDay()->toIso8601String()])
+        ->assertJsonValidationErrors('expires_at');
+});
+
+test('extending needs the permission and a paid, uncancelled membership of this center', function (): void {
+    $membership = ($this->membership)();
+    $pending = ($this->membership)(['status' => ClientMembershipStatus::Pending, 'expires_at' => null]);
+    $cancelled = ($this->membership)(['status' => ClientMembershipStatus::Cancelled]);
+    $foreign = ClientMembershipFactory::new()->create();
+    $body = ['expires_at' => now()->addYear()->toIso8601String()];
+
+    $this->actingAs(UserFactory::new()->create(), 'center_user')
+        ->patchJson("{$this->url}/{$membership->id}", $body)->assertForbidden();
+
+    foreach ([$pending, $foreign] as $notFound) {
+        $this->actingAs($this->user, 'center_user')
+            ->patchJson("{$this->url}/{$notFound->id}", $body)->assertNotFound();
+    }
+
+    $this->actingAs($this->user, 'center_user')
+        ->patchJson("{$this->url}/{$cancelled->id}", $body)
+        ->assertUnprocessable()
+        ->assertJsonPath('reason', 'membership_not_adjustable');
+});

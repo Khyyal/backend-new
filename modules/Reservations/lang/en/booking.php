@@ -44,4 +44,5 @@ return [
     'package_not_adjustable' => 'This package is cancelled and cannot be changed.',
     'package_not_trainer_bound' => 'Only training packages can have a trainer.',
     'invalid_expiry' => 'The new expiry must be later than the current one.',
+    'membership_not_adjustable' => 'This membership is not paid or is cancelled and cannot be changed.',
 ];

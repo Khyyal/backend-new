@@ -9,3 +9,4 @@ use Modules\Reservations\Http\Controllers\Center\MembershipController;
 Route::get('/', [MembershipController::class, 'index'])->name('index');
 Route::get('/counts', [MembershipController::class, 'counts'])->name('counts');
 Route::get('/{membership}', [MembershipController::class, 'show'])->name('show');
+Route::patch('/{membership}', [MembershipController::class, 'update'])->name('update');

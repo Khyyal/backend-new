@@ -17,7 +17,9 @@ use Knuckles\Scribe\Attributes\ResponseFromApiResource;
 use Knuckles\Scribe\Attributes\UrlParam;
 use Modules\Centers\Models\Center;
 use Modules\Reservations\Actions\BookVisitFromMembership;
+use Modules\Reservations\Actions\ExtendClientMembership;
 use Modules\Reservations\Enums\ClientMembershipStatus;
+use Modules\Reservations\Http\Requests\Center\ExtendClientMembershipRequest;
 use Modules\Reservations\Http\Requests\Center\ListClientMembershipsRequest;
 use Modules\Reservations\Http\Resources\CenterClientMembershipDetailsResource;
 use Modules\Reservations\Http\Resources\CenterClientMembershipResource;
@@ -28,7 +30,10 @@ use Modules\Support\Documentation\ApiExamples;
 #[Group('Client memberships', 'Memberships clients bought from a center. Unpaid (`pending`) memberships are never listed or counted. Served on `centers/{center}/…` (center-scoped token) and `admin/centers/{center}/…` (system user).')]
 class MembershipController extends Controller
 {
-    public function __construct(private readonly BookVisitFromMembership $bookVisit) {}
+    public function __construct(
+        private readonly BookVisitFromMembership $bookVisit,
+        private readonly ExtendClientMembership $extendClientMembership,
+    ) {}
 
     #[Endpoint('List client memberships', 'Newest first, 25 per page.')]
     #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
@@ -78,6 +83,34 @@ class MembershipController extends Controller
                 'reservations' => fn ($query) => $query->orderBy('date')->orderBy('start_time'),
             ])
             ->findOrFail($membership);
+
+        return CenterClientMembershipDetailsResource::make($clientMembership)
+            ->withVisitsUsedToday($this->bookVisit->usedVisits($clientMembership, CarbonImmutable::today()));
+    }
+
+    #[Endpoint('Extend a client membership', 'Sets a later `expires_at`. An expired membership becomes `active` again; the packages that came with it keep their own validity. Pending and cancelled memberships cannot be changed.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[UrlParam('membership', 'integer', 'Client membership ID.', example: 9)]
+    #[ResponseFromApiResource(CenterClientMembershipDetailsResource::class, ClientMembership::class, status: 200, description: 'The updated membership.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'No access to this center\'s reservations (center users: `reservations.manage`; system users: `centers.manage_reservations`), or the token lacks `center-access:{center}`.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No such paid membership in this center.')]
+    #[ApiResponse(['message' => 'The new expiry must be later than the current one.', 'reason' => 'invalid_expiry', 'errors' => ['reservation' => ['The new expiry must be later than the current one.']]], 422, 'Validation failed, or the change is not allowed (`reason`: invalid_expiry, membership_not_adjustable).')]
+    public function update(ExtendClientMembershipRequest $request, Center $center, int $membership): CenterClientMembershipDetailsResource
+    {
+        $clientMembership = $this->extendClientMembership->execute(
+            ClientMembership::query()
+                ->whereHas('service', fn (Builder $query) => $query->where('center_id', $center->getKey()))
+                ->where('status', '!=', ClientMembershipStatus::Pending)
+                ->findOrFail($membership),
+            CarbonImmutable::parse($request->validated('expires_at')),
+        );
+
+        $clientMembership->load([
+            'client', 'service', 'membership', 'visitService', ...PurchaseSummaryResource::RELATIONS,
+            'packages.service', 'packages.priceOption',
+            'reservations' => fn ($query) => $query->orderBy('date')->orderBy('start_time'),
+        ]);
 
         return CenterClientMembershipDetailsResource::make($clientMembership)
             ->withVisitsUsedToday($this->bookVisit->usedVisits($clientMembership, CarbonImmutable::today()));
