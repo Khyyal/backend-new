@@ -45,7 +45,7 @@ use Spatie\QueryBuilder\QueryBuilder;
 #[Group('Reservations', 'A center\'s reservations: list, book walk-ins, reschedule, cancel and record attendance. Served on `centers/{center}/…` (center-scoped token) and `admin/centers/{center}/…` (system user).')]
 class ReservationController extends Controller
 {
-    private const array RELATIONS = ['service', 'trainer', 'client', 'lines.priceOption'];
+    private const array RELATIONS = ['service', 'trainer', 'client','priceOption', 'lines.priceOption'];
 
     public function __construct(
         private readonly BookAndCheckout $bookAndCheckout,
