@@ -7,7 +7,9 @@ use Modules\Centers\Enums\CenterUserPermission;
 use Modules\Clients\Database\Factories\ClientFactory;
 use Modules\Reservations\Database\Factories\ClientMembershipFactory;
 use Modules\Reservations\Database\Factories\ReservationFactory;
+use Modules\Reservations\Enums\ClientMembershipLogType;
 use Modules\Reservations\Enums\ClientMembershipStatus;
+use Modules\Reservations\Models\ClientMembershipLog;
 use Modules\Reservations\Tests\Support\BookingFixtures;
 use Modules\Services\Database\Factories\ServiceFactory;
 use Modules\Services\Enums\ServiceType;
@@ -214,4 +216,60 @@ test('extending needs the permission and a paid, uncancelled membership of this 
         ->patchJson("{$this->url}/{$cancelled->id}", $body)
         ->assertUnprocessable()
         ->assertJsonPath('reason', 'membership_not_adjustable');
+});
+
+test('every check-in adds a log entry that the center can list', function (): void {
+    $membership = ($this->membership)();
+    $url = "{$this->url}/{$membership->id}";
+
+    $this->actingAs($this->user, 'center_user')
+        ->postJson("{$url}/check-ins", ['notes' => 'Came with two friends.'])
+        ->assertCreated()
+        ->assertJsonPath('data.type', 'check_in')
+        ->assertJsonPath('data.notes', 'Came with two friends.')
+        ->assertJsonPath('data.actor.type', 'center_user')
+        ->assertJsonPath('data.actor.id', $this->user->id);
+
+    $this->actingAs($this->user, 'center_user')->postJson("{$url}/check-ins")->assertCreated();
+
+    $guest = ClientFactory::new()->create();
+    $membership->logs()->create(['type' => ClientMembershipLogType::Invite, 'guest_client_id' => $guest->id]);
+
+    $this->actingAs($this->user, 'center_user')
+        ->getJson("{$url}/logs")
+        ->assertOk()
+        ->assertJsonCount(3, 'data')
+        ->assertJsonPath('data.0.type', 'invite')
+        ->assertJsonPath('data.0.guest.id', $guest->id);
+
+    $this->actingAs($this->user, 'center_user')
+        ->getJson("{$url}/logs?type=check_in")
+        ->assertOk()
+        ->assertJsonCount(2, 'data');
+
+    expect(ClientMembershipLog::query()->where('type', ClientMembershipLogType::CheckIn)->count())->toBe(2);
+});
+
+test('check-in and logs need the permission and a usable paid membership of this center', function (): void {
+    $membership = ($this->membership)();
+    $expired = ($this->membership)(['status' => ClientMembershipStatus::Expired]);
+    $pending = ($this->membership)(['status' => ClientMembershipStatus::Pending, 'expires_at' => null]);
+    $foreign = ClientMembershipFactory::new()->create();
+
+    $this->actingAs(UserFactory::new()->create(), 'center_user')
+        ->postJson("{$this->url}/{$membership->id}/check-ins")->assertForbidden();
+    $this->actingAs(UserFactory::new()->create(), 'center_user')
+        ->getJson("{$this->url}/{$membership->id}/logs")->assertForbidden();
+
+    foreach ([$pending, $foreign] as $notFound) {
+        $this->actingAs($this->user, 'center_user')->postJson("{$this->url}/{$notFound->id}/check-ins")->assertNotFound();
+        $this->actingAs($this->user, 'center_user')->getJson("{$this->url}/{$notFound->id}/logs")->assertNotFound();
+    }
+
+    $this->actingAs($this->user, 'center_user')
+        ->postJson("{$this->url}/{$expired->id}/check-ins")
+        ->assertUnprocessable()
+        ->assertJsonPath('reason', 'membership_not_usable');
+
+    expect(ClientMembershipLog::query()->count())->toBe(0);
 });

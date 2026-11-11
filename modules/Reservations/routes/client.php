@@ -47,5 +47,6 @@ Route::middleware(['set.locale.from.accept.language', 'track.client.session', 'a
                 Route::post('/', [MembershipController::class, 'store'])->middleware(['throttle:coupon', 'idempotent'])->name('store');
                 Route::post('/quote', [MembershipController::class, 'quote'])->middleware('throttle:coupon')->name('quote');
                 Route::post('/{membership}/visits', [MembershipController::class, 'bookVisit'])->middleware('idempotent')->name('visits.store');
+                Route::post('/{membership}/invites', [MembershipController::class, 'invite'])->middleware('idempotent')->name('invites.store');
             });
     });

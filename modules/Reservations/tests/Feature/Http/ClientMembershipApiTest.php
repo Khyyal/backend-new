@@ -9,9 +9,11 @@ use Modules\Purchase\Services\PaymentStateService;
 use Modules\Purchase\Services\PurchaseStateService;
 use Modules\Reservations\Database\Factories\ClientMembershipFactory;
 use Modules\Reservations\Database\Factories\ClientPackageFactory;
+use Modules\Reservations\Enums\ClientMembershipLogType;
 use Modules\Reservations\Enums\ClientMembershipStatus;
 use Modules\Reservations\Enums\ClientPackageStatus;
 use Modules\Reservations\Models\ClientMembership;
+use Modules\Reservations\Models\ClientMembershipLog;
 use Modules\Reservations\Models\ClientPackage;
 use Modules\Reservations\Models\Reservation;
 use Modules\Reservations\Tests\Support\BookingFixtures;
@@ -250,5 +252,54 @@ describe('free visits', function (): void {
         $this->actingAs(ClientFactory::new()->create(), 'client')
             ->postJson($this->url, ['date' => '2026-10-26'])
             ->assertNotFound();
+    });
+
+    test('invites another client on a free visit and logs it', function (): void {
+        $guest = ClientFactory::new()->create();
+
+        $this->actingAs($this->client, 'client')
+            ->postJson("/api/v1/clients/memberships/{$this->clientMembership->id}/invites", ['guest_client_id' => $guest->id, 'date' => '2026-10-26'])
+            ->assertCreated()
+            ->assertJsonPath('data.status', 'confirmed')
+            ->assertJsonPath('data.total_amount', 0)
+            ->assertJsonPath('data.quantity', 1)
+            ->assertJsonPath('data.client_membership_id', $this->clientMembership->id);
+
+        $reservation = Reservation::query()->sole();
+        $log = ClientMembershipLog::query()->sole();
+
+        expect($reservation->client_id)->toBe($guest->id)
+            ->and($log->type)->toBe(ClientMembershipLogType::Invite)
+            ->and($log->reservation_id)->toBe($reservation->id)
+            ->and($log->guest_client_id)->toBe($guest->id)
+            ->and($log->actor_id)->toBe($this->client->id);
+
+        $this->actingAs($this->client, 'client')
+            ->postJson("/api/v1/clients/memberships/{$this->clientMembership->id}/invites", ['guest_client_id' => $guest->id, 'date' => '2026-10-26'])
+            ->assertCreated();
+
+        $this->actingAs($this->client, 'client')
+            ->postJson("/api/v1/clients/memberships/{$this->clientMembership->id}/invites", ['guest_client_id' => $guest->id, 'date' => '2026-10-26'])
+            ->assertUnprocessable()
+            ->assertJsonPath('reason', 'membership_daily_visits_exceeded');
+
+        expect(ClientMembershipLog::query()->count())->toBe(2);
+    });
+
+    test('an invite needs another existing client and the member\'s own membership', function (): void {
+        $guest = ClientFactory::new()->create();
+        $url = "/api/v1/clients/memberships/{$this->clientMembership->id}/invites";
+
+        $this->actingAs($this->client, 'client')
+            ->postJson($url, ['guest_client_id' => $this->client->id, 'date' => '2026-10-26'])
+            ->assertJsonValidationErrors('guest_client_id');
+        $this->actingAs($this->client, 'client')
+            ->postJson($url, ['guest_client_id' => 999999, 'date' => '2026-10-26'])
+            ->assertJsonValidationErrors('guest_client_id');
+        $this->actingAs($guest, 'client')
+            ->postJson($url, ['guest_client_id' => $this->client->id, 'date' => '2026-10-26'])
+            ->assertNotFound();
+
+        expect(ClientMembershipLog::query()->count())->toBe(0);
     });
 });

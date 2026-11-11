@@ -25,3 +25,7 @@ A **membership** gives you free visits to a center for a period.
 ## Where to see them
 
 **My packages** and **My memberships** list yours with their status (pending, active, exhausted, expired, cancelled).
+
+### Inviting a friend
+
+If your membership includes free visits, you can invite another client on one of the day's free visits. The visit is booked in your friend's name, is free and confirmed at once, and counts against your daily limit. Every invite is recorded on your membership.

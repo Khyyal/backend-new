@@ -24,6 +24,7 @@ use Modules\Reservations\Actions\PurchaseMembership;
 use Modules\Reservations\Actions\QuoteCheckout;
 use Modules\Reservations\Enums\ReservationSource;
 use Modules\Reservations\Http\Requests\Client\BookVisitFromMembershipRequest;
+use Modules\Reservations\Http\Requests\Client\InviteToMembershipRequest;
 use Modules\Reservations\Http\Requests\Client\PurchaseMembershipRequest;
 use Modules\Reservations\Http\Requests\Client\QuoteMembershipRequest;
 use Modules\Reservations\Http\Resources\CheckoutQuoteResource;
@@ -136,6 +137,33 @@ class MembershipController extends Controller
             $request->validated('start_time'),
             (int) $request->validated('quantity', 1),
             ReservationSource::Client,
+        );
+
+        return ReservationResource::make($reservation->load(['service', 'trainer', 'priceOption', 'lines.priceOption', ...PurchaseSummaryResource::RELATIONS]))
+            ->response()
+            ->setStatusCode(201);
+    }
+
+    #[Endpoint('Invite a client on a free visit', 'Books one of today\'s free visits for another client and logs the invite. The visit belongs to the guest, is free and confirmed at once, and counts against the membership\'s daily limit.')]
+    #[UrlParam('membership', 'integer', 'Client membership ID.', example: 9)]
+    #[Header('Idempotency-Key', '7c9e6679-7425-40de-944b-e07fc1f90ae7')]
+    #[ResponseFromApiResource(ReservationResource::class, Reservation::class, status: 201, description: 'The guest\'s confirmed visit.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No such membership of yours.')]
+    #[ApiResponse(['message' => 'Daily free visits exceeded: 0 left today.', 'reason' => 'membership_daily_visits_exceeded', 'errors' => ['reservation' => ['Daily free visits exceeded: 0 left today.']]], 422, 'Validation failed, or the visit cannot be booked (`reason`: membership_not_usable, membership_has_no_visits, membership_daily_visits_exceeded, …).')]
+    #[ApiResponse(ApiExamples::IDEMPOTENCY_KEY_REQUIRED, 400, 'Missing `Idempotency-Key` header. Send a unique UUID per operation and reuse it unchanged on retries (a replay returns the stored response with `Idempotent-Replayed: true`).')]
+    #[ApiResponse(ApiExamples::IDEMPOTENCY_IN_PROGRESS, 409, 'A request with this `Idempotency-Key` is still running; retry after `Retry-After`.')]
+    public function invite(InviteToMembershipRequest $request, int $membership): JsonResponse
+    {
+        $clientMembership = $this->client($request)->memberships()->findOrFail($membership);
+
+        $reservation = $this->bookVisit->execute(
+            $clientMembership,
+            CarbonImmutable::parse($request->validated('date')),
+            $request->validated('start_time'),
+            1,
+            ReservationSource::Client,
+            guest: Client::query()->findOrFail($request->validated('guest_client_id')),
         );
 
         return ReservationResource::make($reservation->load(['service', 'trainer', 'priceOption', 'lines.priceOption', ...PurchaseSummaryResource::RELATIONS]))

@@ -96,6 +96,11 @@ class ClientMembership extends Model implements Purchasable
         return $this->hasMany(Reservation::class);
     }
 
+    public function logs(): HasMany
+    {
+        return $this->hasMany(ClientMembershipLog::class);
+    }
+
     public function isUsable(): bool
     {
         return $this->status === ClientMembershipStatus::Active && ! $this->isExpired();
