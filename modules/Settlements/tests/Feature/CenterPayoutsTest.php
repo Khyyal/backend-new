@@ -82,18 +82,18 @@ test('running twice for the same cutoff creates one payout', function (): void {
     expect(CenterPayout::query()->sole()->amount)->toBe(10000);
 });
 
-test('a center without a bank account is skipped until it adds one', function (): void {
-    $this->center->update(['payout_iban' => null]);
+test('a center without a bank account still gets a payout with no account details', function (): void {
+    $this->center->update(['payout_iban' => null, 'payout_account_name' => null, 'payout_bank_name' => null]);
     ($this->entry)(10000, '2026-11-01 10:00:00');
 
     ($this->generate)();
-    expect(CenterPayout::query()->count())->toBe(0);
 
-    $this->center->update(['payout_iban' => 'SA0380000000608010167519']);
-    $this->travelTo('2026-11-15 00:00:00');
-    ($this->generate)();
-
-    expect(CenterPayout::query()->sole()->amount)->toBe(10000);
+    $payout = CenterPayout::query()->sole();
+    expect($payout->amount)->toBe(10000)
+        ->and($payout->iban)->toBeNull()
+        ->and($payout->account_name)->toBeNull()
+        ->and($payout->bank_name)->toBeNull()
+        ->and(CenterLedgerEntry::query()->where('payout_id', $payout->id)->count())->toBe(1);
 });
 
 test('admins mark a payout paid and the primary user is notified', function (): void {

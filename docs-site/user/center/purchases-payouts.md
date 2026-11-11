@@ -20,7 +20,7 @@ The platform charges a **fee** on each sale. It is taken from your earnings and 
 
 Every week the platform creates a **payout** for your available balance and pays it to your bank account. You can see each payout and its status (**Pending**, **Paid**, **Cancelled**).
 
-To receive payouts, the **owner must set the payout account** (IBAN). Without it your balance simply carries over to the next week. A zero or negative balance is also carried over.
+The **owner should set the payout account** (IBAN). A payout is still created without it, but the platform cannot transfer it until you add the account, and payouts already created keep the account they had at the time. A zero or negative balance is also carried over.
 
 ## Verifying a payment
 
