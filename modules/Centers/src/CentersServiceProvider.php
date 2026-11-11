@@ -21,6 +21,7 @@ class CentersServiceProvider extends ServiceProvider
     {
         $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
         $this->loadTranslationsFrom(__DIR__.'/../lang', 'centers');
+        $this->loadViewsFrom(__DIR__.'/../resources/views', 'centers');
 
         Event::listen(CenterRegistered::class, SendCenterRegisteredNotification::class);
 

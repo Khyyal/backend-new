@@ -48,7 +48,11 @@ The center details response lists each active service with `start_price` and `di
 
 ## Profile completion and launch
 
-`GET centers/{center}/profile-completion` reports what is missing before a center can launch. `POST centers/launch` and `POST centers/register` create centers; admins can also create them.
+`GET centers/{center}/profile-completion` reports what is missing before a center can launch. It has 10 steps; the last one, `email`, is done only when the center's contact email is set **and verified**. `POST centers/launch` and `POST centers/register` create centers; admins can also create them.
+
+## Email verification
+
+The center's contact email is verified with a 6-digit code (`CenterEmailVerification`). The primary user calls `POST centers/{center}/email/send` (mails the code in the request locale through the queued `CenterEmailVerificationMail`; valid 10 minutes, stored hashed in `email_verification_code`, never serialized; one send per 60 seconds and 5 per 15 minutes per center) and then `POST centers/{center}/email/verify` with `code` (5 wrong attempts per 5 minutes). Success sets `email_verified_at` and clears the code. Without an email, or when it is already verified, both fail with a 422 on `email`. Any change of `email` (center update or admin edit, through `CenterUpdateService`) clears `email_verified_at` and the pending code; saving the same email keeps it. Existing centers start unverified. Sending real mail needs a configured `MAIL_*` mailer (the default is `log`).
 
 ## Other center settings
 

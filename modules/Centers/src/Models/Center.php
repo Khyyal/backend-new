@@ -66,6 +66,7 @@ class Center extends Model implements Buyer, HasMedia
     ];
 
     protected $hidden = [
+        'email_verification_code',
         'payout_iban',
         'payout_account_name',
         'payout_bank_name',
@@ -88,7 +89,15 @@ class Center extends Model implements Buyer, HasMedia
             'social_links' => 'array',
             'site_theme' => 'array',
             'custom_site_enabled' => 'boolean',
+            'email_verified_at' => 'datetime',
+            'email_verification_expires_at' => 'datetime',
+            'email_verification_sent_at' => 'datetime',
         ];
+    }
+
+    public function hasVerifiedEmail(): bool
+    {
+        return $this->email !== null && $this->email_verified_at !== null;
     }
 
     public function registerMediaCollections(): void

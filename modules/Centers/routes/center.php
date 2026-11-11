@@ -7,6 +7,7 @@ use Modules\Centers\Http\Controllers\Center\AuthController;
 use Modules\Centers\Http\Controllers\Center\BlockedClientController;
 use Modules\Centers\Http\Controllers\Center\CenterController;
 use Modules\Centers\Http\Controllers\Center\CenterUserController;
+use Modules\Centers\Http\Controllers\Center\EmailVerificationController;
 use Modules\Centers\Http\Controllers\Center\LaunchController;
 use Modules\Centers\Http\Controllers\Center\ProfileCompletionController;
 use Modules\Centers\Http\Controllers\Center\PurchaseController;
@@ -89,6 +90,12 @@ Route::middleware(['api'])
 
                         Route::get('/{center}/profile-completion', ProfileCompletionController::class)
                             ->name('profile-completion');
+
+                        Route::post('/{center}/email/send', [EmailVerificationController::class, 'send'])
+                            ->name('email.send');
+
+                        Route::post('/{center}/email/verify', [EmailVerificationController::class, 'verify'])
+                            ->name('email.verify');
 
                         Route::get('/{center}/ratings', [RatingController::class, 'index'])
                             ->name('ratings');

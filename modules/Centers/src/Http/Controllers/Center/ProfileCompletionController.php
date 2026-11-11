@@ -20,16 +20,16 @@ class ProfileCompletionController extends Controller
 {
     public function __construct(private readonly CenterProfileCompletion $completion) {}
 
-    #[Endpoint('Show the profile completion', 'Steps in order: `city`, `description`, `address`, `location` (lat and lng), `logo`, `cover`, `images` (at least one), `tags` (at least one) and `service` (at least one active service). Any user assigned to the center can read it.')]
+    #[Endpoint('Show the profile completion', 'Steps in order: `city`, `description`, `address`, `location` (lat and lng), `logo`, `cover`, `images` (at least one), `tags` (at least one), `service` (at least one active service) and `email` (contact email set and verified: `POST …/email/send`, then `POST …/email/verify`). Any user assigned to the center can read it.')]
     #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
-    #[ApiResponse(['data' => ['is_complete' => false, 'completed_steps' => 7, 'total_steps' => 9, 'percentage' => 78, 'missing' => ['images', 'service'], 'steps' => [['key' => 'city', 'done' => true, 'fields' => ['city_id'], 'action' => ['method' => 'PATCH', 'path' => '/api/v1/centers/8']], ['key' => 'images', 'done' => false, 'fields' => ['images'], 'action' => ['method' => 'PATCH', 'path' => '/api/v1/centers/8']]]]], 200, 'Completion state.')]
+    #[ApiResponse(['data' => ['is_complete' => false, 'completed_steps' => 8, 'total_steps' => 10, 'percentage' => 80, 'missing' => ['images', 'service'], 'steps' => [['key' => 'city', 'done' => true, 'fields' => ['city_id'], 'action' => ['method' => 'PATCH', 'path' => '/api/v1/centers/8']], ['key' => 'images', 'done' => false, 'fields' => ['images'], 'action' => ['method' => 'PATCH', 'path' => '/api/v1/centers/8']]]]], 200, 'Completion state.')]
     #[ResponseField('data.is_complete', 'boolean', 'True when no step is left.', example: false)]
-    #[ResponseField('data.completed_steps', 'integer', 'Steps done.', example: 7)]
-    #[ResponseField('data.total_steps', 'integer', 'All steps.', example: 9)]
-    #[ResponseField('data.percentage', 'integer', 'Completion percent (0-100).', example: 78)]
+    #[ResponseField('data.completed_steps', 'integer', 'Steps done.', example: 8)]
+    #[ResponseField('data.total_steps', 'integer', 'All steps.', example: 10)]
+    #[ResponseField('data.percentage', 'integer', 'Completion percent (0-100).', example: 80)]
     #[ResponseField('data.missing', 'string[]', 'Keys of the steps still to do.', example: ['images', 'service'])]
     #[ResponseField('data.steps', 'object[]', 'Every step.')]
-    #[ResponseField('data.steps[].key', 'string', 'Step key.', enum: ['city', 'description', 'address', 'location', 'logo', 'cover', 'images', 'tags', 'service'], example: 'city')]
+    #[ResponseField('data.steps[].key', 'string', 'Step key.', enum: ['city', 'description', 'address', 'location', 'logo', 'cover', 'images', 'tags', 'service', 'email'], example: 'city')]
     #[ResponseField('data.steps[].done', 'boolean', 'Whether the step is complete.', example: true)]
     #[ResponseField('data.steps[].fields', 'string[]', 'Request fields that complete it.', example: ['city_id'])]
     #[ResponseField('data.steps[].action', 'object', 'Endpoint that completes it: `method` and `path`.', example: ['method' => 'PATCH', 'path' => '/api/v1/centers/8'])]

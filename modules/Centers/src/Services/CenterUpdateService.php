@@ -33,7 +33,18 @@ class CenterUpdateService
             // Serialize concurrent updates of the same center's media.
             $center = Center::query()->lockForUpdate()->findOrFail($center->getKey());
 
-            $center->fill(Arr::only($data, self::ATTRIBUTES))->save();
+            $center->fill(Arr::only($data, self::ATTRIBUTES));
+
+            if ($center->isDirty('email')) {
+                $center->forceFill([
+                    'email_verified_at' => null,
+                    'email_verification_code' => null,
+                    'email_verification_expires_at' => null,
+                    'email_verification_sent_at' => null,
+                ]);
+            }
+
+            $center->save();
 
             if (array_key_exists('tags', $data)) {
                 $center->tags()->sync($data['tags']);

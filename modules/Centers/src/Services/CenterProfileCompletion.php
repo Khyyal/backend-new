@@ -43,6 +43,14 @@ class CenterProfileCompletion
                 [],
                 ['method' => 'GET', 'path' => "centers/{$center->id}/service-types"],
             ),
+            $this->step(
+                'email',
+                $center->hasVerifiedEmail(),
+                ['email'],
+                $center->email === null
+                    ? $profile
+                    : ['method' => 'POST', 'path' => "centers/{$center->id}/email/send"],
+            ),
         ];
 
         $done = count(array_filter($steps, fn (array $step): bool => $step['done']));

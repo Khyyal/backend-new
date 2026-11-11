@@ -41,9 +41,9 @@ test('a bare center is incomplete and lists every step to do', function (): void
         ->assertOk()
         ->assertJsonPath('data.is_complete', false)
         ->assertJsonPath('data.completed_steps', 0)
-        ->assertJsonPath('data.total_steps', 9)
+        ->assertJsonPath('data.total_steps', 10)
         ->assertJsonPath('data.percentage', 0)
-        ->assertJsonPath('data.missing', ['city', 'description', 'address', 'location', 'logo', 'cover', 'images', 'tags', 'service'])
+        ->assertJsonPath('data.missing', ['city', 'description', 'address', 'location', 'logo', 'cover', 'images', 'tags', 'service', 'email'])
         ->assertJsonPath('data.steps.0.action', ['method' => 'PATCH', 'path' => "centers/{$this->center->id}"])
         ->assertJsonPath('data.steps.3.fields', ['lat', 'lng']);
 });
@@ -60,8 +60,8 @@ test('steps flip as the profile is filled in until it is complete', function ():
         'lng' => 46.6,
     ])->assertOk();
 
-    $this->getJson($this->url)->assertJsonPath('data.missing', ['logo', 'cover', 'images', 'tags', 'service'])
-        ->assertJsonPath('data.percentage', 44);
+    $this->getJson($this->url)->assertJsonPath('data.missing', ['logo', 'cover', 'images', 'tags', 'service', 'email'])
+        ->assertJsonPath('data.percentage', 40);
 
     $this->patchJson("/api/v1/centers/{$this->center->id}", [
         'logo' => $media('logo.png'),
@@ -71,9 +71,10 @@ test('steps flip as the profile is filled in until it is complete', function ():
     ])->assertOk();
 
     ServiceFactory::new()->inactive()->create(['center_id' => $this->center->id]);
-    $this->getJson($this->url)->assertJsonPath('data.missing', ['service']);
+    $this->getJson($this->url)->assertJsonPath('data.missing', ['service', 'email']);
 
     ServiceFactory::new()->create(['center_id' => $this->center->id]);
+    $this->center->forceFill(['email' => 'info@club.test', 'email_verified_at' => now()])->save();
     $this->getJson($this->url)
         ->assertJsonPath('data.is_complete', true)
         ->assertJsonPath('data.percentage', 100)
@@ -82,4 +83,18 @@ test('steps flip as the profile is filled in until it is complete', function ():
 
 test('a user not assigned to the center is forbidden', function (): void {
     $this->actingAs(UserFactory::new()->create(), 'center_user')->getJson($this->url)->assertForbidden();
+});
+
+test('the email step needs a verified email and points to the next action', function (): void {
+    $this->actingAs($this->member, 'center_user');
+    $this->center->forceFill(['email' => null, 'email_verified_at' => null])->save();
+    $emailStep = fn () => collect($this->getJson($this->url)->json('data.steps'))->firstWhere('key', 'email');
+
+    expect($emailStep())->done->toBeFalse()->action->toBe(['method' => 'PATCH', 'path' => "centers/{$this->center->id}"]);
+
+    $this->center->forceFill(['email' => 'info@club.test'])->save();
+    expect($emailStep())->done->toBeFalse()->action->toBe(['method' => 'POST', 'path' => "centers/{$this->center->id}/email/send"]);
+
+    $this->center->forceFill(['email_verified_at' => now()])->save();
+    expect($emailStep())->done->toBeTrue();
 });

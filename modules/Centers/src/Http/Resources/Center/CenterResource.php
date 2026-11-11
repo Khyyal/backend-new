@@ -17,6 +17,7 @@ class CenterResource extends JsonResource
     #[ResponseField('slug', 'string', 'Unique URL slug, generated from the name.', example: 'al-fursan-stables')]
     #[ResponseField('contact_phone', 'string', 'Public contact phone.', example: '+966500000001')]
     #[ResponseField('email', 'string', 'Contact email (lower-case).', nullable: true, example: 'info@alfursan.sa')]
+    #[ResponseField('email_verified_at', 'string', 'When the contact email was verified (ISO-8601); null while unverified or when the email changed.', nullable: true, example: '2026-06-01T10:00:00+00:00')]
     #[ResponseField('social_links', 'object', 'Links keyed by platform (`facebook`, `instagram`, `whatsapp`, `tiktok`, `snapchat`, `x`, `youtube`, `website`); null when unset.', nullable: true, example: ['instagram' => 'https://instagram.com/alfursan', 'website' => 'https://alfursan.sa'])]
     #[ResponseField('site_theme', 'object', 'Hex colors keyed by role (`background`, `foreground`, `primary`, `button`, `secondary`, `accent`); null when unset.', nullable: true, example: ['primary' => '#8B4513', 'background' => '#FFFFFF'])]
     #[ResponseField('custom_site_enabled', 'boolean', 'Whether the center\'s own website is enabled.', example: false)]
@@ -65,6 +66,7 @@ class CenterResource extends JsonResource
             'slug' => $this->slug,
             'contact_phone' => $this->contact_phone,
             'email' => $this->email,
+            'email_verified_at' => $this->email_verified_at?->toIso8601String(),
             'social_links' => $this->social_links,
             'site_theme' => $this->site_theme,
             'custom_site_enabled' => $this->custom_site_enabled,
