@@ -41,4 +41,7 @@ return [
     'membership_not_usable' => 'This membership is not active or has expired.',
     'membership_has_no_visits' => 'This membership does not include visits.',
     'membership_daily_visits_exceeded' => 'Daily free visits exceeded: :available left today.',
+    'package_not_adjustable' => 'This package is cancelled and cannot be changed.',
+    'package_not_trainer_bound' => 'Only training packages can have a trainer.',
+    'invalid_expiry' => 'The new expiry must be later than the current one.',
 ];

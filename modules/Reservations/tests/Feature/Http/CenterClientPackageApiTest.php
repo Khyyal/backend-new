@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Modules\Centers\Database\Factories\CenterFactory;
 use Modules\Centers\Database\Factories\UserFactory;
 use Modules\Centers\Enums\CenterUserPermission;
@@ -11,7 +12,11 @@ use Modules\Reservations\Database\Factories\ClientPackageFactory;
 use Modules\Reservations\Database\Factories\ReservationFactory;
 use Modules\Reservations\Enums\ClientPackageStatus;
 use Modules\Reservations\Tests\Support\BookingFixtures;
+use Modules\Services\Enums\PriceOptionUnit;
+use Modules\Services\Enums\ServiceType;
 use Modules\Services\Models\ServicePackage;
+use Modules\Services\Models\Trainer;
+use Modules\Services\Models\TrainingService;
 use Modules\Support\Enums\ActivationStatus;
 use Tests\TestCase;
 
@@ -237,4 +242,126 @@ test('center package resources carry the purchase of the package', function (): 
         ->getJson("{$this->url}/{$package->id}")
         ->assertOk()
         ->assertJsonPath('data.purchase.id', $purchase->id);
+});
+
+describe('managing a package', function (): void {
+    beforeEach(function (): void {
+        $this->training = BookingFixtures::service($this->center, $trainingService = TrainingService::query()->create(), ServiceType::Training);
+        $option = $this->training->priceOptions()->create(['price' => 200, 'quantity' => 60, 'unit' => PriceOptionUnit::MINUTE]);
+        $this->trainingPackage = ServicePackage::query()->create([
+            'service_id' => $this->training->id, 'price_option_id' => $option->id, 'count' => 8, 'price' => 1500, 'duration' => 1,
+        ]);
+        $this->trainer = Trainer::query()->create(['center_id' => $this->center->id, 'name' => 'Coach', 'max_tickets_per_hour' => 2]);
+        $trainingService->trainers()->attach($this->trainer);
+        $this->trainingPackageFor = fn (array $attributes = []) => ClientPackageFactory::new()
+            ->forServicePackage($this->trainingPackage)
+            ->create(['client_id' => ClientFactory::new()->create()->id, ...$attributes]);
+    });
+
+    test('books a session for the client from their package', function (): void {
+        $package = ($this->package)(['remaining_sessions' => 1]);
+
+        $this->actingAs($this->user, 'center_user')
+            ->postJson("{$this->url}/{$package->id}/reservations", ['date' => '2026-10-26', 'start_time' => '09:00'], ['Idempotency-Key' => (string) Str::uuid()])
+            ->assertCreated()
+            ->assertJsonPath('data.status', 'confirmed')
+            ->assertJsonPath('data.source', 'center')
+            ->assertJsonPath('data.total_amount', 0)
+            ->assertJsonPath('data.client_package_id', $package->id);
+
+        expect($package->fresh())->remaining_sessions->toBe(0)->status->toBe(ClientPackageStatus::Exhausted);
+    });
+
+    test('booking needs the permission, and a paid package of this center', function (): void {
+        $package = ($this->package)();
+        $pending = ($this->package)(['status' => ClientPackageStatus::Pending]);
+        $body = ['date' => '2026-10-26', 'start_time' => '09:00'];
+        $headers = ['Idempotency-Key' => (string) Str::uuid()];
+
+        $this->actingAs(UserFactory::new()->create(), 'center_user')
+            ->postJson("{$this->url}/{$package->id}/reservations", $body, $headers)->assertForbidden();
+        $this->actingAs($this->user, 'center_user')
+            ->postJson("{$this->url}/{$pending->id}/reservations", $body, $headers)->assertNotFound();
+    });
+
+    test('adds sessions, reviving an exhausted package but not an expired or cancelled one', function (): void {
+        $exhausted = ($this->package)(['status' => ClientPackageStatus::Exhausted, 'remaining_sessions' => 0]);
+        $expired = ($this->package)(['status' => ClientPackageStatus::Expired, 'remaining_sessions' => 0]);
+        $cancelled = ($this->package)(['status' => ClientPackageStatus::Cancelled]);
+
+        $this->actingAs($this->user, 'center_user')
+            ->postJson("{$this->url}/{$exhausted->id}/sessions", ['sessions' => 3])
+            ->assertOk()
+            ->assertJsonPath('data.status', 'active')
+            ->assertJsonPath('data.remaining_sessions', 3)
+            ->assertJsonPath('data.total_sessions', $exhausted->total_sessions + 3);
+
+        $this->actingAs($this->user, 'center_user')
+            ->postJson("{$this->url}/{$expired->id}/sessions", ['sessions' => 2])
+            ->assertOk()
+            ->assertJsonPath('data.status', 'expired');
+
+        $this->actingAs($this->user, 'center_user')
+            ->postJson("{$this->url}/{$cancelled->id}/sessions", ['sessions' => 2])
+            ->assertUnprocessable()
+            ->assertJsonPath('reason', 'package_not_adjustable');
+
+        foreach ([0, 101, 'x'] as $invalid) {
+            $this->actingAs($this->user, 'center_user')
+                ->postJson("{$this->url}/{$exhausted->id}/sessions", ['sessions' => $invalid])
+                ->assertJsonValidationErrors('sessions');
+        }
+    });
+
+    test('binds, replaces and frees the trainer of a training package', function (): void {
+        $package = ($this->trainingPackageFor)();
+        $foreign = Trainer::query()->create(['center_id' => CenterFactory::new()->create()->id, 'name' => 'Away', 'max_tickets_per_hour' => 2]);
+        $idle = Trainer::query()->create(['center_id' => $this->center->id, 'name' => 'Idle', 'max_tickets_per_hour' => 2]);
+        $url = "{$this->url}/{$package->id}";
+
+        $this->actingAs($this->user, 'center_user')
+            ->patchJson($url, ['trainer_id' => $this->trainer->id])->assertOk();
+        expect($package->fresh()->trainer_id)->toBe($this->trainer->id);
+
+        foreach ([$foreign->id, $idle->id] as $trainerId) {
+            $this->actingAs($this->user, 'center_user')
+                ->patchJson($url, ['trainer_id' => $trainerId])
+                ->assertUnprocessable()
+                ->assertJsonPath('reason', 'invalid_trainer');
+        }
+
+        $this->actingAs($this->user, 'center_user')->patchJson($url, ['trainer_id' => null])->assertOk();
+        expect($package->fresh()->trainer_id)->toBeNull();
+    });
+
+    test('a riding package cannot have a trainer', function (): void {
+        $this->actingAs($this->user, 'center_user')
+            ->patchJson("{$this->url}/".($this->package)()->id, ['trainer_id' => $this->trainer->id])
+            ->assertUnprocessable()
+            ->assertJsonPath('reason', 'package_not_trainer_bound');
+    });
+
+    test('extends the validity and revives an expired package with sessions left', function (): void {
+        $package = ($this->package)(['status' => ClientPackageStatus::Expired, 'expires_at' => now()->subDay(), 'expiry_reminder_sent_at' => now()->subDays(3)]);
+        $url = "{$this->url}/{$package->id}";
+
+        $this->actingAs($this->user, 'center_user')
+            ->patchJson($url, ['expires_at' => now()->addDays(30)->toIso8601String()])
+            ->assertOk()
+            ->assertJsonPath('data.status', 'active')
+            ->assertJsonPath('data.is_usable', true);
+
+        expect($package->fresh()->expiry_reminder_sent_at)->toBeNull();
+
+        $this->actingAs($this->user, 'center_user')
+            ->patchJson($url, ['expires_at' => now()->addDays(10)->toIso8601String()])
+            ->assertUnprocessable()
+            ->assertJsonPath('reason', 'invalid_expiry');
+
+        $this->actingAs($this->user, 'center_user')
+            ->patchJson($url, ['expires_at' => now()->subDay()->toIso8601String()])
+            ->assertJsonValidationErrors('expires_at');
+
+        $this->actingAs($this->user, 'center_user')->patchJson($url, [])->assertJsonValidationErrors('controlled');
+    });
 });

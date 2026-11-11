@@ -44,7 +44,7 @@ beforeEach(function (): void {
     DB::connection('legacy')->table('account_plans')->insert([
         ['id' => 5, 'name' => 'trial', 'features' => '{"duration": 14, "max_services": 30, "can_edit_booking": false}', 'monthly_price' => 0, 'yearly_price' => 0, 'description' => 'Try Khyyal free', 'deleted_at' => '2026-07-05 19:26:36'],
         ['id' => 6, 'name' => 'basic', 'features' => '{"max_services": 3}', 'monthly_price' => 120, 'yearly_price' => 1152, 'description' => null, 'deleted_at' => null],
-        ['id' => 10, 'name' => 'growth', 'features' => '{"max_services": null, "platform_commission": 6}', 'monthly_price' => 210.5, 'yearly_price' => 3600, 'description' => null, 'deleted_at' => null],
+        ['id' => 10, 'name' => 'growth', 'features' => '{"max_services": null, "platform_commission": 6}', 'monthly_price' => 210, 'yearly_price' => 3600.5, 'description' => null, 'deleted_at' => null],
     ]);
 
     $subscription = ['price_at_purchase' => 0, 'cancelled_at' => null, 'billing_cycle' => 'monthly', 'ends_at' => '2026-03-18', 'starts_at' => '2026-02-18'];
@@ -59,7 +59,7 @@ beforeEach(function (): void {
     ]);
 });
 
-test('legacy plans become monthly plans priced in halalas with their trial and services limit', function (): void {
+test('legacy plans become yearly plans priced in halalas with their trial and services limit', function (): void {
     $this->artisan('migrator:plans')->assertSuccessful();
 
     $growth = migratedPlan(10);
@@ -67,8 +67,8 @@ test('legacy plans become monthly plans priced in halalas with their trial and s
 
     expect($growth->slug)->toBe('growth')
         ->and($growth->name)->toBe(['en' => 'Growth', 'ar' => 'Growth'])
-        ->and($growth->price)->toBe(21050)
-        ->and($growth->billing_interval)->toBe(BillingInterval::Monthly)
+        ->and($growth->price)->toBe(360050)
+        ->and($growth->billing_interval)->toBe(BillingInterval::Yearly)
         ->and($growth->status)->toBe(PlanStatus::Active)
         ->and($growth->limits()->count())->toBe(0)
         ->and($trial->status)->toBe(PlanStatus::InActive)

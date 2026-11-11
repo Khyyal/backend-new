@@ -32,6 +32,7 @@ You need the reservations permission.
 - A **manual** payment is marked as needing a manual refund.
 - **Cash** or unpaid bookings have nothing to refund.
 - A cancelled booking from a package gives the session back.
+- On a client's package you can book a session for them, add sessions, set or remove the trainer (training packages) and extend the expiry date. Extending an expired package that still has sessions makes it active again.
 
 ## Unpaid bookings
 

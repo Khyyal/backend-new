@@ -11,7 +11,7 @@ use Modules\Billing\Enums\BillingInterval;
 use Modules\Billing\Enums\PlanStatus;
 
 #[Signature('migrator:plans {--dry-run : Run inside a transaction and roll it back}')]
-#[Description('Copy legacy account plans into monthly plans, reusing plans that already have the same slug')]
+#[Description('Copy legacy account plans into yearly plans, reusing plans that already have the same slug')]
 class MigratePlansCommand extends LegacyMigrator
 {
     public const ENTITY = 'plan';
@@ -54,7 +54,7 @@ class MigratePlansCommand extends LegacyMigrator
         }
 
         if (($this->stats['plans'] ?? 0) > 0) {
-            $this->addWarning('Plans are migrated as monthly plans; legacy yearly prices are not kept.');
+            $this->addWarning('Plans are migrated as yearly plans; legacy monthly prices are not kept.');
         }
     }
 
@@ -74,8 +74,8 @@ class MigratePlansCommand extends LegacyMigrator
             'name' => json_encode(['en' => $name, 'ar' => $name], JSON_UNESCAPED_UNICODE),
             'slug' => $slug,
             'description' => blank($plan->description) ? null : json_encode(['en' => $plan->description], JSON_UNESCAPED_UNICODE),
-            'price' => $this->halalas($plan->monthly_price),
-            'billing_interval' => BillingInterval::Monthly->value,
+            'price' => $this->halalas($plan->yearly_price),
+            'billing_interval' => BillingInterval::Yearly->value,
             'display_features' => null,
             'status' => ($plan->deleted_at === null ? PlanStatus::Active : PlanStatus::InActive)->value,
             'trial_days' => max(0, (int) ($features['duration'] ?? 0)),

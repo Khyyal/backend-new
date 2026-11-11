@@ -2,6 +2,7 @@
 
 namespace Modules\Reservations\Http\Controllers\Center;
 
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -10,23 +11,38 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Gate;
 use Knuckles\Scribe\Attributes\Endpoint;
 use Knuckles\Scribe\Attributes\Group;
+use Knuckles\Scribe\Attributes\Header;
 use Knuckles\Scribe\Attributes\Response as ApiResponse;
 use Knuckles\Scribe\Attributes\ResponseField;
 use Knuckles\Scribe\Attributes\ResponseFromApiResource;
 use Knuckles\Scribe\Attributes\UrlParam;
 use Modules\Centers\Models\Center;
+use Modules\Reservations\Actions\AddPackageSessions;
+use Modules\Reservations\Actions\BookFromPackage;
+use Modules\Reservations\Actions\UpdateClientPackage;
 use Modules\Reservations\Enums\ClientPackageStatus;
+use Modules\Reservations\Enums\ReservationSource;
+use Modules\Reservations\Http\Requests\Center\AddPackageSessionsRequest;
+use Modules\Reservations\Http\Requests\Center\BookFromPackageRequest;
 use Modules\Reservations\Http\Requests\Center\ListClientPackagesRequest;
 use Modules\Reservations\Http\Requests\Center\UpdateClientPackageRequest;
 use Modules\Reservations\Http\Resources\CenterClientPackageDetailsResource;
 use Modules\Reservations\Http\Resources\CenterClientPackageResource;
+use Modules\Reservations\Http\Resources\CenterReservationResource;
 use Modules\Reservations\Http\Resources\PurchaseSummaryResource;
 use Modules\Reservations\Models\ClientPackage;
+use Modules\Reservations\Models\Reservation;
 use Modules\Support\Documentation\ApiExamples;
 
 #[Group('Client packages', 'Session packages clients bought for a center\'s services. Unpaid (`pending`) packages are never listed or counted. Served on `centers/{center}/…` (center-scoped token) and `admin/centers/{center}/…` (system user).')]
 class PackageController extends Controller
 {
+    public function __construct(
+        private readonly UpdateClientPackage $updateClientPackage,
+        private readonly AddPackageSessions $addPackageSessions,
+        private readonly BookFromPackage $bookFromPackage,
+    ) {}
+
     #[Endpoint('List client packages', 'Newest first, 25 per page.')]
     #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
     #[ResponseFromApiResource(CenterClientPackageResource::class, ClientPackage::class, status: 200, description: 'Paginated packages.', paginate: 25)]
@@ -70,24 +86,69 @@ class PackageController extends Controller
         return CenterClientPackageDetailsResource::make($clientPackage);
     }
 
-    #[Endpoint('Update a client package', 'Marks the package as `controlled` (or not) by the center.')]
+    #[Endpoint('Update a client package', 'Marks the package `controlled` (or not), binds or frees its trainer (`trainer_id`, training packages only) and/or extends its validity (`expires_at`). Send at least one field. Extending an expired package that still has sessions brings it back to `active`.')]
     #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
     #[UrlParam('package', 'integer', 'Client package ID.', example: 41)]
     #[ResponseFromApiResource(CenterClientPackageDetailsResource::class, ClientPackage::class, status: 200, description: 'The updated package.')]
     #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
     #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'No access to this center\'s reservations (center users: `reservations.manage`; system users: `centers.manage_reservations`), or the token lacks `center-access:{center}`.')]
     #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No such paid package in this center.')]
-    #[ApiResponse(['message' => 'The controlled field is required.', 'errors' => ['controlled' => ['The controlled field is required.']]], 422, 'Validation failed.')]
+    #[ApiResponse(['message' => 'The selected trainer does not offer this service.', 'reason' => 'invalid_trainer', 'errors' => ['reservation' => ['The selected trainer does not offer this service.']]], 422, 'Validation failed, or the change is not allowed (`reason`: invalid_trainer, package_not_trainer_bound, invalid_expiry, package_not_adjustable).')]
     public function update(UpdateClientPackageRequest $request, Center $center, int $package): CenterClientPackageDetailsResource
+    {
+        $clientPackage = $this->updateClientPackage->execute(
+            $this->paidPackages($center)->findOrFail($package),
+            $request->safe()->only(['controlled', 'trainer_id', 'expires_at']),
+        );
+
+        return $this->details($clientPackage);
+    }
+
+    #[Endpoint('Add sessions to a client package', 'Raises the total and remaining sessions. An exhausted package works again; a cancelled one cannot be changed.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[UrlParam('package', 'integer', 'Client package ID.', example: 41)]
+    #[ResponseFromApiResource(CenterClientPackageDetailsResource::class, ClientPackage::class, status: 200, description: 'The updated package.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'No access to this center\'s reservations (center users: `reservations.manage`; system users: `centers.manage_reservations`), or the token lacks `center-access:{center}`.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No such paid package in this center.')]
+    #[ApiResponse(['message' => 'This package is cancelled and cannot be changed.', 'reason' => 'package_not_adjustable', 'errors' => ['reservation' => ['This package is cancelled and cannot be changed.']]], 422, 'Validation failed, or the package is cancelled (`reason: package_not_adjustable`).')]
+    public function addSessions(AddPackageSessionsRequest $request, Center $center, int $package): CenterClientPackageDetailsResource
+    {
+        $clientPackage = $this->addPackageSessions->execute(
+            $this->paidPackages($center)->findOrFail($package),
+            $request->integer('sessions'),
+        );
+
+        return $this->details($clientPackage);
+    }
+
+    #[Endpoint('Book a session from a client package', 'Spends one credit for one person on the client\'s behalf; confirmed at once. A trainer-bound package is booked with its trainer.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[UrlParam('package', 'integer', 'Client package ID.', example: 41)]
+    #[Header('Idempotency-Key', '7c9e6679-7425-40de-944b-e07fc1f90ae7')]
+    #[ResponseFromApiResource(CenterReservationResource::class, Reservation::class, status: 201, description: 'The confirmed reservation.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'No access to this center\'s reservations (center users: `reservations.manage`; system users: `centers.manage_reservations`), or the token lacks `center-access:{center}`.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No such paid package in this center.')]
+    #[ApiResponse(['message' => 'This package has no sessions left or has expired.', 'reason' => 'package_not_usable', 'errors' => ['reservation' => ['This package has no sessions left or has expired.']]], 422, 'Validation failed, or the slot cannot be booked (`reason`: package_not_usable, trainer_not_allowed, outside_schedule, capacity_exceeded, …).')]
+    #[ApiResponse(ApiExamples::IDEMPOTENCY_KEY_REQUIRED, 400, 'Missing `Idempotency-Key` header. Send a unique UUID per operation and reuse it unchanged on retries (a replay returns the stored response with `Idempotent-Replayed: true`).')]
+    #[ApiResponse(ApiExamples::IDEMPOTENCY_IN_PROGRESS, 409, 'A request with this `Idempotency-Key` is still running; retry after `Retry-After`.')]
+    public function book(BookFromPackageRequest $request, Center $center, int $package): JsonResponse
     {
         $clientPackage = $this->paidPackages($center)->findOrFail($package);
 
-        $clientPackage->update(['controlled' => $request->boolean('controlled')]);
+        $reservation = $this->bookFromPackage->execute(
+            $clientPackage,
+            CarbonImmutable::parse($request->validated('date')),
+            $request->validated('start_time'),
+            ReservationSource::Center,
+            $request->filled('trainer_id') ? (int) $request->validated('trainer_id') : null,
+            $request->validated('notes'),
+        );
 
-        return CenterClientPackageDetailsResource::make($clientPackage->load([
-            'client', 'service', 'priceOption', ...PurchaseSummaryResource::RELATIONS,
-            'reservations' => fn ($query) => $query->orderBy('date')->orderBy('start_time'),
-        ]));
+        return CenterReservationResource::make($reservation->load(['service', 'trainer', 'client', 'priceOption', 'lines.priceOption', ...PurchaseSummaryResource::RELATIONS]))
+            ->response()
+            ->setStatusCode(201);
     }
 
     #[Endpoint('Count client packages', 'Active vs. not active (exhausted, expired, cancelled), with the list filters `q`, `from`, `to`, `service_id`.')]
@@ -104,6 +165,14 @@ class PackageController extends Controller
         $total = $this->baseQuery($request, $center)->count();
 
         return response()->json(['data' => ['active' => $active, 'not_active' => $total - $active]]);
+    }
+
+    private function details(ClientPackage $package): CenterClientPackageDetailsResource
+    {
+        return CenterClientPackageDetailsResource::make($package->load([
+            'client', 'service', 'priceOption', ...PurchaseSummaryResource::RELATIONS,
+            'reservations' => fn ($query) => $query->orderBy('date')->orderBy('start_time'),
+        ]));
     }
 
     /**

@@ -41,4 +41,7 @@ return [
     'membership_not_usable' => 'هذه العضوية غير مفعّلة أو منتهية.',
     'membership_has_no_visits' => 'هذه العضوية لا تشمل الزيارات.',
     'membership_daily_visits_exceeded' => 'تم تجاوز الزيارات المجانية اليومية: المتبقي اليوم :available.',
+    'package_not_adjustable' => 'هذه الباقة ملغاة ولا يمكن تعديلها.',
+    'package_not_trainer_bound' => 'يمكن تعيين مدرب لباقات التدريب فقط.',
+    'invalid_expiry' => 'يجب أن يكون تاريخ الانتهاء الجديد بعد التاريخ الحالي.',
 ];
