@@ -33,6 +33,7 @@ class MigrateAllCommand extends LegacyMigrator
         'migrator:event-reservations',
         'migrator:resort-reservations',
         'migrator:purchases',
+        'migrator:engagement',
     ];
 
     /** @var array<int, string> Migrators that copy media and accept --skip-media. */

@@ -18,6 +18,7 @@ function useLegacyServiceSchema(): void
     createLegacyBillingTables();
     createLegacyClientTables();
     createLegacyBookingTables();
+    createLegacyEngagementTables();
 }
 
 /**
@@ -431,5 +432,24 @@ function createLegacyBookingTables(): void
         if (! $schema->hasTable($name)) {
             $schema->create($name, $callback);
         }
+    }
+}
+
+/**
+ * Creates the legacy `action_logs` table on the current `legacy` connection,
+ * unless it already exists.
+ */
+function createLegacyEngagementTables(): void
+{
+    $schema = Schema::connection('legacy');
+
+    if (! $schema->hasTable('action_logs')) {
+        $schema->create('action_logs', function (Blueprint $table): void {
+            $table->id();
+            $table->string('model_type')->nullable();
+            $table->unsignedBigInteger('model_id')->nullable();
+            $table->string('action');
+            $table->timestamps();
+        });
     }
 }

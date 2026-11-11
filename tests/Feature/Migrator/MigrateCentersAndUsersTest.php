@@ -106,6 +106,7 @@ beforeEach(function (): void {
     createLegacyBillingTables();
     createLegacyClientTables();
     createLegacyBookingTables();
+    createLegacyEngagementTables();
 
     $legacy = DB::connection('legacy');
     $at = '2024-10-01 10:00:00';
