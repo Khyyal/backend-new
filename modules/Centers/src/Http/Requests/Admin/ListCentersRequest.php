@@ -17,6 +17,7 @@ use Modules\Centers\Services\CenterAdminService;
 #[QueryParam('city_id', 'integer', 'Only centers of this city.', required: false, example: 1)]
 #[QueryParam('from', 'string', 'Created on or after this day, `Y-m-d`.', required: false, example: '2026-05-01')]
 #[QueryParam('to', 'string', 'Created on or before this day, `Y-m-d`, not before `from`.', required: false, example: '2026-05-31')]
+#[QueryParam('trashed', 'string', '`with` includes deleted centers; `only` lists only deleted centers.', required: false, enum: ['with', 'only'], example: 'only')]
 #[QueryParam('sort', 'string', 'Sort column; prefix `-` for descending. Default newest first.', required: false, enum: CenterAdminService::SORTS, example: '-created_at')]
 #[QueryParam('per_page', 'integer', 'Items per page, 1-100. Default 15.', required: false, example: 15)]
 #[QueryParam('page', 'integer', 'Page number (1-based).', required: false, example: 1)]
@@ -40,6 +41,7 @@ class ListCentersRequest extends FormRequest
             /** Inclusive range on the center creation date (`Y-m-d`). */
             'from' => ['sometimes', 'date_format:Y-m-d'],
             'to' => ['sometimes', 'date_format:Y-m-d', 'after_or_equal:from'],
+            'trashed' => ['sometimes', Rule::in(['with', 'only'])],
             'sort' => ['sometimes', 'nullable', Rule::in(CenterAdminService::SORTS)],
             'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
         ];

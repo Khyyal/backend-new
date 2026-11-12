@@ -30,7 +30,10 @@ See [Roles and permissions](../conventions/permissions).
 
 - `sort` is one of `CenterAdminService::SORTS`: `name`, `created_at` or `points`, with a `-` prefix for descending (`-points`). Ties are broken by `id` in the same direction. See [List sorting](../conventions/coding#list-sorting).
 - Without `sort` the list is newest first (`id` descending). Any other value is a 422.
-- `CenterResource` includes `created_at` (ISO-8601) so the panel can show and sort by the creation date.
+- `trashed` adds soft-deleted centers to the list and the export: `with` returns deleted and live centers, `only` returns deleted ones. Without it deleted centers are left out. Any other value is a 422.
+- `GET admin/centers/{center}` (`centers.view`) also returns a soft-deleted center (the route is bound `withTrashed`). Every other `admin/centers/{center}` route stays a 404 for a deleted center.
+- `CenterResource` includes `created_at` (ISO-8601) so the panel can show and sort by the creation date, and `deleted_at` (ISO-8601, `null` unless the center is deleted).
+- `points` (the popularity score behind the client `most_popular` order) is set with `PATCH admin/centers/{center}` (`centers.update`): an integer of 0 or more. Only admins can change it; the center's own update ignores it.
 - `GET centers/{center}`, the `center` of `POST centers/{center}/access` and every center update return the center with `city`, `tags`, `logo`, `cover` and `images`. `CenterUpdateService` loads them after its transaction commits, because replaced and removed media are deleted after commit; the response therefore lists only the media the center still has.
 
 ## Client-facing endpoints

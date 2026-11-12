@@ -176,6 +176,64 @@ test('deletes a center', function (): void {
         ->and(Center::withTrashed()->find($this->center->id))->not->toBeNull();
 });
 
+test('deleted centers are listed only when the trashed filter asks for them', function (): void {
+    $deleted = CenterFactory::new()->create(['name' => 'Closed stable']);
+    $deleted->delete();
+
+    $this->actingAs($this->admin, 'system_user');
+
+    $this->getJson($this->base)
+        ->assertOk()->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.id', $this->center->id)
+        ->assertJsonPath('data.0.deleted_at', null);
+
+    $this->getJson("{$this->base}?trashed=only")
+        ->assertOk()->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.id', $deleted->id)
+        ->assertJsonPath('data.0.deleted_at', $deleted->deleted_at->toIso8601String());
+
+    $this->getJson("{$this->base}?trashed=with")->assertOk()->assertJsonCount(2, 'data');
+
+    $this->getJson("{$this->base}?trashed=yes")
+        ->assertUnprocessable()->assertJsonValidationErrors(['trashed']);
+});
+
+test('shows a deleted center but does not update it', function (): void {
+    $this->center->delete();
+
+    $this->actingAs($this->admin, 'system_user');
+
+    $this->getJson("{$this->base}/{$this->center->id}")
+        ->assertOk()
+        ->assertJsonPath('data.id', $this->center->id)
+        ->assertJsonPath('data.deleted_at', $this->center->deleted_at->toIso8601String());
+
+    $this->patchJson("{$this->base}/{$this->center->id}", ['name' => 'X'])->assertNotFound();
+});
+
+test('showing a deleted center still needs the view permission', function (): void {
+    $this->center->delete();
+
+    $this->actingAs(SystemUser::factory()->create(), 'system_user')
+        ->getJson("{$this->base}/{$this->center->id}")->assertForbidden();
+});
+
+test('updates a center\'s points', function (): void {
+    $this->actingAs($this->admin, 'system_user')
+        ->patchJson("{$this->base}/{$this->center->id}", ['points' => 250])
+        ->assertOk()->assertJsonPath('data.points', 250);
+
+    expect($this->center->refresh()->points)->toBe(250);
+});
+
+test('points must be a non-negative integer', function (mixed $points): void {
+    $this->actingAs($this->admin, 'system_user')
+        ->patchJson("{$this->base}/{$this->center->id}", ['points' => $points])
+        ->assertUnprocessable()->assertJsonValidationErrors(['points']);
+
+    expect($this->center->refresh()->points)->toBe(0);
+})->with([-1, 1.5, 'many', null]);
+
 test('permissions are enforced per ability', function (): void {
     $viewer = SystemUser::factory()
         ->withPermissions([SystemPermission::ViewAnyCenters, SystemPermission::ViewCenter])

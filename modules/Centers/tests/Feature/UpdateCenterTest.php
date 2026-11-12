@@ -83,6 +83,14 @@ test('partial update leaves other fields untouched', function (): void {
     expect($this->center->fresh()->address)->toBe($address);
 });
 
+test('the center cannot change its own points', function (): void {
+    $this->actingAs($this->primary, 'center_user')
+        ->patchJson($this->url, ['name' => 'New name', 'points' => 500])
+        ->assertOk()->assertJsonPath('data.points', 0);
+
+    expect($this->center->refresh()->points)->toBe(0);
+});
+
 test('validation rejects bad coordinates and unknown tags', function (): void {
     $this->actingAs($this->primary, 'center_user')
         ->patchJson($this->url, ['lat' => 100, 'tags' => [999]])

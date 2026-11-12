@@ -24,7 +24,7 @@ use Spatie\Permission\PermissionRegistrar;
  */
 class CenterAdminService
 {
-    private const ATTRIBUTES = ['city_id', 'status', 'state', 'custom_site_enabled', 'domain'];
+    private const ATTRIBUTES = ['city_id', 'status', 'state', 'custom_site_enabled', 'domain', 'points'];
 
     /**
      * Accepted `sort` values for the admin list and export; a `-` prefix means descending.
@@ -39,7 +39,7 @@ class CenterAdminService
     ) {}
 
     /**
-     * @param  array{search?: ?string, status?: ?string, state?: ?string, city_id?: ?int, sort?: ?string}  $filters
+     * @param  array{search?: ?string, status?: ?string, state?: ?string, city_id?: ?int, trashed?: string, sort?: ?string}  $filters
      */
     public function paginate(array $filters, int $perPage = 15): LengthAwarePaginator
     {
@@ -51,8 +51,9 @@ class CenterAdminService
     /**
      * Centers filtered and sorted like the admin center list (newest first when
      * no `sort` is given). Shared by the list endpoint and the centers export.
+     * `trashed` adds (`with`) or keeps only (`only`) soft-deleted centers.
      *
-     * @param  array{search?: string|null, status?: string|null, state?: string|null, city_id?: int|null, from?: string, to?: string, sort?: string|null}  $filters
+     * @param  array{search?: string|null, status?: string|null, state?: string|null, city_id?: int|null, from?: string, to?: string, trashed?: string, sort?: string|null}  $filters
      * @return Builder<Center>
      */
     public function query(array $filters): Builder
@@ -68,6 +69,7 @@ class CenterAdminService
             ->when($filters['city_id'] ?? null, fn (Builder $query, int $cityId) => $query->where('city_id', $cityId))
             ->when($filters['from'] ?? null, fn (Builder $query, string $date) => $query->whereDate('created_at', '>=', $date))
             ->when($filters['to'] ?? null, fn (Builder $query, string $date) => $query->whereDate('created_at', '<=', $date))
+            ->when($filters['trashed'] ?? null, fn (Builder $query, string $trashed) => $trashed === 'only' ? $query->onlyTrashed() : $query->withTrashed())
             ->tap(fn (Builder $query) => ListSort::apply($query, $filters['sort'] ?? null, ['name' => 'name', 'created_at' => 'created_at', 'points' => 'points'], fn (Builder $query) => $query->latest('id')));
     }
 
