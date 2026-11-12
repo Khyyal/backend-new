@@ -94,7 +94,7 @@ Checkout accepts only `pending`, non-package reservations with total > 0, of **o
 
 ## Client endpoints
 
-`reservations` (list, show, show by `code/{code}`, create, `quote`, `cancel`), `purchases/code/{code}` (one of the client's purchases, `ClientPurchaseResource`), `bookings`, `packages` and `memberships` (list, `quote`, buy), `PATCH packages/{package}` (set `knight_name`), `memberships/{membership}/invites`, `packages/{package}/reservations`, `memberships/{membership}/visits`.
+`reservations` (list, show, show by `code/{code}`, create, `quote`, `cancel`), `purchases` (the client's own purchases, newest first, 15 per page, optional `status`), `purchases/{purchase}` and `purchases/code/{code}` (one of the client's purchases, `ClientPurchaseResource`; 404 for anyone else's), `bookings`, `packages` and `memberships` (list, `quote`, buy), `PATCH packages/{package}` (set `knight_name`), `memberships/{membership}/invites`, `packages/{package}/reservations`, `memberships/{membership}/visits`.
 
 ## Center endpoints
 

@@ -4,7 +4,7 @@ The **Support** module holds the shared building blocks.
 
 ## OTP
 
-All phone sign-in goes through `OtpVerificationService`.
+All phone sign-in goes through `OtpVerificationService`, and so does a client's phone change (`clients/phone`, `clients/phone/verify`), where the code goes to the new phone.
 
 - Codes are **hashed** and expire after **300 seconds**.
 - A new send invalidates older unused codes. A successful verify consumes the code.

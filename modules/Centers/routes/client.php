@@ -19,6 +19,11 @@ Route::middleware(['set.locale.from.accept.language'])
             ->group(function (): void {
                 Route::post('/ratings', [RatingController::class, 'rate'])
                     ->name('ratings.rate');
+                Route::get('/ratings', [RatingController::class, 'index'])
+                    ->name('ratings.index');
+                Route::patch('/ratings/{rating}', [RatingController::class, 'update'])
+                    ->whereNumber('rating')
+                    ->name('ratings.update');
 
                 Route::get('/favorites', [FavoriteController::class, 'index'])
                     ->name('favorites.index');
