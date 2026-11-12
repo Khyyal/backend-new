@@ -107,7 +107,7 @@ class CenterController extends Controller
         return CenterResource::make($this->service->update($request->user(), $center, $request->validated()));
     }
 
-    #[Endpoint('Delete a center', 'Soft delete.')]
+    #[Endpoint('Delete a center', 'Soft delete. The team loses access but stays assigned, so the center can be restored with it.')]
     #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
     #[ApiResponse(status: 204, description: 'Deleted. Empty body.')]
     #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
@@ -120,6 +120,21 @@ class CenterController extends Controller
         $this->service->delete($center);
 
         return response()->noContent();
+    }
+
+    #[Endpoint('Restore a deleted center', 'Brings the center back with the state, status and team it had when it was deleted.')]
+    #[UrlParam('center', 'integer', 'ID of a deleted center.', example: 8)]
+    #[ResponseFromApiResource(CenterResource::class, Center::class, status: 200, description: 'The restored center.', with: ['city', 'tags'])]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `centers.restore`.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No center with that ID, or the center is not deleted.')]
+    public function restore(Request $request, Center $center): CenterResource
+    {
+        Gate::forUser($request->user())->authorize('restore', $center);
+
+        abort_unless($center->trashed(), 404);
+
+        return CenterResource::make($this->service->restore($center));
     }
 
     #[Endpoint('Export centers', 'Queues an `.xlsx` export of the centers matching the list filters. Download it from `GET /api/v1/admin/exports/{export}/download` once `completed`.')]

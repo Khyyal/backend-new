@@ -117,10 +117,25 @@ class CenterAdminService
     public function delete(Center $center): void
     {
         DB::transaction(function () use ($center): void {
-            $this->userService->detachAll($center);
-
             $center->delete();
+
+            $this->userService->suspendAll($center);
         });
+    }
+
+    /**
+     * Restores a soft-deleted center together with the team it had when it
+     * was deleted.
+     */
+    public function restore(Center $center): Center
+    {
+        DB::transaction(function () use ($center): void {
+            $center->restore();
+
+            $this->userService->reinstateAll($center);
+        });
+
+        return $this->find($center);
     }
 
     public function find(Center $center): Center

@@ -25,6 +25,7 @@ enum SystemPermission: string
     case ExportCenters = 'centers.export';
     case UpdateCenter = 'centers.update';
     case DeleteCenter = 'centers.delete';
+    case RestoreCenter = 'centers.restore';
     case ManageCenterServices = 'centers.manage_services';
     case ViewCenterRatings = 'centers.view_ratings';
     case ManageCenterBlockedClients = 'centers.manage_blocked_clients';

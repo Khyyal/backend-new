@@ -61,6 +61,11 @@ class CenterPolicy
         return $this->systemUserCan($user, SystemPermission::DeleteCenter);
     }
 
+    public function restore(User|SystemUser $user, Center $center): bool
+    {
+        return $this->systemUserCan($user, SystemPermission::RestoreCenter);
+    }
+
     /**
      * Center users: the primary user, or a user granted the service type's
      * `services.{type}.manage` permission (any type when `$type` is null).

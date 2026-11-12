@@ -32,8 +32,9 @@ class CenterAccountService
     }
 
     /**
-     * Soft-deletes the center and detaches its users (revoking their center
-     * tokens; accounts left without a center are deleted too).
+     * Soft-deletes the center and cuts its users' access (revoking their center
+     * tokens; accounts left without another center are deleted too). Their
+     * assignments are kept so an admin can restore the center with its team.
      *
      * @throws CenterDeletionNotAllowedException When upcoming reservations or an unsettled balance remain.
      */
@@ -44,9 +45,9 @@ class CenterAccountService
 
             $this->ensureCanDelete($center);
 
-            $this->userService->detachAll($center);
-
             $center->delete();
+
+            $this->userService->suspendAll($center);
         });
     }
 
