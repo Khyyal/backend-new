@@ -30,6 +30,13 @@ use Symfony\Component\HttpFoundation\Response as ResponseAlias;
 #[Group('Center / Centers', 'The centers of the authenticated center user, and center-scoped access tokens.')]
 class CenterController extends Controller
 {
+    /**
+     * Relations `CenterResource` renders for a single center.
+     *
+     * @var list<string>
+     */
+    private const array RELATIONS = ['city', 'tags', 'media'];
+
     public function __construct(
         private readonly CenterAuthService $authService,
     ) {}
@@ -49,7 +56,7 @@ class CenterController extends Controller
 
     #[Endpoint('Show a center', 'Needs a center-scoped token. Only `show` is allowed while the center is not active.')]
     #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
-    #[ResponseFromApiResource(CenterResource::class, Center::class, status: 200, description: 'The center.')]
+    #[ResponseFromApiResource(CenterResource::class, Center::class, status: 200, description: 'The center with city, tags and media.', with: ['city', 'tags'])]
     #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
     #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Not assigned to this center, or the token lacks `center-access:{center}`.')]
     #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No center with that ID.')]
@@ -62,7 +69,7 @@ class CenterController extends Controller
             abort(ResponseAlias::HTTP_FORBIDDEN);
         }
 
-        return CenterResource::make($center);
+        return CenterResource::make($center->load(self::RELATIONS));
     }
 
     /**
@@ -73,7 +80,7 @@ class CenterController extends Controller
     #[ApiResponse(['token' => '32|Q2VudGVyU2NvcGVkVG9rZW4', 'token_type' => 'Bearer', 'center' => ['id' => 8, 'name' => 'Al Fursan Stables', 'slug' => 'al-fursan-stables', 'contact_phone' => '+966500000001', 'email' => 'info@alfursan.sa', 'social_links' => null, 'site_theme' => null, 'custom_site_enabled' => false, 'domain' => null, 'status' => 'invisible', 'state' => 'pending', 'points' => 0, 'address' => null, 'lat' => null, 'lng' => null, 'description' => null]], 200, 'Access granted.')]
     #[ResponseField('token', 'string', 'Center-scoped Sanctum token.', example: '32|Q2VudGVyU2NvcGVkVG9rZW4')]
     #[ResponseField('token_type', 'string', 'Always `Bearer`.', example: 'Bearer')]
-    #[ResponseField('center', 'object', 'The center (`CenterResource`).')]
+    #[ResponseField('center', 'object', 'The center (`CenterResource`, with city, tags, logo, cover and images).')]
     #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
     #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Not assigned to this center.')]
     #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No center with that ID.')]
@@ -113,7 +120,7 @@ class CenterController extends Controller
         return response()->json([
             'token' => $token,
             'token_type' => 'Bearer',
-            'center' => CenterResource::make($center),
+            'center' => CenterResource::make($center->load(self::RELATIONS)),
         ]);
     }
 

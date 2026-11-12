@@ -106,6 +106,10 @@ Route::middleware(['api'])
                         Route::post('/{center}/blocked-clients', [BlockedClientController::class, 'store'])
                             ->name('blocked-clients.store');
 
+                        Route::delete('/{center}/blocked-clients/{client}', [BlockedClientController::class, 'destroy'])
+                            ->whereNumber('client')
+                            ->name('blocked-clients.destroy');
+
                         Route::get('/{center}/analytics', AnalyticsController::class)
                             ->name('analytics');
 

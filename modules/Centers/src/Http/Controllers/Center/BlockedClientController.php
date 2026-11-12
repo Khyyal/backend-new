@@ -4,6 +4,7 @@ namespace Modules\Centers\Http\Controllers\Center;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Gate;
 use Knuckles\Scribe\Attributes\Endpoint;
@@ -20,7 +21,7 @@ use Modules\Support\Documentation\ApiExamples;
 use Modules\Support\Models\Block;
 use Modules\Support\Services\BlockService;
 
-#[Group('Blocked clients', 'Clients a center has blocked from booking. Served on `centers/{center}/…` (center-scoped token) and `admin/centers/{center}/…` (system user). Center users need `blocked_clients.manage`; system users need `centers.manage_blocked_clients`.')]
+#[Group('Blocked clients', 'Clients a center has blocked from booking, and unblocking them. Served on `centers/{center}/…` (center-scoped token) and `admin/centers/{center}/…` (system user). Center users need `blocked_clients.manage`; system users need `centers.manage_blocked_clients`.')]
 class BlockedClientController extends Controller
 {
     public function __construct(private readonly BlockService $blockService) {}
@@ -73,5 +74,23 @@ class BlockedClientController extends Controller
                 'blocked_at' => $block->created_at,
             ],
         ], 201);
+    }
+
+    #[Endpoint('Unblock a client', 'Removes the center\'s block on the client, who can book the center again.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[UrlParam('client', 'integer', 'ID of the blocked client.', example: 77)]
+    #[ApiResponse(status: 204, description: 'Unblocked. Empty body.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing the permission for this center. Also returned when the token lacks `center-access:{center}` or the center is not active.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No such client, or the center has not blocked them.')]
+    public function destroy(Request $request, Center $center, int $client): Response
+    {
+        Gate::forUser($request->user())->authorize('manageBlockedClients', $center);
+
+        $unblocked = $this->blockService->unblock($center, Client::query()->findOrFail($client));
+
+        abort_unless($unblocked, 404);
+
+        return response()->noContent();
     }
 }

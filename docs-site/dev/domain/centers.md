@@ -31,6 +31,7 @@ See [Roles and permissions](../conventions/permissions).
 - `sort` is one of `CenterAdminService::SORTS`: `name`, `created_at` or `points`, with a `-` prefix for descending (`-points`). Ties are broken by `id` in the same direction. See [List sorting](../conventions/coding#list-sorting).
 - Without `sort` the list is newest first (`id` descending). Any other value is a 422.
 - `CenterResource` includes `created_at` (ISO-8601) so the panel can show and sort by the creation date.
+- `GET centers/{center}`, the `center` of `POST centers/{center}/access` and every center update return the center with `city`, `tags`, `logo`, `cover` and `images`. `CenterUpdateService` loads them after its transaction commits, because replaced and removed media are deleted after commit; the response therefore lists only the media the center still has.
 
 ## Client-facing endpoints
 
@@ -57,7 +58,7 @@ The center's contact email is verified with a 6-digit code (`CenterEmailVerifica
 
 ## Other center settings
 
-Site theme (`site-theme`), social links (`social-links`) and the payout bank account (`payout-account`) are updated through their own endpoints. The center sees **analytics** at `centers/{center}/analytics`, and its purchases (list, show, export and `purchases/{purchase}/refund`, see [Purchase](./purchase#refunding-a-purchase-from-the-center)), clients, ledger and exports under the same prefix.
+Site theme (`site-theme`), social links (`social-links`) and the payout bank account (`payout-account`) are updated through their own endpoints. The center manages its blocked clients under `centers/{center}/blocked-clients` (list, block, and `DELETE …/{client}` to unblock; also under `admin/centers/{center}`), see [Clients](./clients#relationship-to-centers). The center sees **analytics** at `centers/{center}/analytics`, and its purchases (list, show, export and `purchases/{purchase}/refund`, see [Purchase](./purchase#refunding-a-purchase-from-the-center)), clients, ledger and exports under the same prefix.
 
 ## Business rules
 

@@ -100,3 +100,49 @@ test('listing blocked clients requires center access', function (): void {
     $this->actingAs(UserFactory::new()->create(), 'center_user')
         ->getJson($this->url)->assertForbidden();
 });
+
+test('a center user unblocks a client', function (): void {
+    $client = ClientFactory::new()->create();
+    $other = ClientFactory::new()->create();
+    $service = app(BlockService::class);
+    $service->block($this->center, $client, 'No-shows');
+    $service->block($this->center, $other, 'Rude');
+
+    $this->actingAs($this->user, 'center_user')
+        ->deleteJson("{$this->url}/{$client->id}")
+        ->assertNoContent();
+
+    expect($service->isBlocked($this->center, $client))->toBeFalse()
+        ->and($service->isBlocked($this->center, $other))->toBeTrue();
+});
+
+test('unblocking a client the center has not blocked is not found', function (): void {
+    $client = ClientFactory::new()->create();
+    $otherCenter = CenterFactory::new()->create();
+    $service = app(BlockService::class);
+    $service->block($otherCenter, $client, 'Other center');
+
+    $this->actingAs($this->user, 'center_user')
+        ->deleteJson("{$this->url}/{$client->id}")
+        ->assertNotFound();
+    $this->actingAs($this->user, 'center_user')
+        ->deleteJson("{$this->url}/999999")
+        ->assertNotFound();
+
+    expect($service->isBlocked($otherCenter, $client))->toBeTrue();
+});
+
+test('unblocking requires the blocked clients permission', function (): void {
+    $client = ClientFactory::new()->create();
+    $service = app(BlockService::class);
+    $service->block($this->center, $client, 'No-shows');
+
+    $this->deleteJson("{$this->url}/{$client->id}")->assertUnauthorized();
+
+    $this->user->syncCenterPermissions($this->center, []);
+    $this->actingAs($this->user, 'center_user')
+        ->deleteJson("{$this->url}/{$client->id}")
+        ->assertForbidden();
+
+    expect($service->isBlocked($this->center, $client))->toBeTrue();
+});

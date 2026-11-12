@@ -206,6 +206,15 @@ test('lists ratings and manages blocked clients', function (): void {
         ->getJson("{$this->base}/{$this->center->id}/ratings")->assertOk();
     $this->actingAs($limited, 'system_user')
         ->getJson("{$this->base}/{$this->center->id}/blocked-clients")->assertForbidden();
+    $this->actingAs($limited, 'system_user')
+        ->deleteJson("{$this->base}/{$this->center->id}/blocked-clients/{$client->id}")->assertForbidden();
+
+    $this->actingAs($this->admin, 'system_user')
+        ->deleteJson("{$this->base}/{$this->center->id}/blocked-clients/{$client->id}")
+        ->assertNoContent();
+    $this->actingAs($this->admin, 'system_user')
+        ->getJson("{$this->base}/{$this->center->id}/blocked-clients")
+        ->assertOk()->assertJsonCount(0, 'data');
 });
 
 test('manages a center\'s services', function (): void {
