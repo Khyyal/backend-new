@@ -283,7 +283,7 @@ function createLegacyBillingTables(): void
 }
 
 /**
- * Creates the legacy client and manager push-token tables on the current
+ * Creates the legacy client, rating and manager push-token tables on the current
  * `legacy` connection, skipping any table that already exists.
  */
 function createLegacyClientTables(): void
@@ -307,6 +307,19 @@ function createLegacyClientTables(): void
             $table->unsignedBigInteger('registered_barn_id')->nullable();
             $table->timestamps();
             $table->softDeletes();
+        });
+    }
+
+    if (! $schema->hasTable('ratings')) {
+        $schema->create('ratings', function (Blueprint $table): void {
+            $table->id();
+            $table->unsignedBigInteger('client_id')->nullable();
+            $table->unsignedBigInteger('barn_id');
+            $table->string('rateable_type');
+            $table->unsignedBigInteger('rateable_id');
+            $table->unsignedTinyInteger('stars');
+            $table->text('comment')->nullable();
+            $table->timestamps();
         });
     }
 

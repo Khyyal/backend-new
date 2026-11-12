@@ -22,6 +22,7 @@ class MigrateAllCommand extends LegacyMigrator
         'migrator:tags',
         'migrator:center-users',
         'migrator:clients',
+        'migrator:ratings',
         'migrator:trainers',
         'migrator:services',
         'migrator:center-settings',
