@@ -16,7 +16,7 @@ A center only sees its own clients: people who joined it, or who have a confirme
 
 ## Blocking
 
-A center can block a client. Blocked clients cannot book that center. Admins can see and add blocked clients from the center page.
+A center can block a client. Blocked clients cannot book that center. Admins can see, add and unblock blocked clients from the center page.
 
 ## Deleted clients
 

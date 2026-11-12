@@ -23,13 +23,15 @@ class CenterUpdateService
      * Update a center. Only keys present in $data are touched.
      *
      * Everything runs in one transaction; stored files that must be removed
-     * are deleted after commit since storage cannot be rolled back.
+     * are deleted after commit since storage cannot be rolled back. Relations
+     * are loaded once those deletions ran, so the returned center never lists
+     * media that was just removed.
      *
      * @param  array<string, mixed>  $data
      */
     public function update(Center $center, Model $user, array $data): Center
     {
-        return DB::transaction(function () use ($center, $user, $data) {
+        $center = DB::transaction(function () use ($center, $user, $data) {
             // Serialize concurrent updates of the same center's media.
             $center = Center::query()->lockForUpdate()->findOrFail($center->getKey());
 
@@ -60,8 +62,10 @@ class CenterUpdateService
                 $this->syncImages($center, $user, $data['images']);
             }
 
-            return $center->load(['city', 'tags', 'media']);
+            return $center;
         });
+
+        return $center->load(['city', 'tags', 'media']);
     }
 
     private function syncSingleMedia(Center $center, Model $user, string $collection, ?string $mediaId): void

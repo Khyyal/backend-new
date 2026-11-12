@@ -146,6 +146,52 @@ test('images keep the order sent and are reordered, added and removed', function
     expect(($this->imageUuids)())->toBe([]);
 });
 
+test('replacing every image returns only the new ones', function (): void {
+    $this->actingAs($this->primary, 'center_user');
+    [$a, $b] = [($this->tempMedia)($this->primary, 'a.png'), ($this->tempMedia)($this->primary, 'b.png')];
+    $this->patchJson($this->url, ['images' => [$a, $b]])->assertOk();
+
+    [$c, $d] = [($this->tempMedia)($this->primary, 'c.png'), ($this->tempMedia)($this->primary, 'd.png')];
+
+    $this->patchJson($this->url, ['images' => [$c, $d]])->assertOk()
+        ->assertJsonCount(2, 'data.images')
+        ->assertJsonPath('data.images.0.id', $c)
+        ->assertJsonPath('data.images.1.id', $d);
+
+    expect(($this->imageUuids)())->toBe([$c, $d]);
+});
+
+test('an empty tag list clears the tags and leaving tags out keeps them', function (): void {
+    $tags = TagFactory::new()->count(3)->create();
+    $this->center->tags()->sync([$tags[0]->id, $tags[1]->id]);
+    $this->actingAs($this->primary, 'center_user');
+
+    $this->patchJson($this->url, ['name' => 'Only name'])->assertOk()
+        ->assertJsonCount(2, 'data.tags');
+    expect($this->center->tags()->count())->toBe(2);
+
+    $this->patchJson($this->url, ['tags' => []])->assertOk()
+        ->assertJsonCount(0, 'data.tags');
+    expect($this->center->tags()->count())->toBe(0);
+});
+
+test('showing the center returns its city, tags and media', function (): void {
+    $tag = TagFactory::new()->create();
+    $this->center->tags()->sync([$tag->id]);
+    $this->actingAs($this->primary, 'center_user');
+    [$logo, $cover, $image] = [($this->tempMedia)($this->primary), ($this->tempMedia)($this->primary, 'c.png'), ($this->tempMedia)($this->primary, 'i.png')];
+    $this->patchJson($this->url, ['logo' => $logo, 'cover' => $cover, 'images' => [$image]])->assertOk();
+
+    $this->getJson($this->url)->assertOk()
+        ->assertJsonPath('data.city.id', $this->center->city_id)
+        ->assertJsonCount(1, 'data.tags')
+        ->assertJsonPath('data.tags.0.id', $tag->id)
+        ->assertJsonPath('data.logo.id', $logo)
+        ->assertJsonPath('data.cover.id', $cover)
+        ->assertJsonCount(1, 'data.images')
+        ->assertJsonPath('data.images.0.id', $image);
+});
+
 test('images reject duplicates and unknown ids', function (): void {
     $id = ($this->tempMedia)($this->primary);
 

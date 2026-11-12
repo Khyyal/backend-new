@@ -36,6 +36,7 @@ Route::prefix('admin/centers')
 
         Route::get('/{center}/blocked-clients', [BlockedClientController::class, 'index'])->name('blocked-clients.index');
         Route::post('/{center}/blocked-clients', [BlockedClientController::class, 'store'])->name('blocked-clients.store');
+        Route::delete('/{center}/blocked-clients/{client}', [BlockedClientController::class, 'destroy'])->whereNumber('client')->name('blocked-clients.destroy');
 
         Route::get('/{center}/purchases', [PurchaseController::class, 'index'])->name('purchases.index');
         Route::post('/{center}/purchases/export', [PurchaseController::class, 'export'])->name('purchases.export');

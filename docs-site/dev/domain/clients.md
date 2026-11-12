@@ -17,7 +17,7 @@ A client changes their phone in two steps, both through `OtpVerificationService`
 ## Relationship to centers
 
 - A center sees only clients in `center_client`, or with a Confirmed or Completed purchase where it is the merchant. Never list clients across centers.
-- A center can **block** a client (`blocked-clients`). Blocked clients cannot book that center.
+- A center can **block** a client (`POST …/blocked-clients`) and unblock them again (`DELETE …/blocked-clients/{client}`, 404 when the center has not blocked that client). Blocked clients cannot book that center.
 - Clients are **soft-deleted**; raw queries must filter `deleted_at`.
 
 ## Favorites and ratings

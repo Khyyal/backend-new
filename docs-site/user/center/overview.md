@@ -34,7 +34,7 @@ The center app links to the privacy policy and terms and conditions for centers.
 
 **Plans and subscription:** browse the plans, subscribe, and see your current subscription. Only the owner can cancel. Subscriptions last one billing period and have no VAT or invoices.
 
-Also: **Analytics** (your sales and bookings), **Ratings**, **Blocked clients**, **Clients** and **Notifications**. You can export purchases and clients if you have the export permission.
+Also: **Analytics** (your sales and bookings), **Ratings**, **Blocked clients** (block a client from booking, or unblock them later), **Clients** and **Notifications**. You can export purchases and clients if you have the export permission.
 
 ## Verify your email
 
