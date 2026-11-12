@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Centers\Database\Factories\CenterFactory;
 use Modules\Clients\Database\Factories\ClientFactory;
+use Modules\Support\Database\Factories\RatingFactory;
 use Tests\TestCase;
 
 uses(TestCase::class, RefreshDatabase::class);
@@ -285,4 +286,114 @@ test('rating is accessible via ratingsGiven relationship on client', function ()
     $client->load('ratingsGiven');
     expect($client->ratingsGiven)->toHaveCount(1);
     expect($client->ratingsGiven->first()->stars)->toBe(5);
+});
+
+describe('my ratings', function (): void {
+    beforeEach(function (): void {
+        $this->client = ClientFactory::new()->create();
+        $this->center = CenterFactory::new()->create();
+
+        $this->rating = fn (int $stars, $client = null, array $attributes = [], $center = null) => RatingFactory::new()
+            ->forRateable($center ?? $this->center)
+            ->byRater($client ?? $this->client)
+            ->create(['stars' => $stars, ...$attributes]);
+    });
+
+    test('listing and editing require a client token', function (): void {
+        $rating = ($this->rating)(3);
+
+        $this->getJson('/api/v1/clients/ratings')->assertUnauthorized();
+        $this->patchJson("/api/v1/clients/ratings/{$rating->id}", ['stars' => 4])->assertUnauthorized();
+    });
+
+    test('lists only my ratings, newest first by default', function (): void {
+        $older = ($this->rating)(5, attributes: ['created_at' => now()->subDay()]);
+        $otherCenter = CenterFactory::new()->create();
+        $newer = ($this->rating)(2, attributes: ['comment' => 'Too crowded.'], center: $otherCenter);
+        ($this->rating)(4, ClientFactory::new()->create());
+
+        $this->actingAs($this->client, 'client')
+            ->getJson('/api/v1/clients/ratings')
+            ->assertOk()
+            ->assertJsonCount(2, 'data')
+            ->assertJsonPath('data.0.id', $newer->id)
+            ->assertJsonPath('data.0.stars', 2)
+            ->assertJsonPath('data.0.comment', 'Too crowded.')
+            ->assertJsonPath('data.0.center.id', $otherCenter->id)
+            ->assertJsonPath('data.1.id', $older->id);
+    });
+
+    test('sort=highest lists the most stars first', function (): void {
+        $five = ($this->rating)(5, attributes: ['created_at' => now()->subDays(2)]);
+        $one = ($this->rating)(1, center: CenterFactory::new()->create());
+        $three = ($this->rating)(3, attributes: ['created_at' => now()->subDay()], center: CenterFactory::new()->create());
+
+        $this->actingAs($this->client, 'client')
+            ->getJson('/api/v1/clients/ratings?sort=highest')
+            ->assertOk()
+            ->assertJsonPath('data.0.id', $five->id)
+            ->assertJsonPath('data.1.id', $three->id)
+            ->assertJsonPath('data.2.id', $one->id);
+    });
+
+    test('an unknown sort is rejected', function (): void {
+        $this->actingAs($this->client, 'client')
+            ->getJson('/api/v1/clients/ratings?sort=lowest')
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('sort');
+    });
+
+    test('edits the stars and comment of my rating', function (): void {
+        $rating = ($this->rating)(2, attributes: ['comment' => 'Too crowded.']);
+
+        $this->actingAs($this->client, 'client')
+            ->patchJson("/api/v1/clients/ratings/{$rating->id}", ['stars' => 4, 'comment' => 'Better this time.'])
+            ->assertOk()
+            ->assertJsonPath('rating.id', $rating->id)
+            ->assertJsonPath('rating.stars', 4)
+            ->assertJsonPath('rating.comment', 'Better this time.')
+            ->assertJsonPath('rating.center.id', $this->center->id);
+
+        expect($rating->refresh())
+            ->stars->toBe(4)
+            ->comment->toBe('Better this time.');
+        expect($this->center->averageRating())->toBe(4.0);
+    });
+
+    test('a field left out of an edit keeps its value', function (): void {
+        $rating = ($this->rating)(2, attributes: ['comment' => 'Too crowded.']);
+
+        $this->actingAs($this->client, 'client')
+            ->patchJson("/api/v1/clients/ratings/{$rating->id}", ['stars' => 5])
+            ->assertOk();
+
+        expect($rating->refresh())->stars->toBe(5)->comment->toBe('Too crowded.');
+
+        $this->actingAs($this->client, 'client')
+            ->patchJson("/api/v1/clients/ratings/{$rating->id}", ['comment' => null])
+            ->assertOk();
+
+        expect($rating->refresh())->stars->toBe(5)->comment->toBeNull();
+    });
+
+    test('another client\'s rating cannot be edited', function (): void {
+        $rating = ($this->rating)(2, ClientFactory::new()->create());
+
+        $this->actingAs($this->client, 'client')
+            ->patchJson("/api/v1/clients/ratings/{$rating->id}", ['stars' => 5])
+            ->assertNotFound();
+
+        expect($rating->refresh()->stars)->toBe(2);
+    });
+
+    test('an edit with stars out of range is rejected', function (int $stars): void {
+        $rating = ($this->rating)(3);
+
+        $this->actingAs($this->client, 'client')
+            ->patchJson("/api/v1/clients/ratings/{$rating->id}", ['stars' => $stars])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('stars');
+
+        expect($rating->refresh()->stars)->toBe(3);
+    })->with([0, 6]);
 });

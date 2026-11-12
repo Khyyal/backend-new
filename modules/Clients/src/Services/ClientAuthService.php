@@ -3,6 +3,8 @@
 namespace Modules\Clients\Services;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Modules\Clients\Events\ClientRegistered;
 use Modules\Clients\Models\Client;
 
@@ -42,6 +44,33 @@ class ClientAuthService
         $client->forceFill($attributes)->save();
 
         return $client->fresh() ?? $client;
+    }
+
+    /**
+     * Move the client to a phone that was just verified by OTP. The phone must not belong to another client; this
+     * is re-checked here because `clients.phone_number` has no unique index.
+     *
+     * @throws ValidationException When another client already uses the phone.
+     */
+    public function changePhone(Client $client, string $phoneNumber): Client
+    {
+        return DB::transaction(function () use ($client, $phoneNumber): Client {
+            $taken = Client::query()
+                ->where('phone_number', $phoneNumber)
+                ->whereKeyNot($client->getKey())
+                ->lockForUpdate()
+                ->exists();
+
+            if ($taken) {
+                throw ValidationException::withMessages([
+                    'phone_number' => [__('validation.phone_taken')],
+                ]);
+            }
+
+            $client->forceFill(['phone_number' => $phoneNumber])->save();
+
+            return $client->fresh() ?? $client;
+        });
     }
 
     public function issueAppToken(Client $client, ?Request $request = null, ?string $deviceName = null): string

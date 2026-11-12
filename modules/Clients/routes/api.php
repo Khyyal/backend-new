@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Modules\Clients\Http\Controllers\Client\AuthController;
 use Modules\Clients\Http\Controllers\Client\LaunchController;
+use Modules\Clients\Http\Controllers\Client\PhoneController;
 use Modules\Clients\Http\Controllers\Client\ProfileController;
 
 Route::middleware(['api', 'set.locale.from.accept.language'])
@@ -17,6 +18,10 @@ Route::middleware(['api', 'set.locale.from.accept.language'])
                         ->name('profile.update');
                     Route::get('/me', [ProfileController::class, 'me'])
                         ->name('profile.me');
+                    Route::post('/phone', [PhoneController::class, 'send'])
+                        ->name('phone.send');
+                    Route::post('/phone/verify', [PhoneController::class, 'verify'])
+                        ->name('phone.verify');
                 });
             });
 

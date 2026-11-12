@@ -38,6 +38,8 @@ Route::middleware(['set.locale.from.accept.language', 'track.client.session', 'a
                 Route::post('/{package}/reservations', [PackageController::class, 'book'])->middleware('idempotent')->name('reservations.store');
             });
 
+        Route::get('/purchases', [PurchaseController::class, 'index'])->name('purchases.index');
+        Route::get('/purchases/{purchase}', [PurchaseController::class, 'show'])->whereNumber('purchase')->name('purchases.show');
         Route::get('/purchases/code/{code}', [PurchaseController::class, 'showByCode'])->name('purchases.show-by-code');
 
         Route::prefix('memberships')

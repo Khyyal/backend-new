@@ -40,6 +40,7 @@ See [Roles and permissions](../conventions/permissions).
 | `GET clients/centers/{slug}` | Center details with an overview of its **active** services |
 | `GET/POST/DELETE clients/favorites` | Favorites |
 | `POST clients/ratings` | Rate a center |
+| `GET clients/ratings`, `PATCH clients/ratings/{rating}` | List (`sort=newest\|highest`) and edit the client's own ratings, see [Clients](./clients#favorites-and-ratings) |
 
 The center details response lists each active service with `start_price` and `display_price`:
 
