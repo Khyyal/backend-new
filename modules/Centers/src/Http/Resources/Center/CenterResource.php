@@ -26,6 +26,7 @@ class CenterResource extends JsonResource
     #[ResponseField('state', 'string', 'Account state: `pending` (awaiting approval), `active`, `blocked`. Only active centers can use center-scoped features.', enum: CenterState::class, example: 'active')]
     #[ResponseField('points', 'integer', 'Popularity score used for the `most_popular` order.', example: 120)]
     #[ResponseField('created_at', 'string', 'Creation time (ISO-8601).', example: '2026-05-20T09:30:00+00:00')]
+    #[ResponseField('deleted_at', 'string', 'Soft-delete time (ISO-8601); null when not deleted.', nullable: true, example: 'No-example')]
     #[ResponseField('address', 'string', 'Street address.', nullable: true, example: 'King Fahd Rd, Al Olaya')]
     #[ResponseField('lat', 'number', 'Latitude.', nullable: true, example: 24.7136)]
     #[ResponseField('lng', 'number', 'Longitude.', nullable: true, example: 46.6753)]
@@ -75,6 +76,7 @@ class CenterResource extends JsonResource
             'state' => $this->state,
             'points' => $this->points,
             'created_at' => $this->created_at?->toIso8601String(),
+            'deleted_at' => $this->deleted_at?->toIso8601String(),
             'address' => $this->address,
             'lat' => $this->lat,
             'lng' => $this->lng,

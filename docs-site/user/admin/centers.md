@@ -17,6 +17,10 @@ Only admins can change state, status, custom site and domain.
 
 The centers list shows the newest centers first. You can sort it by **Center** (name), **Points** or **Created**; see [Lists](./getting-around#lists).
 
+Deleted centers are hidden from the list. You can filter the list to include them or to show only deleted centers, and open a deleted center to see its details. A deleted center cannot be edited.
+
+**Points** decide how high a center appears when clients browse the most popular centers. Admins can set a center's points when editing it; the center's team cannot.
+
 ## What you can open for a center
 
 From a center you can open (and, with the right permission, edit) the same things its team uses:

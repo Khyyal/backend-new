@@ -19,6 +19,7 @@ use Modules\Centers\Services\CenterAdminService;
 #[BodyParam('city_id', 'integer', 'Only centers of this city.', required: false, example: 1)]
 #[BodyParam('from', 'string', 'Created on or after this day, `Y-m-d`.', required: false, example: '2026-05-01')]
 #[BodyParam('to', 'string', 'Created on or before this day, `Y-m-d`, not before `from`.', required: false, example: '2026-05-31')]
+#[BodyParam('trashed', 'string', '`with` includes deleted centers; `only` exports only deleted centers.', required: false, enum: ['with', 'only'], example: 'only')]
 #[BodyParam('sort', 'string', 'Row order, as in the list; prefix `-` for descending. Default newest first.', required: false, enum: CenterAdminService::SORTS, example: 'name')]
 class ExportCentersRequest extends ListCentersRequest
 {

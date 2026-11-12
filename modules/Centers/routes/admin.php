@@ -15,7 +15,7 @@ Route::prefix('admin/centers')
         Route::get('/', [CenterController::class, 'index'])->name('index');
         Route::post('/', [CenterController::class, 'store'])->name('store');
         Route::post('/export', [CenterController::class, 'export'])->name('export');
-        Route::get('/{center}', [CenterController::class, 'show'])->name('show');
+        Route::get('/{center}', [CenterController::class, 'show'])->withTrashed()->name('show');
         Route::match(['put', 'patch'], '/{center}', [CenterController::class, 'update'])->name('update');
         Route::match(['put', 'patch'], '/{center}/social-links', [CenterController::class, 'updateSocialLinks'])->name('social-links.update');
         Route::match(['put', 'patch'], '/{center}/site-theme', [CenterController::class, 'updateSiteTheme'])->name('site-theme.update');

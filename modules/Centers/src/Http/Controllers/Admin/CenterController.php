@@ -35,7 +35,7 @@ class CenterController extends Controller
 {
     public function __construct(private readonly CenterAdminService $service) {}
 
-    #[Endpoint('List centers', 'Paginated, newest first unless `sort` is given. Filters and sort are query parameters.')]
+    #[Endpoint('List centers', 'Paginated, newest first unless `sort` is given. Filters and sort are query parameters. Deleted centers are left out unless `trashed` is given.')]
     #[ResponseFromApiResource(CenterResource::class, Center::class, status: 200, description: 'Paginated centers.', paginate: 15, with: ['city'])]
     #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
     #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `centers.view_any`.')]
@@ -58,7 +58,7 @@ class CenterController extends Controller
         return CenterResource::make($center)->response()->setStatusCode(ResponseAlias::HTTP_CREATED);
     }
 
-    #[Endpoint('Show a center', 'With city, tags and media.')]
+    #[Endpoint('Show a center', 'With city, tags and media. Also returns a deleted center (`deleted_at` is set).')]
     #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
     #[ResponseFromApiResource(CenterResource::class, Center::class, status: 200, description: 'The center.', with: ['city', 'tags'])]
     #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
@@ -71,7 +71,7 @@ class CenterController extends Controller
         return CenterResource::make($this->service->find($center));
     }
 
-    #[Endpoint('Update a center', 'Partial update; same fields as create except `primary_user`. Social links and the site theme have their own endpoints.')]
+    #[Endpoint('Update a center', 'Partial update; same fields as create except `primary_user`, plus `points`. Social links and the site theme have their own endpoints.')]
     #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
     #[ResponseFromApiResource(CenterResource::class, Center::class, status: 200, description: 'The updated center.', with: ['city', 'tags'])]
     #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]

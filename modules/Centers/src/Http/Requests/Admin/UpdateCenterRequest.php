@@ -21,6 +21,7 @@ use Modules\Centers\Enums\CenterStatus;
 #[BodyParam('domain', 'string', 'Unique custom domain, lower-case hostname such as `alfursan.sa` (max 255).', required: false, nullable: true, example: 'alfursan.sa')]
 #[BodyParam('status', 'string', '`visible` lists the center in the client app.', required: false, enum: CenterStatus::class, example: 'visible')]
 #[BodyParam('state', 'string', 'Account state; only `active` centers can use center-scoped features.', required: false, enum: CenterState::class, example: 'active')]
+#[BodyParam('points', 'integer', 'Popularity score used for the `most_popular` order, 0 or more.', required: false, example: 120)]
 #[BodyParam('tags', 'integer[]', 'Full list of distinct existing tag IDs (see the tags endpoints); replaces the current tags.', required: false, example: [4, 7])]
 #[BodyParam('logo', 'string', 'UUID of a temporary upload (`POST /api/v1/media`) or an existing logo; null removes it.', required: false, nullable: true, example: '9b1d5f0e-3c1a-4b8e-a0f2-5b7c3e2d1a90')]
 #[BodyParam('cover', 'string', 'UUID of a temporary upload or the existing cover; null removes it.', required: false, nullable: true, example: '1c2d3e4f-5a6b-4c7d-8e9f-0a1b2c3d4e5f')]
@@ -62,6 +63,7 @@ class UpdateCenterRequest extends FormRequest
             'domain' => ['sometimes', 'nullable', 'string', 'max:255', 'regex:/^(?!-)[a-z0-9-]{1,63}(?<!-)(\\.(?!-)[a-z0-9-]{1,63}(?<!-))+$/', Rule::unique('centers', 'domain')->ignore($this->route('center'))],
             'status' => ['sometimes', 'required', Rule::enum(CenterStatus::class)],
             'state' => ['sometimes', 'required', Rule::enum(CenterState::class)],
+            'points' => ['sometimes', 'required', 'integer', 'min:0', 'max:4294967295'],
             'tags' => ['sometimes', 'array'],
             'tags.*' => ['integer', 'distinct', 'exists:tags,id'],
             'logo' => ['sometimes', 'nullable', 'uuid'],
