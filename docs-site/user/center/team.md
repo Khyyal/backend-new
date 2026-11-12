@@ -34,6 +34,6 @@ The owner can change their name and dashboard password. To change a password tha
 
 ## Deleting the center account
 
-Only the owner can delete the account. This removes the center and signs out its whole team; team members who belong to no other center have their accounts removed.
+Only the owner can delete the account. This removes the center and signs out its whole team; team members who belong to no other center have their accounts removed. An admin can restore a deleted center together with its team.
 
 You cannot delete the account while there are upcoming pending or confirmed reservations, or a pending payout or unsettled balance. Cancel the reservations and settle the payout first.

@@ -20,6 +20,7 @@ Route::prefix('admin/centers')
         Route::match(['put', 'patch'], '/{center}/social-links', [CenterController::class, 'updateSocialLinks'])->name('social-links.update');
         Route::match(['put', 'patch'], '/{center}/site-theme', [CenterController::class, 'updateSiteTheme'])->name('site-theme.update');
         Route::delete('/{center}', [CenterController::class, 'destroy'])->name('destroy');
+        Route::post('/{center}/restore', [CenterController::class, 'restore'])->withTrashed()->name('restore');
 
         Route::get('/{center}/users', [CenterUserController::class, 'index'])->name('users.index');
         Route::get('/{center}/users/permissions', [CenterUserController::class, 'permissions'])->name('users.permissions');

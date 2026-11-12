@@ -8,12 +8,14 @@ use Illuminate\Support\Facades\Storage;
 use Modules\Centers\Database\Factories\CenterFactory;
 use Modules\Centers\Database\Factories\UserFactory;
 use Modules\Centers\Enums\CenterStatus;
+use Modules\Centers\Enums\CenterUserPermission;
 use Modules\Centers\Events\CenterCreated;
 use Modules\Centers\Models\Center;
 use Modules\Centers\Models\User;
 use Modules\Clients\Database\Factories\ClientFactory;
 use Modules\Support\Database\Factories\CityFactory;
 use Modules\Support\Database\Seeders\SystemRolePermissionSeeder;
+use Modules\Support\Enums\ActivationStatus;
 use Modules\Support\Enums\SystemPermission;
 use Modules\Support\Models\SystemUser;
 use Modules\Support\Services\Media\TemporaryMediaService;
@@ -233,6 +235,75 @@ test('points must be a non-negative integer', function (mixed $points): void {
 
     expect($this->center->refresh()->points)->toBe(0);
 })->with([-1, 1.5, 'many', null]);
+
+describe('restoring a deleted center', function (): void {
+    beforeEach(function (): void {
+        $this->owner = UserFactory::new()->create();
+        $this->member = UserFactory::new()->create();
+        $this->otherCenter = CenterFactory::new()->create();
+
+        $assign = fn (Center $center, User $user, bool $isPrimary = false) => $center->users()->attach($user->id, [
+            'status' => ActivationStatus::ACTIVE->value,
+            'joined_at' => now()->toDateString(),
+            'is_primary' => $isPrimary,
+        ]);
+
+        $assign($this->center, $this->owner, true);
+        $assign($this->center, $this->member);
+        $assign($this->otherCenter, $this->member);
+        $this->member->syncCenterPermissions($this->center, [CenterUserPermission::ViewRatings->value]);
+
+        $this->restoreUrl = "{$this->base}/{$this->center->id}/restore";
+    });
+
+    test('deleting keeps the team assigned but cuts its access', function (): void {
+        $this->actingAs($this->admin, 'system_user')
+            ->deleteJson("{$this->base}/{$this->center->id}")->assertNoContent();
+
+        expect(User::find($this->owner->id))->toBeNull()
+            ->and(User::find($this->member->id))->not->toBeNull()
+            ->and($this->member->centers()->pluck('centers.id')->all())->toBe([$this->otherCenter->id])
+            ->and($this->center->users()->withTrashed()->count())->toBe(2);
+    });
+
+    test('restores the center with its owner, team and permissions', function (): void {
+        $this->actingAs($this->admin, 'system_user');
+        $this->deleteJson("{$this->base}/{$this->center->id}")->assertNoContent();
+
+        $this->postJson($this->restoreUrl)
+            ->assertOk()
+            ->assertJsonPath('data.id', $this->center->id)
+            ->assertJsonPath('data.deleted_at', null);
+
+        $this->getJson($this->base)->assertJsonCount(2, 'data');
+
+        $owner = User::find($this->owner->id);
+
+        expect($owner)->not->toBeNull()
+            ->and($owner->isPrimaryOf($this->center))->toBeTrue()
+            ->and($this->member->centers()->pluck('centers.id')->sort()->values()->all())
+            ->toBe([$this->center->id, $this->otherCenter->id])
+            ->and($this->member->hasCenterPermission($this->center, CenterUserPermission::ViewRatings))->toBeTrue();
+    });
+
+    test('a center that is not deleted cannot be restored', function (): void {
+        $this->actingAs($this->admin, 'system_user')->postJson($this->restoreUrl)->assertNotFound();
+    });
+
+    test('restoring needs the restore permission', function (): void {
+        $this->center->delete();
+
+        $this->postJson($this->restoreUrl)->assertUnauthorized();
+
+        $limited = SystemUser::factory()
+            ->withPermissions([SystemPermission::ViewCenter, SystemPermission::DeleteCenter])
+            ->create();
+
+        $this->actingAs($limited, 'system_user')->postJson($this->restoreUrl)->assertForbidden();
+
+        expect($this->center->refresh()->trashed())->toBeTrue();
+    });
+});
 
 test('permissions are enforced per ability', function (): void {
     $viewer = SystemUser::factory()

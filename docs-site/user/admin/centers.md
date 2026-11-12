@@ -19,6 +19,8 @@ The centers list shows the newest centers first. You can sort it by **Center** (
 
 Deleted centers are hidden from the list. You can filter the list to include them or to show only deleted centers, and open a deleted center to see its details. A deleted center cannot be edited.
 
+With the **centers.restore** permission you can **restore** a deleted center. It comes back as it was, with the same state, status, owner and team, and their permissions. Team members whose accounts were removed with the center can sign in again. Centers deleted before this was possible come back without a team.
+
 **Points** decide how high a center appears when clients browse the most popular centers. Admins can set a center's points when editing it; the center's team cannot.
 
 ## What you can open for a center

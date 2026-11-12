@@ -213,13 +213,37 @@ class CenterUserManagementService
     }
 
     /**
-     * Detaches every user from the center, primary included.
+     * Cuts every user's access to a center that was just soft-deleted, while
+     * keeping their assignments and permissions so the center can be restored
+     * with its team. Center-scoped tokens are revoked; an account left without
+     * any other center is signed out everywhere and soft-deleted.
      */
-    public function detachAll(Center $center): void
+    public function suspendAll(Center $center): void
     {
         DB::transaction(function () use ($center): void {
             foreach ($center->users()->get() as $user) {
-                $this->detach($center, $user);
+                $user->tokens()
+                    ->whereJsonContains('abilities', CenterAuthService::centerAccessAbilityFor($center->id))
+                    ->delete();
+
+                if ($user->centers()->doesntExist()) {
+                    $user->tokens()->delete();
+                    $user->delete();
+                }
+            }
+        });
+    }
+
+    /**
+     * Brings back the accounts `suspendAll()` soft-deleted. A deleted account
+     * that still holds an assignment was deleted with its center: removing a
+     * user drops the assignment first.
+     */
+    public function reinstateAll(Center $center): void
+    {
+        DB::transaction(function () use ($center): void {
+            foreach ($center->users()->onlyTrashed()->get() as $user) {
+                $user->restore();
             }
         });
     }

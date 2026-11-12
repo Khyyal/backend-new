@@ -86,7 +86,7 @@ test('only the primary user can delete the account', function (): void {
     expect(Center::find($this->center->id))->not->toBeNull();
 });
 
-test('deleting the account removes the center and detaches its users', function (): void {
+test('deleting the account removes the center and cuts its users off while keeping their assignments', function (): void {
     $other = CenterFactory::new()->create();
     attachUser($other, $this->member);
     $token = app(CenterAuthService::class)->issueCenterAccessToken($this->owner, $this->center);
@@ -98,7 +98,8 @@ test('deleting the account removes the center and detaches its users', function 
         ->and(User::find($this->owner->id))->toBeNull()
         ->and(User::find($this->member->id))->not->toBeNull()
         ->and($this->member->centers()->pluck('centers.id')->all())->toBe([$other->id])
-        ->and($this->owner->tokens()->count())->toBe(0);
+        ->and($this->owner->tokens()->count())->toBe(0)
+        ->and($this->center->users()->withTrashed()->count())->toBe(2);
 });
 
 test('deleting is refused while upcoming reservations are open', function (): void {
