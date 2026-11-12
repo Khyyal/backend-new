@@ -60,6 +60,10 @@ return [
             'title' => 'اكتملت جلسات الباقة',
             'body' => 'لقد حجزت جميع جلسات باقتك لـ :service وعددها :sessions.',
         ],
+        'cancelled' => [
+            'title' => 'تم إلغاء الباقة',
+            'body' => 'تم إلغاء باقتك لـ :service.',
+        ],
     ],
     'membership' => [
         'expiring' => [

@@ -43,6 +43,12 @@ return [
     'membership_daily_visits_exceeded' => 'تم تجاوز الزيارات المجانية اليومية: المتبقي اليوم :available.',
     'package_not_adjustable' => 'هذه الباقة ملغاة ولا يمكن تعديلها.',
     'package_not_trainer_bound' => 'يمكن تعيين مدرب لباقات التدريب فقط.',
+    'package_not_cancellable' => 'هذه الباقة غير مدفوعة أو ملغاة مسبقاً.',
+    'package_membership_bound' => 'لا يمكن إلغاء باقة مضمّنة في عضوية بشكل منفرد.',
+    'package_has_payment' => 'تم الدفع لهذه الباقة. قم باسترداد مبلغ عملية الشراء بدلاً من ذلك.',
+    'purchase_not_refundable' => 'يمكن استرداد عملية الشراء المؤكدة فقط.',
+    'nothing_to_refund' => 'لا يوجد مبلغ متبقٍ للاسترداد في عملية الشراء هذه.',
+    'purchase_refund_failed' => 'تعذّر استرداد المبلغ؛ لم يتم تغيير أي شيء.',
     'invalid_expiry' => 'يجب أن يكون تاريخ الانتهاء الجديد بعد التاريخ الحالي.',
     'membership_not_adjustable' => 'هذه العضوية غير مدفوعة أو ملغاة ولا يمكن تعديلها.',
 ];

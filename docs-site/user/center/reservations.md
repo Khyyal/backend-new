@@ -34,6 +34,7 @@ You need the reservations permission.
 - **Cash** or unpaid bookings have nothing to refund.
 - A cancelled booking from a package gives the session back.
 - On a client's package you can book a session for them, add sessions, set or remove the trainer (training packages) and extend the expiry date. Extending an expired package that still has sessions makes it active again.
+- You can **cancel a client's package** as long as no money is held for it (unpaid, cash, or already refunded). Its upcoming sessions are cancelled with it and the client is notified. A package that was paid for is cancelled by **refunding its purchase** instead, and a package that came with a membership cannot be cancelled on its own.
 - You can also extend a client's membership expiry date; an expired membership becomes active again. The packages that came with it keep their own dates.
 - Check a member in when they arrive; every check-in is added to the membership's log, which also lists the guests the member invited (with the visit created for each). Checking in does not change any booking, and only active memberships can be checked in.
 

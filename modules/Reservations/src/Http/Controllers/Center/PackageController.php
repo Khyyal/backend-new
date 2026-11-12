@@ -19,6 +19,7 @@ use Knuckles\Scribe\Attributes\UrlParam;
 use Modules\Centers\Models\Center;
 use Modules\Reservations\Actions\AddPackageSessions;
 use Modules\Reservations\Actions\BookFromPackage;
+use Modules\Reservations\Actions\CancelClientPackage;
 use Modules\Reservations\Actions\UpdateClientPackage;
 use Modules\Reservations\Enums\ClientPackageStatus;
 use Modules\Reservations\Enums\ReservationSource;
@@ -41,6 +42,7 @@ class PackageController extends Controller
         private readonly UpdateClientPackage $updateClientPackage,
         private readonly AddPackageSessions $addPackageSessions,
         private readonly BookFromPackage $bookFromPackage,
+        private readonly CancelClientPackage $cancelClientPackage,
     ) {}
 
     #[Endpoint('List client packages', 'Newest first, 25 per page.')]
@@ -149,6 +151,29 @@ class PackageController extends Controller
         return CenterReservationResource::make($reservation->load(['service', 'trainer', 'client', 'priceOption', 'lines.priceOption', ...PurchaseSummaryResource::RELATIONS]))
             ->response()
             ->setStatusCode(201);
+    }
+
+    #[Endpoint('Cancel a client package', 'Only a package no money is held for (unpaid, cash, or already refunded) and that is not part of a membership. Its upcoming sessions are cancelled with it, and a purchase that sold nothing else is cancelled too. A paid package is cancelled by refunding its purchase (`POST …/purchases/{purchase}/refund`).')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[UrlParam('package', 'integer', 'Client package ID.', example: 41)]
+    #[Header('Idempotency-Key', '7c9e6679-7425-40de-944b-e07fc1f90ae7')]
+    #[ResponseFromApiResource(CenterClientPackageDetailsResource::class, ClientPackage::class, status: 200, description: 'The cancelled package.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'No access to this center\'s reservations (center users: `reservations.manage`; system users: `centers.manage_reservations`), or the token lacks `center-access:{center}`.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No such paid package in this center.')]
+    #[ApiResponse(['message' => 'This package has been paid for. Refund its purchase instead.', 'reason' => 'package_has_payment', 'errors' => ['reservation' => ['This package has been paid for. Refund its purchase instead.']]], 422, 'The package cannot be cancelled (`reason`: package_has_payment, package_membership_bound, package_not_cancellable).')]
+    #[ApiResponse(ApiExamples::IDEMPOTENCY_KEY_REQUIRED, 400, 'Missing `Idempotency-Key` header. Send a unique UUID per operation and reuse it unchanged on retries (a replay returns the stored response with `Idempotent-Replayed: true`).')]
+    #[ApiResponse(ApiExamples::IDEMPOTENCY_IN_PROGRESS, 409, 'A request with this `Idempotency-Key` is still running; retry after `Retry-After`.')]
+    public function cancel(Request $request, Center $center, int $package): CenterClientPackageDetailsResource
+    {
+        Gate::forUser($request->user())->authorize('manageReservations', $center);
+
+        $clientPackage = $this->cancelClientPackage->execute(
+            $this->paidPackages($center)->findOrFail($package),
+            $request->user(),
+        );
+
+        return $this->details($clientPackage);
     }
 
     #[Endpoint('Count client packages', 'Active vs. not active (exhausted, expired, cancelled), with the list filters `q`, `from`, `to`, `service_id`.')]

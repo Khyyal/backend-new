@@ -9,6 +9,7 @@ use Modules\Clients\Models\Client;
 use Modules\Reservations\Enums\ReservationSource;
 use Modules\Reservations\Events\ClientMembershipExpired;
 use Modules\Reservations\Events\ClientPackageActivated;
+use Modules\Reservations\Events\ClientPackageCancelled;
 use Modules\Reservations\Events\ClientPackageExhausted;
 use Modules\Reservations\Events\ClientPackageExpired;
 use Modules\Reservations\Events\ReservationCancelled;
@@ -109,6 +110,11 @@ final class SendReservationNotifications implements ShouldQueue
         }
     }
 
+    public function handlePackageCancelled(ClientPackageCancelled $event): void
+    {
+        $this->notifyPackageClient($event->clientPackage, 'cancelled');
+    }
+
     public function handleMembershipExpired(ClientMembershipExpired $event): void
     {
         $client = $event->clientMembership->client;
@@ -133,6 +139,7 @@ final class SendReservationNotifications implements ShouldQueue
             ClientPackageActivated::class => 'handlePackageActivated',
             ClientPackageExhausted::class => 'handlePackageExhausted',
             ClientPackageExpired::class => 'handlePackageExpired',
+            ClientPackageCancelled::class => 'handlePackageCancelled',
             ClientMembershipExpired::class => 'handleMembershipExpired',
         ];
     }

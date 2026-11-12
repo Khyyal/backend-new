@@ -43,6 +43,12 @@ return [
     'membership_daily_visits_exceeded' => 'Daily free visits exceeded: :available left today.',
     'package_not_adjustable' => 'This package is cancelled and cannot be changed.',
     'package_not_trainer_bound' => 'Only training packages can have a trainer.',
+    'package_not_cancellable' => 'This package is not paid or is already cancelled.',
+    'package_membership_bound' => 'A package included in a membership cannot be cancelled on its own.',
+    'package_has_payment' => 'This package has been paid for. Refund its purchase instead.',
+    'purchase_not_refundable' => 'Only a confirmed purchase can be refunded.',
+    'nothing_to_refund' => 'This purchase has no payment left to refund.',
+    'purchase_refund_failed' => 'The payment could not be refunded; nothing was changed.',
     'invalid_expiry' => 'The new expiry must be later than the current one.',
     'membership_not_adjustable' => 'This membership is not paid or is cancelled and cannot be changed.',
 ];

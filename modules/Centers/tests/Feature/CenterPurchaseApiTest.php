@@ -1,15 +1,23 @@
 <?php
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Modules\Centers\Database\Factories\CenterFactory;
 use Modules\Centers\Database\Factories\UserFactory;
+use Modules\Centers\Enums\CenterUserPermission;
 use Modules\Clients\Database\Factories\ClientFactory;
 use Modules\Purchase\Database\Factories\PaymentFactory;
 use Modules\Purchase\Database\Factories\PurchaseFactory;
 use Modules\Purchase\Database\Factories\PurchaseItemFactory;
+use Modules\Purchase\Enums\PaymentStatus;
 use Modules\Purchase\Enums\PurchaseStatus;
+use Modules\Purchase\Gateways\FakeGateway;
+use Modules\Purchase\Managers\PaymentGatewayManager;
+use Modules\Purchase\Models\Payment;
 use Modules\Reservations\Database\Factories\ClientPackageFactory;
 use Modules\Reservations\Database\Factories\ReservationFactory;
+use Modules\Reservations\Enums\ClientPackageStatus;
+use Modules\Reservations\Enums\ReservationStatus;
 use Modules\Services\Database\Factories\PriceOptionFactory;
 use Modules\Services\Database\Factories\ServiceFactory;
 use Modules\Services\Database\Factories\TrainerFactory;
@@ -217,4 +225,103 @@ test('a purchase of another center is not found by code', function (): void {
     $this->actingAs($this->user, 'center_user')
         ->getJson("{$this->url}/code/{$other->code}")
         ->assertNotFound();
+});
+
+describe('refunding a purchase', function (): void {
+    beforeEach(function (): void {
+        $this->travelTo('2026-10-20 08:00:00');
+
+        $this->refund = fn ($purchase, $user = null) => $this->actingAs($user ?? $this->user, 'center_user')
+            ->postJson("{$this->url}/{$purchase->id}/refund", [], ['Idempotency-Key' => (string) Str::uuid()]);
+
+        $this->sold = function (array $payment = []) {
+            $service = ServiceFactory::new()->create(['center_id' => $this->center->id]);
+            $purchase = ($this->purchase)();
+            $reservation = ReservationFactory::new()->forService($service)->at('2026-10-26', '09:00:00', '10:00:00')
+                ->create(['status' => ReservationStatus::Confirmed]);
+            $package = ClientPackageFactory::new()->create(['service_id' => $service->id]);
+
+            foreach ([$reservation, $package] as $purchasable) {
+                PurchaseItemFactory::new()->create([
+                    'purchase_id' => $purchase->id,
+                    'purchasable_type' => $purchasable->getMorphClass(),
+                    'purchasable_id' => $purchasable->id,
+                ]);
+            }
+
+            $payment = PaymentFactory::new()->online()->succeeded()
+                ->create(['purchase_id' => $purchase->id, 'amount' => 500, 'payment_company' => 'fake', ...$payment]);
+
+            return [$purchase, $payment, $reservation, $package];
+        };
+    });
+
+    test('refunds an online payment in full and cancels the purchase with what it sold', function (): void {
+        [$purchase, $payment, $reservation, $package] = ($this->sold)();
+
+        ($this->refund)($purchase)
+            ->assertOk()
+            ->assertJsonPath('data.status', 'cancelled')
+            ->assertJsonPath('data.payments.0.status', 'refunded')
+            ->assertJsonPath('data.payments.0.refunded_amount', 500);
+
+        expect($payment->fresh()->status)->toBe(PaymentStatus::Refunded)
+            ->and($purchase->fresh()->status)->toBe(PurchaseStatus::Cancelled)
+            ->and($reservation->fresh()->status)->toBe(ReservationStatus::Cancelled)
+            ->and($package->fresh()->status)->toBe(ClientPackageStatus::Cancelled);
+    });
+
+    test('refunds only what is left of a partly refunded manual payment', function (): void {
+        [$purchase, $payment] = ($this->sold)(['method' => 'manual', 'payment_company' => null, 'refunded_amount' => 200]);
+
+        ($this->refund)($purchase)->assertOk();
+
+        expect($payment->fresh())->status->toBe(PaymentStatus::Refunded)->refunded_amount->toBe(500);
+    });
+
+    test('a refund the gateway refuses changes nothing', function (): void {
+        app(PaymentGatewayManager::class)->extend('failing', fn () => new class extends FakeGateway
+        {
+            public function refund(Payment $payment, int $amount): bool
+            {
+                return false;
+            }
+        });
+        [$purchase, $payment, $reservation, $package] = ($this->sold)(['payment_company' => 'failing']);
+
+        ($this->refund)($purchase)
+            ->assertUnprocessable()
+            ->assertJsonPath('reason', 'purchase_refund_failed');
+
+        expect($payment->fresh()->status)->toBe(PaymentStatus::Succeeded)
+            ->and($purchase->fresh()->status)->toBe(PurchaseStatus::Confirmed)
+            ->and($reservation->fresh()->status)->toBe(ReservationStatus::Confirmed)
+            ->and($package->fresh()->status)->toBe(ClientPackageStatus::Active);
+    });
+
+    test('a purchase with nothing paid or not confirmed is refused', function (): void {
+        $unpaid = ($this->purchase)();
+        PaymentFactory::new()->cashOnArrival()->create(['purchase_id' => $unpaid->id]);
+        $pending = ($this->purchase)(['status' => PurchaseStatus::Pending]);
+
+        ($this->refund)($unpaid)->assertUnprocessable()->assertJsonPath('reason', 'nothing_to_refund');
+        ($this->refund)($pending)->assertUnprocessable()->assertJsonPath('reason', 'purchase_not_refundable');
+    });
+
+    test('refunding needs reservations.edit and a purchase of this center', function (): void {
+        [$purchase, $payment] = ($this->sold)();
+        $staff = UserFactory::new()->create();
+        $this->center->users()->attach($staff->id, [
+            'status' => ActivationStatus::ACTIVE->value,
+            'joined_at' => now()->toDateString(),
+            'is_primary' => false,
+        ]);
+        $staff->syncCenterPermissions($this->center, [CenterUserPermission::ManageReservations, ...CenterUserPermission::viewPurchasesPermissions()]);
+        $foreign = ($this->purchase)([], CenterFactory::new()->create());
+
+        ($this->refund)($purchase, $staff)->assertForbidden();
+        ($this->refund)($foreign)->assertNotFound();
+
+        expect($payment->fresh()->status)->toBe(PaymentStatus::Succeeded);
+    });
 });

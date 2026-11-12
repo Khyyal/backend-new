@@ -60,6 +60,10 @@ return [
             'title' => 'Package sessions used up',
             'body' => "You've booked all :sessions sessions of your :service package.",
         ],
+        'cancelled' => [
+            'title' => 'Package cancelled',
+            'body' => 'Your :service package has been cancelled.',
+        ],
     ],
     'membership' => [
         'expiring' => [

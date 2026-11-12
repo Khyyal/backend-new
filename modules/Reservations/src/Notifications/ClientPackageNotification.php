@@ -6,7 +6,7 @@ use Modules\Reservations\Models\ClientPackage;
 use Modules\Support\Notifications\AppNotification;
 
 /**
- * A client package ending update; `$event` picks the copy (expiring, expired, exhausted).
+ * A client package ending update; `$event` picks the copy (expiring, expired, exhausted, cancelled).
  */
 final class ClientPackageNotification extends AppNotification
 {

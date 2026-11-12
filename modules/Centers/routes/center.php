@@ -121,6 +121,10 @@ Route::middleware(['api'])
                         Route::get('/{center}/purchases/{purchase}', [PurchaseController::class, 'show'])
                             ->name('purchases.show');
 
+                        Route::post('/{center}/purchases/{purchase}/refund', [PurchaseController::class, 'refund'])
+                            ->middleware('idempotent')
+                            ->name('purchases.refund');
+
                         Route::prefix('/{center}/users')
                             ->name('users.')
                             ->group(function (): void {

@@ -1,16 +1,23 @@
 <?php
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Str;
 use Modules\Centers\Database\Factories\CenterFactory;
 use Modules\Centers\Database\Factories\UserFactory;
 use Modules\Centers\Enums\CenterUserPermission;
 use Modules\Clients\Database\Factories\ClientFactory;
+use Modules\Purchase\Database\Factories\PaymentFactory;
 use Modules\Purchase\Database\Factories\PurchaseFactory;
+use Modules\Purchase\Enums\PaymentStatus;
+use Modules\Purchase\Enums\PurchaseStatus;
 use Modules\Purchase\Models\PurchaseItem;
+use Modules\Reservations\Database\Factories\ClientMembershipFactory;
 use Modules\Reservations\Database\Factories\ClientPackageFactory;
 use Modules\Reservations\Database\Factories\ReservationFactory;
 use Modules\Reservations\Enums\ClientPackageStatus;
+use Modules\Reservations\Enums\ReservationStatus;
+use Modules\Reservations\Notifications\ClientPackageNotification;
 use Modules\Reservations\Tests\Support\BookingFixtures;
 use Modules\Services\Enums\PriceOptionUnit;
 use Modules\Services\Enums\ServiceType;
@@ -363,5 +370,93 @@ describe('managing a package', function (): void {
             ->assertJsonValidationErrors('expires_at');
 
         $this->actingAs($this->user, 'center_user')->patchJson($url, [])->assertJsonValidationErrors('controlled');
+    });
+});
+
+describe('cancelling a package', function (): void {
+    beforeEach(function (): void {
+        $this->cancel = fn ($package, $user = null) => $this->actingAs($user ?? $this->user, 'center_user')
+            ->postJson("{$this->url}/{$package->id}/cancel", [], ['Idempotency-Key' => (string) Str::uuid()]);
+
+        $this->purchaseOf = function ($package, array $payment) {
+            $purchase = PurchaseFactory::new()->create([
+                'buyer_type' => $package->client->getMorphClass(),
+                'buyer_id' => $package->client_id,
+                'merchant_type' => $this->center->getMorphClass(),
+                'merchant_id' => $this->center->id,
+                'status' => PurchaseStatus::Confirmed,
+            ]);
+            PurchaseItem::query()->create(['purchase_id' => $purchase->id, 'purchasable_type' => $package->getMorphClass(), 'purchasable_id' => $package->id, 'name' => 'Package', 'quantity' => 1, 'unit_price' => 350, 'subtotal' => 350, 'total_amount' => 350]);
+
+            return [$purchase, PaymentFactory::new()->create(['purchase_id' => $purchase->id, 'amount' => 350, ...$payment])];
+        };
+    });
+
+    test('cancels an unpaid package with its upcoming sessions and tells the client', function (): void {
+        Notification::fake();
+        $package = ($this->package)(['remaining_sessions' => 2]);
+        $session = fn (string $date) => ReservationFactory::new()->forService($this->service)->at($date, '09:00:00', '10:00:00')->create([
+            'client_id' => $package->client_id,
+            'client_package_id' => $package->id,
+            'status' => ReservationStatus::Confirmed,
+        ]);
+        $past = $session('2026-10-19');
+        $upcoming = $session('2026-10-26');
+
+        ($this->cancel)($package)
+            ->assertOk()
+            ->assertJsonPath('data.status', 'cancelled');
+
+        expect($package->fresh()->status)->toBe(ClientPackageStatus::Cancelled)
+            ->and($upcoming->fresh()->status)->toBe(ReservationStatus::Cancelled)
+            ->and($upcoming->fresh()->cancellation_reason)->toBe('package_cancelled')
+            ->and($past->fresh()->status)->toBe(ReservationStatus::Confirmed);
+
+        Notification::assertSentTo($package->client, ClientPackageNotification::class, fn (ClientPackageNotification $notification): bool => $notification->type() === 'client_package_cancelled');
+    });
+
+    test('cancels the purchase that only sold the package, with its open payment', function (): void {
+        $package = ($this->package)();
+        [$purchase, $payment] = ($this->purchaseOf)($package, ['method' => 'cash_on_arrival', 'status' => PaymentStatus::Pending]);
+
+        ($this->cancel)($package)->assertOk();
+
+        expect($purchase->fresh()->status)->toBe(PurchaseStatus::Cancelled)
+            ->and($payment->fresh()->status)->toBe(PaymentStatus::Cancelled);
+    });
+
+    test('a paid package is refused until its payment is fully refunded', function (): void {
+        $package = ($this->package)();
+        [, $payment] = ($this->purchaseOf)($package, ['method' => 'manual', 'status' => PaymentStatus::Succeeded]);
+
+        ($this->cancel)($package)
+            ->assertUnprocessable()
+            ->assertJsonPath('reason', 'package_has_payment');
+        expect($package->fresh()->status)->toBe(ClientPackageStatus::Active);
+
+        $payment->update(['status' => PaymentStatus::Refunded, 'refunded_amount' => 350]);
+
+        ($this->cancel)($package)->assertOk();
+        expect($package->fresh()->status)->toBe(ClientPackageStatus::Cancelled);
+    });
+
+    test('a membership package or an already cancelled one is refused', function (): void {
+        $included = ($this->package)(['client_membership_id' => ClientMembershipFactory::new()->create()->id]);
+        $cancelled = ($this->package)(['status' => ClientPackageStatus::Cancelled]);
+
+        ($this->cancel)($included)->assertUnprocessable()->assertJsonPath('reason', 'package_membership_bound');
+        ($this->cancel)($cancelled)->assertUnprocessable()->assertJsonPath('reason', 'package_not_cancellable');
+    });
+
+    test('cancelling needs the permission and a paid package of this center', function (): void {
+        $package = ($this->package)();
+        $pending = ($this->package)(['status' => ClientPackageStatus::Pending]);
+        $foreign = ClientPackageFactory::new()->create();
+
+        ($this->cancel)($package, UserFactory::new()->create())->assertForbidden();
+        ($this->cancel)($pending)->assertNotFound();
+        ($this->cancel)($foreign)->assertNotFound();
+
+        expect($package->fresh()->status)->toBe(ClientPackageStatus::Active);
     });
 });

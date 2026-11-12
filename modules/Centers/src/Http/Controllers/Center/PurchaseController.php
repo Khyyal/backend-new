@@ -10,6 +10,7 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Gate;
 use Knuckles\Scribe\Attributes\Endpoint;
 use Knuckles\Scribe\Attributes\Group;
+use Knuckles\Scribe\Attributes\Header;
 use Knuckles\Scribe\Attributes\Response as ApiResponse;
 use Knuckles\Scribe\Attributes\ResponseFromApiResource;
 use Knuckles\Scribe\Attributes\UrlParam;
@@ -25,6 +26,7 @@ use Modules\Exports\Http\Resources\ExportResource;
 use Modules\Exports\Models\Export;
 use Modules\Exports\Services\ExportService;
 use Modules\Purchase\Models\Purchase;
+use Modules\Reservations\Actions\RefundPurchase;
 use Modules\Reservations\Models\ClientPackage;
 use Modules\Reservations\Models\Reservation;
 use Modules\Support\Documentation\ApiExamples;
@@ -77,6 +79,28 @@ class PurchaseController extends Controller
         $this->authorize($request, $center);
 
         return $this->details($this->purchases->visible($center, $request->user())->whereCode($code));
+    }
+
+    #[Endpoint('Refund a purchase', 'Gives back everything still refundable on a confirmed purchase and cancels it with what it sold: open reservations, packages and memberships (with their upcoming sessions). Online payments are refunded through their gateway; a manual payment is only recorded as refunded, hand the money back yourself. When the gateway refuses, nothing changes. Needs `reservations.edit`, and the purchase must be visible to you.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[UrlParam('purchase', 'integer', 'Purchase ID (must belong to the center and be visible to you).', example: 5521)]
+    #[Header('Idempotency-Key', '7c9e6679-7425-40de-944b-e07fc1f90ae7')]
+    #[ResponseFromApiResource(PurchaseDetailsResource::class, Purchase::class, status: 200, description: 'The cancelled purchase with its refunded payments.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `reservations.edit` for this center (system users: `centers.manage_reservations`), or the token lacks `center-access:{center}`.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No such purchase in this center.')]
+    #[ApiResponse(['message' => 'This purchase has no payment left to refund.', 'reason' => 'nothing_to_refund', 'errors' => ['reservation' => ['This purchase has no payment left to refund.']]], 422, 'The purchase cannot be refunded (`reason`: purchase_not_refundable, nothing_to_refund, purchase_refund_failed).')]
+    #[ApiResponse(ApiExamples::IDEMPOTENCY_KEY_REQUIRED, 400, 'Missing `Idempotency-Key` header. Send a unique UUID per operation and reuse it unchanged on retries (a replay returns the stored response with `Idempotent-Replayed: true`).')]
+    #[ApiResponse(ApiExamples::IDEMPOTENCY_IN_PROGRESS, 409, 'A request with this `Idempotency-Key` is still running; retry after `Retry-After`.')]
+    public function refund(Request $request, Center $center, int $purchase, RefundPurchase $refundPurchase): PurchaseDetailsResource
+    {
+        Gate::forUser($request->user())->authorize('editReservations', $center);
+
+        $visible = $this->purchases->visible($center, $request->user())->whereKey($purchase);
+
+        $refundPurchase->execute((clone $visible)->firstOrFail(), $request->user());
+
+        return $this->details($visible);
     }
 
     /**

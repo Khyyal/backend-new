@@ -56,7 +56,7 @@ The center's contact email is verified with a 6-digit code (`CenterEmailVerifica
 
 ## Other center settings
 
-Site theme (`site-theme`), social links (`social-links`) and the payout bank account (`payout-account`) are updated through their own endpoints. The center sees **analytics** at `centers/{center}/analytics`, and its purchases, clients, ledger and exports under the same prefix.
+Site theme (`site-theme`), social links (`social-links`) and the payout bank account (`payout-account`) are updated through their own endpoints. The center sees **analytics** at `centers/{center}/analytics`, and its purchases (list, show, export and `purchases/{purchase}/refund`, see [Purchase](./purchase#refunding-a-purchase-from-the-center)), clients, ledger and exports under the same prefix.
 
 ## Business rules
 

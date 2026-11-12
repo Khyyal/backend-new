@@ -25,6 +25,16 @@ Purchase `source` is `client`, `center` or `system`. `channel` is `khyyal_app`, 
 - `succeeded` is final except for refunds through `recordRefund`: cumulative, amount ≤ remaining, and status `refunded` only when fully refunded.
 - Gateways return a `PaymentStatus` and never write `Payment.status`.
 
+## Refunding a purchase from the center
+
+`POST centers/{center}/purchases/{purchase}/refund` (also under `admin/centers/{center}`; idempotent; `reservations.edit` for center users, `centers.manage_reservations` for system users; the purchase must pass `CenterPurchaseQuery::visible()`, otherwise 404) runs `Modules\Reservations\Actions\RefundPurchase` in one transaction:
+
+1. The purchase must be `confirmed` (`purchase_not_refundable`) and have a `succeeded` payment with something left to refund (`nothing_to_refund`).
+2. The purchase is cancelled through `PurchaseStateService`, then everything it sold is cancelled (see [Reservations](./reservations#packages-and-memberships)).
+3. Each payment's whole remaining amount is refunded last: online payments through their gateway (a refusal or exception gives `purchase_refund_failed` and rolls everything back), manual payments without a gateway call. `recordRefund` then marks them `refunded`.
+
+There is no partial refund on this endpoint. Fee reversal, redemption release, ledger sync and buyer notifications come from the existing `PurchaseCancelled` and `PaymentRefunded` listeners. Errors use `ReservationNotAllowedException` (422 with `reason`).
+
 ## Payments are append-only attempts
 
 A retry is a **new** Payment row. Never revive failed or expired payments, and never delete abandoned pending ones. A purchase is confirmed only when its succeeded payments sum to at least `total_amount`.
