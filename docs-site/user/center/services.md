@@ -12,7 +12,7 @@ A **service** is something you sell. There are nine types, and each has its own 
 | **Horse service** | Other horse services | Price options |
 | **Training** | Lessons with a trainer | Pick an hour with a trainer |
 | **Membership** | A membership with included visits | Buy a membership |
-| **Stabling** | Boarding a horse at the center | Not bookable in the app yet; clients see the prices |
+| **Stabling** | Boarding a horse at the center | Booked by your team for a client's horse; clients see the prices |
 
 ## Creating and editing
 

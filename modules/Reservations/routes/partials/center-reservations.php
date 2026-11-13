@@ -8,6 +8,7 @@ use Modules\Reservations\Http\Controllers\Center\ReservationController;
  */
 Route::get('/', [ReservationController::class, 'index'])->name('index');
 Route::post('/', [ReservationController::class, 'store'])->middleware(['throttle:coupon', 'idempotent'])->name('store');
+Route::post('/stabling', [ReservationController::class, 'storeStabling'])->middleware('idempotent')->name('stabling.store');
 Route::post('/quote', [ReservationController::class, 'quote'])->middleware('throttle:coupon')->name('quote');
 Route::get('/calendar', [ReservationController::class, 'calendar'])->name('calendar');
 Route::get('/code/{code}', [ReservationController::class, 'showByCode'])->name('show-by-code');
@@ -16,4 +17,5 @@ Route::put('/{reservation}/horse', [ReservationController::class, 'attachHorse']
 Route::patch('/{reservation}/reschedule', [ReservationController::class, 'reschedule'])->middleware('idempotent')->name('reschedule');
 Route::post('/{reservation}/cancel', [ReservationController::class, 'cancel'])->middleware('idempotent')->name('cancel');
 Route::post('/{reservation}/complete', [ReservationController::class, 'complete'])->middleware('idempotent')->name('complete');
+Route::post('/{reservation}/end-stay', [ReservationController::class, 'endStay'])->middleware('idempotent')->name('end-stay');
 Route::post('/{reservation}/no-show', [ReservationController::class, 'noShow'])->middleware('idempotent')->name('no-show');

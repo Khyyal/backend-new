@@ -20,6 +20,7 @@ use Knuckles\Scribe\Attributes\ResponseField;
 use Knuckles\Scribe\Attributes\ResponseFromApiResource;
 use Knuckles\Scribe\Attributes\UrlParam;
 use Modules\Centers\Models\Center;
+use Modules\Centers\Models\Horse;
 use Modules\Clients\Models\Client;
 use Modules\Purchase\Enums\PaymentMethod;
 use Modules\Purchase\Enums\PurchaseChannel;
@@ -27,17 +28,21 @@ use Modules\Reservations\Actions\BookAndCheckout;
 use Modules\Reservations\Actions\QuoteCheckout;
 use Modules\Reservations\Enums\ReservationSource;
 use Modules\Reservations\Enums\ReservationStatus;
+use Modules\Reservations\Exceptions\ReservationNotAllowedException;
 use Modules\Reservations\Http\Requests\CancelReservationRequest;
 use Modules\Reservations\Http\Requests\Center\AttachReservationHorseRequest;
+use Modules\Reservations\Http\Requests\Center\EndStablingStayRequest;
 use Modules\Reservations\Http\Requests\Center\QuoteReservationRequest;
 use Modules\Reservations\Http\Requests\Center\RescheduleReservationRequest;
 use Modules\Reservations\Http\Requests\Center\StoreReservationRequest;
+use Modules\Reservations\Http\Requests\Center\StoreStablingReservationRequest;
 use Modules\Reservations\Http\Resources\CenterReservationResource;
 use Modules\Reservations\Http\Resources\CheckoutQuoteResource;
 use Modules\Reservations\Http\Resources\CheckoutResource;
 use Modules\Reservations\Http\Resources\PurchaseSummaryResource;
 use Modules\Reservations\Models\Reservation;
 use Modules\Reservations\Services\ReservationStateService;
+use Modules\Services\Enums\ServiceType;
 use Modules\Support\Documentation\ApiExamples;
 use Modules\Support\Models\SystemUser;
 use Spatie\QueryBuilder\AllowedFilter;
@@ -198,6 +203,46 @@ class ReservationController extends Controller
             ->setStatusCode(201);
     }
 
+    #[Endpoint('Book a stabling stay for a horse', 'Puts a client-owned horse into a stabling service; the horse owner is the client. A monthly price covers its months from `start_date` (`end_date` = last day); the daily price opens a stay without end date that lasts until it is completed or cancelled. The horse must not have another pending or confirmed stay overlapping. `total_amount` replaces the computed price (offers and coupons are skipped). `is_paid` true records the payment and confirms everything; false confirms the stay with the payment pending.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[Header('Idempotency-Key', '7c9e6679-7425-40de-944b-e07fc1f90ae7')]
+    #[ApiResponse(['data' => ['id' => 412, 'status' => 'confirmed', 'source' => 'center', 'center_id' => 8, 'service' => ['id' => 31, 'type' => 'stabling', 'name' => ['ar' => 'إسطبل شهري', 'en' => 'Monthly stabling']], 'horse_id' => 5, 'horse' => ['id' => 5, 'name' => 'Najm', 'room' => 12], 'price_option_id' => 70, 'date' => '2026-12-01', 'end_date' => '2026-12-31', 'quantity' => 1, 'unit_price' => 150000, 'subtotal' => 180000, 'total_amount' => 180000], 'checkout' => null], 201, 'Booked.')]
+    #[ResponseField('data', 'object', 'The reservation (`CenterReservationResource`).')]
+    #[ResponseField('checkout', 'object', 'The checkout (`CheckoutResource`: purchase, payment); null when the total is 0.', nullable: true)]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'No access to this center\'s reservations (center users: `reservations.manage`; system users: `centers.manage_reservations`), or the token lacks `center-access:{center}`.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No stabling service with this ID in this center.')]
+    #[ApiResponse(['message' => 'This horse already has a stabling stay during the selected period.', 'reason' => 'horse_unavailable', 'errors' => ['reservation' => ['This horse already has a stabling stay during the selected period.']]], 422, 'Validation failed, or a booking rule failed; `reason` is one of: horse_not_client_owned, horse_unavailable, service_inactive, client_blocked, date_in_past, invalid_price_option, slot_blocked.')]
+    #[ApiResponse(ApiExamples::IDEMPOTENCY_KEY_REQUIRED, 400, 'Missing `Idempotency-Key` header. Send a unique UUID per operation and reuse it unchanged on retries (a replay returns the stored response with `Idempotent-Replayed: true`).')]
+    #[ApiResponse(ApiExamples::IDEMPOTENCY_IN_PROGRESS, 409, 'A request with this `Idempotency-Key` is still running; retry after `Retry-After`.')]
+    public function storeStabling(StoreStablingReservationRequest $request, Center $center): JsonResponse
+    {
+        $service = $center->services()
+            ->where('type', ServiceType::Stabling)
+            ->with(['serviceable', 'center'])
+            ->findOrFail($request->validated('service_id'));
+        $horse = Horse::query()->with('client')->findOrFail($request->validated('horse_id'));
+
+        if ($horse->client === null) {
+            throw ReservationNotAllowedException::because('horse_not_client_owned');
+        }
+
+        [$reservation, $checkout] = $this->bookAndCheckout->execute(
+            $request->toBookingRequest($service, $horse),
+            ReservationSource::Center,
+            $request->boolean('is_paid') ? PaymentMethod::Manual : PaymentMethod::CashOnArrival,
+            null,
+            $request->validated('notes'),
+            $request->toDiscountInput(),
+            $request->user() instanceof SystemUser ? null : PurchaseChannel::CenterDashboard,
+        );
+
+        return CenterReservationResource::make($reservation->load(self::RELATIONS))
+            ->additional(['checkout' => $checkout !== null ? CheckoutResource::make($checkout) : null])
+            ->response()
+            ->setStatusCode(201);
+    }
+
     #[Endpoint('Price a walk-in reservation', 'Returns the total after running offers and the coupon, without booking. Coupon attempts are limited to 10 per minute.')]
     #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
     #[ResponseFromApiResource(CheckoutQuoteResource::class, Reservation::class, status: 200, description: 'The priced quote; nothing is booked.')]
@@ -286,6 +331,24 @@ class ReservationController extends Controller
         $completed = $this->reservationState->complete($this->find($center, $reservation));
 
         return CenterReservationResource::make($completed->load(self::RELATIONS));
+    }
+
+    #[Endpoint('End a stabling stay', 'Ends a confirmed stabling stay that has started and marks it `completed`, which frees the horse. `end_date` (default today) becomes the last day; it must be from the start date to today and not after a monthly stay\'s planned end, which is kept in the reservation metadata. The price and payment are not changed.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[UrlParam('reservation', 'integer', 'Reservation ID (of this center).', example: 412)]
+    #[Header('Idempotency-Key', '7c9e6679-7425-40de-944b-e07fc1f90ae7')]
+    #[ResponseFromApiResource(CenterReservationResource::class, Reservation::class, status: 200, description: 'The ended stay, now `completed`.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `reservations.edit` for this center (system users: `centers.manage_reservations`), or the token lacks `center-access:{center}`.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No such reservation in this center.')]
+    #[ApiResponse(['message' => 'Only a stabling stay can be ended.', 'reason' => 'not_a_stabling_stay', 'errors' => ['reservation' => ['Only a stabling stay can be ended.']]], 422, 'The reservation is not a stabling stay, is not confirmed, has not started, or the end date is out of range (`reason`: not_a_stabling_stay, invalid_transition, not_started_yet, invalid_stay_end).')]
+    #[ApiResponse(ApiExamples::IDEMPOTENCY_KEY_REQUIRED, 400, 'Missing `Idempotency-Key` header. Send a unique UUID per operation and reuse it unchanged on retries (a replay returns the stored response with `Idempotent-Replayed: true`).')]
+    #[ApiResponse(ApiExamples::IDEMPOTENCY_IN_PROGRESS, 409, 'A request with this `Idempotency-Key` is still running; retry after `Retry-After`.')]
+    public function endStay(EndStablingStayRequest $request, Center $center, int $reservation): CenterReservationResource
+    {
+        $ended = $this->reservationState->endStay($this->find($center, $reservation), $request->endDate());
+
+        return CenterReservationResource::make($ended->load(self::RELATIONS));
     }
 
     #[Endpoint('Mark a reservation as a no-show', 'Only a confirmed reservation that has started.')]

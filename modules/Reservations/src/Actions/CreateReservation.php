@@ -33,12 +33,19 @@ class CreateReservation
         ?string $notes = null,
     ): Reservation {
         return DB::transaction(function () use ($request, $source, $status, $notes): Reservation {
-            $this->capacityLock->acquire($request->service, $request->trainerId);
+            $this->capacityLock->acquire($request->service, $request->trainerId, $request->horseId);
 
             $quote = $this->rules->quote($request);
 
+            $attributes = $quote->toReservationAttributes();
+
+            if ($request->totalOverride !== null) {
+                $attributes['total_amount'] = $request->totalOverride;
+                $attributes['metadata'] = ['price_override' => ['calculated_total' => $quote->subtotal]];
+            }
+
             $reservation = Reservation::query()->create([
-                ...$quote->toReservationAttributes(),
+                ...$attributes,
                 'center_id' => $request->service->center_id,
                 'service_id' => $request->service->getKey(),
                 'client_id' => $request->client->getKey(),

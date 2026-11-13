@@ -28,6 +28,7 @@ use Modules\Reservations\Exceptions\ReservationNotAllowedException;
 use Modules\Reservations\Models\ClientPackage;
 use Modules\Reservations\Models\Reservation;
 use Modules\Reservations\Models\ReservationLine;
+use Modules\Services\Enums\ServiceType;
 use Throwable;
 
 /**
@@ -104,6 +105,46 @@ class ReservationStateService
             action: 'completed',
             eventClass: ReservationCompleted::class,
             beforeSave: fn (Reservation $locked) => $this->ensureStarted($locked),
+        );
+    }
+
+    /**
+     * Ends a confirmed stabling stay that has started: sets its last day
+     * (between the start and today, and not after a planned end) and
+     * completes it, which frees the horse. The price is not changed; the
+     * previous end date is kept in `metadata.planned_end_date`.
+     *
+     * @throws ReservationNotAllowedException
+     */
+    public function endStay(Reservation $reservation, ?CarbonImmutable $endDate = null): Reservation
+    {
+        $endDate = ($endDate ?? CarbonImmutable::today())->startOfDay();
+
+        return $this->transition(
+            $reservation,
+            from: [ReservationStatus::Confirmed],
+            to: ReservationStatus::Completed,
+            action: 'ended',
+            eventClass: ReservationCompleted::class,
+            beforeSave: function (Reservation $locked) use ($endDate): void {
+                if ($locked->service->type !== ServiceType::Stabling) {
+                    throw ReservationNotAllowedException::because('not_a_stabling_stay');
+                }
+
+                $this->ensureStarted($locked);
+
+                $plannedEnd = $locked->end_date === null ? null : CarbonImmutable::parse($locked->end_date)->startOfDay();
+                $isValid = $endDate->gte(CarbonImmutable::parse($locked->date)->startOfDay())
+                    && ! $endDate->isAfter(CarbonImmutable::today())
+                    && ($plannedEnd === null || $endDate->lte($plannedEnd));
+
+                if (! $isValid) {
+                    throw ReservationNotAllowedException::because('invalid_stay_end');
+                }
+
+                $locked->metadata = [...($locked->metadata ?? []), 'planned_end_date' => $plannedEnd?->toDateString()];
+                $locked->end_date = $endDate->toDateString();
+            },
         );
     }
 

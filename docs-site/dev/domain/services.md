@@ -14,9 +14,9 @@ A **Service** is something a center sells. Every service has a `type`, belongs t
 | `horse_service` | `HorseService` | Price options only |
 | `training` | `TrainingService` | Hourly slot with a trainer |
 | `membership` | `Membership` | A paid membership with packages and visits |
-| `stabling` | `Stabling` | Not bookable: monthly prices, optional daily price and extras |
+| `stabling` | `Stabling` | A horse's stay, booked by the center: a monthly price, or an open-ended daily stay, plus extras |
 
-Only riding, visit, event, resort and training are bookable through reservations. See [Reservations](./reservations).
+Riding, visit, event, resort and training are bookable through reservations; stabling only by the center, for a horse. See [Reservations](./reservations).
 
 ## Rules
 
