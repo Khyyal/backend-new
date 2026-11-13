@@ -30,6 +30,8 @@ The **Horses and stays** view shows, in one list:
 
 Switch between **All**, **Active stays** and **Others**, and search by horse name, client name or phone. You need the horses or the reservations permission.
 
+Open a stay to see its details (dates, price, extras, payment, the horse with its owner and trainers) and every invoice billed during it with its payment status. Ended and cancelled stays can be opened too.
+
 ## Removing a horse
 
 Deleting a horse removes it from the list.

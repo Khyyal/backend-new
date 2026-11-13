@@ -95,7 +95,7 @@ test('active and others split the board', function (): void {
 });
 
 test('a stay row carries its horse, service and unpaid operations', function (): void {
-    $purchaseOf = fn (PurchaseStatus $status) => Purchase::factory()->create(['status' => $status]);
+    $purchaseOf = fn (PurchaseStatus $status) => Purchase::factory()->create(['status' => $status, 'merchant_type' => $this->center->getMorphClass(), 'merchant_id' => $this->center->id]);
     PurchaseItemFactory::new()->create(['purchase_id' => $purchaseOf(PurchaseStatus::Pending)->id, 'purchasable_type' => $this->activeStay->getMorphClass(), 'purchasable_id' => $this->activeStay->id]);
 
     foreach ([PurchaseStatus::Confirmed, PurchaseStatus::Pending] as $status) {
@@ -164,4 +164,64 @@ test('a system user with centers.manage_horses can see the board', function (): 
         ->getJson("/api/v1/admin/centers/{$this->center->id}/horse-stays")
         ->assertOk()
         ->assertJsonCount(4, 'data');
+});
+
+test('shows a stay with its horse, unpaid count and invoices', function (): void {
+    $trainer = TrainerFactory::new()->create(['center_id' => $this->center->id, 'name' => 'Fahad']);
+    $this->alpha->trainers()->attach($trainer->id);
+    $purchaseOf = fn (PurchaseStatus $status) => Purchase::factory()->create(['status' => $status, 'merchant_type' => $this->center->getMorphClass(), 'merchant_id' => $this->center->id]);
+    PurchaseItemFactory::new()->create(['purchase_id' => $purchaseOf(PurchaseStatus::Pending)->id, 'purchasable_type' => $this->activeStay->getMorphClass(), 'purchasable_id' => $this->activeStay->id]);
+    $paid = StayInvoiceFactory::new()->create(['reservation_id' => $this->activeStay->id, 'name' => 'Vet visit']);
+    PurchaseItemFactory::new()->create(['purchase_id' => $purchaseOf(PurchaseStatus::Confirmed)->id, 'purchasable_type' => $paid->getMorphClass(), 'purchasable_id' => $paid->id]);
+    $pending = StayInvoiceFactory::new()->create(['reservation_id' => $this->activeStay->id, 'name' => 'Grooming']);
+    PurchaseItemFactory::new()->create(['purchase_id' => $purchaseOf(PurchaseStatus::Pending)->id, 'purchasable_type' => $pending->getMorphClass(), 'purchasable_id' => $pending->id]);
+
+    $this->actingAs($this->user, 'center_user')
+        ->getJson("{$this->url}/{$this->activeStay->id}")
+        ->assertOk()
+        ->assertJsonPath('data.id', $this->activeStay->id)
+        ->assertJsonPath('data.code', $this->activeStay->code)
+        ->assertJsonPath('data.date', '2026-12-01')
+        ->assertJsonPath('data.end_date', '2026-12-31')
+        ->assertJsonPath('data.service.id', $this->stabling->id)
+        ->assertJsonPath('data.horse.name', 'Alpha')
+        ->assertJsonPath('data.horse.room', 1)
+        ->assertJsonPath('data.horse.client.id', $this->owner->id)
+        ->assertJsonPath('data.horse.trainers', [['id' => $trainer->id, 'name' => 'Fahad']])
+        ->assertJsonPath('data.planned_end_date', null)
+        ->assertJsonPath('data.unpaid_operations_count', 2)
+        ->assertJsonCount(2, 'data.invoices')
+        ->assertJsonPath('data.invoices.0.name', 'Grooming')
+        ->assertJsonPath('data.invoices.0.purchase.status', 'pending')
+        ->assertJsonPath('data.invoices.1.purchase.status', 'confirmed')
+        ->assertJsonPath('data.purchase.status', 'pending');
+});
+
+test('shows an ended stay with its planned end date', function (): void {
+    $this->activeStay->update(['status' => ReservationStatus::Completed, 'end_date' => '2026-12-09', 'metadata' => ['planned_end_date' => '2026-12-31']]);
+
+    $this->actingAs($this->user, 'center_user')
+        ->getJson("{$this->url}/{$this->activeStay->id}")
+        ->assertOk()
+        ->assertJsonPath('data.status', 'completed')
+        ->assertJsonPath('data.end_date', '2026-12-09')
+        ->assertJsonPath('data.planned_end_date', '2026-12-31')
+        ->assertJsonCount(0, 'data.invoices');
+});
+
+test('only shows stabling stays of the center, with horse or reservation access', function (): void {
+    $riding = ReservationFactory::new()->forService(BookingFixtures::riding($this->center))->create();
+    $foreign = ReservationFactory::new()->forService(BookingFixtures::service(CenterFactory::new()->create(), StablingFactory::new()->create(), ServiceType::Stabling))->create();
+
+    $this->actingAs($this->user, 'center_user');
+    $this->getJson("{$this->url}/{$riding->id}")->assertNotFound();
+    $this->getJson("{$this->url}/{$foreign->id}")->assertNotFound();
+
+    $this->user->syncCenterPermissions($this->center, [CenterUserPermission::ViewRatings]);
+    $this->getJson("{$this->url}/{$this->activeStay->id}")->assertForbidden();
+
+    $admin = SystemUser::factory()->withPermissions([SystemPermission::ManageCenterReservations])->create();
+    $this->actingAs($admin, 'system_user')
+        ->getJson("/api/v1/admin/centers/{$this->center->id}/horse-stays/{$this->activeStay->id}")
+        ->assertOk();
 });

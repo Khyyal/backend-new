@@ -6,10 +6,8 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Knuckles\Scribe\Attributes\ResponseField;
 use Modules\Centers\Models\Horse;
-use Modules\Clients\Models\Client;
+use Modules\Reservations\Http\Resources\Concerns\DescribesHorse;
 use Modules\Reservations\Models\Reservation;
-use Modules\Services\Models\Trainer;
-use Modules\Support\Http\Resources\MediaResource;
 
 /**
  * One row of the horses board: an active stabling stay or a horse without one.
@@ -18,6 +16,8 @@ use Modules\Support\Http\Resources\MediaResource;
  */
 class HorseStayBoardResource extends JsonResource
 {
+    use DescribesHorse;
+
     #[ResponseField('type', 'string', '`stay` (an active stabling stay) or `horse` (a horse without an active stay); decides the other fields.', enum: ['stay', 'horse'], example: 'stay')]
     #[ResponseField('id', 'integer', 'Reservation ID for a stay, horse ID for a horse.', example: 412)]
     #[ResponseField('status', 'string', 'Stay only: reservation status (`confirmed`).', required: false, example: 'confirmed')]
@@ -41,8 +41,8 @@ class HorseStayBoardResource extends JsonResource
                 'status' => $item->status->value,
                 'end_date' => $item->end_date?->toDateString(),
                 'horse' => $item->horse === null ? null : [
-                    ...$this->horse($item->horse),
-                    'client' => $this->client($item->horse->client),
+                    ...$this->horseSummary($item->horse),
+                    'client' => $this->horseClient($item->horse->client),
                 ],
                 'service' => [
                     'id' => $item->service->id,
@@ -54,40 +54,9 @@ class HorseStayBoardResource extends JsonResource
 
         return [
             'type' => 'horse',
-            ...$this->horse($item),
-            'client' => $this->client($item->client),
-            'trainers' => $item->trainers->map(fn (Trainer $trainer) => [
-                'id' => $trainer->id,
-                'name' => $trainer->name,
-            ])->values(),
-        ];
-    }
-
-    /**
-     * @return array{id: int, name: string, image: MediaResource|null, room: int}
-     */
-    private function horse(Horse $horse): array
-    {
-        $image = $horse->media->firstWhere('collection_name', 'image');
-
-        return [
-            'id' => $horse->id,
-            'name' => $horse->name,
-            'image' => $image === null ? null : new MediaResource($image),
-            'room' => $horse->room,
-        ];
-    }
-
-    /**
-     * @return array{id: int, first_name: string|null, last_name: string|null, phone_number: string}|null
-     */
-    private function client(?Client $client): ?array
-    {
-        return $client === null ? null : [
-            'id' => $client->id,
-            'first_name' => $client->first_name,
-            'last_name' => $client->last_name,
-            'phone_number' => $client->phone_number,
+            ...$this->horseSummary($item),
+            'client' => $this->horseClient($item->client),
+            'trainers' => $this->horseTrainers($item),
         ];
     }
 }
