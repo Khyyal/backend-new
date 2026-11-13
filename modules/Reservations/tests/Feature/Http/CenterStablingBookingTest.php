@@ -179,3 +179,56 @@ test('the generic booking endpoint cannot book stabling without a horse', functi
         ->assertUnprocessable()
         ->assertJsonPath('reason', 'horse_required');
 });
+
+test('ending an open-ended stay completes it today and frees the horse', function (): void {
+    $this->user->syncCenterPermissions($this->center, [CenterUserPermission::ManageReservations, CenterUserPermission::EditReservations]);
+    $id = ($this->book)(['price_option_id' => $this->daily->id])->assertCreated()->json('data.id');
+
+    $this->travelTo('2026-12-10 09:00:00');
+
+    $this->withHeader('Idempotency-Key', (string) Str::uuid())
+        ->postJson("/api/v1/centers/{$this->center->id}/reservations/{$id}/end-stay")
+        ->assertOk()
+        ->assertJsonPath('data.status', 'completed')
+        ->assertJsonPath('data.end_date', '2026-12-10')
+        ->assertJsonPath('data.total_amount', 6000);
+
+    ($this->book)(['start_date' => '2026-12-11'])->assertCreated();
+});
+
+test('a monthly stay can end early on a chosen day, keeping its planned end', function (): void {
+    $this->user->syncCenterPermissions($this->center, [CenterUserPermission::ManageReservations, CenterUserPermission::EditReservations]);
+    $id = ($this->book)()->assertCreated()->json('data.id');
+    $url = "/api/v1/centers/{$this->center->id}/reservations/{$id}/end-stay";
+    $end = fn (array $body = []) => $this->withHeader('Idempotency-Key', (string) Str::uuid())->postJson($url, $body);
+
+    $end()->assertUnprocessable()->assertJsonPath('reason', 'not_started_yet');
+
+    $this->travelTo('2026-12-20 09:00:00');
+
+    $end(['end_date' => '2026-11-30'])->assertUnprocessable()->assertJsonPath('reason', 'invalid_stay_end');
+    $end(['end_date' => '2026-12-21'])->assertUnprocessable()->assertJsonPath('reason', 'invalid_stay_end');
+    $end(['end_date' => '2026-12-15'])
+        ->assertOk()
+        ->assertJsonPath('data.status', 'completed')
+        ->assertJsonPath('data.end_date', '2026-12-15');
+
+    expect(Reservation::find($id)->metadata['planned_end_date'])->toBe('2026-12-31');
+    $end()->assertUnprocessable()->assertJsonPath('reason', 'invalid_transition');
+});
+
+test('only stabling stays can be ended, with reservations.edit', function (): void {
+    $id = ($this->book)()->assertCreated()->json('data.id');
+    $this->travelTo('2026-12-05 09:00:00');
+    $url = "/api/v1/centers/{$this->center->id}/reservations/{$id}/end-stay";
+
+    $this->withHeader('Idempotency-Key', (string) Str::uuid())->postJson($url)->assertForbidden();
+
+    $this->user->syncCenterPermissions($this->center, [CenterUserPermission::ManageReservations, CenterUserPermission::EditReservations]);
+    $riding = Reservation::factory()->forService(BookingFixtures::riding($this->center))->create(['date' => '2026-12-01']);
+
+    $this->withHeader('Idempotency-Key', (string) Str::uuid())
+        ->postJson("/api/v1/centers/{$this->center->id}/reservations/{$riding->id}/end-stay")
+        ->assertUnprocessable()
+        ->assertJsonPath('reason', 'not_a_stabling_stay');
+});

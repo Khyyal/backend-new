@@ -31,6 +31,7 @@ use Modules\Reservations\Enums\ReservationStatus;
 use Modules\Reservations\Exceptions\ReservationNotAllowedException;
 use Modules\Reservations\Http\Requests\CancelReservationRequest;
 use Modules\Reservations\Http\Requests\Center\AttachReservationHorseRequest;
+use Modules\Reservations\Http\Requests\Center\EndStablingStayRequest;
 use Modules\Reservations\Http\Requests\Center\QuoteReservationRequest;
 use Modules\Reservations\Http\Requests\Center\RescheduleReservationRequest;
 use Modules\Reservations\Http\Requests\Center\StoreReservationRequest;
@@ -330,6 +331,24 @@ class ReservationController extends Controller
         $completed = $this->reservationState->complete($this->find($center, $reservation));
 
         return CenterReservationResource::make($completed->load(self::RELATIONS));
+    }
+
+    #[Endpoint('End a stabling stay', 'Ends a confirmed stabling stay that has started and marks it `completed`, which frees the horse. `end_date` (default today) becomes the last day; it must be from the start date to today and not after a monthly stay\'s planned end, which is kept in the reservation metadata. The price and payment are not changed.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[UrlParam('reservation', 'integer', 'Reservation ID (of this center).', example: 412)]
+    #[Header('Idempotency-Key', '7c9e6679-7425-40de-944b-e07fc1f90ae7')]
+    #[ResponseFromApiResource(CenterReservationResource::class, Reservation::class, status: 200, description: 'The ended stay, now `completed`.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `reservations.edit` for this center (system users: `centers.manage_reservations`), or the token lacks `center-access:{center}`.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No such reservation in this center.')]
+    #[ApiResponse(['message' => 'Only a stabling stay can be ended.', 'reason' => 'not_a_stabling_stay', 'errors' => ['reservation' => ['Only a stabling stay can be ended.']]], 422, 'The reservation is not a stabling stay, is not confirmed, has not started, or the end date is out of range (`reason`: not_a_stabling_stay, invalid_transition, not_started_yet, invalid_stay_end).')]
+    #[ApiResponse(ApiExamples::IDEMPOTENCY_KEY_REQUIRED, 400, 'Missing `Idempotency-Key` header. Send a unique UUID per operation and reuse it unchanged on retries (a replay returns the stored response with `Idempotent-Replayed: true`).')]
+    #[ApiResponse(ApiExamples::IDEMPOTENCY_IN_PROGRESS, 409, 'A request with this `Idempotency-Key` is still running; retry after `Retry-After`.')]
+    public function endStay(EndStablingStayRequest $request, Center $center, int $reservation): CenterReservationResource
+    {
+        $ended = $this->reservationState->endStay($this->find($center, $reservation), $request->endDate());
+
+        return CenterReservationResource::make($ended->load(self::RELATIONS));
     }
 
     #[Endpoint('Mark a reservation as a no-show', 'Only a confirmed reservation that has started.')]

@@ -55,4 +55,6 @@ return [
     'horse_not_client_owned' => 'Only a horse owned by a client can be booked into stabling.',
     'horse_unavailable' => 'This horse already has a stabling stay during the selected period.',
     'stabling_reschedule_not_supported' => 'A stabling stay cannot be rescheduled; cancel it and book again.',
+    'not_a_stabling_stay' => 'Only a stabling stay can be ended.',
+    'invalid_stay_end' => 'The end date must be between the start of the stay and today, and not after its planned end.',
 ];
