@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Modules\Reservations\Http\Controllers\Center\HorseStayController;
 
 /*
  * System-user access to a center's reservations. Reuses the center portal
@@ -25,4 +26,11 @@ Route::prefix('admin/centers/{center}/client-memberships')
     ->middleware(['auth:system_user'])
     ->group(function (): void {
         require __DIR__.'/partials/center-memberships.php';
+    });
+
+Route::prefix('admin/centers/{center}/horse-stays')
+    ->name('admin.centers.horse-stays.')
+    ->middleware(['auth:system_user'])
+    ->group(function (): void {
+        Route::get('/', [HorseStayController::class, 'index'])->name('index');
     });
