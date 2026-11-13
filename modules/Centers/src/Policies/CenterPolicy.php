@@ -103,6 +103,11 @@ class CenterPolicy
         return $this->canAccessCenter($user, $center, [CenterUserPermission::ManageBlockedClients], SystemPermission::ManageCenterBlockedClients);
     }
 
+    public function manageHorses(User|SystemUser $user, Center $center): bool
+    {
+        return $this->canAccessCenter($user, $center, [CenterUserPermission::ManageHorses], SystemPermission::ManageCenterHorses);
+    }
+
     public function manageReservations(User|SystemUser $user, Center $center): bool
     {
         return $this->canAccessCenter($user, $center, [CenterUserPermission::ManageReservations], SystemPermission::ManageCenterReservations);

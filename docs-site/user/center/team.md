@@ -22,6 +22,7 @@ You need the **users** permission to manage the team.
 | Purchases | View purchases for each service type; see prices; see other trainers' sales; see sales without a trainer |
 | Reservations | Manage reservations; edit reservations |
 | Clients | Manage blocked clients; export clients |
+| Horses | Manage the center's horses |
 | Business | Promotions; analytics; ratings; payouts; export purchases; manage users |
 
 ## Removing someone

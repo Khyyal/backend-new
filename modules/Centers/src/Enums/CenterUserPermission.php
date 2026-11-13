@@ -46,6 +46,7 @@ enum CenterUserPermission: string
     case ViewPayouts = 'payouts.view';
     case ExportPurchases = 'purchases.export';
     case ExportClients = 'clients.export';
+    case ManageHorses = 'horses.manage';
 
     public static function manageServicesFor(ServiceType $type): self
     {
