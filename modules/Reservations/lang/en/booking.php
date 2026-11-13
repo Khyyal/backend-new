@@ -51,4 +51,8 @@ return [
     'purchase_refund_failed' => 'The payment could not be refunded; nothing was changed.',
     'invalid_expiry' => 'The new expiry must be later than the current one.',
     'membership_not_adjustable' => 'This membership is not paid or is cancelled and cannot be changed.',
+    'horse_required' => 'A horse must be selected for a stabling stay.',
+    'horse_not_client_owned' => 'Only a horse owned by a client can be booked into stabling.',
+    'horse_unavailable' => 'This horse already has a stabling stay during the selected period.',
+    'stabling_reschedule_not_supported' => 'A stabling stay cannot be rescheduled; cancel it and book again.',
 ];

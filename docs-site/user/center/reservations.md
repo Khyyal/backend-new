@@ -28,6 +28,18 @@ You need the reservations permission.
 - **Reschedule** a pending or confirmed booking to another slot. The price must stay the same; if it would change, cancel and rebook.
   If the new slot is full you are told there are not enough places; confirm the move to book it anyway (this overbooks the slot). Other rules, such as opening hours, still apply.
 
+## Stabling a horse
+
+To board a client's horse, book a **stabling** stay from the horse. Choose the stabling service, a **monthly price** or the **price per day**, the start date, and any extras.
+
+- A monthly price covers its months from the start date (one month from 1 December ends on 31 December).
+- The price per day starts a stay with no end date. It lasts until you complete or cancel it, and the first day is charged.
+- Only horses that belong to a client can be stabled. The client is the horse's owner.
+- A horse can only have one stay at a time. Complete or cancel the current stay before booking an overlapping one.
+- You can enter a **different total**. It is charged as you enter it, and offers and coupons are not applied.
+- Mark the stay **paid** if the client already paid. Otherwise it is confirmed with the payment still to collect.
+- A stabling stay cannot be rescheduled. Cancel it and book again.
+
 ## Cancelling and refunds
 
 - Clients can cancel only until the cutoff set by the platform (a number of hours before the start). Staff are not bound by it.

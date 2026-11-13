@@ -6,6 +6,7 @@ use Illuminate\Contracts\Container\Container;
 use Modules\Reservations\Booking\Rules\EventRules;
 use Modules\Reservations\Booking\Rules\RecreationRidingRules;
 use Modules\Reservations\Booking\Rules\ResortRules;
+use Modules\Reservations\Booking\Rules\StablingRules;
 use Modules\Reservations\Booking\Rules\TrainingRules;
 use Modules\Reservations\Booking\Rules\VisitRules;
 use Modules\Reservations\Exceptions\ReservationNotAllowedException;
@@ -30,6 +31,7 @@ class ReservationRulesResolver
             ServiceType::Visit => VisitRules::class,
             ServiceType::Event => EventRules::class,
             ServiceType::Resort => ResortRules::class,
+            ServiceType::Stabling => StablingRules::class,
             default => throw ReservationNotAllowedException::because('service_type_not_bookable'),
         };
 

@@ -136,13 +136,14 @@ class StartCheckout
     }
 
     /**
-     * Promotions apply to a client buying from a center.
+     * Promotions apply to a client buying from a center, unless the center
+     * set the total itself.
      *
      * @param  list<array<string, mixed>>  $items
      */
     private function quote(Buyer $buyer, Model $merchant, array $items, DiscountInput $discount): ?CheckoutQuote
     {
-        if (! $buyer instanceof Client || ! $merchant instanceof Center) {
+        if (! $buyer instanceof Client || ! $merchant instanceof Center || ! $discount->applyPromotions) {
             return null;
         }
 

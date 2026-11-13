@@ -20,6 +20,8 @@ final readonly class BookingRequest
      * @param  int|null  $ignoreReservationId  reservation being rescheduled, left out of capacity counts
      * @param  ClientMembership|null  $clientMembership  membership granting a free visit
      * @param  bool  $ignoreCapacity  forced reschedule: places left are not checked
+     * @param  int|null  $horseId  horse the stay is for (stabling)
+     * @param  int|null  $totalOverride  total set by center staff, charged instead of the computed price
      */
     public function __construct(
         public Service $service,
@@ -35,6 +37,8 @@ final readonly class BookingRequest
         public ?int $ignoreReservationId = null,
         public ?ClientMembership $clientMembership = null,
         public bool $ignoreCapacity = false,
+        public ?int $horseId = null,
+        public ?int $totalOverride = null,
     ) {}
 
     public function usesPackage(): bool

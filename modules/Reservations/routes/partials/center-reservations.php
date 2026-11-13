@@ -8,6 +8,7 @@ use Modules\Reservations\Http\Controllers\Center\ReservationController;
  */
 Route::get('/', [ReservationController::class, 'index'])->name('index');
 Route::post('/', [ReservationController::class, 'store'])->middleware(['throttle:coupon', 'idempotent'])->name('store');
+Route::post('/stabling', [ReservationController::class, 'storeStabling'])->middleware('idempotent')->name('stabling.store');
 Route::post('/quote', [ReservationController::class, 'quote'])->middleware('throttle:coupon')->name('quote');
 Route::get('/calendar', [ReservationController::class, 'calendar'])->name('calendar');
 Route::get('/code/{code}', [ReservationController::class, 'showByCode'])->name('show-by-code');
