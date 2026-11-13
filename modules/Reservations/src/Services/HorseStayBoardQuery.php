@@ -77,6 +77,23 @@ class HorseStayBoardQuery
     }
 
     /**
+     * Adds `unpaid_stay_count` (the stay's own pending purchase) and
+     * `unpaid_invoices_count` (its invoices with a pending purchase).
+     *
+     * @param  EloquentBuilder<Reservation>  $stays
+     * @return EloquentBuilder<Reservation>
+     */
+    public static function withUnpaidCounts(EloquentBuilder $stays): EloquentBuilder
+    {
+        $pending = fn (EloquentBuilder $purchase) => $purchase->where('status', PurchaseStatus::Pending);
+
+        return $stays->withCount([
+            'purchaseItems as unpaid_stay_count' => fn (EloquentBuilder $items) => $items->whereHas('purchase', $pending),
+            'invoices as unpaid_invoices_count' => fn (EloquentBuilder $invoices) => $invoices->whereHas('purchaseItems.purchase', $pending),
+        ]);
+    }
+
+    /**
      * Confirmed stabling stays of the center that have started.
      */
     private function activeStays(Center $center): Builder
@@ -125,12 +142,7 @@ class HorseStayBoardQuery
         $stays = Reservation::query()
             ->whereKey($ids->get('stay', []))
             ->with(['horse.media', 'horse.client', 'service'])
-            ->withCount([
-                'purchaseItems as unpaid_stay_count' => fn (EloquentBuilder $items) => $items
-                    ->whereHas('purchase', fn (EloquentBuilder $purchase) => $purchase->where('status', PurchaseStatus::Pending)),
-                'invoices as unpaid_invoices_count' => fn (EloquentBuilder $invoices) => $invoices
-                    ->whereHas('purchaseItems.purchase', fn (EloquentBuilder $purchase) => $purchase->where('status', PurchaseStatus::Pending)),
-            ])
+            ->tap(fn (EloquentBuilder $query) => self::withUnpaidCounts($query))
             ->get()
             ->keyBy('id');
 
