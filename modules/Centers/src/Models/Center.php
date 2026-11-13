@@ -175,6 +175,11 @@ class Center extends Model implements Buyer, HasMedia
             ->withTimestamps();
     }
 
+    public function horses(): HasMany
+    {
+        return $this->hasMany(Horse::class);
+    }
+
     public function primaryUser(): HasOneThrough
     {
         return $this->hasOneThrough(

@@ -30,6 +30,7 @@ enum SystemPermission: string
     case ViewCenterRatings = 'centers.view_ratings';
     case ManageCenterBlockedClients = 'centers.manage_blocked_clients';
     case ManageCenterReservations = 'centers.manage_reservations';
+    case ManageCenterHorses = 'centers.manage_horses';
 
     case ManageNotificationCampaigns = 'notification_campaigns.manage';
     case ManageWhatsAppTemplates = 'whatsapp_templates.manage';

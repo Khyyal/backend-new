@@ -66,6 +66,12 @@ Site theme (`site-theme`), social links (`social-links`) and the payout bank acc
 
 `GET centers/{center}/ratings` (also under `admin/centers/{center}`; `ratings.view` or `centers.view_ratings`) returns a `summary` (`average`, `count`) and every rating, not paginated. `sort` (`Center\RatingController::SORTS`) is `newest` (default) or `highest` (most stars first, then newest); any other value is a 422.
 
+## Horses
+
+A center keeps a list of its horses (`Horse`, table `horses`): `name` (plain string), `room` (positive integer, rooms may be shared) and an `image` (single-file media collection, attached only through temporary uploads). A horse is **center-owned** when `client_id` is null, otherwise **client-owned**. Naming any existing, non-deleted client makes them the owner, and `CenterHorseService` adds them to `center_client` (`syncWithoutDetaching`) so the center can see them. Update replaces `name`, `room` and `client_id` (null makes the center the owner); an omitted `image` is kept, null removes it after commit. Deleting soft-deletes the horse.
+
+CRUD lives under `centers/{center}/horses` (`horses.manage`) and `admin/centers/{center}/horses` (`centers.manage_horses`), authorized by `CenterPolicy::manageHorses`. The list is paginated (15, newest first) and filters by `owner` (`center`/`client`), `client_id` and `q` (name). Clients do not see horses yet.
+
 ## Business rules
 
 - A center sees only its **own clients**: clients in `center_client`, or with a Confirmed or Completed purchase where the center is the merchant. Never list clients across centers.

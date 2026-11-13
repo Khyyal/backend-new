@@ -21,7 +21,7 @@ Center users belong to centers through an assignment, and hold **`CenterUserPerm
 | Services, per type | `services.recreation_riding.manage`, `services.visit.manage`, `services.event.manage`, `services.resort.manage`, `services.horse_care.manage`, `services.horse_service.manage`, `services.training.manage`, `services.membership.manage`, `services.stabling.manage` |
 | Purchases, per type | `purchases.<type>.view`, plus `purchases.view_prices`, `purchases.view_other_trainers`, `purchases.view_unassigned` |
 | Reservations | `reservations.manage`, `reservations.edit` |
-| Other | `users.manage`, `ratings.view`, `blocked_clients.manage`, `promotions.manage`, `analytics.view`, `payouts.view`, `purchases.export`, `clients.export` |
+| Other | `users.manage`, `ratings.view`, `blocked_clients.manage`, `promotions.manage`, `analytics.view`, `payouts.view`, `purchases.export`, `clients.export`, `horses.manage` |
 
 The **primary user** (`is_primary`, role `owner`) implicitly holds every center permission, can never be modified, and must re-enter their password on `POST /centers/{center}/access`. Non-primary managers cannot modify themselves and can only grant permissions they hold. Removing a user revokes their center tokens; a user with no centers left is soft-deleted.
 

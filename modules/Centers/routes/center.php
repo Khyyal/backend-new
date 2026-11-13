@@ -8,6 +8,7 @@ use Modules\Centers\Http\Controllers\Center\BlockedClientController;
 use Modules\Centers\Http\Controllers\Center\CenterController;
 use Modules\Centers\Http\Controllers\Center\CenterUserController;
 use Modules\Centers\Http\Controllers\Center\EmailVerificationController;
+use Modules\Centers\Http\Controllers\Center\HorseController;
 use Modules\Centers\Http\Controllers\Center\LaunchController;
 use Modules\Centers\Http\Controllers\Center\ProfileCompletionController;
 use Modules\Centers\Http\Controllers\Center\PurchaseController;
@@ -109,6 +110,24 @@ Route::middleware(['api'])
                         Route::delete('/{center}/blocked-clients/{client}', [BlockedClientController::class, 'destroy'])
                             ->whereNumber('client')
                             ->name('blocked-clients.destroy');
+
+                        Route::get('/{center}/horses', [HorseController::class, 'index'])
+                            ->name('horses.index');
+
+                        Route::post('/{center}/horses', [HorseController::class, 'store'])
+                            ->name('horses.store');
+
+                        Route::get('/{center}/horses/{horse}', [HorseController::class, 'show'])
+                            ->whereNumber('horse')
+                            ->name('horses.show');
+
+                        Route::match(['put', 'patch'], '/{center}/horses/{horse}', [HorseController::class, 'update'])
+                            ->whereNumber('horse')
+                            ->name('horses.update');
+
+                        Route::delete('/{center}/horses/{horse}', [HorseController::class, 'destroy'])
+                            ->whereNumber('horse')
+                            ->name('horses.destroy');
 
                         Route::get('/{center}/analytics', AnalyticsController::class)
                             ->name('analytics');

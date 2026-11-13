@@ -31,6 +31,7 @@ From a center you can open (and, with the right permission, edit) the same thing
 - **Reservations**, including creating, cancelling, completing, marking no-show and rescheduling on its behalf
 - **Purchases** and the center's **ledger**
 - **Clients**, **blocked clients**, **packages** and **client memberships**
+- **Horses** kept at the center
 - **Ratings**, newest first or highest first
 - **Subscription**, social links and site theme
 

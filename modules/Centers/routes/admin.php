@@ -5,6 +5,7 @@ use Modules\Centers\Http\Controllers\Admin\CenterController;
 use Modules\Centers\Http\Controllers\Admin\CenterUserController;
 use Modules\Centers\Http\Controllers\Admin\TagController;
 use Modules\Centers\Http\Controllers\Center\BlockedClientController;
+use Modules\Centers\Http\Controllers\Center\HorseController;
 use Modules\Centers\Http\Controllers\Center\PurchaseController;
 use Modules\Centers\Http\Controllers\Center\RatingController;
 
@@ -38,6 +39,12 @@ Route::prefix('admin/centers')
         Route::get('/{center}/blocked-clients', [BlockedClientController::class, 'index'])->name('blocked-clients.index');
         Route::post('/{center}/blocked-clients', [BlockedClientController::class, 'store'])->name('blocked-clients.store');
         Route::delete('/{center}/blocked-clients/{client}', [BlockedClientController::class, 'destroy'])->whereNumber('client')->name('blocked-clients.destroy');
+
+        Route::get('/{center}/horses', [HorseController::class, 'index'])->name('horses.index');
+        Route::post('/{center}/horses', [HorseController::class, 'store'])->name('horses.store');
+        Route::get('/{center}/horses/{horse}', [HorseController::class, 'show'])->whereNumber('horse')->name('horses.show');
+        Route::match(['put', 'patch'], '/{center}/horses/{horse}', [HorseController::class, 'update'])->whereNumber('horse')->name('horses.update');
+        Route::delete('/{center}/horses/{horse}', [HorseController::class, 'destroy'])->whereNumber('horse')->name('horses.destroy');
 
         Route::get('/{center}/purchases', [PurchaseController::class, 'index'])->name('purchases.index');
         Route::post('/{center}/purchases/export', [PurchaseController::class, 'export'])->name('purchases.export');

@@ -77,6 +77,7 @@ const userGroups: Group[] = [
         title: 'Center dashboard', base: 'user/center/', items: [
             ['overview', 'Overview'],
             ['services', 'Managing services'],
+            ['horses', 'Horses'],
             ['schedules-blocks', 'Schedules, periods and blocks'],
             ['reservations', 'Reservations'],
             ['purchases-payouts', 'Purchases, balance and payouts'],
