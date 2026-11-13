@@ -64,6 +64,8 @@ The center's contact email is verified with a 6-digit code (`CenterEmailVerifica
 
 Site theme (`site-theme`), social links (`social-links`) and the payout bank account (`payout-account`) are updated through their own endpoints. The center manages its blocked clients under `centers/{center}/blocked-clients` (list, block, and `DELETE …/{client}` to unblock; also under `admin/centers/{center}`), see [Clients](./clients#relationship-to-centers). The center sees **analytics** at `centers/{center}/analytics`, and its purchases (list, show, export and `purchases/{purchase}/refund`, see [Purchase](./purchase#refunding-a-purchase-from-the-center)), clients, ledger and exports under the same prefix.
 
+`GET centers/{center}/ratings` (also under `admin/centers/{center}`; `ratings.view` or `centers.view_ratings`) returns a `summary` (`average`, `count`) and every rating, not paginated. `sort` (`Center\RatingController::SORTS`) is `newest` (default) or `highest` (most stars first, then newest); any other value is a 422.
+
 ## Business rules
 
 - A center sees only its **own clients**: clients in `center_client`, or with a Confirmed or Completed purchase where the center is the merchant. Never list clients across centers.
