@@ -51,6 +51,7 @@ While a stay is confirmed, add **invoices** to bill the horse owner for extras. 
 - You can enter a **different total**. It is charged as you enter it, and offers and coupons never apply to invoices.
 - Mark the invoice **paid** if the client already paid. Otherwise the payment stays to collect.
 - Each invoice appears in your purchases, and you can see a stay's invoices with their payment status.
+- **Cancel an invoice** billed by mistake (edit permission). If it was paid, it is refunded and the payment is recorded as given back; hand the money back to the client yourself. If it wasn't paid yet, the pending payment is cancelled. The stay itself is not changed. Refunding the invoice from your purchases also cancels it.
 
 ## Cancelling and refunds
 

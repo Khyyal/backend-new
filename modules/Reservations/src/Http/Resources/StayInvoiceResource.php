@@ -25,6 +25,9 @@ class StayInvoiceResource extends JsonResource
     #[ResponseField('price_option', 'object', 'Billed option (`id`, `name`, `price`); null for standalone.', nullable: true)]
     #[ResponseField('purchase', 'object', 'Purchase (`id`, `code`, `status`); null when the total is 0.', nullable: true)]
     #[ResponseField('payment_status', 'string', 'Latest payment status; null without payment.', nullable: true, example: 'pending')]
+    #[ResponseField('refunded_amount', 'integer', 'Halalas refunded on the purchase\'s payments; 0 when nothing was refunded.', example: 0)]
+    #[ResponseField('cancelled_at', 'string', 'When the invoice was cancelled (ISO-8601); null while active.', nullable: true, example: 'No-example')]
+    #[ResponseField('cancellation_reason', 'string', 'Why it was cancelled.', nullable: true, example: 'No-example')]
     #[ResponseField('created_at', 'string', 'Creation time (ISO-8601).', example: '2026-12-10T09:30:00.000000Z')]
     public function toArray(Request $request): array
     {
@@ -58,6 +61,9 @@ class StayInvoiceResource extends JsonResource
                 'status' => $purchase->status->value,
             ],
             'payment_status' => $payment?->status->value,
+            'refunded_amount' => (int) ($purchase?->payments->sum('refunded_amount') ?? 0),
+            'cancelled_at' => $invoice->cancelled_at?->toIso8601String(),
+            'cancellation_reason' => $invoice->cancellation_reason,
             'created_at' => $invoice->created_at,
         ];
     }

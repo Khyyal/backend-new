@@ -20,4 +20,5 @@ Route::post('/{reservation}/complete', [ReservationController::class, 'complete'
 Route::post('/{reservation}/end-stay', [ReservationController::class, 'endStay'])->middleware('idempotent')->name('end-stay');
 Route::get('/{reservation}/invoices', [ReservationController::class, 'invoices'])->name('invoices.index');
 Route::post('/{reservation}/invoices', [ReservationController::class, 'storeInvoice'])->middleware('idempotent')->name('invoices.store');
+Route::post('/{reservation}/invoices/{invoice}/cancel', [ReservationController::class, 'cancelInvoice'])->whereNumber('invoice')->middleware('idempotent')->name('invoices.cancel');
 Route::post('/{reservation}/no-show', [ReservationController::class, 'noShow'])->middleware('idempotent')->name('no-show');

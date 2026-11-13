@@ -60,4 +60,5 @@ return [
     'invoice_stay_not_active' => 'Invoices can only be added to a confirmed stabling stay.',
     'invoice_date_outside_stay' => 'The invoice date must be within the stay.',
     'invalid_invoice_service' => 'The selected service cannot be billed with this invoice type.',
+    'invoice_already_cancelled' => 'This invoice is already cancelled.',
 ];

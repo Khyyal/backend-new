@@ -19,13 +19,14 @@ use Modules\Reservations\Exceptions\ReservationNotAllowedException;
 use Modules\Reservations\Models\ClientMembership;
 use Modules\Reservations\Models\ClientPackage;
 use Modules\Reservations\Models\Reservation;
+use Modules\Reservations\Models\StayInvoice;
 use Modules\Reservations\Services\ReservationStateService;
 use Throwable;
 
 /**
  * Gives a confirmed purchase's money back in full and cancels the purchase
  * with everything it sold: open reservations, packages and memberships (with
- * their upcoming sessions). Online payments go back through their gateway; a
+ * their upcoming sessions), and stay invoices. Online payments go back through their gateway; a
  * manual payment is only recorded, the center hands the money back itself.
  * When a gateway refuses, nothing changes.
  */
@@ -80,6 +81,7 @@ class RefundPurchase
                 (new Reservation)->getMorphClass(),
                 (new ClientPackage)->getMorphClass(),
                 (new ClientMembership)->getMorphClass(),
+                (new StayInvoice)->getMorphClass(),
             ])
             ->with('purchasable')
             ->get();
@@ -97,6 +99,10 @@ class RefundPurchase
 
             if ($purchasable instanceof ClientMembership) {
                 $this->cancelMembership($purchasable, $cancelledBy);
+            }
+
+            if ($purchasable instanceof StayInvoice && ! $purchasable->isCancelled()) {
+                $purchasable->markCancelled($cancelledBy);
             }
         }
     }
