@@ -19,7 +19,7 @@ use Modules\Support\Services\Media\TemporaryMediaService;
  */
 class CenterHorseService
 {
-    private const RELATIONS = ['client', 'media'];
+    private const RELATIONS = ['client', 'media', 'trainers'];
 
     public function __construct(
         private readonly TemporaryMediaService $temporaryMedia,
@@ -69,13 +69,29 @@ class CenterHorseService
         return $horse->refresh()->load(self::RELATIONS);
     }
 
+    /**
+     * Replaces the horse's trainers. The ids are already validated as
+     * live trainers of the horse's center.
+     *
+     * @param  array<int, int>  $trainerIds
+     */
+    public function syncTrainers(Horse $horse, array $trainerIds): Horse
+    {
+        DB::transaction(function () use ($horse, $trainerIds) {
+            Horse::query()->lockForUpdate()->findOrFail($horse->getKey())
+                ->trainers()->sync($trainerIds);
+        });
+
+        return $horse->unsetRelations()->load(self::RELATIONS);
+    }
+
     public function delete(Horse $horse): void
     {
         $horse->delete();
     }
 
     /**
-     * @param  array{owner?: string|null, client_id?: int|null, q?: string|null}  $filters
+     * @param  array{owner?: string|null, client_id?: int|null, trainer_id?: int|null, q?: string|null}  $filters
      * @return Builder<Horse>
      */
     public function queryForCenter(Center $center, array $filters = []): Builder
@@ -85,6 +101,7 @@ class CenterHorseService
             ->when(($filters['owner'] ?? null) === 'center', fn (Builder $query) => $query->whereNull('client_id'))
             ->when(($filters['owner'] ?? null) === 'client', fn (Builder $query) => $query->whereNotNull('client_id'))
             ->when($filters['client_id'] ?? null, fn (Builder $query, int $clientId) => $query->where('client_id', $clientId))
+            ->when($filters['trainer_id'] ?? null, fn (Builder $query, int $trainerId) => $query->whereHas('trainers', fn (Builder $trainers) => $trainers->whereKey($trainerId)))
             ->when(filled($filters['q'] ?? null), fn (Builder $query) => $query->where('name', 'like', '%'.addcslashes($filters['q'], '%_\\').'%'))
             ->with(self::RELATIONS);
     }

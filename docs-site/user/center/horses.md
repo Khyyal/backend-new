@@ -17,6 +17,10 @@ Click **New**, enter the name and room, and add a photo if you want. To record a
 
 Filter the list to show only your center's horses or only clients' horses, show the horses of one client, or search by name. When you edit a horse you can change its name, room, photo or owner. Clearing the owner makes the horse your center's.
 
+## Assigning trainers
+
+Open a horse and choose the **trainers** who work with it. A horse can have several trainers, and a trainer can work with several horses. Save the full list each time; removing a trainer from the list unlinks them. You can also filter the horse list to one trainer's horses.
+
 ## Removing a horse
 
 Deleting a horse removes it from the list.

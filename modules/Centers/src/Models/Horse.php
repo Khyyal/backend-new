@@ -5,9 +5,11 @@ namespace Modules\Centers\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Modules\Centers\Database\Factories\HorseFactory;
 use Modules\Clients\Models\Client;
+use Modules\Services\Models\Trainer;
 use Spatie\Image\Enums\Fit;
 use Spatie\MediaLibrary\HasMedia;
 use Spatie\MediaLibrary\InteractsWithMedia;
@@ -47,6 +49,14 @@ class Horse extends Model implements HasMedia
     public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class);
+    }
+
+    /**
+     * Trainers working with this horse (trainers of the same center).
+     */
+    public function trainers(): BelongsToMany
+    {
+        return $this->belongsToMany(Trainer::class)->withTimestamps();
     }
 
     public function isOwnedByCenter(): bool

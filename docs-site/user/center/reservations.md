@@ -21,6 +21,8 @@ Pending, confirmed, completed and no-show bookings all **use up capacity**. Only
 You need the reservations permission.
 
 - **Create** a booking for a client. Use **quote** first to check the price and availability.
+- **Find a client by phone** at the desk. You can find any client of the app, even one who has never booked with you. If nobody has that phone, **add the client** with their phone, first name and last name. They join your client list and can later sign in to the app with the same phone.
+- **Pick the horse** a booking is for, from your center's horses (yours or your clients'), or remove it. You need the edit permission. This works whatever the booking's status.
 - **Cancel** a booking.
 - **Complete** or mark **no-show**, but only after the slot has started.
 - **Reschedule** a pending or confirmed booking to another slot. The price must stay the same; if it would change, cancel and rebook.

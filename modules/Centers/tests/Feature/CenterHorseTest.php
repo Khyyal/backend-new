@@ -9,6 +9,7 @@ use Modules\Centers\Database\Factories\UserFactory;
 use Modules\Centers\Enums\CenterUserPermission;
 use Modules\Centers\Models\Horse;
 use Modules\Clients\Database\Factories\ClientFactory;
+use Modules\Services\Database\Factories\TrainerFactory;
 use Modules\Support\Database\Seeders\SystemRolePermissionSeeder;
 use Modules\Support\Enums\ActivationStatus;
 use Modules\Support\Models\SystemUser;
@@ -152,4 +153,71 @@ test('a system user manages horses through the admin routes', function (): void 
     $this->actingAs(SystemUser::factory()->create(), 'system_user')
         ->getJson("/api/v1/admin/centers/{$this->center->id}/horses")
         ->assertForbidden();
+});
+
+test('sets, replaces and clears the trainers of a horse', function (): void {
+    $horse = HorseFactory::new()->for($this->center)->create();
+    [$fahad, $sara, $omar] = TrainerFactory::new()->count(3)->sequence(['name' => 'Fahad'], ['name' => 'Sara'], ['name' => 'Omar'])
+        ->create(['center_id' => $this->center->id]);
+    $url = "{$this->url}/{$horse->id}/trainers";
+
+    $this->actingAs($this->user, 'center_user')
+        ->putJson($url, ['trainer_ids' => [$fahad->id, $sara->id]])
+        ->assertOk()
+        ->assertJsonCount(2, 'data.trainers')
+        ->assertJsonPath('data.trainers.0', ['id' => $fahad->id, 'name' => 'Fahad']);
+
+    $this->putJson($url, ['trainer_ids' => [$omar->id]])
+        ->assertOk()
+        ->assertJsonCount(1, 'data.trainers')
+        ->assertJsonPath('data.trainers.0.id', $omar->id);
+
+    $this->getJson("{$this->url}/{$horse->id}")->assertJsonPath('data.trainers.0.id', $omar->id);
+
+    $this->putJson($url, ['trainer_ids' => []])->assertOk()->assertJsonCount(0, 'data.trainers');
+    expect($horse->trainers()->count())->toBe(0);
+});
+
+test('rejects trainers of another center, deleted, duplicated or a missing list', function (): void {
+    $horse = HorseFactory::new()->for($this->center)->create();
+    $trainer = TrainerFactory::new()->create(['center_id' => $this->center->id]);
+    $foreign = TrainerFactory::new()->create();
+    $deleted = TrainerFactory::new()->create(['center_id' => $this->center->id]);
+    $deleted->delete();
+    $url = "{$this->url}/{$horse->id}/trainers";
+
+    $this->actingAs($this->user, 'center_user');
+    $this->putJson($url, ['trainer_ids' => [$foreign->id]])->assertUnprocessable()->assertJsonValidationErrors(['trainer_ids.0']);
+    $this->putJson($url, ['trainer_ids' => [$deleted->id]])->assertUnprocessable()->assertJsonValidationErrors(['trainer_ids.0']);
+    $this->putJson($url, ['trainer_ids' => [$trainer->id, $trainer->id]])->assertUnprocessable()->assertJsonValidationErrors(['trainer_ids.0']);
+    $this->putJson($url, [])->assertUnprocessable()->assertJsonValidationErrors(['trainer_ids']);
+});
+
+test('trainer sync is scoped to the center and needs horses.manage', function (): void {
+    $foreignHorse = HorseFactory::new()->create();
+    $horse = HorseFactory::new()->for($this->center)->create();
+
+    $this->actingAs($this->user, 'center_user')
+        ->putJson("{$this->url}/{$foreignHorse->id}/trainers", ['trainer_ids' => []])
+        ->assertNotFound();
+
+    $this->user->syncCenterPermissions($this->center, [CenterUserPermission::ManageReservations]);
+    $this->putJson("{$this->url}/{$horse->id}/trainers", ['trainer_ids' => []])->assertForbidden();
+});
+
+test('filters horses by trainer and hides deleted trainers', function (): void {
+    $trainer = TrainerFactory::new()->create(['center_id' => $this->center->id]);
+    $gone = TrainerFactory::new()->create(['center_id' => $this->center->id]);
+    $najm = HorseFactory::new()->for($this->center)->create(['name' => 'Najm']);
+    HorseFactory::new()->for($this->center)->create(['name' => 'Barq']);
+    $najm->trainers()->attach([$trainer->id, $gone->id]);
+    $gone->delete();
+
+    $this->actingAs($this->user, 'center_user')
+        ->getJson("{$this->url}?trainer_id={$trainer->id}")
+        ->assertOk()
+        ->assertJsonCount(1, 'data')
+        ->assertJsonPath('data.0.name', 'Najm')
+        ->assertJsonCount(1, 'data.0.trainers')
+        ->assertJsonPath('data.0.trainers.0.id', $trainer->id);
 });

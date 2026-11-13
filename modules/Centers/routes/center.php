@@ -125,6 +125,10 @@ Route::middleware(['api'])
                             ->whereNumber('horse')
                             ->name('horses.update');
 
+                        Route::put('/{center}/horses/{horse}/trainers', [HorseController::class, 'syncTrainers'])
+                            ->whereNumber('horse')
+                            ->name('horses.trainers');
+
                         Route::delete('/{center}/horses/{horse}', [HorseController::class, 'destroy'])
                             ->whereNumber('horse')
                             ->name('horses.destroy');

@@ -12,6 +12,7 @@ Route::post('/quote', [ReservationController::class, 'quote'])->middleware('thro
 Route::get('/calendar', [ReservationController::class, 'calendar'])->name('calendar');
 Route::get('/code/{code}', [ReservationController::class, 'showByCode'])->name('show-by-code');
 Route::get('/{reservation}', [ReservationController::class, 'show'])->name('show');
+Route::put('/{reservation}/horse', [ReservationController::class, 'attachHorse'])->name('horse');
 Route::patch('/{reservation}/reschedule', [ReservationController::class, 'reschedule'])->middleware('idempotent')->name('reschedule');
 Route::post('/{reservation}/cancel', [ReservationController::class, 'cancel'])->middleware('idempotent')->name('cancel');
 Route::post('/{reservation}/complete', [ReservationController::class, 'complete'])->middleware('idempotent')->name('complete');

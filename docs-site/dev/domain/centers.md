@@ -70,7 +70,9 @@ Site theme (`site-theme`), social links (`social-links`) and the payout bank acc
 
 A center keeps a list of its horses (`Horse`, table `horses`): `name` (plain string), `room` (positive integer, rooms may be shared) and an `image` (single-file media collection, attached only through temporary uploads). A horse is **center-owned** when `client_id` is null, otherwise **client-owned**. Naming any existing, non-deleted client makes them the owner, and `CenterHorseService` adds them to `center_client` (`syncWithoutDetaching`) so the center can see them. Update replaces `name`, `room` and `client_id` (null makes the center the owner); an omitted `image` is kept, null removes it after commit. Deleting soft-deletes the horse.
 
-CRUD lives under `centers/{center}/horses` (`horses.manage`) and `admin/centers/{center}/horses` (`centers.manage_horses`), authorized by `CenterPolicy::manageHorses`. The list is paginated (15, newest first) and filters by `owner` (`center`/`client`), `client_id` and `q` (name). Clients do not see horses yet.
+CRUD lives under `centers/{center}/horses` (`horses.manage`) and `admin/centers/{center}/horses` (`centers.manage_horses`), authorized by `CenterPolicy::manageHorses`. The list is paginated (15, newest first) and filters by `owner` (`center`/`client`), `client_id`, `trainer_id` and `q` (name). Clients do not see horses yet.
+
+Horses and trainers are many-to-many (`horse_trainer` pivot with timestamps; `Horse::trainers()`, `Trainer::horses()`). `PUT centers/{center}/horses/{horse}/trainers` (and under `admin/centers/{center}`; `manageHorses`) takes the full `trainer_ids` list (max 50, live trainers of the same center, distinct) and syncs it under a lock on the horse; `[]` unlinks all. `HorseResource` returns `trainers` (`id`, `name`); soft-deleted trainers keep their pivot rows but are not shown.
 
 ## Business rules
 

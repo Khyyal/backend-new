@@ -44,6 +44,7 @@ Route::prefix('admin/centers')
         Route::post('/{center}/horses', [HorseController::class, 'store'])->name('horses.store');
         Route::get('/{center}/horses/{horse}', [HorseController::class, 'show'])->whereNumber('horse')->name('horses.show');
         Route::match(['put', 'patch'], '/{center}/horses/{horse}', [HorseController::class, 'update'])->whereNumber('horse')->name('horses.update');
+        Route::put('/{center}/horses/{horse}/trainers', [HorseController::class, 'syncTrainers'])->whereNumber('horse')->name('horses.trainers');
         Route::delete('/{center}/horses/{horse}', [HorseController::class, 'destroy'])->whereNumber('horse')->name('horses.destroy');
 
         Route::get('/{center}/purchases', [PurchaseController::class, 'index'])->name('purchases.index');
