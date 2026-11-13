@@ -29,6 +29,7 @@ use Modules\Purchase\Models\Purchase;
 use Modules\Reservations\Actions\RefundPurchase;
 use Modules\Reservations\Models\ClientPackage;
 use Modules\Reservations\Models\Reservation;
+use Modules\Reservations\Models\StayInvoice;
 use Modules\Support\Documentation\ApiExamples;
 use Modules\Support\Models\SystemUser;
 use Symfony\Component\HttpFoundation\Response as HttpStatus;
@@ -113,10 +114,11 @@ class PurchaseController extends Controller
         $purchase = $query->with(['buyer', 'items', 'payments', 'latestPayment', 'adjustments', 'fee', 'ledgerEntries'])->withCount('items')->firstOrFail();
 
         $purchase->items
-            ->whereIn('purchasable_type', [(new Reservation)->getMorphClass(), (new ClientPackage)->getMorphClass()])
+            ->whereIn('purchasable_type', [(new Reservation)->getMorphClass(), (new ClientPackage)->getMorphClass(), (new StayInvoice)->getMorphClass()])
             ->loadMorph('purchasable', [
                 Reservation::class => ['service', 'trainer', 'priceOption'],
                 ClientPackage::class => ['service', 'priceOption'],
+                StayInvoice::class => ['service', 'priceOption'],
             ]);
 
         return PurchaseDetailsResource::make($purchase);

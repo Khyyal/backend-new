@@ -7,7 +7,7 @@ The **Purchase** module records what a client buys and how it is paid. It also c
 | Concept | Notes |
 |---|---|
 | **Purchase** | One checkout. Status `pending`, `confirmed`, `cancelled`, `completed`. Has items. Gets a unique 6-character `code` on insert (`HasUniqueCode`, same format as the [reservation code](./reservations#reservation-code)). |
-| **Purchase item** | `total = unit_price × quantity − discount + tax`. |
+| **Purchase item** | `total = unit_price × quantity − discount + tax`. Its `purchasable` (morph alias) is a `reservation`, `client_package`, `client_membership`, `stay_invoice` (an extra charge on a stabling stay, see [Reservations](./reservations#rules-per-type)) or `subscription`. |
 | **Payment** | One **attempt**. Status `pending`, `processing`, `succeeded`, `failed`, `cancelled`, `expired`, `refunded`. |
 | **Adjustment** | A promotion or coupon discount applied to a purchase. See [Promotions](./promotions). |
 | **PurchaseFee** | The platform fee snapshot for a center-merchant purchase. |

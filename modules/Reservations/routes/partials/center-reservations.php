@@ -18,4 +18,6 @@ Route::patch('/{reservation}/reschedule', [ReservationController::class, 'resche
 Route::post('/{reservation}/cancel', [ReservationController::class, 'cancel'])->middleware('idempotent')->name('cancel');
 Route::post('/{reservation}/complete', [ReservationController::class, 'complete'])->middleware('idempotent')->name('complete');
 Route::post('/{reservation}/end-stay', [ReservationController::class, 'endStay'])->middleware('idempotent')->name('end-stay');
+Route::get('/{reservation}/invoices', [ReservationController::class, 'invoices'])->name('invoices.index');
+Route::post('/{reservation}/invoices', [ReservationController::class, 'storeInvoice'])->middleware('idempotent')->name('invoices.store');
 Route::post('/{reservation}/no-show', [ReservationController::class, 'noShow'])->middleware('idempotent')->name('no-show');

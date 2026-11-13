@@ -25,6 +25,7 @@ use Modules\Clients\Models\Client;
 use Modules\Purchase\Enums\PaymentMethod;
 use Modules\Purchase\Enums\PurchaseChannel;
 use Modules\Reservations\Actions\BookAndCheckout;
+use Modules\Reservations\Actions\CreateStayInvoice;
 use Modules\Reservations\Actions\QuoteCheckout;
 use Modules\Reservations\Enums\ReservationSource;
 use Modules\Reservations\Enums\ReservationStatus;
@@ -36,11 +37,14 @@ use Modules\Reservations\Http\Requests\Center\QuoteReservationRequest;
 use Modules\Reservations\Http\Requests\Center\RescheduleReservationRequest;
 use Modules\Reservations\Http\Requests\Center\StoreReservationRequest;
 use Modules\Reservations\Http\Requests\Center\StoreStablingReservationRequest;
+use Modules\Reservations\Http\Requests\Center\StoreStayInvoiceRequest;
 use Modules\Reservations\Http\Resources\CenterReservationResource;
 use Modules\Reservations\Http\Resources\CheckoutQuoteResource;
 use Modules\Reservations\Http\Resources\CheckoutResource;
 use Modules\Reservations\Http\Resources\PurchaseSummaryResource;
+use Modules\Reservations\Http\Resources\StayInvoiceResource;
 use Modules\Reservations\Models\Reservation;
+use Modules\Reservations\Models\StayInvoice;
 use Modules\Reservations\Services\ReservationStateService;
 use Modules\Services\Enums\ServiceType;
 use Modules\Support\Documentation\ApiExamples;
@@ -349,6 +353,54 @@ class ReservationController extends Controller
         $ended = $this->reservationState->endStay($this->find($center, $reservation), $request->endDate());
 
         return CenterReservationResource::make($ended->load(self::RELATIONS));
+    }
+
+    #[Endpoint('List the invoices of a stay', 'Extra charges billed during a stabling stay, newest first. Not paginated.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[UrlParam('reservation', 'integer', 'Reservation ID (of this center).', example: 412)]
+    #[ResponseFromApiResource(StayInvoiceResource::class, StayInvoice::class, status: 200, description: 'The invoices.', collection: true)]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'No access to this center\'s reservations (center users: `reservations.manage`; system users: `centers.manage_reservations`), or the token lacks `center-access:{center}`.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No such reservation in this center.')]
+    public function invoices(Request $request, Center $center, int $reservation): AnonymousResourceCollection
+    {
+        $this->authorize($request, $center);
+
+        $invoices = $this->find($center, $reservation)->invoices()
+            ->with(['service', 'priceOption', 'purchaseItem.purchase.payments'])
+            ->latest('id')
+            ->get();
+
+        return StayInvoiceResource::collection($invoices);
+    }
+
+    #[Endpoint('Add an invoice to a stay', 'Bills an extra charge to the client of a confirmed stabling stay: a horse service or horse care (one of its price options) or a standalone line (name, optional description, total). The date must be within the stay. `total_amount` replaces the price; offers and coupons never apply. `is_paid` true records the payment and confirms the purchase; false leaves the payment pending.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[UrlParam('reservation', 'integer', 'The stabling stay (reservation ID of this center).', example: 412)]
+    #[Header('Idempotency-Key', '7c9e6679-7425-40de-944b-e07fc1f90ae7')]
+    #[ApiResponse(['data' => ['id' => 9, 'reservation_id' => 412, 'kind' => 'horse_service', 'date' => '2026-12-10', 'name' => 'Shoeing - Full set', 'description' => null, 'price' => 25000, 'total_amount' => 25000, 'service' => ['id' => 44, 'type' => 'horse_service', 'name' => ['ar' => 'حدادة', 'en' => 'Shoeing']], 'price_option' => ['id' => 90, 'name' => 'Full set', 'price' => 25000], 'purchase' => ['id' => 120, 'code' => 'K7QX2M', 'status' => 'pending'], 'payment_status' => 'pending', 'created_at' => '2026-12-10T09:30:00.000000Z'], 'checkout' => null], 201, 'Invoice added.')]
+    #[ResponseField('data', 'object', 'The invoice (`StayInvoiceResource`).')]
+    #[ResponseField('checkout', 'object', 'The checkout (`CheckoutResource`: purchase, payment); null when the total is 0.', nullable: true)]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `reservations.edit` for this center (system users: `centers.manage_reservations`), or the token lacks `center-access:{center}`.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No such reservation in this center.')]
+    #[ApiResponse(['message' => 'The invoice date must be within the stay.', 'reason' => 'invoice_date_outside_stay', 'errors' => ['reservation' => ['The invoice date must be within the stay.']]], 422, 'Validation failed, or `reason` is one of: not_a_stabling_stay, invoice_stay_not_active, invoice_date_outside_stay, invalid_invoice_service, invalid_price_option.')]
+    #[ApiResponse(ApiExamples::IDEMPOTENCY_KEY_REQUIRED, 400, 'Missing `Idempotency-Key` header. Send a unique UUID per operation and reuse it unchanged on retries (a replay returns the stored response with `Idempotent-Replayed: true`).')]
+    #[ApiResponse(ApiExamples::IDEMPOTENCY_IN_PROGRESS, 409, 'A request with this `Idempotency-Key` is still running; retry after `Retry-After`.')]
+    public function storeInvoice(StoreStayInvoiceRequest $request, Center $center, int $reservation, CreateStayInvoice $createStayInvoice): JsonResponse
+    {
+        [$invoice, $checkout] = $createStayInvoice->execute(
+            $this->find($center, $reservation),
+            $request->validated(),
+            $request->boolean('is_paid'),
+            $request->user(),
+            $request->user() instanceof SystemUser ? null : PurchaseChannel::CenterDashboard,
+        );
+
+        return StayInvoiceResource::make($invoice->load(['service', 'priceOption', 'purchaseItem.purchase.payments']))
+            ->additional(['checkout' => $checkout !== null ? CheckoutResource::make($checkout) : null])
+            ->response()
+            ->setStatusCode(201);
     }
 
     #[Endpoint('Mark a reservation as a no-show', 'Only a confirmed reservation that has started.')]

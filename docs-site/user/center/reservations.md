@@ -41,6 +41,17 @@ To board a client's horse, book a **stabling** stay from the horse. Choose the s
 - **End a stay** when the horse leaves. Pick the last day (today by default; it can't be after a monthly stay's planned end). The stay is completed and the horse is free for a new stay. The price is not changed, so settle any difference with the client yourself.
 - A stabling stay cannot be rescheduled. Cancel it and book again.
 
+### Invoices during a stay
+
+While a stay is confirmed, add **invoices** to bill the horse owner for extras. You need the edit permission.
+
+- **Horse service** or **horse care**: pick the service, one of its prices, and the date. The invoice uses that price.
+- **Standalone invoice**: enter a date, a name, an optional description, and the total.
+- The date must fall within the stay.
+- You can enter a **different total**. It is charged as you enter it, and offers and coupons never apply to invoices.
+- Mark the invoice **paid** if the client already paid. Otherwise the payment stays to collect.
+- Each invoice appears in your purchases, and you can see a stay's invoices with their payment status.
+
 ## Cancelling and refunds
 
 - Clients can cancel only until the cutoff set by the platform (a number of hours before the start). Staff are not bound by it.

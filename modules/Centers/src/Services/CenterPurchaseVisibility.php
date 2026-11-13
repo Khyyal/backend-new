@@ -10,6 +10,7 @@ use Modules\Purchase\Models\Purchase;
 use Modules\Reservations\Models\ClientMembership;
 use Modules\Reservations\Models\ClientPackage;
 use Modules\Reservations\Models\Reservation;
+use Modules\Reservations\Models\StayInvoice;
 use Modules\Services\Enums\ServiceType;
 use Modules\Support\Models\SystemUser;
 
@@ -19,7 +20,7 @@ use Modules\Support\Models\SystemUser;
  * a client membership) is for a service type the user can view and passes the trainer rule:
  * reservations of the user's own trainer are always visible, those of another
  * trainer need `purchases.view_other_trainers`, and items without a trainer
- * (including every client package and membership) need `purchases.view_unassigned`.
+ * (including every client package, membership and stay invoice) need `purchases.view_unassigned`.
  *
  * The primary user and system users see every purchase.
  */
@@ -48,7 +49,7 @@ class CenterPurchaseVisibility
         return $purchases->whereHas('items', function (Builder $items) use ($types, $trainerId, $canViewOtherTrainers, $canViewUnassigned): void {
             $items->whereHasMorph(
                 'purchasable',
-                [Reservation::class, ClientPackage::class, ClientMembership::class],
+                [Reservation::class, ClientPackage::class, ClientMembership::class, StayInvoice::class],
                 function (Builder $purchasable) use ($types, $trainerId, $canViewOtherTrainers, $canViewUnassigned): void {
                     $purchasable->whereHas('service', fn (Builder $service) => $service->whereIn('type', $types));
 
