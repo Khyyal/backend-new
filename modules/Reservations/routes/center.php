@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Modules\Reservations\Http\Controllers\Center\HorseStayController;
 
 Route::prefix('centers/{center}/reservations')
     ->name('centers.reservations.')
@@ -21,4 +22,11 @@ Route::prefix('centers/{center}/client-memberships')
     ->middleware(['auth:center_user', 'center.scope'])
     ->group(function (): void {
         require __DIR__.'/partials/center-memberships.php';
+    });
+
+Route::prefix('centers/{center}/horse-stays')
+    ->name('centers.horse-stays.')
+    ->middleware(['auth:center_user', 'center.scope'])
+    ->group(function (): void {
+        Route::get('/', [HorseStayController::class, 'index'])->name('index');
     });

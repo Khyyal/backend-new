@@ -21,6 +21,15 @@ Filter the list to show only your center's horses or only clients' horses, show 
 
 Open a horse and choose the **trainers** who work with it. A horse can have several trainers, and a trainer can work with several horses. Save the full list each time; removing a trainer from the list unlinks them. You can also filter the horse list to one trainer's horses.
 
+## Horses and stays
+
+The **Horses and stays** view shows, in one list:
+
+- every horse that is **stabled right now** (a confirmed stay that has started), with its service, end date, status and how many payments are still to collect for the stay and its invoices;
+- every other horse, with its owner and trainers.
+
+Switch between **All**, **Active stays** and **Others**, and search by horse name, client name or phone. You need the horses or the reservations permission.
+
 ## Removing a horse
 
 Deleting a horse removes it from the list.

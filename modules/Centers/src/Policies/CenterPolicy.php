@@ -108,6 +108,19 @@ class CenterPolicy
         return $this->canAccessCenter($user, $center, [CenterUserPermission::ManageHorses], SystemPermission::ManageCenterHorses);
     }
 
+    /**
+     * The horses and stabling stays board: either horse or reservation access.
+     */
+    public function viewHorseStays(User|SystemUser $user, Center $center): bool
+    {
+        if ($user instanceof SystemUser) {
+            return $this->systemUserCan($user, SystemPermission::ManageCenterHorses)
+                || $this->systemUserCan($user, SystemPermission::ManageCenterReservations);
+        }
+
+        return $user->hasAnyCenterPermission($center, [CenterUserPermission::ManageHorses, CenterUserPermission::ManageReservations]);
+    }
+
     public function manageReservations(User|SystemUser $user, Center $center): bool
     {
         return $this->canAccessCenter($user, $center, [CenterUserPermission::ManageReservations], SystemPermission::ManageCenterReservations);
