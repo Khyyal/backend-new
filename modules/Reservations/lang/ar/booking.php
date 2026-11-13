@@ -60,4 +60,5 @@ return [
     'invoice_stay_not_active' => 'لا يمكن إضافة الفواتير إلا لحجز إسطبل مؤكد.',
     'invoice_date_outside_stay' => 'يجب أن يكون تاريخ الفاتورة ضمن فترة الإقامة.',
     'invalid_invoice_service' => 'لا يمكن إصدار فاتورة بهذا النوع للخدمة المختارة.',
+    'invoice_already_cancelled' => 'هذه الفاتورة ملغاة بالفعل.',
 ];

@@ -7,6 +7,7 @@ use Modules\Centers\Database\Factories\HorseFactory;
 use Modules\Centers\Database\Factories\UserFactory;
 use Modules\Centers\Enums\CenterUserPermission;
 use Modules\Promotions\Database\Factories\PromotionFactory;
+use Modules\Purchase\Models\Purchase;
 use Modules\Reservations\Database\Factories\ReservationFactory;
 use Modules\Reservations\Enums\ReservationStatus;
 use Modules\Reservations\Models\StayInvoice;
@@ -179,4 +180,74 @@ test('invoice purchases follow purchase visibility and show their details', func
         ->assertJsonPath('data.items.0.purchasable_type', 'stay_invoice')
         ->assertJsonPath('data.items.0.details.kind', 'horse_service')
         ->assertJsonPath('data.items.0.details.reservation_id', $this->stay->id);
+});
+
+test('cancelling a paid invoice refunds it and reverses the fee, leaving the stay alone', function (): void {
+    $created = ($this->invoice)(['kind' => 'horse_service', 'service_id' => $this->shoeing->id, 'price_option_id' => $this->fullSet->id])->json();
+    $purchase = Purchase::find($created['checkout']['purchase']['id']);
+
+    $this->withHeader('Idempotency-Key', (string) Str::uuid())
+        ->postJson(($this->url)()."/{$created['data']['id']}/cancel", ['reason' => 'Billed by mistake'])
+        ->assertOk()
+        ->assertJsonPath('data.purchase.status', 'cancelled')
+        ->assertJsonPath('data.payment_status', 'refunded')
+        ->assertJsonPath('data.refunded_amount', 25000)
+        ->assertJsonPath('data.cancellation_reason', 'Billed by mistake')
+        ->assertJsonPath('data.cancelled_at', fn (?string $at) => $at !== null);
+
+    expect($purchase->fee()->first()?->reversed_at)->not->toBeNull()
+        ->and($this->stay->fresh()->status)->toBe(ReservationStatus::Confirmed)
+        ->and(StayInvoice::find($created['data']['id'])->cancelledBy->is($this->user))->toBeTrue();
+});
+
+test('cancelling an unpaid invoice cancels its payment and purchase without a refund', function (): void {
+    $id = ($this->invoice)(['kind' => 'horse_care', 'service_id' => $this->care->id, 'price_option_id' => $this->wash->id, 'is_paid' => false])->json('data.id');
+    $board = "/api/v1/centers/{$this->center->id}/horse-stays?type=active";
+    $this->getJson($board)->assertJsonPath('data.0.unpaid_operations_count', 1);
+
+    $this->withHeader('Idempotency-Key', (string) Str::uuid())
+        ->postJson(($this->url)()."/{$id}/cancel")
+        ->assertOk()
+        ->assertJsonPath('data.purchase.status', 'cancelled')
+        ->assertJsonPath('data.payment_status', 'cancelled')
+        ->assertJsonPath('data.refunded_amount', 0);
+
+    $this->getJson($board)->assertJsonPath('data.0.unpaid_operations_count', 0);
+});
+
+test('a free invoice is only marked cancelled, and only once', function (): void {
+    $id = ($this->invoice)(['kind' => 'standalone', 'name' => 'Free check', 'total_amount' => 0])->json('data.id');
+    $cancel = fn () => $this->withHeader('Idempotency-Key', (string) Str::uuid())->postJson(($this->url)()."/{$id}/cancel");
+
+    $cancel()->assertOk()->assertJsonPath('data.purchase', null)->assertJsonPath('data.cancelled_at', fn (?string $at) => $at !== null);
+    $cancel()->assertUnprocessable()->assertJsonPath('reason', 'invoice_already_cancelled');
+});
+
+test('cancelling is scoped to the stay and needs reservations.edit', function (): void {
+    $id = ($this->invoice)(['kind' => 'standalone', 'name' => 'Extra', 'total_amount' => 100])->json('data.id');
+    $otherStay = ReservationFactory::new()->forService($this->stabling)->create(['status' => ReservationStatus::Confirmed]);
+    $foreign = ReservationFactory::new()->create();
+
+    $this->withHeader('Idempotency-Key', (string) Str::uuid())->postJson(($this->url)($otherStay->id)."/{$id}/cancel")->assertNotFound();
+    $this->withHeader('Idempotency-Key', (string) Str::uuid())->postJson(($this->url)($foreign->id)."/{$id}/cancel")->assertNotFound();
+
+    $this->user->syncCenterPermissions($this->center, [CenterUserPermission::ManageReservations]);
+    $this->withHeader('Idempotency-Key', (string) Str::uuid())->postJson(($this->url)()."/{$id}/cancel")->assertForbidden();
+    expect(StayInvoice::find($id)->isCancelled())->toBeFalse();
+});
+
+test('refunding the invoice purchase from the purchases screen cancels the invoice', function (): void {
+    $this->user->syncCenterPermissions($this->center, [
+        CenterUserPermission::ManageReservations,
+        CenterUserPermission::EditReservations,
+        CenterUserPermission::ViewHorseServicePurchases,
+        CenterUserPermission::ViewUnassignedPurchases,
+    ]);
+    $created = ($this->invoice)(['kind' => 'horse_service', 'service_id' => $this->shoeing->id, 'price_option_id' => $this->fullSet->id])->json();
+
+    $this->withHeader('Idempotency-Key', (string) Str::uuid())
+        ->postJson("/api/v1/centers/{$this->center->id}/purchases/{$created['checkout']['purchase']['id']}/refund")
+        ->assertOk();
+
+    expect(StayInvoice::find($created['data']['id'])->isCancelled())->toBeTrue();
 });

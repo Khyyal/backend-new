@@ -25,6 +25,7 @@ use Modules\Clients\Models\Client;
 use Modules\Purchase\Enums\PaymentMethod;
 use Modules\Purchase\Enums\PurchaseChannel;
 use Modules\Reservations\Actions\BookAndCheckout;
+use Modules\Reservations\Actions\CancelStayInvoice;
 use Modules\Reservations\Actions\CreateStayInvoice;
 use Modules\Reservations\Actions\QuoteCheckout;
 use Modules\Reservations\Enums\ReservationSource;
@@ -32,6 +33,7 @@ use Modules\Reservations\Enums\ReservationStatus;
 use Modules\Reservations\Exceptions\ReservationNotAllowedException;
 use Modules\Reservations\Http\Requests\CancelReservationRequest;
 use Modules\Reservations\Http\Requests\Center\AttachReservationHorseRequest;
+use Modules\Reservations\Http\Requests\Center\CancelStayInvoiceRequest;
 use Modules\Reservations\Http\Requests\Center\EndStablingStayRequest;
 use Modules\Reservations\Http\Requests\Center\QuoteReservationRequest;
 use Modules\Reservations\Http\Requests\Center\RescheduleReservationRequest;
@@ -401,6 +403,27 @@ class ReservationController extends Controller
             ->additional(['checkout' => $checkout !== null ? CheckoutResource::make($checkout) : null])
             ->response()
             ->setStatusCode(201);
+    }
+
+    #[Endpoint('Cancel a stay invoice', 'A paid invoice is refunded in full and its purchase cancelled (a manual payment is recorded as refunded: hand the money back yourself); an unpaid invoice has its pending payment and purchase cancelled; a free invoice is only marked cancelled. The stay is not changed.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[UrlParam('reservation', 'integer', 'The stabling stay (reservation ID of this center).', example: 412)]
+    #[UrlParam('invoice', 'integer', 'Invoice ID (of this stay).', example: 9)]
+    #[Header('Idempotency-Key', '7c9e6679-7425-40de-944b-e07fc1f90ae7')]
+    #[ResponseFromApiResource(StayInvoiceResource::class, StayInvoice::class, status: 200, description: 'The cancelled invoice.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `reservations.edit` for this center (system users: `centers.manage_reservations`), or the token lacks `center-access:{center}`.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No such reservation in this center, or no such invoice on it.')]
+    #[ApiResponse(['message' => 'This invoice is already cancelled.', 'reason' => 'invoice_already_cancelled', 'errors' => ['reservation' => ['This invoice is already cancelled.']]], 422, '`reason` is one of: invoice_already_cancelled, nothing_to_refund, purchase_refund_failed.')]
+    #[ApiResponse(ApiExamples::IDEMPOTENCY_KEY_REQUIRED, 400, 'Missing `Idempotency-Key` header. Send a unique UUID per operation and reuse it unchanged on retries (a replay returns the stored response with `Idempotent-Replayed: true`).')]
+    #[ApiResponse(ApiExamples::IDEMPOTENCY_IN_PROGRESS, 409, 'A request with this `Idempotency-Key` is still running; retry after `Retry-After`.')]
+    public function cancelInvoice(CancelStayInvoiceRequest $request, Center $center, int $reservation, int $invoice, CancelStayInvoice $cancelStayInvoice): StayInvoiceResource
+    {
+        $model = $this->find($center, $reservation)->invoices()->findOrFail($invoice);
+
+        $cancelled = $cancelStayInvoice->execute($model, $request->user(), $request->validated('reason'));
+
+        return StayInvoiceResource::make($cancelled->load(['service', 'priceOption', 'purchaseItem.purchase.payments']));
     }
 
     #[Endpoint('Mark a reservation as a no-show', 'Only a confirmed reservation that has started.')]

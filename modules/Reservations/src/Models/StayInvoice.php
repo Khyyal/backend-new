@@ -41,6 +41,10 @@ class StayInvoice extends Model implements Purchasable
         'metadata',
         'created_by_type',
         'created_by_id',
+        'cancelled_at',
+        'cancelled_by_type',
+        'cancelled_by_id',
+        'cancellation_reason',
     ];
 
     protected static function newFactory(): StayInvoiceFactory
@@ -56,6 +60,7 @@ class StayInvoice extends Model implements Purchasable
             'price' => 'integer',
             'total_amount' => 'integer',
             'metadata' => 'array',
+            'cancelled_at' => 'datetime',
         ];
     }
 
@@ -87,5 +92,29 @@ class StayInvoice extends Model implements Purchasable
     public function createdBy(): MorphTo
     {
         return $this->morphTo();
+    }
+
+    public function cancelledBy(): MorphTo
+    {
+        return $this->morphTo();
+    }
+
+    public function isCancelled(): bool
+    {
+        return $this->cancelled_at !== null;
+    }
+
+    /**
+     * Records the cancellation; the money side (refund or cancelled payment)
+     * is handled by the caller.
+     */
+    public function markCancelled(?Model $cancelledBy = null, ?string $reason = null): void
+    {
+        $this->forceFill([
+            'cancelled_at' => now(),
+            'cancelled_by_type' => $cancelledBy?->getMorphClass(),
+            'cancelled_by_id' => $cancelledBy?->getKey(),
+            'cancellation_reason' => $reason,
+        ])->save();
     }
 }
