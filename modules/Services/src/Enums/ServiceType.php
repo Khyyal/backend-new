@@ -12,4 +12,5 @@ enum ServiceType: string
     case HorseService = 'horse_service';
     case Training = 'training';
     case Membership = 'membership';
+    case Stabling = 'stabling';
 }

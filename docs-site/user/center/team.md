@@ -18,7 +18,7 @@ You need the **users** permission to manage the team.
 
 | Group | Examples |
 |---|---|
-| Services | Manage riding, visit, event, resort, horse care, horse service, training or membership services (one permission each) |
+| Services | Manage riding, visit, event, resort, horse care, horse service, training, membership or stabling services (one permission each) |
 | Purchases | View purchases for each service type; see prices; see other trainers' sales; see sales without a trainer |
 | Reservations | Manage reservations; edit reservations |
 | Clients | Manage blocked clients; export clients |

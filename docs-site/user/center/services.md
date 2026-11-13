@@ -1,6 +1,6 @@
 # Managing services
 
-A **service** is something you sell. There are eight types, and each has its own permission.
+A **service** is something you sell. There are nine types, and each has its own permission.
 
 | Type | What it is | How clients buy it |
 |---|---|---|
@@ -12,6 +12,7 @@ A **service** is something you sell. There are eight types, and each has its own
 | **Horse service** | Other horse services | Price options |
 | **Training** | Lessons with a trainer | Pick an hour with a trainer |
 | **Membership** | A membership with included visits | Buy a membership |
+| **Stabling** | Boarding a horse at the center | Not bookable in the app yet; clients see the prices |
 
 ## Creating and editing
 
@@ -28,7 +29,8 @@ Each service has **price options** (for example 30, 60 or 90 minutes, each with 
 - Editing a price option keeps packages that were already sold. Removing an option removes its package from sale.
 - **Packages** let clients pay once for several sessions. Each price option can have one package.
 - Set a package to **inactive** to stop selling it without deleting it. Clients no longer see it, and memberships that include it cannot be bought until it is active again. Packages already sold keep working.
-- The **lowest price** is shown to clients as the starting price ("from"). For resorts, extras are not counted.
+- **Stabling** has its own prices: at least one **monthly price** (a number of months, for example 1, 3 or 6, each with a price), an optional **price per day**, and optional **extras** (a name and a price, for example grooming).
+- The **lowest price** is shown to clients as the starting price ("from"). For resorts and stabling, extras are not counted.
 - While one of your [promotions](./promotions) is running, clients also see the **discounted price**.
 
 ## Trainers

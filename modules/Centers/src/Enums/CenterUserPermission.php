@@ -19,6 +19,7 @@ enum CenterUserPermission: string
     case ManageHorseServiceServices = 'services.horse_service.manage';
     case ManageTrainingServices = 'services.training.manage';
     case ManageMembershipServices = 'services.membership.manage';
+    case ManageStablingServices = 'services.stabling.manage';
 
     case ViewRecreationRidingPurchases = 'purchases.recreation_riding.view';
     case ViewVisitPurchases = 'purchases.visit.view';
@@ -28,6 +29,7 @@ enum CenterUserPermission: string
     case ViewHorseServicePurchases = 'purchases.horse_service.view';
     case ViewTrainingPurchases = 'purchases.training.view';
     case ViewMembershipPurchases = 'purchases.membership.view';
+    case ViewStablingPurchases = 'purchases.stabling.view';
 
     case ManageUsers = 'users.manage';
 

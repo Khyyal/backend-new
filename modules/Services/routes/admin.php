@@ -12,6 +12,7 @@ use Modules\Services\Http\Controllers\Center\ServiceBlockController;
 use Modules\Services\Http\Controllers\Center\ServiceListController;
 use Modules\Services\Http\Controllers\Center\ServiceTypeCountController;
 use Modules\Services\Http\Controllers\Center\ServiceTypeTermController;
+use Modules\Services\Http\Controllers\Center\StablingController;
 use Modules\Services\Http\Controllers\Center\TrainerController;
 use Modules\Services\Http\Controllers\Center\TrainingServiceController;
 use Modules\Services\Http\Controllers\Center\VisitController;
@@ -33,6 +34,7 @@ Route::prefix('admin/centers/{center}')
             'horse-services' => [HorseServiceController::class, 'horseService'],
             'training-services' => [TrainingServiceController::class, 'trainingService'],
             'memberships' => [MembershipController::class, 'membership'],
+            'stablings' => [StablingController::class, 'stabling'],
             'trainers' => [TrainerController::class, 'trainer'],
             'service-blocks' => [ServiceBlockController::class, 'serviceBlock'],
         ];

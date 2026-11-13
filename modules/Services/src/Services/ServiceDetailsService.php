@@ -13,6 +13,7 @@ use Modules\Services\Models\Membership;
 use Modules\Services\Models\RecreationalRiding;
 use Modules\Services\Models\Resort;
 use Modules\Services\Models\Service;
+use Modules\Services\Models\Stabling;
 use Modules\Services\Models\TrainingService;
 use Modules\Services\Models\Visit;
 use Modules\Support\Enums\ActivationStatus;
@@ -41,6 +42,7 @@ class ServiceDetailsService
         HorseService::class => ['priceOptions', 'media'],
         TrainingService::class => ['priceOptions.package', 'settings', 'media'],
         Membership::class => ['priceOptions', 'media'],
+        Stabling::class => ['priceOptions', 'media'],
     ];
 
     /**
