@@ -14,6 +14,7 @@ use Modules\Services\Database\Factories\RecreationalRidingFactory;
 use Modules\Services\Database\Factories\ResortFactory;
 use Modules\Services\Database\Factories\ServiceFactory;
 use Modules\Services\Database\Factories\ServicePackageFactory;
+use Modules\Services\Database\Factories\StablingFactory;
 use Modules\Services\Database\Factories\TrainerFactory;
 use Modules\Services\Database\Factories\TrainingServiceFactory;
 use Modules\Services\Database\Factories\VisitFactory;
@@ -51,6 +52,7 @@ test('returns the serviceable details of each service type', function (ServiceTy
     'horse service' => [ServiceType::HorseService, HorseServiceFactory::class, 'price_options'],
     'training' => [ServiceType::Training, TrainingServiceFactory::class, 'trainers'],
     'membership' => [ServiceType::Membership, MembershipFactory::class, 'packages'],
+    'stabling' => [ServiceType::Stabling, StablingFactory::class, 'monthly_prices'],
 ]);
 
 test('returns start_price and the discounted display_price while an automatic offer runs', function (): void {

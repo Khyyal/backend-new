@@ -107,3 +107,9 @@ test('horse care services cannot be reserved', function (): void {
 
     ($this->book)();
 })->throws(ReservationNotAllowedException::class, 'This service type cannot be reserved.');
+
+test('stabling services cannot be reserved', function (): void {
+    $this->service->update(['type' => ServiceType::Stabling]);
+
+    ($this->book)();
+})->throws(ReservationNotAllowedException::class, 'This service type cannot be reserved.');

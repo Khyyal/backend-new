@@ -30,6 +30,7 @@ class ServiceSearchProvider implements GlobalSearchProvider
         ServiceType::HorseService->value => 'horse-services',
         ServiceType::Training->value => 'training-services',
         ServiceType::Membership->value => 'memberships',
+        ServiceType::Stabling->value => 'stablings',
     ];
 
     public function key(): string

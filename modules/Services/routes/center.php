@@ -12,6 +12,7 @@ use Modules\Services\Http\Controllers\Center\ServiceBlockController;
 use Modules\Services\Http\Controllers\Center\ServiceListController;
 use Modules\Services\Http\Controllers\Center\ServiceTypeCountController;
 use Modules\Services\Http\Controllers\Center\ServiceTypeTermController;
+use Modules\Services\Http\Controllers\Center\StablingController;
 use Modules\Services\Http\Controllers\Center\TrainerController;
 use Modules\Services\Http\Controllers\Center\TrainingServiceController;
 use Modules\Services\Http\Controllers\Center\VisitController;
@@ -69,6 +70,17 @@ Route::prefix('centers/{center}/horse-cares')
         Route::get('/{horseCare}', [HorseCareController::class, 'show'])->name('show');
         Route::match(['put', 'patch'], '/{horseCare}', [HorseCareController::class, 'update'])->name('update');
         Route::delete('/{horseCare}', [HorseCareController::class, 'destroy'])->name('destroy');
+    });
+
+Route::prefix('centers/{center}/stablings')
+    ->name('centers.stablings.')
+    ->middleware(['auth:center_user', 'center.scope'])
+    ->group(function (): void {
+        Route::get('/', [StablingController::class, 'index'])->name('index');
+        Route::post('/', [StablingController::class, 'store'])->name('store');
+        Route::get('/{stabling}', [StablingController::class, 'show'])->name('show');
+        Route::match(['put', 'patch'], '/{stabling}', [StablingController::class, 'update'])->name('update');
+        Route::delete('/{stabling}', [StablingController::class, 'destroy'])->name('destroy');
     });
 
 Route::prefix('centers/{center}/horse-services')

@@ -54,13 +54,13 @@ class Service extends Model implements HasMedia
 
     /**
      * Adds `start_price`: the lowest price option in halalas. Resort add-ons
-     * (price options without a quantity) are not counted.
+     * and stabling extras (price options without a quantity) are not counted.
      */
     public function scopeWithStartPrice(Builder $query): Builder
     {
         return $query->withMin(['priceOptions as start_price' => fn ($prices) => $prices->where(
             fn ($scope) => $scope->whereNotNull('price_options.quantity')
-                ->orWhere('services.type', '!=', ServiceType::Resort->value)
+                ->orWhereNotIn('services.type', [ServiceType::Resort->value, ServiceType::Stabling->value])
         )], 'price');
     }
 

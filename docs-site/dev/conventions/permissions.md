@@ -18,7 +18,7 @@ Center users belong to centers through an assignment, and hold **`CenterUserPerm
 
 | Group | Permissions |
 |---|---|
-| Services, per type | `services.recreation_riding.manage`, `services.visit.manage`, `services.event.manage`, `services.resort.manage`, `services.horse_care.manage`, `services.horse_service.manage`, `services.training.manage`, `services.membership.manage` |
+| Services, per type | `services.recreation_riding.manage`, `services.visit.manage`, `services.event.manage`, `services.resort.manage`, `services.horse_care.manage`, `services.horse_service.manage`, `services.training.manage`, `services.membership.manage`, `services.stabling.manage` |
 | Purchases, per type | `purchases.<type>.view`, plus `purchases.view_prices`, `purchases.view_other_trainers`, `purchases.view_unassigned` |
 | Reservations | `reservations.manage`, `reservations.edit` |
 | Other | `users.manage`, `ratings.view`, `blocked_clients.manage`, `promotions.manage`, `analytics.view`, `payouts.view`, `purchases.export`, `clients.export` |
