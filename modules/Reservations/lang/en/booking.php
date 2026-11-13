@@ -57,4 +57,7 @@ return [
     'stabling_reschedule_not_supported' => 'A stabling stay cannot be rescheduled; cancel it and book again.',
     'not_a_stabling_stay' => 'Only a stabling stay can be ended.',
     'invalid_stay_end' => 'The end date must be between the start of the stay and today, and not after its planned end.',
+    'invoice_stay_not_active' => 'Invoices can only be added to a confirmed stabling stay.',
+    'invoice_date_outside_stay' => 'The invoice date must be within the stay.',
+    'invalid_invoice_service' => 'The selected service cannot be billed with this invoice type.',
 ];

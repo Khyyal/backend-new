@@ -21,6 +21,7 @@ use Modules\Reservations\Listeners\SendReservationNotifications;
 use Modules\Reservations\Models\ClientMembership;
 use Modules\Reservations\Models\ClientPackage;
 use Modules\Reservations\Models\Reservation;
+use Modules\Reservations\Models\StayInvoice;
 use Modules\Services\Models\Service;
 use Modules\Services\Models\Trainer;
 
@@ -47,6 +48,7 @@ class ReservationsServiceProvider extends ServiceProvider
             'reservation' => Reservation::class,
             'client_package' => ClientPackage::class,
             'client_membership' => ClientMembership::class,
+            'stay_invoice' => StayInvoice::class,
         ]);
 
         // Lets availability eager-load reservations of a service or trainer without Services depending on Reservations.

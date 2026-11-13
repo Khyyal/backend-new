@@ -133,6 +133,14 @@ class Reservation extends Model implements Purchasable
         return $this->belongsTo(ClientMembership::class);
     }
 
+    /**
+     * Extra charges billed during a stabling stay.
+     */
+    public function invoices(): HasMany
+    {
+        return $this->hasMany(StayInvoice::class);
+    }
+
     public function lines(): HasMany
     {
         return $this->hasMany(ReservationLine::class);

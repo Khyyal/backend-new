@@ -14,6 +14,7 @@ use Modules\Purchase\Models\PurchaseAdjustment;
 use Modules\Purchase\Models\PurchaseItem;
 use Modules\Reservations\Models\ClientPackage;
 use Modules\Reservations\Models\Reservation;
+use Modules\Reservations\Models\StayInvoice;
 use Modules\Services\Models\PriceOption;
 use Modules\Services\Models\Schedule;
 use Modules\Services\Models\Service;
@@ -50,7 +51,7 @@ class PurchaseDetailsResource extends PurchaseResource
     #[ResponseField('items', 'object[]', 'Line items.')]
     #[ResponseField('items[].id', 'integer', 'Item ID.', example: 9001)]
     #[ResponseField('items[].name', 'string', 'Snapshot of the item name.', example: 'Beginner ride - 60 min')]
-    #[ResponseField('items[].purchasable_type', 'string', 'What was bought: `Reservation`, `ClientPackage`, `ClientMembership` or `Subscription`.', example: 'Reservation')]
+    #[ResponseField('items[].purchasable_type', 'string', 'What was bought (morph alias): `reservation`, `client_package`, `client_membership`, `stay_invoice` or `subscription`.', example: 'reservation')]
     #[ResponseField('items[].purchasable_id', 'integer', 'ID of the bought record.', example: 311)]
     #[ResponseField('items[].quantity', 'integer', 'Quantity.', example: 2)]
     #[ResponseField('items[].unit_price', 'integer', 'Unit price in halalas. Only with `purchases.view_prices`.', required: false, example: 15000)]
@@ -58,7 +59,7 @@ class PurchaseDetailsResource extends PurchaseResource
     #[ResponseField('items[].discount_amount', 'integer', 'Line discount in halalas. Only with `purchases.view_prices`.', required: false, example: 4500)]
     #[ResponseField('items[].tax_amount', 'integer', 'Line VAT in halalas. Only with `purchases.view_prices`.', required: false, example: 3825)]
     #[ResponseField('items[].total_amount', 'integer', 'Line total in halalas. Only with `purchases.view_prices`.', required: false, example: 29325)]
-    #[ResponseField('items[].details', 'object', 'What was booked. Reservation: status, service, trainer, price_option, date, end_date, start_time, end_time, quantity. Client package: status, service, price_option, total_sessions, remaining_sessions, expires_at. Null for other items.', nullable: true, example: ['status' => 'confirmed', 'service' => ['id' => 31, 'type' => 'recreation_riding', 'name' => ['en' => 'Beginner ride', 'ar' => 'ركوب للمبتدئين']], 'trainer' => ['id' => 6, 'name' => 'Fahad'], 'price_option' => ['id' => 70, 'name' => '60 min', 'quantity' => 60, 'unit' => 'minute'], 'date' => '2026-06-05', 'end_date' => null, 'start_time' => '16:00', 'end_time' => '17:00', 'quantity' => 2])]
+    #[ResponseField('items[].details', 'object', 'What was booked. Reservation: status, service, trainer, price_option, date, end_date, start_time, end_time, quantity. Client package: status, service, price_option, total_sessions, remaining_sessions, expires_at. Stay invoice: kind, reservation_id, service, price_option, date, name, description. Null for other items.', nullable: true, example: ['status' => 'confirmed', 'service' => ['id' => 31, 'type' => 'recreation_riding', 'name' => ['en' => 'Beginner ride', 'ar' => 'ركوب للمبتدئين']], 'trainer' => ['id' => 6, 'name' => 'Fahad'], 'price_option' => ['id' => 70, 'name' => '60 min', 'quantity' => 60, 'unit' => 'minute'], 'date' => '2026-06-05', 'end_date' => null, 'start_time' => '16:00', 'end_time' => '17:00', 'quantity' => 2])]
     #[ResponseField('coupon_code', 'string', 'Coupon code applied at checkout; null when none.', nullable: true, example: 'SUMMER25')]
     #[ResponseField('adjustments', 'object[]', 'Discounts applied. Only with `purchases.view_prices`.', required: false)]
     #[ResponseField('adjustments[].type', 'string', '`promotion` (automatic) or `coupon`.', enum: ['promotion', 'coupon'], example: 'coupon')]
@@ -154,6 +155,15 @@ class PurchaseDetailsResource extends PurchaseResource
                 'total_sessions' => $purchasable->total_sessions,
                 'remaining_sessions' => $purchasable->remaining_sessions,
                 'expires_at' => $purchasable->expires_at?->toIso8601String(),
+            ],
+            $purchasable instanceof StayInvoice => [
+                'kind' => $purchasable->kind->value,
+                'reservation_id' => $purchasable->reservation_id,
+                'service' => $this->service($purchasable->service),
+                'price_option' => $this->priceOption($purchasable->priceOption),
+                'date' => $purchasable->date->toDateString(),
+                'name' => $purchasable->name,
+                'description' => $purchasable->description,
             ],
             default => null,
         };
