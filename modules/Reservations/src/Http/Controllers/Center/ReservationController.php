@@ -28,6 +28,7 @@ use Modules\Reservations\Actions\QuoteCheckout;
 use Modules\Reservations\Enums\ReservationSource;
 use Modules\Reservations\Enums\ReservationStatus;
 use Modules\Reservations\Http\Requests\CancelReservationRequest;
+use Modules\Reservations\Http\Requests\Center\AttachReservationHorseRequest;
 use Modules\Reservations\Http\Requests\Center\QuoteReservationRequest;
 use Modules\Reservations\Http\Requests\Center\RescheduleReservationRequest;
 use Modules\Reservations\Http\Requests\Center\StoreReservationRequest;
@@ -46,7 +47,7 @@ use Spatie\QueryBuilder\QueryBuilder;
 #[Group('Reservations', 'A center\'s reservations: list, book walk-ins, reschedule, cancel and record attendance. Served on `centers/{center}/…` (center-scoped token) and `admin/centers/{center}/…` (system user).')]
 class ReservationController extends Controller
 {
-    private const array RELATIONS = ['service', 'trainer', 'client', 'priceOption', 'lines.priceOption', ...PurchaseSummaryResource::RELATIONS];
+    private const array RELATIONS = ['service', 'trainer', 'horse', 'client', 'priceOption', 'lines.priceOption', ...PurchaseSummaryResource::RELATIONS];
 
     public function __construct(
         private readonly BookAndCheckout $bookAndCheckout,
@@ -305,6 +306,28 @@ class ReservationController extends Controller
         $marked = $this->reservationState->markNoShow($this->find($center, $reservation));
 
         return CenterReservationResource::make($marked->load(self::RELATIONS));
+    }
+
+    #[Endpoint('Attach a horse to a reservation', 'Sets the horse the reservation is for (any horse of this center), or clears it with `horse_id: null`. Works in any status; the slot, price and status are unchanged.')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[UrlParam('reservation', 'integer', 'Reservation ID (of this center).', example: 311)]
+    #[ResponseFromApiResource(CenterReservationResource::class, Reservation::class, status: 200, description: 'The reservation with its horse.')]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `reservations.edit` for this center (system users: `centers.manage_reservations`), or the token lacks `center-access:{center}`.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No such reservation in this center.')]
+    #[ApiResponse(['message' => 'The selected horse id is invalid.', 'errors' => ['horse_id' => ['The selected horse id is invalid.']]], 422, 'The horse does not exist in this center (or was deleted).')]
+    public function attachHorse(AttachReservationHorseRequest $request, Center $center, int $reservation): CenterReservationResource
+    {
+        $model = $this->find($center, $reservation);
+
+        $updated = DB::transaction(function () use ($model, $request): Reservation {
+            $locked = Reservation::query()->lockForUpdate()->findOrFail($model->getKey());
+            $locked->update(['horse_id' => $request->validated('horse_id')]);
+
+            return $locked;
+        });
+
+        return CenterReservationResource::make($updated->load(self::RELATIONS));
     }
 
     private function authorize(Request $request, Center $center): void

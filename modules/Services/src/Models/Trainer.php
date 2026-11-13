@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Modules\Centers\Models\Center;
+use Modules\Centers\Models\Horse;
 use Modules\Services\Concerns\HasSchedules;
 
 class Trainer extends Model
@@ -43,6 +44,11 @@ class Trainer extends Model
     public function center(): BelongsTo
     {
         return $this->belongsTo(Center::class);
+    }
+
+    public function horses(): BelongsToMany
+    {
+        return $this->belongsToMany(Horse::class)->withTimestamps();
     }
 
     public function trainingServices(): BelongsToMany

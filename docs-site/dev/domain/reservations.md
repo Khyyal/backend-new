@@ -98,4 +98,6 @@ Checkout accepts only `pending`, non-package reservations with total > 0, of **o
 
 ## Center endpoints
 
-`centers/{center}/reservations` (and the same under `admin/centers/{center}/reservations`): list, `calendar`, show, show by `code/{code}` (404 for another center's code), create, `quote`, `reschedule`, `cancel`, `complete`, `no-show`.
+`centers/{center}/reservations` (and the same under `admin/centers/{center}/reservations`): list, `calendar`, show, show by `code/{code}` (404 for another center's code), create, `quote`, `reschedule`, `cancel`, `complete`, `no-show`, and `PUT …/{reservation}/horse`.
+
+**Horse.** A reservation has an optional `horse_id` (nullable FK to `horses`, null on delete). `PUT centers/{center}/reservations/{reservation}/horse` with `horse_id` (`editReservations`) sets it to any non-deleted horse of the same center, whoever owns it, or clears it with `null`. It works in any status and does not touch the slot, price or status. `CenterReservationResource` returns `horse_id` and `horse` (`id`, `name`, `room`).

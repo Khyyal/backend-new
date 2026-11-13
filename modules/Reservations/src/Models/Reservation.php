@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Modules\Centers\Models\Center;
+use Modules\Centers\Models\Horse;
 use Modules\Clients\Models\Client;
 use Modules\Purchase\Contracts\Purchasable;
 use Modules\Purchase\Traits\IsPurchasable;
@@ -37,6 +38,7 @@ class Reservation extends Model implements Purchasable
         'service_id',
         'client_id',
         'trainer_id',
+        'horse_id',
         'price_option_id',
         'client_package_id',
         'client_membership_id',
@@ -109,6 +111,11 @@ class Reservation extends Model implements Purchasable
     public function trainer(): BelongsTo
     {
         return $this->belongsTo(Trainer::class);
+    }
+
+    public function horse(): BelongsTo
+    {
+        return $this->belongsTo(Horse::class);
     }
 
     public function priceOption(): BelongsTo

@@ -70,6 +70,8 @@ class CenterReservationResource extends ReservationResource
     #[ResponseField('purchase.center.lng', 'string', 'Longitude.', nullable: true, example: '46.6753000')]
     #[ResponseField('purchase.center.contact_phone', 'string', 'Public contact phone.', example: '+966500000001')]
     #[ResponseField('client', 'object', 'The client (`id`, `full_name`, `phone_number`). Present when loaded.', required: false, example: ['id' => 77, 'full_name' => 'Noura Al-Qahtani', 'phone_number' => '+966500000003'])]
+    #[ResponseField('horse_id', 'integer', 'Horse the reservation is for; null when none.', nullable: true, example: 5)]
+    #[ResponseField('horse', 'object', 'The horse (`id`, `name`, `room`); null when none. Present when loaded.', required: false, nullable: true, example: ['id' => 5, 'name' => 'Najm', 'room' => 12])]
     #[ResponseField('notes', 'string', 'Staff notes (walk-ins).', nullable: true, example: 'Prefers a calm horse.')]
     #[ResponseField('reschedules', 'object[]', 'Previous slots, oldest first: `date`, `end_date`, `start_time`, `end_time`, `trainer_id`, `rescheduled_at`.', example: [])]
     public function toArray(Request $request): array
@@ -82,6 +84,12 @@ class CenterReservationResource extends ReservationResource
                 'id' => $reservation->client->id,
                 'full_name' => $reservation->client->full_name,
                 'phone_number' => $reservation->client->phone_number,
+            ]),
+            'horse_id' => $reservation->horse_id,
+            'horse' => $this->whenLoaded('horse', fn (): ?array => $reservation->horse === null ? null : [
+                'id' => $reservation->horse->id,
+                'name' => $reservation->horse->name,
+                'room' => $reservation->horse->room,
             ]),
             'notes' => $reservation->notes,
             'reschedules' => $reservation->metadata['reschedules'] ?? [],

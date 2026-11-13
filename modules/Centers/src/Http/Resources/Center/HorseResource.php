@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Knuckles\Scribe\Attributes\ResponseField;
 use Modules\Centers\Models\Horse;
+use Modules\Services\Models\Trainer;
 use Modules\Support\Http\Resources\MediaResource;
 
 /**
@@ -22,6 +23,7 @@ class HorseResource extends JsonResource
     #[ResponseField('client.first_name', 'string', 'First name.', nullable: true, example: 'Sara')]
     #[ResponseField('client.last_name', 'string', 'Last name.', nullable: true, example: 'Ali')]
     #[ResponseField('client.phone_number', 'string', 'Phone number.', example: '966500000000')]
+    #[ResponseField('trainers', 'object[]', 'Trainers working with the horse (`id`, `name`).', example: [['id' => 6, 'name' => 'Fahad']])]
     #[ResponseField('image', 'object', 'Horse image (`MediaResource`); null when none.', nullable: true)]
     #[ResponseField('image.id', 'string', 'Media UUID.', example: '9b1d5f0e-3c1a-4b8e-a0f2-5b7c3e2d1a90')]
     #[ResponseField('image.url', 'string', 'Public URL of the original file.', example: 'https://cdn.khyyal.com/media/12/najm.jpg')]
@@ -42,6 +44,10 @@ class HorseResource extends JsonResource
                 'last_name' => $client->last_name,
                 'phone_number' => $client->phone_number,
             ],
+            'trainers' => $this->resource->trainers->map(fn (Trainer $trainer) => [
+                'id' => $trainer->id,
+                'name' => $trainer->name,
+            ])->values(),
             'image' => $image === null ? null : new MediaResource($image),
             'created_at' => $this->resource->created_at,
         ];
