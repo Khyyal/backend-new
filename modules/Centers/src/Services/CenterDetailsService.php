@@ -2,6 +2,7 @@
 
 namespace Modules\Centers\Services;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Modules\Centers\Models\Center;
 use Modules\Promotions\Contracts\ServicePriceDisplay;
@@ -52,14 +53,7 @@ class CenterDetailsService
         }
 
         if ($withRatings) {
-            $query->withRatingStats()->with([
-                'ratings' => fn ($ratings) => $ratings
-                    ->with('rater')
-                    ->orderByDesc('stars')
-                    ->orderByDesc('created_at')
-                    ->orderByDesc('id')
-                    ->limit(self::RATINGS_LIMIT),
-            ]);
+            $this->withTopRatings($query);
         }
 
         $center = $query->firstOrFail();
@@ -71,16 +65,37 @@ class CenterDetailsService
 
     /**
      * Find the visible center whose custom site is enabled on the given domain.
+     * With `$withRatings` it also loads the rating stats and the highest ratings.
      *
      * @throws ModelNotFoundException
      */
-    public function findByDomain(string $domain): Center
+    public function findByDomain(string $domain, bool $withRatings = false): Center
     {
         return Center::query()
             ->visible()
             ->where('custom_site_enabled', true)
             ->where('domain', strtolower(trim($domain)))
-            ->select(['id', 'slug', 'site_theme'])
+            ->select(['centers.id', 'centers.slug', 'centers.site_theme'])
+            ->when($withRatings, fn (Builder $query) => $this->withTopRatings($query))
             ->firstOrFail();
+    }
+
+    /**
+     * Add rating stats and eager-load the RATINGS_LIMIT highest ratings
+     * (most stars first, then newest).
+     *
+     * @param  Builder<Center>  $query
+     * @return Builder<Center>
+     */
+    private function withTopRatings(Builder $query): Builder
+    {
+        return $query->withRatingStats()->with([
+            'ratings' => fn ($ratings) => $ratings
+                ->with('rater')
+                ->orderByDesc('stars')
+                ->orderByDesc('created_at')
+                ->orderByDesc('id')
+                ->limit(self::RATINGS_LIMIT),
+        ]);
     }
 }

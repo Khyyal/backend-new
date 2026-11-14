@@ -86,13 +86,7 @@ class CenterDetailsResource extends JsonResource
                 'start_price' => $service->start_price !== null ? (int) $service->start_price : null,
                 'display_price' => $prices[$service->id] ?? null,
             ])->values()),
-            'ratings' => $this->whenLoaded('ratings', fn () => [
-                'summary' => [
-                    'average' => $center->rating_avg !== null ? round((float) $center->rating_avg, 2) : null,
-                    'count' => (int) $center->ratings_count,
-                ],
-                'data' => CenterRatingResource::collection($center->ratings),
-            ]),
+            'ratings' => $this->whenLoaded('ratings', fn () => new CenterRatingsResource($center)),
         ];
     }
 

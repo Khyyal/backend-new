@@ -11,6 +11,7 @@ use Knuckles\Scribe\Attributes\ResponseFromApiResource;
 use Knuckles\Scribe\Attributes\Unauthenticated;
 use Knuckles\Scribe\Attributes\UrlParam;
 use Modules\Centers\Http\Requests\Client\ListCentersRequest;
+use Modules\Centers\Http\Requests\Client\ShowCenterByDomainRequest;
 use Modules\Centers\Http\Requests\Client\ShowCenterRequest;
 use Modules\Centers\Http\Resources\Client\CenterDetailsResource;
 use Modules\Centers\Http\Resources\Client\CenterResource;
@@ -56,12 +57,13 @@ class CenterController extends Controller
     }
 
     #[Unauthenticated]
-    #[Endpoint('Find a center by custom domain', 'Resolves the center behind a custom site. Only visible, active centers with the custom site enabled. The domain is matched case-insensitively.')]
+    #[Endpoint('Find a center by custom domain', 'Resolves the center behind a custom site. Only visible, active centers with the custom site enabled. The domain is matched case-insensitively. `include=ratings` adds the rating summary and the 10 highest ratings.')]
     #[UrlParam('domain', 'string', 'Custom domain (hostname).', example: 'alfursan.sa')]
     #[ResponseFromApiResource(CenterSiteResource::class, Center::class, status: 200, description: 'The center.')]
     #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No visible center with an enabled custom site on this domain.')]
-    public function showByDomain(string $domain): CenterSiteResource
+    #[ApiResponse(['message' => 'The selected include.0 is invalid.', 'errors' => ['include.0' => ['The selected include.0 is invalid.']]], 422, 'Unknown `include` value.')]
+    public function showByDomain(ShowCenterByDomainRequest $request, string $domain): CenterSiteResource
     {
-        return new CenterSiteResource($this->detailsService->findByDomain($domain));
+        return new CenterSiteResource($this->detailsService->findByDomain($domain, $request->includes('ratings')));
     }
 }
