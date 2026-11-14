@@ -75,6 +75,7 @@ class CenterDetailsResource extends JsonResource
             'services' => $this->whenLoaded('services', fn () => $center->services->map(fn ($service) => [
                 'id' => $service->id,
                 'slug' => $service->slug,
+                "type" => $service->type,
                 'name' => $service->name,
                 'cover' => $service->getFirstMedia('cover')?->getFullUrl('cover-thumb'),
                 'start_price' => $service->start_price !== null ? (int) $service->start_price : null,
