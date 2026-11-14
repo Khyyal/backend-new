@@ -51,4 +51,19 @@ class CenterDetailsService
 
         return $center;
     }
+
+    /**
+     * Find the visible center whose custom site is enabled on the given domain.
+     *
+     * @throws ModelNotFoundException
+     */
+    public function findByDomain(string $domain): Center
+    {
+        return Center::query()
+            ->visible()
+            ->where('custom_site_enabled', true)
+            ->where('domain', strtolower(trim($domain)))
+            ->select(['id', 'slug', 'site_theme'])
+            ->firstOrFail();
+    }
 }

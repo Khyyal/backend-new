@@ -43,6 +43,7 @@ See [Roles and permissions](../conventions/permissions).
 |---|---|
 | `GET clients/centers` | Paginated list of visible centers, optional `lat` and `lng` for distance |
 | `GET clients/centers/{slug}` | Center details with an overview of its **active** services |
+| `GET clients/centers/by-domain/{domain}` | `{id, slug, site_theme}` of the center behind a custom site. Matched case-insensitively; only **visible, active** centers with `custom_site_enabled`, otherwise 404 |
 | `GET/POST/DELETE clients/favorites` | Favorites |
 | `POST clients/ratings` | Rate a center |
 | `GET clients/ratings`, `PATCH clients/ratings/{rating}` | List (`sort=newest\|highest`) and edit the client's own ratings, see [Clients](./clients#favorites-and-ratings) |

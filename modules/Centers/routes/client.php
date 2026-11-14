@@ -12,6 +12,10 @@ Route::middleware(['set.locale.from.accept.language'])
         Route::get('/centers', [CenterController::class, 'index'])
             ->name('centers.index');
 
+        Route::get('/centers/by-domain/{domain}', [CenterController::class, 'showByDomain'])
+            ->where('domain', '[A-Za-z0-9.-]+')
+            ->name('centers.by-domain');
+
         Route::get('/centers/{slug}', [CenterController::class, 'show'])
             ->name('centers.show');
 

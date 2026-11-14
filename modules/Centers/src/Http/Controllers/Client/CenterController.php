@@ -14,6 +14,7 @@ use Modules\Centers\Http\Requests\Client\ListCentersRequest;
 use Modules\Centers\Http\Requests\Client\ShowCenterRequest;
 use Modules\Centers\Http\Resources\Client\CenterDetailsResource;
 use Modules\Centers\Http\Resources\Client\CenterResource;
+use Modules\Centers\Http\Resources\Client\CenterSiteResource;
 use Modules\Centers\Models\Center;
 use Modules\Centers\Services\CenterDetailsService;
 use Modules\Centers\Services\CenterSearchService;
@@ -51,5 +52,15 @@ class CenterController extends Controller
         );
 
         return new CenterDetailsResource($center);
+    }
+
+    #[Unauthenticated]
+    #[Endpoint('Find a center by custom domain', 'Resolves the center behind a custom site. Only visible, active centers with the custom site enabled. The domain is matched case-insensitively.')]
+    #[UrlParam('domain', 'string', 'Custom domain (hostname).', example: 'alfursan.sa')]
+    #[ResponseFromApiResource(CenterSiteResource::class, Center::class, status: 200, description: 'The center.')]
+    #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'No visible center with an enabled custom site on this domain.')]
+    public function showByDomain(string $domain): CenterSiteResource
+    {
+        return new CenterSiteResource($this->detailsService->findByDomain($domain));
     }
 }
