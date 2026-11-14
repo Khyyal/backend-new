@@ -42,7 +42,7 @@ See [Roles and permissions](../conventions/permissions).
 | Endpoint | Notes |
 |---|---|
 | `GET clients/centers` | Paginated list of visible centers, optional `lat` and `lng` for distance |
-| `GET clients/centers/{slug}` | Center details with an overview of its **active** services |
+| `GET clients/centers/{slug}` | Center details with an overview of its **active** services; `include=ratings` adds ratings |
 | `GET clients/centers/by-domain/{domain}` | `{id, slug, site_theme}` of the center behind a custom site. Matched case-insensitively; only **visible, active** centers with `custom_site_enabled`, otherwise 404 |
 | `GET/POST/DELETE clients/favorites` | Favorites |
 | `POST clients/ratings` | Rate a center |
@@ -52,6 +52,8 @@ The center details response lists each active service with `start_price` and `di
 
 - `start_price` is the lowest price option in halalas. For a **Resort**, add-ons (price options without a quantity) are not counted.
 - `display_price` is `null`, or `{original, discounted, discount_amount, badge}` while an automatic offer lowers the start price right now. It comes from `ServicePriceDisplay` (see [Promotions](./promotions)).
+
+`include` takes a comma-separated list of extras (`ShowCenterRequest::INCLUDES`); any other value is a 422. Today it accepts only `ratings`, which adds `ratings: {summary: {average, count}, data}`. `summary` covers every rating of the center (`average` rounded to 2 decimals, `null` without ratings). `data` holds the `CenterDetailsService::RATINGS_LIMIT` (10) highest ratings, most stars first, then newest, each with `id`, `client` (rater full name), `stars`, `comment` and `rated_at`.
 
 ## Profile completion and launch
 

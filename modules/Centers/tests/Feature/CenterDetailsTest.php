@@ -4,11 +4,13 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Modules\Centers\Database\Factories\CenterFactory;
 use Modules\Centers\Database\Factories\TagFactory;
 use Modules\Centers\Models\Center;
+use Modules\Clients\Database\Factories\ClientFactory;
 use Modules\Promotions\Database\Factories\PromotionFactory;
 use Modules\Services\Database\Factories\PriceOptionFactory;
 use Modules\Services\Enums\ServiceType;
 use Modules\Services\Models\Resort;
 use Modules\Services\Models\Service;
+use Modules\Support\Database\Factories\RatingFactory;
 use Modules\Support\Enums\ActivationStatus;
 use Tests\TestCase;
 
@@ -104,4 +106,49 @@ test('invisible or unknown centers return 404', function (): void {
 
     $this->getJson("/api/v1/clients/centers/{$hidden->slug}")->assertNotFound();
     $this->getJson('/api/v1/clients/centers/does-not-exist')->assertNotFound();
+});
+
+test('include=ratings adds the summary and the 10 highest ratings', function (): void {
+    $center = CenterFactory::new()->create(['status' => 'visible']);
+    $client = ClientFactory::new()->create(['first_name' => 'Noura', 'last_name' => 'Ali']);
+    ClientFactory::new()->count(10)->create()->each(
+        fn ($rater) => RatingFactory::new()->forRateable($center)->byRater($rater)->oneStar()->create(),
+    );
+    $best = RatingFactory::new()->forRateable($center)->byRater($client)->fiveStars()->create();
+    RatingFactory::new()->forRateable(CenterFactory::new()->create())->byRater($client)->fiveStars()->create();
+
+    $this->getJson("/api/v1/clients/centers/{$center->slug}?include=ratings")
+        ->assertOk()
+        ->assertJsonPath('data.ratings.summary.count', 11)
+        ->assertJsonPath('data.ratings.summary.average', 1.36)
+        ->assertJsonCount(10, 'data.ratings.data')
+        ->assertJsonPath('data.ratings.data.0.id', $best->id)
+        ->assertJsonPath('data.ratings.data.0.client', 'Noura Ali')
+        ->assertJsonPath('data.ratings.data.0.stars', 5);
+});
+
+test('ratings are left out without include', function (): void {
+    $center = CenterFactory::new()->create(['status' => 'visible']);
+    RatingFactory::new()->forRateable($center)->byRater(ClientFactory::new()->create())->create();
+
+    $this->getJson("/api/v1/clients/centers/{$center->slug}")
+        ->assertOk()
+        ->assertJsonMissingPath('data.ratings');
+});
+
+test('include=ratings returns an empty summary for a center without ratings', function (): void {
+    $center = CenterFactory::new()->create(['status' => 'visible']);
+
+    $this->getJson("/api/v1/clients/centers/{$center->slug}?include=ratings")
+        ->assertOk()
+        ->assertJsonPath('data.ratings.summary', ['average' => null, 'count' => 0])
+        ->assertJsonPath('data.ratings.data', []);
+});
+
+test('an unknown include fails validation', function (): void {
+    $center = CenterFactory::new()->create(['status' => 'visible']);
+
+    $this->getJson("/api/v1/clients/centers/{$center->slug}?include=ratings,owner")
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('include.1');
 });

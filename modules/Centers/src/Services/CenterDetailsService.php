@@ -10,6 +10,11 @@ use Modules\Support\Support\Haversine;
 
 class CenterDetailsService
 {
+    /**
+     * Number of highest ratings loaded with `include=ratings`.
+     */
+    public const int RATINGS_LIMIT = 10;
+
     public function __construct(
         private readonly ServicePriceDisplay $priceDisplay,
     ) {}
@@ -18,10 +23,11 @@ class CenterDetailsService
      * Find a visible center by slug with its active services overview.
      * Resort `start_price` is the minimum day price (add-ons excluded).
      * `distance_km` is set only when both coordinates are given.
+     * With `$withRatings` it also loads the rating stats and the highest ratings.
      *
      * @throws ModelNotFoundException
      */
-    public function findBySlug(string $slug, ?float $lat = null, ?float $lng = null): Center
+    public function findBySlug(string $slug, ?float $lat = null, ?float $lng = null, bool $withRatings = false): Center
     {
         $query = Center::query()
             ->visible()
@@ -43,6 +49,17 @@ class CenterDetailsService
                 Haversine::sql('centers.lat', 'centers.lng').' as distance_km',
                 Haversine::bindings($lat, $lng),
             );
+        }
+
+        if ($withRatings) {
+            $query->withRatingStats()->with([
+                'ratings' => fn ($ratings) => $ratings
+                    ->with('rater')
+                    ->orderByDesc('stars')
+                    ->orderByDesc('created_at')
+                    ->orderByDesc('id')
+                    ->limit(self::RATINGS_LIMIT),
+            ]);
         }
 
         $center = $query->firstOrFail();

@@ -38,17 +38,18 @@ class CenterController extends Controller
     }
 
     #[Unauthenticated]
-    #[Endpoint('Show a center', 'Looked up by slug; only visible, active centers. Includes images, tags and an overview of active services.')]
+    #[Endpoint('Show a center', 'Looked up by slug; only visible, active centers. Includes images, tags and an overview of active services. `include=ratings` adds the rating summary and the 10 highest ratings.')]
     #[UrlParam('slug', 'string', 'Center slug.', example: 'al-fursan-stables')]
     #[ResponseFromApiResource(CenterDetailsResource::class, Center::class, status: 200, description: 'The center.', with: ['city', 'tags'])]
     #[ApiResponse(ApiExamples::NOT_FOUND, 404, 'Center not found or not visible.')]
-    #[ApiResponse(['message' => 'The lng field is required when lat is present.', 'errors' => ['lng' => ['The lng field is required when lat is present.']]], 422, 'Validation failed.')]
+    #[ApiResponse(['message' => 'The lng field is required when lat is present.', 'errors' => ['lng' => ['The lng field is required when lat is present.']]], 422, 'Validation failed (e.g. unknown `include` value).')]
     public function show(ShowCenterRequest $request, string $slug): CenterDetailsResource
     {
         $center = $this->detailsService->findBySlug(
             $slug,
             $request->filled('lat') ? (float) $request->input('lat') : null,
             $request->filled('lng') ? (float) $request->input('lng') : null,
+            $request->includes('ratings'),
         );
 
         return new CenterDetailsResource($center);

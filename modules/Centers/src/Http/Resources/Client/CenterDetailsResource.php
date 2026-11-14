@@ -44,6 +44,10 @@ class CenterDetailsResource extends JsonResource
     #[ResponseField('services[].cover', 'string', 'Cover thumbnail URL; null when none.', nullable: true, example: 'https://cdn.khyyal.com/media/50/conversions/cover-cover-thumb.jpg')]
     #[ResponseField('services[].start_price', 'integer', 'Lowest price option in halalas; null when none.', nullable: true, example: 15000)]
     #[ResponseField('services[].display_price', 'object', 'Set only while an automatic offer lowers the start price: `original`, `discounted`, `discount_amount` (halalas), `badge`.', nullable: true, example: ['original' => 15000, 'discounted' => 12750, 'discount_amount' => 2250, 'badge' => '-15%'])]
+    #[ResponseField('ratings', 'object', 'Present only with `include=ratings`.', required: false)]
+    #[ResponseField('ratings.summary.average', 'number', 'Average stars (2 decimals); null without ratings.', nullable: true, example: 4.6)]
+    #[ResponseField('ratings.summary.count', 'integer', 'Number of ratings.', example: 18)]
+    #[ResponseField('ratings.data', 'object[]', 'The 10 highest ratings, most stars first, then newest (`CenterRatingResource`).')]
     public function toArray(Request $request): array
     {
         $center = $this->resource;
@@ -76,12 +80,19 @@ class CenterDetailsResource extends JsonResource
             'services' => $this->whenLoaded('services', fn () => $center->services->map(fn ($service) => [
                 'id' => $service->id,
                 'slug' => $service->slug,
-                "type" => $service->type,
+                'type' => $service->type,
                 'name' => $service->name,
                 'cover' => $service->getFirstMedia('cover')?->getFullUrl('cover-thumb'),
                 'start_price' => $service->start_price !== null ? (int) $service->start_price : null,
                 'display_price' => $prices[$service->id] ?? null,
             ])->values()),
+            'ratings' => $this->whenLoaded('ratings', fn () => [
+                'summary' => [
+                    'average' => $center->rating_avg !== null ? round((float) $center->rating_avg, 2) : null,
+                    'count' => (int) $center->ratings_count,
+                ],
+                'data' => CenterRatingResource::collection($center->ratings),
+            ]),
         ];
     }
 
