@@ -54,6 +54,25 @@ class HorseStayBoardQuery
         return $page->setCollection($this->hydrate($page->getCollection()->all()));
     }
 
+    /**
+     * How many items each `type` filter lists, for the same search.
+     *
+     * @param  array{q?: string|null}  $filters
+     * @return array{all: int, active: int, others: int}
+     */
+    public function counts(Center $center, array $filters = []): array
+    {
+        $search = $filters['q'] ?? null;
+        $active = $this->stays($center, $search)->count();
+        $others = $this->unlinkedHorses($center, $search)->count();
+
+        return [
+            self::TYPE_ALL => $active + $others,
+            self::TYPE_ACTIVE => $active,
+            self::TYPE_OTHERS => $others,
+        ];
+    }
+
     private function stays(Center $center, ?string $search): Builder
     {
         return $this->activeStays($center)

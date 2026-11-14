@@ -94,6 +94,24 @@ test('active and others split the board', function (): void {
     $this->getJson("{$this->url}?type=nope")->assertUnprocessable()->assertJsonValidationErrors(['type']);
 });
 
+test('counts the items of each type, with the search applied', function (): void {
+    $this->actingAs($this->user, 'center_user');
+
+    $this->getJson("{$this->url}/counts")
+        ->assertOk()
+        ->assertExactJson(['data' => ['all' => 4, 'active' => 1, 'others' => 3]]);
+
+    $this->getJson("{$this->url}/counts?q=Bravo&type=active")
+        ->assertOk()
+        ->assertExactJson(['data' => ['all' => 1, 'active' => 0, 'others' => 1]]);
+});
+
+test('counts need horse or reservation access', function (): void {
+    $this->user->syncCenterPermissions($this->center, [CenterUserPermission::ManageUsers]);
+
+    $this->actingAs($this->user, 'center_user')->getJson("{$this->url}/counts")->assertForbidden();
+});
+
 test('a stay row carries its horse, service and unpaid operations', function (): void {
     $purchaseOf = fn (PurchaseStatus $status) => Purchase::factory()->create(['status' => $status, 'merchant_type' => $this->center->getMorphClass(), 'merchant_id' => $this->center->id]);
     PurchaseItemFactory::new()->create(['purchase_id' => $purchaseOf(PurchaseStatus::Pending)->id, 'purchasable_type' => $this->activeStay->getMorphClass(), 'purchasable_id' => $this->activeStay->id]);

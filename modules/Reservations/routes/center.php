@@ -29,5 +29,6 @@ Route::prefix('centers/{center}/horse-stays')
     ->middleware(['auth:center_user', 'center.scope'])
     ->group(function (): void {
         Route::get('/', [HorseStayController::class, 'index'])->name('index');
+        Route::get('/counts', [HorseStayController::class, 'counts'])->name('counts');
         Route::get('/{reservation}', [HorseStayController::class, 'show'])->whereNumber('reservation')->name('show');
     });

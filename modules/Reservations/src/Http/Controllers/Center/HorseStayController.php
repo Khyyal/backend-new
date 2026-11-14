@@ -3,6 +3,7 @@
 namespace Modules\Reservations\Http\Controllers\Center;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Routing\Controller;
@@ -10,6 +11,7 @@ use Illuminate\Support\Facades\Gate;
 use Knuckles\Scribe\Attributes\Endpoint;
 use Knuckles\Scribe\Attributes\Group;
 use Knuckles\Scribe\Attributes\Response as ApiResponse;
+use Knuckles\Scribe\Attributes\ResponseField;
 use Knuckles\Scribe\Attributes\ResponseFromApiResource;
 use Knuckles\Scribe\Attributes\UrlParam;
 use Modules\Centers\Models\Center;
@@ -37,6 +39,20 @@ class HorseStayController extends Controller
     public function index(ListHorseStaysRequest $request, Center $center, HorseStayBoardQuery $board): AnonymousResourceCollection
     {
         return HorseStayBoardResource::collection($board->paginate($center, $request->validated()));
+    }
+
+    #[Endpoint('Count horses and stays', 'How many items each `type` filter of the list returns, with the list filter `q` applied (`type` and `page` are ignored).')]
+    #[UrlParam('center', 'integer', 'Center ID. Must match the center the access token was issued for.', example: 8)]
+    #[ApiResponse(['data' => ['all' => 14, 'active' => 9, 'others' => 5]], 200, 'Counts.')]
+    #[ResponseField('data.all', 'integer', 'Active stays plus horses without an active stay.', example: 14)]
+    #[ResponseField('data.active', 'integer', 'Active stays.', example: 9)]
+    #[ResponseField('data.others', 'integer', 'Horses without an active stay.', example: 5)]
+    #[ApiResponse(ApiExamples::UNAUTHENTICATED, 401, 'Missing or invalid bearer token.')]
+    #[ApiResponse(ApiExamples::FORBIDDEN, 403, 'Missing `horses.manage` and `reservations.manage` for this center (system users: `centers.manage_horses` or `centers.manage_reservations`), or the token lacks `center-access:{center}`.')]
+    #[ApiResponse(['message' => 'The q field must not be greater than 100 characters.', 'errors' => ['q' => ['The q field must not be greater than 100 characters.']]], 422, 'Invalid filters.')]
+    public function counts(ListHorseStaysRequest $request, Center $center, HorseStayBoardQuery $board): JsonResponse
+    {
+        return response()->json(['data' => $board->counts($center, $request->validated())]);
     }
 
     #[Endpoint('Show a stay with its invoices', 'A stabling stay of this center in any status: every reservation field (code, dates, price option, extras, prices, client, purchase summary), the horse with its client and trainers, `planned_end_date` after an early end, `unpaid_operations_count`, and the invoices billed during the stay, newest first.')]

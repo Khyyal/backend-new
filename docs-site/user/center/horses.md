@@ -28,7 +28,7 @@ The **Horses and stays** view shows, in one list:
 - every horse that is **stabled right now** (a confirmed stay that has started), with its service, end date, status and how many payments are still to collect for the stay and its invoices;
 - every other horse, with its owner and trainers.
 
-Switch between **All**, **Active stays** and **Others**, and search by horse name, client name or phone. You need the horses or the reservations permission.
+Switch between **All**, **Active stays** and **Others** (each shows how many items it holds for the current search), and search by horse name, client name or phone. You need the horses or the reservations permission.
 
 Open a stay to see its details (dates, price, extras, payment, the horse with its owner and trainers) and every invoice billed during it with its payment status. Ended and cancelled stays can be opened too.
 
