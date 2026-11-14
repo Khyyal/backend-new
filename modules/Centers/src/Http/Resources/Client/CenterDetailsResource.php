@@ -39,6 +39,7 @@ class CenterDetailsResource extends JsonResource
     #[ResponseField('services', 'object[]', 'Overview of the center\'s active services.', required: false)]
     #[ResponseField('services[].id', 'integer', 'Service ID.', example: 31)]
     #[ResponseField('services[].slug', 'string', 'Service slug; use it on `GET /api/v1/clients/centers/{center}/services/{slug}`.', example: 'beginner-ride')]
+    #[ResponseField('services[].type', 'string', 'Service type;', example: 'recreation_riding')]
     #[ResponseField('services[].name', 'string', 'Service name in the request locale.', example: 'Beginner ride')]
     #[ResponseField('services[].cover', 'string', 'Cover thumbnail URL; null when none.', nullable: true, example: 'https://cdn.khyyal.com/media/50/conversions/cover-cover-thumb.jpg')]
     #[ResponseField('services[].start_price', 'integer', 'Lowest price option in halalas; null when none.', nullable: true, example: 15000)]
